@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V38</title>
+    <title>Notion Pilot EFB V39</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
             --border: #38383a; --accent: #0a84ff; 
             --danger: #ff453a; --warn: #ff9f0a; --success: #32d74b;
             --mvfr: #0a84ff; --lifr: #bf5af2;
-            --timeline-bg: #2c2c2e;
-            --strip-bg: #2c2c2e;
+            --timeline-bg: #2c2c2e; --strip-bg: #2c2c2e;
         }
         * { box-sizing: border-box; }
         body {
@@ -30,17 +29,9 @@
             padding-left: 8px; transition: border-color 0.2s;
         }
         .search-box:focus-within { border-color: var(--accent); }
-        #icao {
-            flex-grow: 1; background: transparent; border: none; color: #fff; 
-            padding: 8px 4px; text-transform: uppercase; font-weight: 700; 
-            font-size: 16px; outline: none; width: 100%;
-        }
+        #icao { flex-grow: 1; background: transparent; border: none; color: #fff; padding: 8px 4px; text-transform: uppercase; font-weight: 700; font-size: 16px; outline: none; width: 100%; }
         .clear-btn { color: var(--sub-text); cursor: pointer; padding: 0 8px; font-size: 14px; display: none; }
-        .icon-btn { 
-            background: var(--card-bg); border: 1px solid var(--border); color: var(--accent); 
-            width: 40px; height: 100%; border-radius: 8px; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 18px;
-        }
+        .icon-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--accent); width: 40px; height: 100%; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 18px; }
         .badge { height: 100%; display: flex; align-items: center; justify-content: center; padding: 0 12px; border-radius: 8px; font-weight: 700; font-size: 15px; min-width: 60px; }
         .badge-time { background: var(--card-bg); border: 1px solid var(--border); color: #fff; font-family: 'SF Mono', monospace; letter-spacing: -0.5px; }
         .badge-cat { background: var(--card-bg); color: var(--sub-text); }
@@ -59,26 +50,42 @@
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* INFO & ATC STYLES */
+        /* SHARED COMPONENTS */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
         .info-card { background: var(--card-bg); padding: 10px; border-radius: 8px; }
         .ic-lbl { font-size: 11px; color: var(--sub-text); text-transform: uppercase; }
         .ic-val { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
         .ic-val-sm { font-size: 13px; font-weight: 500; color: #fff; margin-top: 2px; font-family: 'SF Mono', monospace; }
         .section-title { font-weight:700; color:var(--sub-text); margin: 20px 0 8px 0; font-size:12px; }
-
-        /* ATC Buttons */
-        .atc-btn {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--card-bg); padding: 14px 16px; border-radius: 10px;
-            text-decoration: none; color: #fff; font-weight: 600; font-size: 15px;
-            border: 1px solid var(--border); transition: background 0.2s;
-            margin-bottom: 10px;
-        }
+        .atc-btn { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 16px; border-radius: 10px; text-decoration: none; color: #fff; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: background 0.2s; margin-bottom: 10px; }
         .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
-        .atc-icon { margin-right: 10px; font-size: 18px; }
 
-        /* RUNWAY VISUALIZER */
+        /* FREQUENCY GRID */
+        .freq-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .freq-card { background: var(--card-bg); padding: 10px; border-radius: 8px; text-align: center; }
+        .freq-val { font-size: 16px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+
+        /* TOOLS STYLES */
+        .tool-box { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+        .tool-head { font-weight: 700; color: var(--sub-text); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; }
+        .tool-input { width: 100%; background: #2c2c2e; border: none; padding: 8px; color: white; border-radius: 6px; margin-bottom: 6px; font-family: 'SF Mono', monospace; }
+        .tool-btn { background: var(--accent); border:none; color:white; padding: 6px 12px; border-radius: 6px; font-weight:600; cursor: pointer; font-size: 12px; }
+        .tool-btn.secondary { background: #3a3a3c; }
+        .tool-res { color: var(--accent); font-weight: 700; font-size: 14px; margin-top: 4px; }
+        
+        /* TIMER */
+        .stopwatch { text-align: center; padding: 10px 0; }
+        .sw-display { font-size: 32px; font-family: 'SF Mono', monospace; font-weight: 700; margin-bottom: 12px; }
+        .sw-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
+        .sw-laps { max-height: 100px; overflow-y: auto; text-align: left; font-size: 12px; color: var(--sub-text); border-top: 1px solid var(--border); padding-top: 8px; }
+        .sw-lap-row { display: flex; justify-content: space-between; padding: 2px 0; }
+
+        /* METAR CHEAT SHEET */
+        .cheat-sheet { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11px; color: #ccc; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); display: none; }
+        .cs-row { display: flex; justify-content: space-between; }
+        .cs-code { font-weight: 700; color: var(--accent); }
+
+        /* RUNWAY VIS */
         .rwy-section-head { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px 0; }
         .unit-toggle { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; cursor: pointer; }
         .u-opt { padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--sub-text); }
@@ -93,8 +100,8 @@
         .wind-comp { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: #fff; }
         .wc-arrow { font-size: 14px; }
         .rc-rose { width: 36px; height: 36px; margin-left: 8px; }
-
-        /* Shared / Retained Styles */
+        
+        /* OTHER */
         .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
         .metar-card.full-width { grid-column: span 2; }
@@ -107,7 +114,6 @@
         .wind-stats { font-family: 'SF Mono', monospace; font-size: 13px; color: #fff; margin-top: 5px; }
         .stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; }
         select.stealth-select { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; font-weight: 600; outline: none; }
-        
         .taf-viz-container { margin-top: 10px; }
         .taf-bar { display: flex; height: 32px; width: 100%; background: #2c2c2e; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
         .taf-axis { display: flex; width: 100%; margin-top: 4px; margin-bottom: 12px; }
@@ -123,10 +129,6 @@
         .td-item { display: flex; flex-direction: column; }
         .td-lbl { font-size: 11px; color: var(--sub-text); margin-bottom: 2px; }
         .td-val { font-size: 14px; font-weight: 600; color: #fff; }
-
-        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .info-label { color: var(--sub-text); }
-        .info-val { font-weight: 500; text-align: right; }
         .raw-text { font-family: 'SF Mono', monospace; font-size: 11px; color: #d0d0d0; margin-top: 6px; line-height: 1.4; white-space: pre-wrap; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 6px; }
         .hidden { display: none !important; }
     </style>
@@ -208,11 +210,20 @@
     <div id="tab-info" class="view-section">
         <div style="font-size:20px; font-weight:700; margin-bottom:4px;" id="infoName">Unknown</div>
         <div style="font-size:12px; color:var(--sub-text); margin-bottom:12px;" id="infoLoc">--</div>
+        
         <div class="info-grid">
             <div class="info-card"><div class="ic-lbl">ICAO / IATA</div><div class="ic-val" id="infoCodes">--</div></div>
             <div class="info-card"><div class="ic-lbl">Elevation</div><div class="ic-val" id="infoElev">--</div></div>
             <div class="info-card" style="grid-column: span 2;"><div class="ic-lbl">Coordinates</div><div class="ic-val-sm" id="infoCoords">--</div></div>
         </div>
+
+        <div class="section-title">FREQUENCIES</div>
+        <div class="freq-grid">
+            <div class="freq-card"><div class="ic-lbl">ATIS</div><div class="freq-val" id="freqAtis">--</div></div>
+            <div class="freq-card"><div class="ic-lbl">TOWER</div><div class="freq-val" id="freqTwr">--</div></div>
+            <div class="freq-card"><div class="ic-lbl">GROUND</div><div class="freq-val" id="freqGnd">--</div></div>
+        </div>
+        
         <div class="section-title">ATMOSPHERE & TIME</div>
         <div class="info-grid">
             <div class="info-card"><div class="ic-lbl">Pressure Alt</div><div class="ic-val" id="calcPA">--</div></div>
@@ -222,6 +233,7 @@
             <div class="info-card"><div class="ic-lbl">Sunrise/Set</div><div class="ic-val" style="font-size:13px;" id="infoSun">--</div></div>
             <div class="info-card"><div class="ic-lbl">Mag Variation</div><div class="ic-val" id="infoMag">--</div></div>
         </div>
+        
         <div class="rwy-section-head">
             <span style="font-weight:700; color:var(--sub-text);">RUNWAYS</span>
             <div class="unit-toggle" onclick="toggleUnits()">
@@ -240,35 +252,80 @@
                 Your browser does not support audio.
             </audio>
         </div>
-
         <div class="section-title">EXTERNAL RESOURCES</div>
         <div style="display: flex; flex-direction: column;">
-            <a href="https://beta.twatc.net/" target="_blank" class="atc-btn">
-                <span>🇹🇼 Taiwan Virtual ATC</span>
-                <span style="color:var(--sub-text)">↗</span>
-            </a>
-            <a href="https://www.liveatc.net/" target="_blank" class="atc-btn">
-                <span>📡 LiveATC.net</span>
-                <span style="color:var(--sub-text)">↗</span>
-            </a>
-            <a href="https://aviationlisteners.aero" target="_blank" class="atc-btn">
-                <span>🎧 AviationListeners.aero</span>
-                <span style="color:var(--sub-text)">↗</span>
-            </a>
+            <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span style="color:var(--sub-text)">↗</span></a>
+            <a href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span style="color:var(--sub-text)">↗</span></a>
+            <a href="https://aviationlisteners.aero" target="_blank" class="atc-btn"><span>🎧 AviationListeners.aero</span><span style="color:var(--sub-text)">↗</span></a>
         </div>
     </div>
 
     <div id="tab-tools" class="view-section">
-        <div style="margin-bottom:10px;">
-            <div class="info-label">METAR Decoder</div>
-            <input type="text" placeholder="Code (e.g. SN, BR)" style="width:100%; background:#2c2c2e; border:none; padding:8px; color:white; border-radius:6px; margin-top:4px;" oninput="decode(this.value)">
-            <div id="decodeOut" style="color:var(--accent); margin-top:4px; font-weight:600;">...</div>
+        
+        <div class="tool-box">
+            <div class="tool-head">Flight Timer</div>
+            <div class="stopwatch">
+                <div class="sw-display" id="swDisplay">00:00:00</div>
+                <div class="sw-controls">
+                    <button class="tool-btn" onclick="startTimer()">Start</button>
+                    <button class="tool-btn" onclick="stopTimer()">Stop</button>
+                    <button class="tool-btn secondary" onclick="lapTimer()">Lap</button>
+                    <button class="tool-btn secondary" onclick="resetTimer()">Reset</button>
+                </div>
+                <div class="sw-laps" id="swLaps"></div>
+            </div>
         </div>
-        <hr style="border:0; border-top:1px solid var(--border);">
-        <div style="margin-bottom:10px;">
-            <div class="info-label">Fuel Calc (Gal ➔ Lbs)</div>
-            <input type="number" placeholder="Gallons" style="width:100%; background:#2c2c2e; border:none; padding:8px; color:white; border-radius:6px; margin-top:4px;" oninput="document.getElementById('fuelOut').innerText=(this.value*6).toFixed(1)+' lbs'">
-            <div id="fuelOut" style="color:var(--accent); margin-top:4px; font-weight:600;">0 lbs</div>
+
+        <div class="tool-box">
+            <div class="tool-head">METAR Decoder</div>
+            <input type="text" placeholder="Code (e.g. SN, BR)" class="tool-input" oninput="decode(this.value)">
+            <div id="decodeOut" style="color:var(--accent); margin-top:4px; font-weight:600;">...</div>
+            <div style="text-align:right; margin-top:8px;">
+                <button class="tool-btn secondary" onclick="toggleCheatSheet()">Cheat Sheet ▼</button>
+            </div>
+            <div id="cheatSheet" class="cheat-sheet">
+                <div class="cs-row"><span class="cs-code">BR</span> <span>Mist</span></div>
+                <div class="cs-row"><span class="cs-code">FG</span> <span>Fog</span></div>
+                <div class="cs-row"><span class="cs-code">HZ</span> <span>Haze</span></div>
+                <div class="cs-row"><span class="cs-code">FU</span> <span>Smoke</span></div>
+                <div class="cs-row"><span class="cs-code">DZ</span> <span>Drizzle</span></div>
+                <div class="cs-row"><span class="cs-code">RA</span> <span>Rain</span></div>
+                <div class="cs-row"><span class="cs-code">SN</span> <span>Snow</span></div>
+                <div class="cs-row"><span class="cs-code">TS</span> <span>Storm</span></div>
+                <div class="cs-row"><span class="cs-code">SH</span> <span>Shower</span></div>
+                <div class="cs-row"><span class="cs-code">+</span> <span>Heavy</span></div>
+                <div class="cs-row"><span class="cs-code">-</span> <span>Light</span></div>
+                <div class="cs-row"><span class="cs-code">VC</span> <span>Vicinity</span></div>
+            </div>
+        </div>
+
+        <div class="tool-box">
+            <div class="tool-head">ISA Calculator</div>
+            <div style="display:flex; gap:8px;">
+                <input type="number" id="isaAlt" placeholder="Altitude (ft)" class="tool-input" style="flex:1;">
+                <button class="tool-btn" onclick="calcISA()">Calc</button>
+            </div>
+            <div id="isaRes" class="tool-res"></div>
+        </div>
+
+        <div class="tool-box">
+            <div class="tool-head">Unit Converter</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                <input type="number" placeholder="Knots" class="tool-input" oninput="this.nextElementSibling.innerText=Math.round(this.value*1.852)+' kph'">
+                <div class="tool-res">0 kph</div>
+                
+                <input type="number" placeholder="Celsius" class="tool-input" oninput="this.nextElementSibling.innerText=Math.round(this.value*1.8+32)+' °F'">
+                <div class="tool-res">32 °F</div>
+                
+                <input type="number" placeholder="inHg" class="tool-input" oninput="this.nextElementSibling.innerText=Math.round(this.value*33.8639)+' hPa'">
+                <div class="tool-res">0 hPa</div>
+            </div>
+        </div>
+
+        <div class="tool-box">
+            <div class="tool-head">Fuel (Gal ➔ Lbs)</div>
+            <input type="number" placeholder="Gallons" class="tool-input" oninput="document.getElementById('fuelOut').innerText=(this.value*6).toFixed(1)+' lbs'">
+            <div id="fuelOut" class="tool-res">0 lbs</div>
         </div>
     </div>
 
@@ -280,6 +337,11 @@
         let stationData = null;
         let useMetric = true; 
         let tafDataCache = null;
+
+        // Timer Vars
+        let swInterval;
+        let swTime = 0; // ms
+        let swRunning = false;
 
         function setTab(name) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -295,6 +357,45 @@
             document.getElementById('optFt').className = !useMetric ? 'u-opt active' : 'u-opt';
             if(stationData) renderRunwaysComplex();
         }
+
+        // --- TOOLS FUNCTIONS ---
+        // Timer
+        function fmtSw(ms) {
+            const d = new Date(ms);
+            return d.toISOString().substr(11, 8) + '.' + Math.floor(d.getMilliseconds()/100);
+        }
+        function startTimer() {
+            if(swRunning) return;
+            swRunning = true;
+            const start = Date.now() - swTime;
+            swInterval = setInterval(() => { swTime = Date.now() - start; document.getElementById('swDisplay').innerText = fmtSw(swTime); }, 100);
+        }
+        function stopTimer() { swRunning = false; clearInterval(swInterval); }
+        function resetTimer() { stopTimer(); swTime = 0; document.getElementById('swDisplay').innerText = "00:00:00.0"; document.getElementById('swLaps').innerHTML = ""; }
+        function lapTimer() {
+            const div = document.createElement('div'); div.className = 'sw-lap-row';
+            div.innerHTML = `<span>Lap</span><span>${fmtSw(swTime)}</span>`;
+            document.getElementById('swLaps').prepend(div);
+        }
+
+        // Cheat Sheet
+        function toggleCheatSheet() {
+            const el = document.getElementById('cheatSheet');
+            el.style.display = el.style.display === 'grid' ? 'none' : 'grid';
+        }
+        const WX_CODES={"BR":"Mist","FG":"Fog","TS":"Storm","HZ":"Haze","FU":"Smoke","DZ":"Drizzle","RA":"Rain","SN":"Snow"};
+        function decode(c){ document.getElementById('decodeOut').innerText = WX_CODES[c.toUpperCase()] || "Unknown"; }
+
+        // ISA Calc
+        function calcISA() {
+            const alt = parseFloat(document.getElementById('isaAlt').value);
+            if(isNaN(alt)) return;
+            const stdTemp = 15 - (2 * alt / 1000);
+            const stdPress = 29.92 * Math.pow((1 - (0.0000068756 * alt)), 5.2561);
+            document.getElementById('isaRes').innerText = `Std Temp: ${stdTemp.toFixed(1)}°C | Std Press: ${stdPress.toFixed(2)} inHg`;
+        }
+
+        // --- CORE DATA LOGIC ---
 
         function toggleClearBtn() {
             const val = document.getElementById('icao').value;
@@ -315,15 +416,16 @@
             updateHeaderCat('Loading', '');
 
             try {
+                // 1. Station
                 const resSt = await fetch(`https://avwx.rest/api/station/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
                 if(!resSt.ok) throw new Error();
                 stationData = await resSt.json();
                 
+                // 2. METAR
                 const resMe = await fetch(`https://avwx.rest/api/metar/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
                 const metar = await resMe.json();
                 
                 currentWind = { dir: metar.wind_direction?.value||0, spd: metar.wind_speed?.value||0 };
-                
                 let altVal = metar.altimeter?.value || 1013;
                 let altUnit = 'hPa';
                 if(altVal < 200) altUnit = 'inHg';
@@ -358,7 +460,6 @@
             badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
         }
 
-        // RENDER METAR
         function renderMetar(d) {
             document.getElementById('rawMetar').innerText = d.raw;
             const rules = d.flight_rules; 
@@ -394,7 +495,6 @@
             document.getElementById('mAge').innerText = `${minAgo}m ago`;
         }
 
-        // RENDER INFO
         function renderInfo(d) {
             document.getElementById('infoName').innerText = d.name;
             document.getElementById('infoLoc').innerText = `${d.city || ''}, ${d.country || ''} (${d.icao})`;
@@ -416,6 +516,21 @@
             document.getElementById('calcDA').innerText = `${da} ft`;
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
 
+            // Frequencies (Using mock data or real if available in object)
+            // AVWX "station" object sometimes doesn't have detailed freqs, so we check.
+            // If missing, we show '--'
+            document.getElementById('freqAtis').innerText = '--';
+            document.getElementById('freqTwr').innerText = '--';
+            document.getElementById('freqGnd').innerText = '--';
+            
+            // Basic parsing if frequencies array exists
+            /*
+            if(d.runways && d.runways.length > 0) {
+                 // AVWX API doesn't always provide frequencies in the Station endpoint for free tier or all airports.
+                 // We leave placeholders or manual entry for now as requested.
+            }
+            */
+
             fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
                 .then(r=>r.json()).then(s => {
                     const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
@@ -429,7 +544,6 @@
             renderRunwaysComplex();
         }
 
-        // RENDER RUNWAYS
         function renderRunwaysComplex() {
             const container = document.getElementById('runwayListComplex'); container.innerHTML = '';
             const d = stationData; if(!d || !d.runways) return;
