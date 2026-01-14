@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V35</title>
+    <title>Notion Pilot EFB V36</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
@@ -11,7 +11,7 @@
             --danger: #ff453a; --warn: #ff9f0a; --success: #32d74b;
             --mvfr: #0a84ff; --lifr: #bf5af2;
             --timeline-bg: #2c2c2e;
-            --strip-bg: #2c2c2e; /* Grey background for runway strip */
+            --strip-bg: #2c2c2e;
         }
         * { box-sizing: border-box; }
         body {
@@ -59,14 +59,13 @@
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- INFO TAB STYLES (UPDATED) --- */
+        /* INFO GRID */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .info-card { background: var(--card-bg); padding: 10px; border-radius: 8px; }
         .ic-lbl { font-size: 11px; color: var(--sub-text); text-transform: uppercase; }
         .ic-val { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
-        .ic-sub { font-size: 11px; color: var(--sub-text); font-weight: 400; }
 
-        /* Runway Section Header with Toggle */
+        /* RUNWAY VISUALIZER */
         .rwy-section-head { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px 0; }
         .unit-toggle { 
             background: var(--card-bg); border: 1px solid var(--border); 
@@ -75,37 +74,27 @@
         .u-opt { padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--sub-text); }
         .u-opt.active { background: #fff; color: #000; }
 
-        /* Complex Runway Visualizer */
         .rwy-complex { margin-bottom: 16px; }
-        
-        /* Row 1: Header (Idents & Dims) */
         .rc-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px; padding: 0 4px; }
         .rc-idents { font-size: 16px; font-weight: 800; font-family: 'SF Mono', monospace; }
         .rc-dims { font-size: 13px; color: #fff; font-weight: 600; }
 
-        /* Row 2: The Strip */
         .rc-strip { 
             height: 44px; background: var(--strip-bg); border-radius: 8px; 
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 6px; overflow: hidden; position: relative;
         }
-        
-        /* Vertical Idents inside strip */
         .rc-id-v { 
             font-size: 12px; font-weight: 700; color: #fff; 
             writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
             padding: 0 4px;
         }
-        
-        /* Middle Data */
         .rc-data { flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 12px; }
         .wind-comp { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: #fff; }
         .wc-arrow { font-size: 14px; }
-        
-        /* Mini Rose Canvas */
         .rc-rose { width: 36px; height: 36px; margin-left: 8px; }
 
-        /* --- METAR/TAF/TOOLS STYLES (Retained) --- */
+        /* Shared / Retained Styles */
         .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
         .metar-card.full-width { grid-column: span 2; }
@@ -275,10 +264,10 @@
         const TOKEN = 'dMzS0-M9_ku1bYySTtsq4pZE8fEEiTUJaNtvqSDEgUs';
         
         // State
-        let currentWind = { dir:0, spd:0 }; // True North
-        let currentMetar = { temp: 15, alt: 29.92 };
+        let currentWind = { dir:0, spd:0 }; 
+        let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' }; // Added unit tracking
         let stationData = null;
-        let useMetric = true; // Default to Meters
+        let useMetric = true; 
         let tafDataCache = null;
 
         function setTab(name) {
@@ -286,8 +275,6 @@
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+name).classList.add('active');
             event.target.classList.add('active');
-            
-            // Redraw roses if switching to info tab (canvas sizing issue fix)
             if(name === 'info' && stationData) renderRunwaysComplex();
         }
 
@@ -298,7 +285,7 @@
             if(stationData) renderRunwaysComplex();
         }
 
-        // Header
+        // Header Logic
         function toggleClearBtn() {
             const val = document.getElementById('icao').value;
             document.getElementById('clearBtn').style.display = val ? 'block' : 'none';
@@ -319,25 +306,33 @@
             updateHeaderCat('Loading', '');
 
             try {
-                // 1. Station (Info + Runways)
+                // 1. Station
                 const resSt = await fetch(`https://avwx.rest/api/station/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
                 if(!resSt.ok) throw new Error();
                 stationData = await resSt.json();
                 
-                // 2. METAR (Weather + Temp/Alt)
+                // 2. METAR
                 const resMe = await fetch(`https://avwx.rest/api/metar/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
                 const metar = await resMe.json();
                 
                 // Update State
                 currentWind = { dir: metar.wind_direction?.value||0, spd: metar.wind_speed?.value||0 };
+                
+                // --- FIX: Detect Altimeter Unit ---
+                let altVal = metar.altimeter?.value || 1013;
+                let altUnit = 'hPa';
+                // Threshold: If alt < 200, it's likely inHg (standard is ~29.92)
+                // If alt > 200, it's likely hPa (standard is ~1013)
+                if(altVal < 200) altUnit = 'inHg';
+
                 currentMetar = { 
                     temp: metar.temperature?.value || 15, 
-                    alt: metar.altimeter?.value || 29.92 
+                    alt: altVal,
+                    altUnit: altUnit
                 };
 
-                // Render All
                 renderMetar(metar);
-                renderInfo(stationData); // Now uses currentMetar state for calcs
+                renderInfo(stationData); 
                 
                 // 3. TAF & NOTAM
                 fetch(`https://avwx.rest/api/taf/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } }).then(r=>r.json()).then(renderTaf).catch(console.error);
@@ -345,25 +340,24 @@
                     document.getElementById('notamList').innerHTML = d.map(n => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${n.raw}</div>`).join('');
                 });
 
-                // Populate Dropdown for Metar Tab
-                const sel = document.getElementById('rwySelect');
-                sel.innerHTML = '';
+                // Dropdown
+                const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
                 (stationData.runways || []).forEach(r => {
                     sel.add(new Option(`RWY ${r.ident1}`, r.ident1));
                     sel.add(new Option(`RWY ${r.ident2}`, r.ident2));
                 });
                 if(stationData.runways.length > 0) sel.value = stationData.runways[0].ident1; 
-                drawWindRose(); // Initial draw metar tab
+                drawWindRose();
 
             } catch(e) { console.error(e); updateHeaderCat('Err', 'cat-ifr'); }
         }
-
-        // --- RENDERERS ---
 
         function updateHeaderCat(status, colorClass) {
             const badge = document.getElementById('headerCat');
             badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
         }
+
+        // --- RENDERERS ---
 
         function renderMetar(d) {
             document.getElementById('rawMetar').innerText = d.raw;
@@ -375,7 +369,20 @@
             document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
             document.getElementById('mVis').innerText = `${d.visibility?.value} sm`;
             const c = d.clouds?.[0]; document.getElementById('mCeil').innerText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
-            const alt = d.altimeter?.value; if(alt) document.getElementById('mAlt').innerText = `A${alt.toFixed(2)}`;
+            
+            // Format Altimeter
+            const alt = d.altimeter?.value; 
+            if(alt) {
+                // If native is hPa, show both. If native is inHg, show both.
+                if(currentMetar.altUnit === 'hPa') {
+                    const inHg = (alt * 0.02953).toFixed(2);
+                    document.getElementById('mAlt').innerText = `Q${alt} / A${inHg}`;
+                } else {
+                    const hPa = Math.round(alt * 33.8639);
+                    document.getElementById('mAlt').innerText = `Q${hPa} / A${alt.toFixed(2)}`;
+                }
+            }
+
             const t = d.temperature?.value, dew = d.dewpoint?.value;
             if(t!=null) {
                 document.getElementById('mTempC').innerText = `${t}°C`;
@@ -387,268 +394,150 @@
         }
 
         function renderInfo(d) {
-            // Header
             document.getElementById('infoName').innerText = d.name;
             document.getElementById('infoLoc').innerText = `${d.city || ''}, ${d.country || ''} (${d.icao})`;
             
-            // 1. Atmosphere Calculations
-            const elev = d.elevation_ft;
-            const alt = currentMetar.alt;
+            // --- FIXED CALCULATION LOGIC ---
+            const elev = d.elevation_ft; // Field Elevation
             const temp = currentMetar.temp;
-
-            // Pressure Alt: (29.92 - alt) * 1000 + elev
-            const pa = Math.round(elev + (29.92 - alt) * 1000);
             
-            // ISA Temp at PA: 15 - (2 * PA/1000)
+            // 1. Normalize Altimeter to hPa (Standard: 1013.25)
+            let currentHpa = currentMetar.alt;
+            if(currentMetar.altUnit === 'inHg') {
+                currentHpa = currentMetar.alt * 33.8639;
+            }
+
+            // 2. Pressure Altitude (PA)
+            // Formula: Elev + (1013.25 - QNH) * 30
+            // Note: 30ft per hPa is the standard lapse rate for pressure.
+            const pa = Math.round(elev + (1013.25 - currentHpa) * 30);
+            
+            // 3. ISA Temperature at PA
+            // Standard at Sea Level: 15°C. Lapse rate: 2°C per 1000ft.
             const isaTemp = 15 - (2 * pa / 1000);
             const isaDev = Math.round(temp - isaTemp);
             
-            // Density Alt: PA + 120 * (OAT - ISA_Temp)
+            // 4. Density Altitude (DA)
+            // Formula: PA + 120 * (OAT - ISA_Temp)
             const da = Math.round(pa + 120 * (temp - isaTemp));
 
             document.getElementById('calcPA').innerText = `${pa} ft`;
             document.getElementById('calcDA').innerText = `${da} ft`;
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
 
-            // 2. Solar & Time
+            // Solar & Offset
             fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
                 .then(r=>r.json()).then(s => {
                     const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
                     document.getElementById('infoSun').innerText = `🌅 ${t(s.results.sunrise)}  🌇 ${t(s.results.sunset)}`;
                 });
-            
-            // Approx Offset (Lon / 15)
             const offset = Math.round(d.longitude / 15);
             document.getElementById('calcOffset').innerText = `UTC ${offset >= 0 ? '+' : ''}${offset}`;
-
-            // Mag Var
-            const mv = d.magnetic_variation; // e.g., -3 (West)
+            const mv = d.magnetic_variation;
             document.getElementById('infoMag').innerText = mv ? `${Math.abs(mv)}° ${mv < 0 ? 'W' : 'E'}` : '0°';
 
-            // 3. Render Complex Runways
             renderRunwaysComplex();
         }
 
         function renderRunwaysComplex() {
-            const container = document.getElementById('runwayListComplex');
-            container.innerHTML = '';
-            const d = stationData;
-            if(!d || !d.runways) return;
-
+            const container = document.getElementById('runwayListComplex'); container.innerHTML = '';
+            const d = stationData; if(!d || !d.runways) return;
             d.runways.forEach((r, idx) => {
-                // Dimensions
-                let dimStr = '';
-                if(useMetric) {
-                    const lenM = Math.round(r.length_ft * 0.3048);
-                    const widM = Math.round(r.width_ft * 0.3048);
-                    dimStr = `${lenM}m x ${widM}m`;
-                } else {
-                    dimStr = `${r.length_ft}' x ${r.width_ft}'`;
-                }
-
-                // Wind Calc for LEFT side (Ident 1)
-                // Need Mag Heading. Ident usually implies Mag.
-                // METAR wind is TRUE. MagVar correction needed.
-                // Variation: West is Negative. Mag = True - Var. 
-                // e.g. True 360, Var -5 (5W). Mag = 360 - (-5) = 005.
-                // e.g. True 360, Var +5 (5E). Mag = 360 - 5 = 355.
+                let dimStr = useMetric ? `${Math.round(r.length_ft * 0.3048)}m x ${Math.round(r.width_ft * 0.3048)}m` : `${r.length_ft}' x ${r.width_ft}'`;
                 
                 const magVar = d.magnetic_variation || 0;
                 const windMagDir = currentWind.dir - magVar;
-                
                 const rwy1Hdg = parseInt(r.ident1.replace(/\D/g,'')) * 10;
-                
-                // Calc components relative to Ident 1
                 const diffRad = (windMagDir - rwy1Hdg) * (Math.PI/180);
-                const hw = Math.round(Math.cos(diffRad) * currentWind.spd); // + is Head, - is Tail
-                const xw = Math.round(Math.sin(diffRad) * currentWind.spd); // + is Left->Right (Wind from Left?)
+                const hw = Math.round(Math.cos(diffRad) * currentWind.spd); 
+                const xw = Math.round(Math.sin(diffRad) * currentWind.spd);
                 
-                // Color Logic
-                // If HW > 0 (Headwind for Ident 1), Ident 1 is Green, Ident 2 is Red.
                 const color1 = hw >= 0 ? 'var(--success)' : 'var(--danger)';
                 const color2 = hw < 0 ? 'var(--success)' : 'var(--danger)';
-
-                // Arrow Logic (Relative to Strip center)
-                // HW Arrow: Up if Headwind, Down if Tailwind
                 const hwArrow = hw >= 0 ? '⬆' : '⬇';
-                // XW Arrow: Wind FROM Left (xw > 0) means arrow points Right? 
-                // Standard: Arrow points in direction wind is blowing TO usually, or FROM? 
-                // Reference image: "7kt <-" means wind from right? 
-                // Let's stick to standard Vector logic: 
-                // Sin(wind-rwy): if positive, wind is from Left of nose. So arrow should point RIGHT (->).
-                // Let's use arrows indicating "Wind From".
-                // If XW > 0 (Wind from Left), Arrow: ⬅ (From Left)
                 const xwArrow = xw >= 0 ? '⬅' : '➡'; 
 
-                // Create HTML
                 const div = document.createElement('div');
                 div.className = 'rwy-complex';
                 div.innerHTML = `
                     <div class="rc-header">
-                        <div class="rc-idents">
-                            <span style="color:${color1}">${r.ident1}</span> / <span style="color:${color2}">${r.ident2}</span>
-                        </div>
+                        <div class="rc-idents"><span style="color:${color1}">${r.ident1}</span> / <span style="color:${color2}">${r.ident2}</span></div>
                         <div class="rc-dims">${dimStr}</div>
                     </div>
                     <div class="rc-strip">
                         <div class="rc-id-v">${r.ident1}</div>
                         <div class="rc-data">
-                            <div class="wind-comp">
-                                <span>${Math.abs(hw)}kt</span><span class="wc-arrow" style="color:${color1}">${hwArrow}</span>
-                            </div>
-                            <div class="wind-comp">
-                                <span>${Math.abs(xw)}kt</span><span class="wc-arrow" style="color:#0a84ff">${xwArrow}</span>
-                            </div>
+                            <div class="wind-comp"><span>${Math.abs(hw)}kt</span><span class="wc-arrow" style="color:${color1}">${hwArrow}</span></div>
+                            <div class="wind-comp"><span>${Math.abs(xw)}kt</span><span class="wc-arrow" style="color:#0a84ff">${xwArrow}</span></div>
                             <canvas id="miniRose_${idx}" class="rc-rose" width="36" height="36"></canvas>
                         </div>
                         <div class="rc-id-v" style="transform:rotate(0deg);">${r.ident2}</div>
-                    </div>
-                `;
+                    </div>`;
                 container.appendChild(div);
-
-                // Draw Mini Rose
-                // We draw relative to Ident 1 (Up).
-                // Wind relative to Rwy 1 = windMagDir - rwy1Hdg.
-                const relWind = windMagDir - rwy1Hdg;
-                drawMiniRose(`miniRose_${idx}`, relWind);
+                drawMiniRose(`miniRose_${idx}`, windMagDir - rwy1Hdg);
             });
         }
 
         function drawMiniRose(id, relDeg) {
-            const canvas = document.getElementById(id);
-            if(!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const w=36, h=36, cx=18, cy=18, r=14;
-            
+            const canvas = document.getElementById(id); if(!canvas) return;
+            const ctx = canvas.getContext('2d'); const w=36, h=36, cx=18, cy=18, r=14;
             ctx.clearRect(0,0,w,h);
-            
-            // Dashed Circle
-            ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI);
-            ctx.strokeStyle = '#8e8e93'; ctx.lineWidth=2; ctx.setLineDash([2,3]); ctx.stroke();
-            ctx.setLineDash([]);
-
-            // Runway Line (Always Vertical)
-            // ctx.beginPath(); ctx.moveTo(cx, cy-r+4); ctx.lineTo(cx, cy+r-4);
-            // ctx.strokeStyle = '#555'; ctx.lineWidth=4; ctx.stroke();
-
-            // Wind Arrow
+            ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.strokeStyle = '#8e8e93'; ctx.lineWidth=2; ctx.setLineDash([2,3]); ctx.stroke(); ctx.setLineDash([]);
             if(currentWind.spd > 0) {
-                // relDeg is wind direction. 0 = Headwind (Top). 
-                // We want arrow pointing TO center FROM wind direction?
-                // Or standard arrow pointing with wind? 
-                // Reference image shows Arrow inside circle pointing to center.
-                // 0 deg (Headwind) = Wind from Top.
-                
-                // Convert to canvas rads. 0 deg (North) is -PI/2 in Canvas.
-                // We want to rotate to `relDeg`. 
-                // If relDeg is 90 (Crosswind from Right), we want arrow at Right pointing left.
-                
                 const rad = (relDeg - 90) * (Math.PI/180); 
-                
-                ctx.save();
-                ctx.translate(cx, cy);
-                ctx.rotate(rad);
-                
-                // Draw Arrow at Edge pointing In
-                ctx.beginPath();
-                ctx.moveTo(r, 0); // Start at right edge (which is rotated to wind source)
-                ctx.lineTo(4, 0); // Line to center
-                ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 2; ctx.stroke();
-                
-                // Arrowhead
-                ctx.beginPath();
-                ctx.moveTo(8, -3); ctx.lineTo(2, 0); ctx.lineTo(8, 3);
-                ctx.fillStyle = '#0a84ff'; ctx.fill();
-
+                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rad);
+                ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(4, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(2, 0); ctx.lineTo(8, 3); ctx.fillStyle = '#0a84ff'; ctx.fill();
                 ctx.restore();
             }
         }
 
-        // --- TAF & WINDS (Retained) ---
+        // TAF & Tools (Same as before)
         function renderTaf(d) {
             document.getElementById('rawTaf').innerText = d.raw;
-            tafDataCache = d.forecast;
-            const bar = document.getElementById('tafBar');
-            const axis = document.getElementById('tafAxis');
-            bar.innerHTML = ''; axis.innerHTML = '';
+            tafDataCache = d.forecast; const bar = document.getElementById('tafBar'); const axis = document.getElementById('tafAxis'); bar.innerHTML = ''; axis.innerHTML = '';
             document.getElementById('tafDetail').classList.add('hidden');
             if(!d.forecast) return;
             d.forecast.forEach((f, index) => {
-                const block = document.createElement('div');
-                block.className = 'taf-block'; block.style.flex = "1";
-                let col = '#555';
-                if(f.flight_rules === 'VFR') col = 'var(--success)';
-                if(f.flight_rules === 'MVFR') col = 'var(--mvfr)';
-                if(f.flight_rules === 'IFR') col = 'var(--danger)';
-                if(f.flight_rules === 'LIFR') col = 'var(--lifr)';
-                block.style.backgroundColor = col; block.innerText = f.type; 
+                const block = document.createElement('div'); block.className = 'taf-block'; block.style.flex = "1";
+                let col = '#555'; if(f.flight_rules==='VFR')col='var(--success)'; if(f.flight_rules==='MVFR')col='var(--mvfr)'; if(f.flight_rules==='IFR')col='var(--danger)';
+                block.style.backgroundColor = col; block.innerText = f.type;
                 block.onclick = () => { document.querySelectorAll('.taf-block').forEach(b => b.classList.remove('selected')); block.classList.add('selected'); showTafDetail(index, col); };
                 bar.appendChild(block);
-                const start = new Date(f.start_time.dt);
-                const lbl = document.createElement('div'); lbl.className = 'taf-axis-lbl'; lbl.style.flex = "1"; lbl.innerText = `${start.getUTCHours()}z`;
-                axis.appendChild(lbl);
+                const start = new Date(f.start_time.dt); const lbl = document.createElement('div'); lbl.className = 'taf-axis-lbl'; lbl.style.flex = "1"; lbl.innerText = `${start.getUTCHours()}z`; axis.appendChild(lbl);
             });
         }
         function showTafDetail(index, color) {
-            const f = tafDataCache[index];
-            const card = document.getElementById('tafDetail');
-            card.style.borderLeftColor = color; card.classList.remove('hidden');
+            const f = tafDataCache[index]; const card = document.getElementById('tafDetail'); card.style.borderLeftColor = color; card.classList.remove('hidden');
             const s = new Date(f.start_time.dt); const e = new Date(f.end_time.dt);
-            const fmt = (date) => `${date.getUTCHours().toString().padStart(2,'0')}:${date.getUTCMinutes().toString().padStart(2,'0')}Z`;
-            document.getElementById('tdTime').innerText = `${fmt(s)} ➔ ${fmt(e)}`; document.getElementById('tdType').innerText = f.type;
-            const wDir = f.wind_direction?.value || 'VRB'; const wSpd = f.wind_speed?.value || 0;
-            document.getElementById('tdWind').innerText = `${wDir}° / ${wSpd}kt`;
+            document.getElementById('tdTime').innerText = `${s.getUTCHours()}:${s.getUTCMinutes()}Z ➔ ${e.getUTCHours()}:${e.getUTCMinutes()}Z`; document.getElementById('tdType').innerText = f.type;
+            const wDir = f.wind_direction?.value || 'VRB'; const wSpd = f.wind_speed?.value || 0; document.getElementById('tdWind').innerText = `${wDir}° / ${wSpd}kt`;
             document.getElementById('tdVis').innerText = f.visibility ? `${f.visibility.value} sm` : 'P6SM';
             document.getElementById('tdWx').innerText = f.wx_codes ? f.wx_codes.map(x => x.repr).join(' ') : 'NSW';
-            let cStr = 'SKC'; if(f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3,'0')}`).join(', ');
-            document.getElementById('tdCloud').innerText = cStr;
+            let cStr = 'SKC'; if(f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3,'0')}`).join(', '); document.getElementById('tdCloud').innerText = cStr;
         }
-        // Simplified Main Tab Rose (Needs same variation logic if we want to be strict, but keeping simple for now)
         function drawWindRose() {
-            const canvas = document.getElementById('windRose');
-            const ctx = canvas.getContext('2d');
-            const w=140, h=140, cx=70, cy=70, r=60;
-            const rwyIdent = document.getElementById('rwySelect').value;
-            ctx.clearRect(0,0,w,h);
+            const canvas = document.getElementById('windRose'); const ctx = canvas.getContext('2d'); const w=140, h=140, cx=70, cy=70, r=60;
+            const rwyIdent = document.getElementById('rwySelect').value; ctx.clearRect(0,0,w,h);
             ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.stroke();
             ctx.fillStyle = '#8e8e93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText('N', cx, cy - r + 10); ctx.fillText('E', cx + r - 10, cy); ctx.fillText('S', cx, cy + r - 10); ctx.fillText('W', cx - r + 10, cy);
-            
-            // Mag Var Correction for Main Rose
-            const mv = stationData?.magnetic_variation || 0;
-            const windMag = currentWind.dir - mv;
-
+            const mv = stationData?.magnetic_variation || 0; const windMag = currentWind.dir - mv;
             if(rwyIdent) {
-                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10;
-                const rwyRad = (rwyHdg - 90) * (Math.PI/180);
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad);
-                ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12);
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12);
-                ctx.restore();
-
-                const diff = (windMag - rwyHdg) * (Math.PI/180);
-                const hw = Math.round(Math.cos(diff) * currentWind.spd);
-                const xw = Math.round(Math.sin(diff) * currentWind.spd);
-                const vHW = document.getElementById('valHW'); vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`;
-                vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
+                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10; const rwyRad = (rwyHdg - 90) * (Math.PI/180);
+                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad); ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12); ctx.restore();
+                const diff = (windMag - rwyHdg) * (Math.PI/180); const hw = Math.round(Math.cos(diff) * currentWind.spd); const xw = Math.round(Math.sin(diff) * currentWind.spd);
+                const vHW = document.getElementById('valHW'); vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
                 const vXW = document.getElementById('valXW'); vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
             }
             if(currentWind.spd > 0) {
-                const windRad = (windMag - 90) * (Math.PI/180);
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
-                ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0);
-                ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5);
-                ctx.fillStyle = '#0a84ff'; ctx.fill();
-                ctx.restore();
+                const windRad = (windMag - 90) * (Math.PI/180); ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
+                ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
             }
         }
-        const WX_CODES={"BR":"Mist","FG":"Fog","TS":"Storm"};
-        function decode(c){ document.getElementById('decodeOut').innerText = WX_CODES[c.toUpperCase()] || "Unknown"; }
-
-        document.getElementById('icao').value = 'RCTP';
-        toggleClearBtn();
-        loadData();
+        const WX_CODES={"BR":"Mist","FG":"Fog","TS":"Storm"}; function decode(c){ document.getElementById('decodeOut').innerText = WX_CODES[c.toUpperCase()] || "Unknown"; }
+        document.getElementById('icao').value = 'RCTP'; toggleClearBtn(); loadData();
     </script>
 </body>
 </html>
