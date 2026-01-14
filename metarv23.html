@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot Widget V22</title>
+    <title>Notion Pilot Widget V23</title>
     <style>
         :root {
             --bg: #ffffff; --text: #37352f; --sub-text: #787774;
@@ -25,32 +25,27 @@
             display: flex; flex-direction: column; gap: 10px;
         }
 
-        /* PRINT MODE */
-        @media print {
-            body { background-color: #fff !important; color: #000 !important; display: block !important; }
-            .top-bar button, .top-bar input, .tabs, .tool-bar, .visual-box, #memoView, #toolsView, #infoView { display: none !important; }
-            #metarView, #tafView { display: block !important; }
-            .hidden { display: block !important; }
-            .cat-badge { border: 1px solid #000; color: #000 !important; }
-            .raw-box { border: 1px solid #ccc; white-space: pre-wrap; font-size: 10pt; }
-            .print-header { display: block !important; font-size: 18pt; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #000; }
-        }
-        .print-header { display: none; }
-
-        /* HEADER & TABS */
+        /* HEADER */
         .top-bar { display: flex; align-items: center; gap: 8px; height: 28px; }
         .search-wrapper { flex-grow: 1; position: relative; }
-        #icao { width: 100%; background: transparent; border: 1px solid var(--border); color: var(--text); padding: 4px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 700; font-size: 13px; appearance: none; -webkit-appearance: none; }
+        #icao {
+            width: 100%; background: transparent; border: 1px solid var(--border);
+            color: var(--text); padding: 4px 6px; border-radius: 4px;
+            text-transform: uppercase; font-weight: 700; font-size: 13px;
+            appearance: none; -webkit-appearance: none;
+        }
         input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: searchfield-cancel-button; cursor: pointer; }
         .cat-badge { padding: 4px 8px; border-radius: 4px; color: white; font-weight: 700; font-size: 11px; min-width: 40px; text-align: center; }
         .zulu-clock { font-family: 'SF Mono', monospace; font-size: 11px; color: var(--text); font-weight: 600; background: var(--code-bg); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border); white-space: nowrap; }
         .print-btn { background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px; }
         .print-btn:hover { background: var(--code-bg); }
+
+        /* TABS */
         .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 4px; overflow-x: auto; }
         .tab { padding: 6px 10px; cursor: pointer; font-size: 11px; font-weight: 600; color: var(--sub-text); border-bottom: 2px solid transparent; white-space: nowrap; }
         .tab.active { color: var(--text); border-bottom-color: var(--text); }
 
-        /* METAR GRID */
+        /* METAR & DATA */
         .status-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--sub-text); margin-bottom: 8px; }
         .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
         .data-item { background: var(--code-bg); padding: 6px; border-radius: 4px; }
@@ -60,7 +55,7 @@
 
         /* ADVANCED DATA BAR */
         .advanced-data { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .adv-label { font-size: 9px; color: var(--sub-text); text-transform: uppercase; }
+        .adv-label { font-size: 9px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 2px; }
         .adv-val { font-size: 11px; font-weight: 600; color: var(--text); font-family: 'SF Mono', monospace; }
         .spread-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
         .spread-bar-fill { height: 100%; width: 100%; transition: width 0.5s ease, background-color 0.5s ease; }
@@ -92,7 +87,6 @@
         .countdown { font-size: 11px; color: var(--accent); font-weight: 700; text-align: center; margin-top: 8px; padding: 4px; background: var(--code-bg); border-radius: 4px; }
         .freq-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         
-        /* MATRIX TABLE */
         .matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .matrix-table th { text-align: left; color: var(--sub-text); font-weight: 700; padding: 4px; border-bottom: 1px solid var(--border); font-size: 9px; }
         .matrix-table td { padding: 4px; border-bottom: 1px solid var(--border); }
@@ -113,6 +107,18 @@
         .tool-btn:hover { background: var(--code-bg); color: var(--text); }
         .hidden { display: none; }
         .offset-badge { display: inline-block; background: var(--code-bg); color: var(--accent); border: 1px solid var(--border); border-radius: 3px; padding: 1px 4px; font-size: 10px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+        
+        /* PRINT MODE OVERRIDES */
+        @media print {
+            body { background-color: #fff !important; color: #000 !important; display: block !important; }
+            .top-bar button, .top-bar input, .tabs, .tool-bar, .visual-box, #memoView, #toolsView, #infoView { display: none !important; }
+            #metarView, #tafView { display: block !important; }
+            .hidden { display: block !important; }
+            .cat-badge { border: 1px solid #000; color: #000 !important; }
+            .raw-box { border: 1px solid #ccc; white-space: pre-wrap; font-size: 10pt; }
+            .print-header { display: block !important; font-size: 18pt; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #000; }
+        }
+        .print-header { display: none; }
     </style>
 </head>
 <body>
@@ -170,14 +176,14 @@
 
         <div class="advanced-data">
             <div>
-                <div class="adv-label">Est. Cloud Base (AGL) / Spread</div>
+                <div class="adv-label">Temp-Dew Spread / Humidity</div>
                 <div class="adv-val" id="estBase">--</div>
                 <div class="spread-bar-bg"><div id="spreadBar" class="spread-bar-fill" style="width:100%; background-color:#2ecc71;"></div></div>
             </div>
             <div style="text-align:right;">
-                <div class="adv-label">Density Altitude / ISA</div>
-                <div class="adv-val" id="densityAlt">--</div>
-                <div class="adv-val" id="isaDev" style="color:var(--accent);">--</div>
+                <div class="adv-label">Est. Freezing Level</div>
+                <div class="adv-val" id="freezingLvl">--</div>
+                <div class="adv-val" id="densityAlt" style="color:var(--sub-text); font-size:10px;">--</div>
             </div>
         </div>
     </div>
@@ -222,6 +228,26 @@
             <div class="mini-input-group"><input type="text" class="mini-input" placeholder="Code (e.g. BR, FU)" id="decodeInput" oninput="decodeCode()"></div>
             <div class="mini-result" id="decodeRes" style="text-align:left; color:var(--text);">Type code above...</div>
         </div>
+        
+        <div class="section-title">Study Tools</div>
+        <div class="tools-grid">
+            <div class="tool-card">
+                <div class="tool-label">ISA Temp Calc</div>
+                <div class="mini-input-group">
+                    <input type="number" class="mini-input" placeholder="Alt (ft)" oninput="calcIsa(this.value)">
+                </div>
+                <div class="mini-result" id="isaRes" style="font-size:11px;">15°C @ SL</div>
+            </div>
+            <div class="tool-card">
+                <div class="tool-label">Pressure Alt</div>
+                <div class="mini-input-group">
+                    <input type="number" class="mini-input" placeholder="QNH" oninput="calcPaManual()">
+                    <input type="number" class="mini-input" placeholder="Elev" id="manElev" oninput="calcPaManual()">
+                </div>
+                <div class="mini-result" id="paRes">--</div>
+            </div>
+        </div>
+
         <div class="section-title">Converters</div>
         <div class="tools-grid">
             <div class="tool-card">
@@ -230,19 +256,11 @@
                 <div class="mini-result" id="fuelRes">0 lbs</div>
             </div>
             <div class="tool-card">
-                <div class="tool-label">Flt Time</div>
-                <div class="mini-input-group"><input type="number" class="mini-input" placeholder="NM" id="eteDist" oninput="calcEte()"><input type="number" class="mini-input" placeholder="Kts" id="eteSpd" value="110" oninput="calcEte()"></div>
-                <div class="mini-result" id="eteRes">-- min</div>
-            </div>
-            <div class="tool-card">
                 <div class="tool-label">Dist (NM/KM)</div>
                 <div class="mini-input-group"><input type="number" class="mini-input" placeholder="NM" oninput="calcDist(this.value, 'nm')"><input type="number" class="mini-input" placeholder="KM" id="distKm" oninput="calcDist(this.value, 'km')"></div>
             </div>
-            <div class="tool-card">
-                <div class="tool-label">Weight (KG/LB)</div>
-                <div class="mini-input-group"><input type="number" class="mini-input" placeholder="KG" oninput="calcWt(this.value, 'kg')"><input type="number" class="mini-input" placeholder="LB" id="wtLb" oninput="calcWt(this.value, 'lb')"></div>
-            </div>
         </div>
+        
         <div class="section-title" style="margin-top:12px;">Personal Minimums</div>
         <div class="tool-card" style="border-left:3px solid var(--accent);">
             <div class="mini-input-group" style="justify-content:space-between;">
@@ -288,11 +306,46 @@
 
         function saveLimits() { localStorage.setItem('pilot_limit_xwind', document.getElementById('limitXwind').value); calculateCrosswind(); updateMatrix(); }
         function clearMemo(){if(confirm("Clear?")){memoArea.value="";localStorage.setItem('pilot_memo',"");}}
-        function calcFuel(v,t){if(t==='gal'){document.getElementById('fuelLbs').value=(v*6).toFixed(1);document.getElementById('fuelRes').innerText=`${(v*6).toFixed(1)} lbs`;}else{document.querySelector('input[placeholder="Gal"]').value=(v/6).toFixed(1);document.getElementById('fuelRes').innerText=`${(v/6).toFixed(1)} gal`;}}
-        function calcEte(){const d=document.getElementById('eteDist').value, s=document.getElementById('eteSpd').value;if(d&&s) document.getElementById('eteRes').innerText=`${Math.round((d/s)*60)} min`;}
-        function calcDist(v,t){if(t==='nm') document.getElementById('distKm').value=(v*1.852).toFixed(1); else document.querySelector('input[placeholder="NM"]').value=(v/1.852).toFixed(1);}
-        function calcWt(v,t){if(t==='kg') document.getElementById('wtLb').value=(v*2.2046).toFixed(1); else document.querySelector('input[placeholder="KG"]').value=(v/2.2046).toFixed(1);}
-        function decodeCode(){const c=document.getElementById('decodeInput').value.toUpperCase();document.getElementById('decodeRes').innerText=WX_CODES[c]||(c.length<2?"Type code...":"Unknown");}
+        
+        // --- TOOLS ---
+        function calcFuel(v,t){
+            if(t==='gal'){ document.getElementById('fuelLbs').value=(v*6).toFixed(1); document.getElementById('fuelRes').innerText=`${(v*6).toFixed(1)} lbs`;}
+            else{ document.querySelector('input[placeholder="Gal"]').value=(v/6).toFixed(1); document.getElementById('fuelRes').innerText=`${(v/6).toFixed(1)} gal`;}
+        }
+        function calcDist(v,t){
+            if(t==='nm') document.getElementById('distKm').value=(v*1.852).toFixed(1);
+            else document.querySelector('input[placeholder="NM"]').value=(v/1.852).toFixed(1);
+        }
+        function calcWt(v,t){
+            if(t==='kg') document.getElementById('wtLb').value=(v*2.2046).toFixed(1);
+            else document.querySelector('input[placeholder="KG"]').value=(v/2.2046).toFixed(1);
+        }
+        function decodeCode(){
+            const c=document.getElementById('decodeInput').value.toUpperCase();
+            document.getElementById('decodeRes').innerText=WX_CODES[c]||(c.length<2?"Type code...":"Unknown");
+        }
+        
+        // --- STUDY TOOLS ---
+        function calcIsa(alt) {
+            // Standard Temp = 15 - 2 degrees per 1000ft
+            const stdTemp = 15 - (2 * (alt/1000));
+            document.getElementById('isaRes').innerText = `Std Temp: ${stdTemp.toFixed(1)}°C`;
+        }
+        function calcPaManual() {
+            const qnh = document.querySelector('input[placeholder="QNH"]').value;
+            const elev = document.getElementById('manElev').value;
+            if(qnh && elev) {
+                // If QNH > 50 it's prob hPa, else inHg
+                let delta = 0;
+                if(qnh > 50) { // hPa (Standard 1013.25) ~ 30ft per hPa
+                    delta = (1013.25 - qnh) * 30;
+                } else { // inHg (Standard 29.92) ~ 1000ft per inHg
+                    delta = (29.92 - qnh) * 1000;
+                }
+                const pa = Math.round(parseInt(elev) + delta);
+                document.getElementById('paRes').innerText = `${pa} ft`;
+            }
+        }
 
         async function loadData() {
             const input = document.getElementById('icao').value.toUpperCase();
@@ -353,15 +406,10 @@
             if (db) {
                 currentElev=db.elev; nameEl.innerText=db.name; elevEl.innerText=`Elevation: ${db.elev} ft`;
                 fetchSunData(db.lat, db.lon);
-                
-                // Store Runways globally for matrix
                 currentRunways = db.runways || [];
 
                 if(db.runways) {
-                    db.runways.forEach(r => {
-                        const opt=document.createElement('option'); opt.value=r.id; dl.appendChild(opt);
-                    });
-                    // Matrix populated later after wind data
+                    db.runways.forEach(r => { const opt=document.createElement('option'); opt.value=r.id; dl.appendChild(opt); });
                 }
                 if(db.freqs) {
                     for(const [t,f] of Object.entries(db.freqs)) freqGrid.innerHTML+=`<div style="background:var(--code-bg); padding:6px; border-radius:4px; text-align:center;"><div style="font-size:9px; color:var(--sub-text);">${t}</div><div style="font-size:12px; font-weight:600; color:var(--accent);">${f}</div></div>`;
@@ -413,8 +461,7 @@
                 arrow.style.transform=`rotate(${dir}deg)`; 
             } else { document.getElementById('windText').innerText='VRB/Calm'; arrow.style.display = 'none'; }
             
-            calculateCrosswind(); 
-            updateMatrix(); // Calc matrix with new wind
+            calculateCrosswind(); updateMatrix(); 
 
             const alt=data.altimeter?.value; 
             if(alt) {
@@ -424,25 +471,34 @@
             }
 
             const tempC=data.temperature?.value, d=data.dewpoint?.value;
-            const daEl=document.getElementById('densityAlt');
-            const isaEl=document.getElementById('isaDev');
             
+            // FREEZING LEVEL CALC (2 deg per 1000)
+            const fzLvlEl = document.getElementById('freezingLvl');
+            if(tempC != null) {
+                // Formula: Temp / 2 * 1000
+                const fzLvl = Math.round((tempC / 2) * 1000);
+                fzLvlEl.innerText = `${fzLvl.toLocaleString()} ft`;
+            }
+
+            // DENSITY ALT
+            const daEl=document.getElementById('densityAlt');
             if(tempC!=null && alt!=null && currentElev!=0) {
                 const altInHg=(alt<32)?alt:(alt/33.8639);
                 const pa=Math.round(currentElev+(29.92-altInHg)*1000);
                 const isaTemp=15-(2*(pa/1000));
                 const da=Math.round(pa+(120*(tempC-isaTemp)));
-                const dev = Math.round(tempC - isaTemp);
-                daEl.innerText=`${da.toLocaleString()} ft`;
-                isaEl.innerText=`ISA ${dev>=0?'+':''}${dev}°C`;
-            } else { daEl.innerText="--"; isaEl.innerText="--"; }
+                daEl.innerText=`DA ${da.toLocaleString()} ft`;
+            } else { daEl.innerText="DA --"; }
 
+            // SPREAD / HUMIDITY
             const baseEl=document.getElementById('estBase');
             const bar=document.getElementById('spreadBar');
             if(tempC!=null && d!=null) {
                 const spread=(tempC-d);
-                const base=Math.round((spread/2.5)*1000);
-                baseEl.innerText=`~${base.toLocaleString()}ft / Spread: ${spread.toFixed(1)}°`;
+                // Approx RH: 100 - (5 * spread)
+                const rh = Math.max(100 - (5 * spread), 0);
+                baseEl.innerText=`Spread ${spread.toFixed(1)}° / RH ${Math.round(rh)}%`;
+                
                 const pct = Math.min(Math.max(spread * 10, 0), 100);
                 bar.style.width = pct + "%";
                 bar.style.backgroundColor = (spread <= 2) ? "#e74c3c" : (spread <= 4) ? "#f1c40f" : "#2ecc71";
@@ -455,65 +511,28 @@
             drawVisualRunway();
         }
 
-        // --- NEW MATRIX LOGIC ---
         function updateMatrix() {
             const table = document.getElementById('matrixTable');
             table.innerHTML = `<tr><th>RWY</th><th>LEN</th><th>HW</th><th>XW</th></tr>`;
-            
-            if(!currentRunways.length || windData.dir == null) {
-                table.innerHTML += `<tr><td colspan="4" style="text-align:center; color:#999;">No Data</td></tr>`;
-                return;
-            }
-
+            if(!currentRunways.length || windData.dir == null) { table.innerHTML += `<tr><td colspan="4" style="text-align:center; color:#999;">No Data</td></tr>`; return; }
             const limit = localStorage.getItem('pilot_limit_xwind') || 10;
 
             currentRunways.forEach(r => {
-                // Parse Heading from ID (e.g., 05L -> 050)
                 const rwyNum = parseInt(r.id.replace(/\D/g, '')); 
                 if(isNaN(rwyNum)) return;
                 const hdg = rwyNum * 10;
-
-                // Calc
-                const rads = (windData.dir - hdg + 180 + 360) % 360 - 180 * (Math.PI / 180);
-                const radsVal = rads * (Math.PI / 180); // To Radians
-                
-                // Actual Math (using standard wind components)
-                // Angle between wind and runway
-                let angle = Math.abs(windData.dir - hdg);
-                if(angle > 180) angle = 360 - angle;
-                const angleRad = angle * (Math.PI/180);
-
-                const hw = Math.round(Math.cos(angleRad) * windData.speed);
-                const xw = Math.round(Math.sin(angleRad) * windData.speed);
-
-                // Check Tailwind
-                // If angle > 90, it's a tailwind. Cos is negative.
-                // My logic above forces positive angle diff, so cos is positive.
-                // Let's use simple logic:
-                // Diff:
                 let diff = windData.dir - hdg;
-                // Normalize to -180 to +180
                 while (diff <= -180) diff += 360;
                 while (diff > 180) diff -= 360;
                 
                 const realHw = Math.round(Math.cos(diff * (Math.PI/180)) * windData.speed);
                 const realXw = Math.round(Math.abs(Math.sin(diff * (Math.PI/180)) * windData.speed));
-
-                const hwClass = (realHw < 0) ? 'val-bad' : 'val-good'; // Red for tailwind
-                const xwClass = (realXw > limit) ? 'val-bad' : 'val-good'; // Red for limit
-
-                // Format Length
+                const hwClass = (realHw < 0) ? 'val-bad' : 'val-good';
+                const xwClass = (realXw > limit) ? 'val-bad' : 'val-good';
                 const ft = parseInt(r.len);
                 const lenText = isNaN(ft) ? r.len : `${Math.round(ft/1000)}k'`;
 
-                table.innerHTML += `
-                    <tr>
-                        <td><span class="matrix-rwy">${r.id}</span></td>
-                        <td style="font-size:10px;">${lenText}</td>
-                        <td class="${hwClass}">${realHw}</td>
-                        <td class="${xwClass}">${realXw}</td>
-                    </tr>
-                `;
+                table.innerHTML += `<tr><td><span class="matrix-rwy">${r.id}</span></td><td style="font-size:10px;">${lenText}</td><td class="${hwClass}">${realHw}</td><td class="${xwClass}">${realXw}</td></tr>`;
             });
         }
 
@@ -521,21 +540,16 @@
             const rwyStr=document.getElementById('rwyInput').value;
             const out=document.getElementById('xwindOutput');
             const rwyNum=parseInt(rwyStr);
-            if(!rwyNum||!windData.dir) { 
-                out.innerHTML='<span style="color:var(--sub-text)">Select Runway</span>'; 
-                drawVisualRunway(null); return; 
-            }
+            if(!rwyNum||!windData.dir) { out.innerHTML='<span style="color:var(--sub-text)">Select Runway</span>'; drawVisualRunway(null); return; }
             const rwyHeading=rwyNum*10;
             const rads=(windData.dir-rwyHeading+180+360)%360-180 * (Math.PI/180);
             const headwind=Math.round(Math.cos(rads)*windData.speed);
             const crosswind=Math.round(Math.abs(Math.sin(rads)*windData.speed));
             const hwLabel=headwind>=0?"Headwind":"TAILWIND";
             const hwColor=headwind>=0?"var(--text)":"var(--ifr)";
-            
             const limit = localStorage.getItem('pilot_limit_xwind') || 10;
             let xwText = `Crosswind: ${crosswind}kt`;
             if(crosswind > limit) xwText = `<span class="limit-alert">⚠️ LIMIT (${limit}kt) EXCEEDED</span>`;
-
             out.innerHTML=`<div style="color:${hwColor}; font-weight:600;">${hwLabel}: ${Math.abs(headwind)}kt</div><div>${xwText}</div>`;
             drawVisualRunway(rwyHeading);
         }
@@ -545,7 +559,6 @@
             const ctx = canvas.getContext('2d');
             const w = canvas.width, h = canvas.height, cx = w/2, cy = h/2;
             ctx.clearRect(0, 0, w, h);
-
             ctx.beginPath(); ctx.arc(cx, cy, 25, 0, 2*Math.PI);
             ctx.strokeStyle = '#e9e9e8'; ctx.lineWidth = 1; ctx.stroke();
             ctx.fillStyle = '#e9e9e8'; ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('N', cx, cy - 28);
@@ -569,10 +582,7 @@
 
         function copyText() { navigator.clipboard.writeText(currentRawText); }
         function switchTab(t) {
-            ['metar','taf','notam','info','tools','memo'].forEach(v => {
-                const el = document.getElementById(v+'View');
-                if(el) el.classList.add('hidden');
-            });
+            ['metar','taf','info','tools','memo'].forEach(v => { const el = document.getElementById(v+'View'); if(el) el.classList.add('hidden'); });
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
             if(t==='metar') { document.getElementById('metarView').classList.remove('hidden'); document.querySelectorAll('.tab')[0].classList.add('active'); }
             else if(t==='taf' || t==='notam') { document.getElementById('tafView').classList.remove('hidden'); document.querySelectorAll('.tab')[1].classList.add('active'); }
