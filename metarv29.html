@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Pilot EFB V29</title>
+    <style>
+        :root {
+            --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
+            --border: #38383a; --accent: #0a84ff; --danger: #ff453a; --warn: #ff9f0a; 
+            --success: #32d74b; --timeline-bg: #2c2c2e;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+            background-color: var(--bg); color: var(--text);
+            margin: 0; padding: 12px; font-size: 14px; line-height: 1.4;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+
+        /* HEADER */
+        .top-bar { display: flex; align-items: center; gap: 8px; }
+        .search-box {
+            flex-grow: 1; background: var(--card-bg); border-radius: 8px; padding: 0 8px;
+            display: flex; align-items: center; border: 1px solid var(--border);
+        }
+        #icao {
+            width: 100%; background: transparent; border: none; color: #fff; padding: 8px 4px;
+            text-transform: uppercase; font-weight: 700; font-size: 16px; outline: none;
+        }
+        .icon-btn { 
+            background: var(--card-bg); border: 1px solid var(--border); color: var(--accent); 
+            width: 36px; height: 36px; border-radius: 8px; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 18px;
+        }
+
+        /* TABS */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); gap: 20px; padding: 0 4px; }
+        .tab {
+            padding: 10px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--sub-text);
+            border-bottom: 2px solid transparent; text-transform: uppercase;
+        }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* CONTENT CONTAINERS */
+        .view-section { display: none; animation: fadeIn 0.2s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* INFO TAB STYLES (Like Image 3) */
+        .info-header { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .info-label { color: var(--sub-text); }
+        .info-val { font-weight: 500; text-align: right; }
+        
+        /* RUNWAY CARDS (Like Image 2) */
+        .rwy-card { background: var(--card-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .rwy-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 15px; }
+        .rwy-dim { color: var(--sub-text); font-size: 12px; font-weight: 400; }
+        .wind-bar {
+            background: #3a3a3c; border-radius: 6px; padding: 6px 10px;
+            display: flex; justify-content: space-between; align-items: center; margin-top: 4px;
+        }
+        .wind-arrow { display: inline-block; font-size: 12px; margin-left: 2px; }
+        .rwy-id-small { font-family: 'SF Mono', monospace; color: #fff; font-weight: 700; transform: rotate(-90deg); display: inline-block; width: 12px;}
+
+        /* TAF VISUALS (Like Image 4/5) */
+        .taf-header { display: flex; justify-content: space-between; color: var(--sub-text); font-size: 12px; margin-bottom: 8px; }
+        .timeline-scroll { overflow-x: auto; padding-bottom: 10px; }
+        .timeline-track { display: flex; height: 30px; background: var(--timeline-bg); border-radius: 6px; overflow: hidden; position: relative; min-width: 100%; }
+        .timeline-block { 
+            height: 100%; display: flex; align-items: center; justify-content: center; 
+            font-size: 10px; font-weight: 700; color: #000; border-right: 1px solid rgba(0,0,0,0.2);
+        }
+        .time-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--sub-text); margin-top: 4px; font-family: 'SF Mono', monospace; }
+        
+        .raw-text { 
+            font-family: 'SF Mono', monospace; font-size: 12px; color: #d0d0d0; 
+            margin-top: 12px; line-height: 1.5; white-space: pre-wrap;
+        }
+
+        /* METAR BADGES */
+        .cat-badge { 
+            background: #333; color: #fff; padding: 4px 8px; border-radius: 6px; 
+            font-weight: 700; font-size: 12px; 
+        }
+
+        /* UTILS */
+        .hidden { display: none !important; }
+        .good { color: var(--success); } .bad { color: var(--danger); }
+        .warn { color: var(--warn); }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="icao" value="RCTP" onkeydown="if(event.key==='Enter') loadData()">
+        </div>
+        <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
+        <a id="linkLiveATC" href="#" target="_blank" class="icon-btn" title="LiveATC">📡</a>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="setTab('metar')">METAR</div>
+        <div class="tab" onclick="setTab('taf')">TAF</div>
+        <div class="tab" onclick="setTab('info')">INFO</div>
+        <div class="tab" onclick="setTab('tools')">TOOLS</div>
+    </div>
+
+    <div id="tab-metar" class="view-section active">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2 id="metarStation" style="margin:0; font-size:20px;">----</h2>
+            <div id="flightCat" class="cat-badge">--</div>
+        </div>
+        
+        <div class="info-row" style="padding-top:0;">
+            <span class="info-label">Wind</span>
+            <span class="info-val" id="metarWind">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Visibility</span>
+            <span class="info-val" id="metarVis">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Clouds</span>
+            <span class="info-val" id="metarCloud">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Temp / Dew</span>
+            <span class="info-val" id="metarTemp">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Altimeter</span>
+            <span class="info-val" id="metarAlt">--</span>
+        </div>
+        
+        <div style="margin-top:10px; font-size:11px; color:var(--sub-text);">
+            <span id="metarAge">--</span> • <span id="metarSpread">Spread: --</span>
+        </div>
+
+        <div class="raw-text" id="rawMetar">Loading...</div>
+    </div>
+
+    <div id="tab-taf" class="view-section">
+        <div class="taf-header">
+            <span>Forecast Timeline</span>
+            <span id="tafIssued">--</span>
+        </div>
+        
+        <div class="timeline-scroll">
+            <div id="tafTimeline" class="timeline-track"></div>
+            <div id="tafTimeScale" class="time-scale"></div>
+        </div>
+
+        <div class="raw-text" id="rawTaf">Loading...</div>
+        
+        <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
+        <div id="notamList" class="raw-text" style="max-height:200px; overflow-y:auto; font-size:11px;">Loading...</div>
+    </div>
+
+    <div id="tab-info" class="view-section">
+        <div class="info-header" id="infoName">Unknown</div>
+        
+        <div class="info-row">
+            <span class="info-label">ICAO / IATA</span>
+            <span class="info-val" id="infoCodes">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Coordinates</span>
+            <span class="info-val" id="infoCoords">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Elevation</span>
+            <span class="info-val" id="infoElev">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Pressure Alt (Live)</span>
+            <span class="info-val" id="infoPA">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Density Alt (Live)</span>
+            <span class="info-val" id="infoDA">--</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Sunrise / Sunset</span>
+            <span class="info-val" id="infoSun">--</span>
+        </div>
+
+        <div style="margin: 20px 0 10px 0; font-weight:700; color:var(--sub-text);">RUNWAYS</div>
+        <div id="runwayList"></div>
+    </div>
+
+    <div id="tab-tools" class="view-section">
+        <div style="margin-bottom:10px;">
+            <div class="info-label">METAR Decoder</div>
+            <input type="text" placeholder="Code (e.g. SN, BR)" style="width:100%; background:#2c2c2e; border:none; padding:8px; color:white; border-radius:6px; margin-top:4px;" oninput="decode(this.value)">
+            <div id="decodeOut" style="color:var(--accent); margin-top:4px; font-weight:600;">...</div>
+        </div>
+        <hr style="border:0; border-top:1px solid var(--border);">
+        <div style="margin-bottom:10px;">
+            <div class="info-label">Fuel Calc (Gal ➔ Lbs)</div>
+            <input type="number" placeholder="Gallons" style="width:100%; background:#2c2c2e; border:none; padding:8px; color:white; border-radius:6px; margin-top:4px;" oninput="document.getElementById('fuelOut').innerText=(this.value*6).toFixed(1)+' lbs'">
+            <div id="fuelOut" style="color:var(--accent); margin-top:4px; font-weight:600;">0 lbs</div>
+        </div>
+    </div>
+
+    <script>
+        const TOKEN = 'dMzS0-M9_ku1bYySTtsq4pZE8fEEiTUJaNtvqSDEgUs';
+        let currentWind = { dir:0, spd:0 };
+        let currentElev = 0;
+
+        function setTab(name) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-'+name).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function loadData() {
+            const icao = document.getElementById('icao').value.toUpperCase();
+            if(!icao) return;
+
+            // Update Links
+            document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
+            document.getElementById('linkLiveATC').href = `https://www.liveatc.net/search/?designator=${icao}`;
+
+            // 1. Station Info & Runways
+            try {
+                const res = await fetch(`https://avwx.rest/api/station/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                const station = await res.json();
+                renderInfo(station);
+            } catch(e) { console.error("Info Error", e); }
+
+            // 2. METAR
+            try {
+                const res = await fetch(`https://avwx.rest/api/metar/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                const metar = await res.json();
+                renderMetar(metar);
+            } catch(e) { console.error("Metar Error", e); }
+
+            // 3. TAF
+            try {
+                const res = await fetch(`https://avwx.rest/api/taf/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                const taf = await res.json();
+                renderTaf(taf);
+            } catch(e) { console.error("TAF Error", e); }
+
+            // 4. NOTAMs
+            fetch(`https://avwx.rest/api/notam/${icao}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } })
+                .then(r=>r.json()).then(d => {
+                    const list = document.getElementById('notamList');
+                    list.innerHTML = d.map(n => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${n.raw}</div>`).join('');
+                });
+        }
+
+        function renderInfo(d) {
+            document.getElementById('infoName').innerText = d.name;
+            document.getElementById('infoCodes').innerText = `${d.icao} / ${d.iata || '--'}`;
+            document.getElementById('infoCoords').innerText = `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}`;
+            document.getElementById('infoElev').innerText = `${Math.round(d.elevation_ft)} ft / ${Math.round(d.elevation_m)} m`;
+            currentElev = d.elevation_ft;
+
+            // Solar (Basic Calc or Placeholder if API fails)
+            // Ideally call sunrise-sunset.org here
+            fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
+                .then(r=>r.json()).then(s => {
+                    const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+                    document.getElementById('infoSun').innerText = `🌅 ${t(s.results.sunrise)}  🌇 ${t(s.results.sunset)}`;
+                });
+
+            // Runways
+            const container = document.getElementById('runwayList');
+            container.innerHTML = '';
+            
+            // Group Reciprocals (e.g., 05 and 23)
+            // Simple logic: iterate and match ident
+            if(d.runways) {
+                d.runways.forEach(r => {
+                    const w1 = calcWind(r.ident1);
+                    const w2 = calcWind(r.ident2);
+                    
+                    const dimFt = `${r.length_ft}' x ${r.width_ft}'`;
+                    const dimM = `${Math.round(r.length_ft*0.3048)}m x ${Math.round(r.width_ft*0.3048)}m`;
+
+                    const card = `
+                    <div class="rwy-card">
+                        <div class="rwy-head">
+                            <span style="color:var(--success)">${r.ident1}</span> / <span style="color:var(--danger)">${r.ident2}</span>
+                            <span class="rwy-dim">${dimM} (${dimFt})</span>
+                        </div>
+                        <div class="wind-bar">
+                            <span style="color:#fff; font-weight:700;">${r.ident1}</span>
+                            <span style="color:${w1.color}">${w1.hArrow} ${w1.hVal}kt ${w1.xArrow}</span>
+                        </div>
+                        <div class="wind-bar">
+                            <span style="color:#fff; font-weight:700;">${r.ident2}</span>
+                            <span style="color:${w2.color}">${w2.hArrow} ${w2.hVal}kt ${w2.xArrow}</span>
+                        </div>
+                    </div>`;
+                    container.innerHTML += card;
+                });
+            }
+        }
+
+        function calcWind(ident) {
+            if(!ident) return { hVal:0, hArrow:'', xArrow:'', color:'#fff' };
+            const rwyHdg = parseInt(ident.replace(/\D/g,'')) * 10;
+            const diff = (currentWind.dir - rwyHdg) * (Math.PI/180);
+            const hw = Math.round(Math.cos(diff) * currentWind.spd);
+            const xw = Math.round(Math.sin(diff) * currentWind.spd);
+            
+            return {
+                hVal: Math.abs(hw),
+                hArrow: hw >= 0 ? '⬇' : '⬆', // Headwind vs Tailwind arrows
+                xArrow: xw >= 0 ? '⬅' : '➡',
+                color: hw < 0 ? 'var(--danger)' : 'var(--success)'
+            };
+        }
+
+        function renderMetar(d) {
+            document.getElementById('rawMetar').innerText = d.raw;
+            document.getElementById('metarStation').innerText = d.station;
+            
+            // Badge
+            const cat = document.getElementById('flightCat');
+            cat.innerText = d.flight_rules;
+            cat.style.backgroundColor = `var(--${d.flight_rules.toLowerCase()})`;
+
+            // Data
+            currentWind = { dir: d.wind_direction?.value||0, spd: d.wind_speed?.value||0 };
+            document.getElementById('metarWind').innerText = `${currentWind.dir}° at ${currentWind.spd} kt`;
+            document.getElementById('metarVis').innerText = `${d.visibility?.value} sm`;
+            document.getElementById('metarCloud').innerText = d.clouds?.[0]?.repr || "CLR";
+            
+            const t = d.temperature?.value;
+            const dew = d.dewpoint?.value;
+            const alt = d.altimeter?.value;
+
+            if(t!=null) {
+                const tf = Math.round(t * 9/5 + 32);
+                document.getElementById('metarTemp').innerText = `${t}°C (${tf}°F) / ${dew}°C`;
+                document.getElementById('metarSpread').innerText = `Spread: ${(t-dew).toFixed(1)}°C`;
+            }
+            if(alt!=null) {
+                const hpa = Math.round(alt * 33.8639);
+                document.getElementById('metarAlt').innerText = `Q${hpa} / A${alt.toFixed(2)}`;
+                
+                // Calc DA
+                const da = Math.round((currentElev + (29.92-alt)*1000) + (120*(t-15)));
+                const pa = Math.round(currentElev + (29.92-alt)*1000);
+                document.getElementById('infoDA').innerText = `${da} ft`;
+                document.getElementById('infoPA').innerText = `${pa} ft`;
+            }
+            
+            // Update age
+            const minAgo = Math.floor((new Date() - new Date(d.time.dt)) / 60000);
+            document.getElementById('metarAge').innerText = `Reported ${minAgo}m ago`;
+        }
+
+        function renderTaf(d) {
+            document.getElementById('rawTaf').innerText = d.raw;
+            const timeline = document.getElementById('tafTimeline');
+            const scales = document.getElementById('tafTimeScale');
+            timeline.innerHTML = ''; scales.innerHTML = '';
+
+            if(d.forecast) {
+                // Simple proportional blocks
+                const total = d.forecast.length;
+                d.forecast.forEach(f => {
+                    const start = new Date(f.start_time.dt);
+                    const h = start.getUTCHours();
+                    
+                    const block = document.createElement('div');
+                    block.className = 'timeline-block';
+                    block.style.flex = "1"; // Equal width for now, simplified
+                    
+                    // Colors
+                    let col = '#555';
+                    if(f.flight_rules === 'VFR') col = 'var(--success)';
+                    if(f.flight_rules === 'MVFR') col = 'var(--accent)';
+                    if(f.flight_rules === 'IFR') col = 'var(--warn)';
+                    if(f.flight_rules === 'LIFR') col = 'var(--danger)';
+                    block.style.backgroundColor = col;
+                    
+                    block.innerHTML = `<span>${f.type}</span>`;
+                    timeline.appendChild(block);
+
+                    // Time label
+                    const lbl = document.createElement('span');
+                    lbl.innerText = h.toString().padStart(2,'0');
+                    scales.appendChild(lbl);
+                });
+            }
+        }
+
+        // --- Helper ---
+        const WX_CODES={"BR":"Mist","FG":"Fog","FU":"Smoke","HZ":"Haze","DZ":"Drizzle","RA":"Rain","SN":"Snow","TS":"Thunderstorm"};
+        function decode(c){ document.getElementById('decodeOut').innerText = WX_CODES[c.toUpperCase()] || "Unknown"; }
+
+        // Start
+        loadData();
+    </script>
+</body>
+</html>
