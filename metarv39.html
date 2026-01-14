@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V41</title>
+    <title>Notion Pilot EFB V42</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
@@ -103,7 +103,7 @@
         .stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; }
         select.stealth-select { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; font-weight: 600; outline: none; }
 
-        /* TAF & TOOLS Styles */
+        /* TAF STYLES */
         .taf-viz-container { margin-top: 10px; }
         .taf-bar { display: flex; height: 32px; width: 100%; background: #2c2c2e; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
         .taf-axis { display: flex; width: 100%; margin-top: 4px; margin-bottom: 12px; }
@@ -119,21 +119,24 @@
         .td-item { display: flex; flex-direction: column; }
         .td-lbl { font-size: 11px; color: var(--sub-text); margin-bottom: 2px; }
         .td-val { font-size: 14px; font-weight: 600; color: #fff; }
+        
         .atc-btn { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 16px; border-radius: 10px; text-decoration: none; color: #fff; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: background 0.2s; margin-bottom: 10px; }
         .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
-        .tool-btn { background: #333; border: 1px solid var(--border); color: #fff; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; margin-top: 4px; font-weight: 600; }
-        .tool-btn:hover { background: #444; }
-        .code-list { background: #222; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 12px; max-height: 200px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .code-item { color: #aaa; } .code-item b { color: var(--accent); }
-        .timer-display { font-family: 'SF Mono', monospace; font-size: 32px; font-weight: 700; text-align: center; margin: 10px 0; letter-spacing: 2px; }
-        .timer-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .t-btn { padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; color: #fff; }
-        .tb-start { background: var(--success); color: #000; } .tb-stop { background: var(--danger); } .tb-lap { background: var(--accent); }
-        .lap-list { max-height: 100px; overflow-y: auto; margin-top: 10px; border-top: 1px solid var(--border); }
-        .lap-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; font-size: 12px; color: var(--sub-text); font-family: 'SF Mono', monospace; }
-        .conv-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-        .conv-inp { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; }
-        .conv-lbl { font-size: 10px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 2px; }
+
+        /* WORLD CLOCK STYLES (NEW) */
+        .world-grid {
+            display: grid; grid-template-columns: 1fr; gap: 8px;
+        }
+        .clock-card {
+            background: var(--card-bg); border-radius: 8px; padding: 12px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #2c2c2e;
+        }
+        .clock-left { display: flex; flex-direction: column; }
+        .clock-city { font-weight: 700; font-size: 15px; color: #fff; }
+        .clock-meta { font-size: 11px; color: var(--sub-text); margin-top: 2px; }
+        .clock-time { font-family: 'SF Mono', monospace; font-size: 20px; font-weight: 600; color: var(--accent); letter-spacing: 0.5px; }
+        .clock-utc { color: var(--success); } /* Special color for UTC */
     </style>
 </head>
 <body>
@@ -159,7 +162,7 @@
         <div class="tab" onclick="setTab('taf')">TAF</div>
         <div class="tab" onclick="setTab('info')">INFO</div>
         <div class="tab" onclick="setTab('atc')">ATC</div>
-        <div class="tab" onclick="setTab('tools')">TOOLS</div>
+        <div class="tab" onclick="setTab('world')">WORLD</div>
     </div>
 
     <div id="tab-metar" class="view-section active">
@@ -257,57 +260,22 @@
         </div>
     </div>
 
-    <div id="tab-tools" class="view-section">
-        <div class="section-title" style="margin-top:0;">METAR/TAF Helper</div>
-        <input type="text" placeholder="Decode (e.g. +TSRA, BCFG)" class="conv-inp" oninput="decode(this.value)">
-        <div id="decodeOut" style="color:var(--accent); margin:4px 0 8px 0; font-weight:600; font-size:14px; min-height:18px;">...</div>
-        <button class="tool-btn" onclick="document.getElementById('codeList').classList.toggle('hidden')">Show Reference Codes</button>
-        <div id="codeList" class="code-list hidden"></div>
-
-        <div class="section-title">Flight Timer</div>
-        <div class="info-card">
-            <div id="timerDisplay" class="timer-display">00:00:00</div>
-            <div class="timer-controls">
-                <button class="t-btn tb-start" onclick="startTimer()">Start</button>
-                <button class="t-btn tb-lap" onclick="lapTimer()">Lap</button>
-                <button class="t-btn tb-stop" onclick="stopTimer()">Stop</button>
+    <div id="tab-world" class="view-section">
+        <div class="world-grid" id="worldContainer">
             </div>
-            <div id="lapList" class="lap-list"></div>
-        </div>
-
-        <div class="section-title">ISA Calculator</div>
-        <div class="info-card">
-            <div style="display:flex; gap:8px;">
-                <div style="flex:1;"><div class="conv-lbl">Altitude (ft)</div><input type="number" id="isaInput" class="conv-inp" oninput="calcIsaTool()" placeholder="e.g. 5000"></div>
-                <div style="flex:1;"><div class="conv-lbl">Std Temp</div><div id="isaTempOut" class="ic-val">--</div></div>
-                <div style="flex:1;"><div class="conv-lbl">Std Press</div><div id="isaPressOut" class="ic-val" style="font-size:13px;">--</div></div>
-            </div>
-        </div>
-
-        <div class="section-title">Quick Convert</div>
-        <div class="info-card">
-            <div class="conv-row">
-                <div style="flex:1"><div class="conv-lbl">Knots</div><input type="number" id="cKts" class="conv-inp" oninput="convSpeed('kts')"></div>
-                <div style="flex:1"><div class="conv-lbl">MPH</div><input type="number" id="cMph" class="conv-inp" oninput="convSpeed('mph')"></div>
-                <div style="flex:1"><div class="conv-lbl">KPH</div><input type="number" id="cKph" class="conv-inp" oninput="convSpeed('kph')"></div>
-            </div>
-            <div class="conv-row">
-                <div style="flex:1"><div class="conv-lbl">inHg</div><input type="number" id="cInhg" class="conv-inp" oninput="convPress('inhg')"></div>
-                <div style="flex:1"><div class="conv-lbl">hPa</div><input type="number" id="cHpa" class="conv-inp" oninput="convPress('hpa')"></div>
-            </div>
-        </div>
     </div>
 
     <script>
         const TOKEN = 'dMzS0-M9_ku1bYySTtsq4pZE8fEEiTUJaNtvqSDEgUs';
         
+        // --- GLOBALS ---
         let currentWind = { dir:0, spd:0 }; 
         let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
         let stationData = null;
         let useMetric = true; 
         let tafDataCache = null;
-        let timerInterval = null, startTime = 0, elapsed = 0, running = false;
 
+        // --- TABS & UI ---
         function setTab(name) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
@@ -326,11 +294,67 @@
             document.getElementById('clearBtn').style.display = val ? 'block' : 'none';
         }
         function clearSearch() { document.getElementById('icao').value = ''; document.getElementById('icao').focus(); toggleClearBtn(); }
+        
+        // --- CLOCK & WORLD TIME LOGIC ---
+        const CITY_LIST = [
+            { name: "UTC (Zulu)", zone: "UTC", icon: "✈️" },
+            { name: "Taipei", zone: "Asia/Taipei", icon: "🇹🇼" },
+            { name: "Tokyo", zone: "Asia/Tokyo", icon: "🇯🇵" },
+            { name: "Brisbane", zone: "Australia/Brisbane", icon: "🇦🇺" },
+            { name: "Paris", zone: "Europe/Paris", icon: "🇫🇷" },
+            { name: "London", zone: "Europe/London", icon: "🇬🇧" },
+            { name: "New York", zone: "America/New_York", icon: "🇺🇸" },
+            { name: "Los Angeles", zone: "America/Los_Angeles", icon: "🇺🇸" }
+        ];
+
         function updateClock() {
             const now = new Date();
+            // Header Z time
             document.getElementById('zuluTime').innerText = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
+
+            // World Tab
+            if(document.getElementById('tab-world').classList.contains('active')) {
+                const container = document.getElementById('worldContainer');
+                container.innerHTML = '';
+                
+                CITY_LIST.forEach(c => {
+                    // Get time in that zone
+                    const timeStr = now.toLocaleTimeString('en-US', { timeZone: c.zone, hour: '2-digit', minute: '2-digit', hour12: false });
+                    
+                    // Day diff logic (simplified)
+                    // We compare local day vs zone day
+                    const localDay = now.getDate();
+                    // Hacky way to get zone date
+                    const zoneDateStr = now.toLocaleDateString('en-US', { timeZone: c.zone, day: 'numeric' });
+                    const zoneDay = parseInt(zoneDateStr);
+                    
+                    let dayDiff = "";
+                    if (zoneDay > localDay) dayDiff = "+1 Day";
+                    else if (zoneDay < localDay) dayDiff = "-1 Day";
+                    
+                    // Day/Night Icon based on hour
+                    const zoneHour = parseInt(timeStr.split(':')[0]);
+                    const isDay = zoneHour >= 6 && zoneHour < 18;
+                    const sunMoon = isDay ? "☀️" : "🌙";
+
+                    // Styling class
+                    const timeClass = c.zone === "UTC" ? "clock-time clock-utc" : "clock-time";
+
+                    const card = document.createElement('div');
+                    card.className = 'clock-card';
+                    card.innerHTML = `
+                        <div class="clock-left">
+                            <div class="clock-city">${c.icon} ${c.name}</div>
+                            <div class="clock-meta">${sunMoon} ${dayDiff}</div>
+                        </div>
+                        <div class="${timeClass}">${timeStr}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
         }
-        setInterval(updateClock, 1000); updateClock();
+        setInterval(updateClock, 1000); 
+        // Note: Initial call handles header, world tab renders when active/interval ticks
 
         // --- OPTIMIZED PARALLEL DATA LOADING ---
         async function loadData() {
@@ -431,7 +455,7 @@
                      for(let k in priority) if(b.type.includes(k)) pb = priority[k];
                      return pa - pb;
                  });
-                 d.frequencies.slice(0, 6).forEach(f => { // Limit to top 6 to prevent layout break
+                 d.frequencies.slice(0, 6).forEach(f => {
                      const card = document.createElement('div'); card.className = 'freq-card';
                      card.innerHTML = `<div class="freq-type">${f.type}</div><div class="freq-val">${f.frequency}</div>`;
                      fContainer.appendChild(card);
@@ -545,60 +569,10 @@
                 ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
             }
         }
-        
-        // --- TOOLS: DECODER ---
-        const WX_DATA = {
-            "MI":"Shallow", "PR":"Partial", "BC":"Patches", "DR":"Drifting", "BL":"Blowing", "SH":"Shower", "TS":"Thunderstorm", "FZ":"Freezing",
-            "DZ":"Drizzle", "RA":"Rain", "SN":"Snow", "SG":"Snow Grains", "IC":"Ice Crystals", "PL":"Ice Pellets", "GR":"Hail", "GS":"Small Hail", "UP":"Unknown",
-            "BR":"Mist", "FG":"Fog", "FU":"Smoke", "VA":"Ash", "DU":"Dust", "SA":"Sand", "HZ":"Haze", "PY":"Spray",
-            "PO":"Dust Devils", "SQ":"Squall", "FC":"Funnel Cloud", "SS":"Sandstorm", "DS":"Duststorm",
-            "SKC":"Clear", "CLR":"Clear", "FEW":"Few", "SCT":"Scattered", "BKN":"Broken", "OVC":"Overcast", "VV":"Vertical Vis", "CAVOK":"Ceiling & Vis OK"
-        };
-        const codeListEl = document.getElementById('codeList'); codeListEl.innerHTML = '';
-        Object.keys(WX_DATA).sort().forEach(key => { const item = document.createElement('div'); item.className = 'code-item'; item.innerHTML = `<b>${key}</b> ${WX_DATA[key]}`; codeListEl.appendChild(item); });
-        function decode(input) {
-            input = input.trim().toUpperCase(); if(!input) { document.getElementById('decodeOut').innerText = "..."; return; }
-            if(WX_DATA[input]) { document.getElementById('decodeOut').innerText = WX_DATA[input]; return; }
-            let res = [], rem = input;
-            if(rem.startsWith('-')) { res.push("Light"); rem = rem.substring(1); } else if(rem.startsWith('+')) { res.push("Heavy"); rem = rem.substring(1); } else if(rem.startsWith('VC')) { res.push("Vicinity"); rem = rem.substring(2); }
-            let foundAny = false;
-            while(rem.length >= 2) { let chunk = rem.substring(0,2); if(WX_DATA[chunk]) { res.push(WX_DATA[chunk]); rem = rem.substring(2); foundAny = true; } else break; }
-            if(foundAny && rem.length === 0) document.getElementById('decodeOut').innerText = res.join(" "); else document.getElementById('decodeOut').innerText = "Unknown / Custom";
-        }
 
-        // --- TOOLS: TIMER ---
-        function formatTime(ms) { const d = new Date(ms); return d.toISOString().substr(11, 8); }
-        function updateTimerDisplay() { const now = Date.now(); const diff = now - startTime + elapsed; document.getElementById('timerDisplay').innerText = formatTime(diff); }
-        function startTimer() { if(!running) { startTime = Date.now(); timerInterval = setInterval(updateTimerDisplay, 100); running = true; } }
-        function stopTimer() { if(running) { clearInterval(timerInterval); elapsed += Date.now() - startTime; running = false; } else { elapsed = 0; document.getElementById('timerDisplay').innerText = "00:00:00"; document.getElementById('lapList').innerHTML = ""; } }
-        function lapTimer() { if(running) { const now = Date.now(); const diff = now - startTime + elapsed; const div = document.createElement('div'); div.className = 'lap-item'; div.innerHTML = `<span>Lap</span><span>${formatTime(diff)}</span>`; document.getElementById('lapList').prepend(div); } }
-
-        // --- TOOLS: ISA ---
-        function calcIsaTool() {
-            const alt = parseFloat(document.getElementById('isaInput').value);
-            if(isNaN(alt)) { document.getElementById('isaTempOut').innerText = "--"; document.getElementById('isaPressOut').innerText = "--"; return; }
-            const t = 15 - (1.98 * (alt/1000));
-            const p = 29.92 * Math.pow((1 - (0.0000068753 * alt)), 5.2561);
-            document.getElementById('isaTempOut').innerText = t.toFixed(1) + "°C";
-            document.getElementById('isaPressOut').innerText = p.toFixed(2) + " inHg";
-        }
-
-        // --- TOOLS: CONVERTERS ---
-        function convSpeed(type) {
-            const kts = document.getElementById('cKts'), mph = document.getElementById('cMph'), kph = document.getElementById('cKph');
-            let val = 0;
-            if(type==='kts') { val = parseFloat(kts.value); mph.value=(val*1.15078).toFixed(1); kph.value=(val*1.852).toFixed(1); }
-            if(type==='mph') { val = parseFloat(mph.value); kts.value=(val/1.15078).toFixed(1); kph.value=(val*1.60934).toFixed(1); }
-            if(type==='kph') { val = parseFloat(kph.value); kts.value=(val/1.852).toFixed(1); mph.value=(val/1.60934).toFixed(1); }
-        }
-        function convPress(type) {
-            const inhg = document.getElementById('cInhg'), hpa = document.getElementById('cHpa');
-            let val = 0;
-            if(type==='inhg') { val = parseFloat(inhg.value); hpa.value=(val*33.8639).toFixed(1); }
-            if(type==='hpa') { val = parseFloat(hpa.value); inhg.value=(val*0.02953).toFixed(2); }
-        }
-
+        // Init
         document.getElementById('icao').value = 'RCTP'; toggleClearBtn(); loadData();
+        updateClock(); // Run clock immediately
     </script>
 </body>
 </html>
