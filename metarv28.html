@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot Widget V27</title>
+    <title>Notion Pilot Widget V28</title>
     <style>
         :root {
-            /* ForeFlight-ish Dark Theme */
-            --bg: #121212; --card-bg: #1e1e1e; --text: #ffffff; --sub-text: #8e8e93;
-            --border: #333333; --accent: #0a84ff; --danger: #ff453a; --warn: #ff9f0a; --success: #30d158;
-            /* Flight Categories */
-            --vfr: #30d158; --mvfr: #0a84ff; --ifr: #ff9f0a; --lifr: #ff453a;
+            --bg: #1e1e1e; --card-bg: #2a2a2a; --text: #e0e0e0; --sub-text: #a0a0a0;
+            --border: #333; --accent: #4a90e2; --success: #30d158; --warn: #f39c12; --danger: #ff453a;
+            --vfr: #2ecc71; --mvfr: #3498db; --ifr: #f39c12; --lifr: #ff453a;
         }
         * { box-sizing: border-box; }
         body {
@@ -28,15 +26,13 @@
             color: #fff; padding: 6px 10px; border-radius: 6px;
             text-transform: uppercase; font-weight: 700; font-size: 14px;
         }
-        .icon-btn { 
-            background: var(--card-bg); border: 1px solid var(--border); color: var(--accent); 
-            width: 30px; height: 30px; border-radius: 6px; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; text-decoration: none;
-        }
-        .icon-btn:hover { background: #333; }
+        .cat-badge { padding: 4px 10px; border-radius: 6px; color: #000; font-weight: 800; font-size: 12px; min-width: 45px; text-align: center; }
+        .zulu-clock { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--sub-text); font-weight: 600; padding: 0 4px; }
+        .print-btn { background: transparent; border: none; cursor: pointer; font-size: 16px; filter: grayscale(1); transition: filter 0.2s; }
+        .print-btn:hover { filter: grayscale(0); }
 
         /* TABS */
-        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 8px; gap: 16px; overflow-x: auto;}
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 8px; gap: 16px; overflow-x: auto; }
         .tab {
             padding: 6px 2px; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--sub-text);
             border-bottom: 2px solid transparent; text-transform: uppercase; letter-spacing: 0.5px;
@@ -47,10 +43,10 @@
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
         .data-card { background: var(--card-bg); border-radius: 8px; padding: 8px 10px; border: 1px solid var(--border); }
         .label { font-size: 10px; color: var(--sub-text); text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
-        .value { font-size: 14px; font-weight: 600; color: #fff; }
-        .sub-val { font-size: 11px; color: var(--sub-text); margin-top: 2px; }
+        .value { font-size: 14px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 6px; }
+        #windArrowIcon { width: 16px; height: 16px; fill: var(--accent); transition: transform 0.5s ease; }
 
-        /* COMPASS & RUNWAY */
+        /* VISUAL COMPASS */
         .visual-container {
             display: flex; gap: 12px; background: var(--card-bg); 
             border-radius: 8px; padding: 10px; margin-bottom: 8px; align-items: center;
@@ -58,57 +54,54 @@
         }
         #compassCanvas { width: 70px; height: 70px; }
         .calc-inputs { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
-        #rwyInput {
-            width: 50px; background: #000; border: 1px solid var(--border);
-            color: #fff; border-radius: 4px; padding: 4px; text-align: center; font-weight: 700;
-        }
+        #rwyInput { width: 50px; background: #000; border: 1px solid var(--border); color: #fff; border-radius: 4px; padding: 4px; text-align: center; font-weight: 700; }
         .xwind-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: var(--sub-text); }
         .xwind-val { color: #fff; font-weight: 700; }
 
-        /* FLIGHT CATEGORY BAR */
-        .cat-bar-container { margin-top: 4px; }
+        /* FLIGHT CAT BAR */
         .cat-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #333; margin-top: 4px; }
         .cat-segment { flex: 1; opacity: 0.3; }
         .cat-active { opacity: 1; box-shadow: 0 0 8px currentColor; }
 
-        /* TAF TIMELINE */
-        .timeline-container { display: flex; gap: 2px; overflow-x: auto; margin-top: 8px; padding-bottom: 4px; }
-        .timeline-block {
-            min-width: 60px; padding: 6px; border-radius: 4px; font-size: 10px;
-            color: #000; font-weight: 700; text-align: center; white-space: nowrap;
+        /* TAF TIMELINE (New Style) */
+        .timeline-container { display: flex; gap: 4px; overflow-x: auto; margin-top: 8px; padding-bottom: 8px; }
+        .taf-block {
+            min-width: 70px; padding: 6px 8px; border-radius: 6px; font-size: 11px;
+            color: #000; font-weight: 700; text-align: center; display: flex; flex-direction: column; gap: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        .tl-init { background: var(--vfr); }
-        .tl-becmg { background: var(--sub-text); color: #fff; }
-        .tl-tempo { background: var(--warn); }
-        .tl-prob { background: var(--danger); color: #fff; }
+        .block-time { font-size: 10px; opacity: 0.8; font-weight: 600; }
+        .block-type { font-size: 12px; font-weight: 800; text-transform: uppercase; }
+        
+        /* NOTAMs */
+        .notam-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; margin-top: 8px; }
+        .notam-item { background: var(--card-bg); padding: 8px; border-radius: 4px; font-size: 11px; font-family: 'SF Mono', monospace; border-left: 3px solid var(--warn); line-height: 1.4; color: #ddd; }
 
-        /* INFO RUNWAY LIST */
-        .rwy-card { 
-            background: var(--card-bg); border-radius: 6px; margin-bottom: 6px; overflow: hidden;
-            border: 1px solid var(--border);
-        }
-        .rwy-header { 
-            padding: 6px 10px; background: #252525; display: flex; justify-content: space-between;
-            font-size: 12px; font-weight: 700; color: var(--text);
-        }
-        .rwy-data {
-            padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;
-            background: #333; margin: 0 4px 4px 4px; border-radius: 4px;
-        }
+        /* INFO & TOOLS */
+        .rwy-card { background: var(--card-bg); border-radius: 6px; margin-bottom: 6px; overflow: hidden; border: 1px solid var(--border); }
+        .rwy-header { padding: 6px 10px; background: #252525; display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text); }
+        .rwy-data { padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; background: #333; margin: 0 4px 4px 4px; border-radius: 4px; }
         .wind-component { font-size: 12px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 4px; }
         .blue-arrow { color: var(--accent); font-size: 10px; }
+
+        /* ATC BUTTONS */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .action-btn { background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; text-align: center; text-decoration: none; font-size: 12px; font-weight: 600; display: block; transition: background 0.2s; }
+        .action-btn:hover { background: #333; }
 
         /* COMMON */
         .hidden { display: none; }
         .raw-text { font-family: 'SF Mono', monospace; font-size: 11px; color: var(--sub-text); line-height: 1.4; background: #000; padding: 8px; border-radius: 4px; }
         .section-title { font-size: 11px; font-weight: 700; color: var(--sub-text); text-transform: uppercase; margin: 12px 0 6px 0; }
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
-        /* ATC BUTTONS */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .action-btn {
-            background: var(--card-bg); border: 1px solid var(--border); color: #fff;
-            padding: 10px; border-radius: 6px; text-align: center; text-decoration: none;
-            font-size: 12px; font-weight: 600; display: block;
+        /* PRINT */
+        @media print {
+            body { background: #fff !important; color: #000 !important; }
+            .top-bar, .tabs, .tool-bar, .visual-box, #memoView, #toolsView, #infoView, #atcView { display: none !important; }
+            #metarView, #tafView { display: block !important; }
+            .data-item, .taf-block, .notam-item, .raw-text { border: 1px solid #ccc; background: none !important; color: #000 !important; }
+            .hidden { display: block !important; }
         }
     </style>
 </head>
@@ -121,16 +114,18 @@
                 <option value="RCTP">Taoyuan</option><option value="RCSS">Songshan</option><option value="KMCC">Mather</option><option value="VHHH">Hong Kong</option>
             </datalist>
         </div>
-        <a href="#" target="_blank" id="skyvectorLink" class="icon-btn" title="SkyVector">🗺️</a>
-        <button class="icon-btn" onclick="window.print()" title="Print">🖨️</button>
+        <a href="#" target="_blank" id="skyvectorLink" class="icon-btn" title="Charts" style="text-decoration:none; font-size:16px;">🗺️</a>
+        <div id="flightCat" class="cat-badge hidden">VFR</div>
+        <div id="zuluClock" class="zulu-clock">00:00Z</div>
+        <button class="print-btn" onclick="window.print()">🖨️</button>
     </div>
 
     <div class="tabs">
         <div class="tab active" onclick="switchTab('metar')">METAR</div>
-        <div class="tab" onclick="switchTab('taf')">TAF</div>
+        <div class="tab" onclick="switchTab('taf')">Forecast</div>
         <div class="tab" onclick="switchTab('atc')">ATC</div>
-        <div class="tab" onclick="switchTab('info')">INFO</div>
-        <div class="tab" onclick="switchTab('tools')">TOOLS</div>
+        <div class="tab" onclick="switchTab('info')">Info</div>
+        <div class="tab" onclick="switchTab('tools')">Tools</div>
     </div>
 
     <div id="metarView">
@@ -157,24 +152,17 @@
         <div class="dashboard-grid">
             <div class="data-card">
                 <div class="label">Wind</div>
-                <div class="value" id="windText">--</div>
+                <div class="value">
+                    <svg id="windArrowIcon" viewBox="0 0 24 24"><path d="M12 2L12 22M12 22L5 15M12 22L19 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                    <span id="windText">--</span>
+                </div>
             </div>
-            <div class="data-card">
-                <div class="label">Vis / Clouds</div>
-                <div class="value" style="font-size:12px;"><span id="vis">--</span> / <span id="clouds">--</span></div>
-            </div>
-            <div class="data-card">
-                <div class="label">Temp / Dew (Spread)</div>
-                <div class="value" id="tempText">--</div>
-                <div class="sub-val" id="spreadText">--</div>
-            </div>
-            <div class="data-card">
-                <div class="label">Altimeter</div>
-                <div class="value" id="altText">--</div>
-            </div>
+            <div class="data-card"><div class="label">Vis / Clouds</div><div class="value" style="font-size:12px;"><span id="vis">--</span> / <span id="clouds">--</span></div></div>
+            <div class="data-card"><div class="label">Temp / Dew</div><div class="value" id="tempText">--</div></div>
+            <div class="data-card"><div class="label">Altimeter</div><div class="value" id="altText">--</div></div>
         </div>
 
-        <div class="cat-bar-container">
+        <div class="cat-bar-container" style="margin-top:4px;">
             <div class="label">FLIGHT RULES</div>
             <div class="cat-bar">
                 <div id="barLIFR" class="cat-segment" style="background:var(--lifr)"></div>
@@ -198,165 +186,173 @@
         <div class="raw-text" id="rawTaf">Loading...</div>
 
         <div class="section-title">NOTAMs</div>
-        <div id="notamList" class="raw-text" style="max-height:200px; overflow-y:auto;">Loading...</div>
+        <div id="notamList" class="notam-list"><div style="color:#666">Fetch NOTAMs...</div></div>
     </div>
 
     <div id="atcView" class="hidden">
         <div class="btn-grid">
             <a href="#" target="_blank" id="twatcBtn" class="action-btn hidden">🇹🇼 RCTP ATIS</a>
-            <a href="#" target="_blank" id="liveAtcBtn" class="action-btn">📡 LiveATC</a>
             <a href="https://www.aviationlisteners.aero/" target="_blank" class="action-btn">🎧 Practice</a>
+            <a href="#" target="_blank" id="liveAtcBtn" class="action-btn">📡 LiveATC</a>
         </div>
         <div class="section-title">Frequencies</div>
         <div id="freqList" style="display:grid; gap:6px;"></div>
     </div>
 
     <div id="infoView" class="hidden">
-        <div class="data-card" style="margin-bottom:12px;">
+        <div style="text-align:center; margin-bottom:12px;">
             <div class="value" id="stationName" style="font-size:16px;">Unknown</div>
-            <div class="sub-val" id="stationDetails">ICAO • IATA • Elev</div>
-            <div class="dashboard-grid" style="margin-top:8px;">
-                <div><div class="label">Press Alt</div><div class="value" id="infoPA">--</div></div>
-                <div><div class="label">Density Alt</div><div class="value" id="infoDA">--</div></div>
-            </div>
+            <div style="font-size:12px; color:var(--sub-text);" id="stationDetails">--</div>
         </div>
-
         <div class="section-title">Solar (Local)</div>
         <div class="dashboard-grid">
-            <div class="data-card"><div class="label">Sunrise</div><div class="value" id="srTime">--</div></div>
-            <div class="data-card"><div class="label">Sunset</div><div class="value" id="ssTime">--</div></div>
+            <div class="data-card" style="text-align:center;"><div class="label">Sunrise</div><div class="value" id="srTime" style="justify-content:center;">--</div></div>
+            <div class="data-card" style="text-align:center;"><div class="label">Sunset</div><div class="value" id="ssTime" style="justify-content:center;">--</div></div>
         </div>
-        <div id="sunCountdown" style="text-align:center; color:var(--accent); font-weight:700; font-size:11px;"></div>
-
+        <div id="sunCountdown" style="text-align:center; color:var(--accent); font-weight:700; font-size:11px; margin-top:4px;"></div>
         <div class="section-title">Runway Info</div>
         <div id="runwayMatrix"></div>
     </div>
 
     <div id="toolsView" class="hidden">
         <div class="section-title">Calculators</div>
-        <div class="data-card">
-            <div class="label">Fuel (100LL)</div>
-            <input type="number" placeholder="Gal" style="width:100%; background:none; border:none; color:white;" oninput="this.nextElementSibling.innerText=(this.value*6).toFixed(1)+' lbs'">
-            <div class="value" style="margin-top:4px;">0 lbs</div>
+        <div class="tools-grid">
+            <div class="data-card">
+                <div class="label">Fuel (100LL)</div>
+                <input type="number" placeholder="Gal" style="width:100%; background:none; border:none; color:white;" oninput="this.nextElementSibling.innerText=(this.value*6).toFixed(1)+' lbs'">
+                <div class="value" style="margin-top:4px; font-size:12px;">0 lbs</div>
+            </div>
+            <div class="data-card">
+                <div class="label">Time (NM/Kt)</div>
+                <div style="display:flex; gap:4px;">
+                    <input type="number" style="width:100%; background:#333; border:none; color:white; padding:2px;" placeholder="NM" id="calDist" oninput="calcTime()">
+                    <input type="number" style="width:100%; background:#333; border:none; color:white; padding:2px;" placeholder="Kts" id="calSpd" oninput="calcTime()">
+                </div>
+                <div id="calTime" style="margin-top:4px; color:var(--accent); font-weight:700;">-- min</div>
+            </div>
         </div>
         <div class="section-title">Memo</div>
-        <textarea id="memoInput" style="width:100%; height:100px; background:#000; border:1px solid #333; color:#fff;" placeholder="Notes..."></textarea>
+        <textarea id="memoInput" style="width:100%; height:100px; background:#000; border:1px solid #333; color:#fff;" placeholder="Clearance / Notes..."></textarea>
     </div>
 
     <script>
         const TOKEN = 'dMzS0-M9_ku1bYySTtsq4pZE8fEEiTUJaNtvqSDEgUs';
-        
-        // --- DATA STATE ---
         let currentIcao='RCTP', windData={dir:0,speed:0}, currentElev=0, currentRunways=[], sunsetTime=null;
-        
-        // --- INIT ---
+
         setInterval(()=>{
             const now=new Date();
             // document.getElementById('zuluClock').innerText = now.toISOString().substring(11,16) + 'Z'; 
             updateCountdown();
         },1000);
 
-        // --- MAIN LOAD ---
+        function calcTime(){ const d=document.getElementById('calDist').value, s=document.getElementById('calSpd').value; if(d&&s) document.getElementById('calTime').innerText = Math.round((d/s)*60)+" min"; }
+
         async function loadData() {
             const input = document.getElementById('icao').value.toUpperCase();
             if(!input) return; currentIcao = input;
             
-            // 1. Links
+            // Links
             document.getElementById('skyvectorLink').href = `https://skyvector.com/airport/${currentIcao}`;
             document.getElementById('liveAtcBtn').href = `https://www.liveatc.net/search/?designator=${currentIcao}`;
             const twBtn = document.getElementById('twatcBtn');
             if(currentIcao==='RCTP') { twBtn.classList.remove('hidden'); twBtn.href="https://stream.twatc.net/RCTP_ATIS"; }
             else twBtn.classList.add('hidden');
 
-            // 2. Fetch Info (AVWX Station)
             try {
                 const infoRes = await fetch(`https://avwx.rest/api/station/${currentIcao}`, {headers:{'Authorization':`Bearer ${TOKEN}`}});
                 const info = await infoRes.json();
                 renderStationInfo(info);
-            } catch(e) { console.log("Station Error"); }
+            } catch(e) {}
 
-            // 3. Fetch METAR
-            fetch(`https://avwx.rest/api/metar/${currentIcao}`, {headers:{'Authorization':`Bearer ${TOKEN}`}})
-                .then(r=>r.json()).then(d=>updateMetar(d));
-
-            // 4. Fetch TAF
-            fetch(`https://avwx.rest/api/taf/${currentIcao}`, {headers:{'Authorization':`Bearer ${TOKEN}`}})
-                .then(r=>r.json()).then(d=>updateTaf(d));
+            fetch(`https://avwx.rest/api/metar/${currentIcao}`, {headers:{'Authorization':`Bearer ${TOKEN}`}}).then(r=>r.json()).then(d=>updateMetar(d));
             
-            // 5. Fetch NOTAMs
-            fetch(`https://avwx.rest/api/notam/${currentIcao}`, {headers:{'Authorization':`Bearer ${TOKEN}`}})
-                .then(r=>r.json()).then(d=>renderNotams(d));
+            fetch(`https://avwx.rest/api/taf/${currentIcao}`, {headers:{'Authorization':`Bearer ${TOKEN}`}}).then(r=>r.json()).then(d=>{
+                document.getElementById('rawTaf').innerText = d.raw || "No TAF";
+                if(d.time?.dt) document.getElementById('tafAge').innerText = "Issued " + Math.floor((new Date()-new Date(d.time.dt))/60000) + "m ago";
+                renderTafTimeline(d);
+            });
+
+            fetch(`https://avwx.rest/api/notam/${currentIcao}`, {headers:{'Authorization':`Bearer ${TOKEN}`}}).then(r=>r.json()).then(d=>renderNotams(d));
         }
 
-        // --- RENDERERS ---
         function renderStationInfo(d) {
             document.getElementById('stationName').innerText = d.name;
-            document.getElementById('stationDetails').innerText = `${d.icao} • ${d.iata||'--'} • ${Math.round(d.elevation_ft)}ft • ${d.city}, ${d.country}`;
+            document.getElementById('stationDetails').innerText = `${d.icao} • ${Math.round(d.elevation_ft)}ft • ${d.city}`;
             currentElev = d.elevation_ft;
             currentRunways = d.runways || [];
             
-            // Runways Dropdown
+            // Freqs
+            const fl = document.getElementById('freqList'); fl.innerHTML = '';
+            if(d.freqs) {
+                // AVWX returns array of objects {type, frequency}
+                // Or sometimes object {type: freq} - check format. AVWX usually array.
+                // Assuming it might be different structure in full API, let's safe check.
+                // Actually standardized AVWX station endpoint usually returns array.
+                // Let's try to map it safely.
+                // Note: Previous code assumed a specific structure. Let's make it robust.
+                // If it is array:
+                if(Array.isArray(d.freqs)) {
+                     d.freqs.forEach(f => {
+                         fl.innerHTML+=`<div class="freq-row"><span class="freq-type">${f.type}</span><span class="freq-num">${f.frequency}</span></div>`;
+                     });
+                }
+            }
+
             const dl = document.getElementById('dynamicRunways'); dl.innerHTML='';
             currentRunways.forEach(r => { 
                 const o=document.createElement('option'); o.value=r.ident1; dl.appendChild(o);
                 const o2=document.createElement('option'); o2.value=r.ident2; dl.appendChild(o2);
             });
 
-            // Solar
             if(d.latitude) {
                 fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
                 .then(r=>r.json()).then(s=>{
                     const p = (t) => new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});
                     document.getElementById('srTime').innerText = p(s.results.sunrise);
                     document.getElementById('ssTime').innerText = p(s.results.sunset);
+                    document.getElementById('ctTime').innerText = p(s.results.civil_twilight_end);
                     sunsetTime = new Date(s.results.sunset);
                 });
             }
         }
 
+        function updateCountdown(){
+            if(!sunsetTime) return;
+            const diff = sunsetTime - new Date();
+            const el = document.getElementById('sunCountdown');
+            if(diff>0) {
+                const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000);
+                el.innerText = `Sunset in ${h}h ${m}m`;
+            } else { el.innerText="Night Time"; }
+        }
+
         function updateMetar(d) {
             document.getElementById('rawMetar').innerText = d.raw;
-            document.getElementById('metarAge').innerText = "Reported " + Math.floor((new Date()-new Date(d.time.dt))/60000) + "m ago";
+            document.getElementById('metarAge').innerText = Math.floor((new Date()-new Date(d.time.dt))/60000) + "m ago";
             
-            // Category Bar
             ['LIFR','IFR','MVFR','VFR'].forEach(c => document.getElementById('bar'+c).classList.remove('cat-active'));
             const cat = d.flight_rules;
             document.getElementById('bar'+cat).classList.add('cat-active');
             document.getElementById('flightCatBadge').innerText = cat;
             document.getElementById('flightCatBadge').style.color = `var(--${cat.toLowerCase()})`;
 
-            // Wind
             windData = { dir: d.wind_direction?.value||0, speed: d.wind_speed?.value||0 };
             document.getElementById('windText').innerText = `${windData.dir}° / ${windData.speed}kt`;
             document.getElementById('windArrowIcon').style.transform = `rotate(${windData.dir}deg)`;
 
-            // Vis / Clouds
             document.getElementById('vis').innerText = d.visibility?.value + 'sm';
             document.getElementById('clouds').innerText = d.clouds?.[0]?.repr || 'CLR';
 
-            // Temp / Spread / Humidity
             const t = d.temperature?.value;
-            const dew = d.dewpoint?.value;
             if(t!=null) {
                 const tf = Math.round(t * 9/5 + 32);
                 document.getElementById('tempText').innerText = `${t}°C (${tf}°F)`;
-                if(dew!=null) {
-                    const rh = 100 - (5 * (t-dew)); // Approx
-                    document.getElementById('spreadText').innerText = `Spread: ${(t-dew).toFixed(1)}° / RH: ${Math.round(rh)}%`;
-                }
             }
 
-            // Altimeter / DA
             const alt = d.altimeter?.value;
             if(alt) {
                 const hpa = Math.round(alt * 33.8639);
                 document.getElementById('altText').innerText = `Q${hpa} / A${alt.toFixed(2)}`;
-                if(t!=null) {
-                    const da = Math.round((currentElev + (29.92-alt)*1000) + (120*(t-15)));
-                    const pa = Math.round(currentElev + (29.92-alt)*1000);
-                    document.getElementById('infoPA').innerText = pa + " ft";
-                    document.getElementById('infoDA').innerText = document.getElementById('densityAlt').innerText = da + " ft";
-                }
             }
 
             calculateCrosswind();
@@ -364,15 +360,23 @@
         }
 
         function updateTaf(d) {
-            document.getElementById('rawTaf').innerText = d.raw || "No TAF";
-            // Timeline
             const tl = document.getElementById('tafTimeline'); tl.innerHTML = '';
             if(!d.forecast) return;
             d.forecast.forEach(f => {
                 const div = document.createElement('div');
-                div.className = `timeline-block tl-${f.type.toLowerCase()}`;
-                const startH = new Date(f.start_time.dt).getHours();
-                div.innerText = `${f.type} ${startH}:00`;
+                // Determine color based on forecast flight rules if available, else type
+                let bgVar = 'var(--vfr)'; // Default
+                if(f.flight_rules === 'IFR') bgVar = 'var(--ifr)';
+                if(f.flight_rules === 'MVFR') bgVar = 'var(--mvfr)';
+                if(f.flight_rules === 'LIFR') bgVar = 'var(--lifr)';
+                
+                div.className = 'taf-block';
+                div.style.backgroundColor = bgVar; 
+                
+                const startH = new Date(f.start_time.dt).getUTCHours().toString().padStart(2,'0');
+                const endH = new Date(f.end_time.dt).getUTCHours().toString().padStart(2,'0');
+                
+                div.innerHTML = `<span class="block-time">${startH}</span><span class="block-type">${f.type}</span>`;
                 tl.appendChild(div);
             });
         }
@@ -382,8 +386,8 @@
             if(!data.length) { list.innerText="No active NOTAMs"; return; }
             data.forEach(n => {
                 const div = document.createElement('div');
-                div.style = "background:#111; padding:6px; margin-bottom:4px; border-left:2px solid var(--warn); font-family:monospace;";
-                div.innerText = n.raw; // Simplified
+                div.className = 'notam-item';
+                div.innerText = n.raw;
                 list.appendChild(div);
             });
         }
@@ -403,7 +407,7 @@
             
             res.innerHTML = `
                 <div class="xwind-row"><span>Headwind</span> <span class="xwind-val" style="color:${hwC}">${Math.abs(hw)}kt</span></div>
-                <div class="xwind-row"><span>Crosswind</span> <span class="xwind-val" style="color:${xwC}">${Math.abs(xw)}kt</span></div>
+                <div class="xwind-row"><span>Crosswind</span> <span class="xwind-val" style="color:${xwC}">${xw}kt</span></div>
             `;
         }
 
@@ -411,7 +415,6 @@
             const container = document.getElementById('runwayMatrix');
             container.innerHTML = '';
             currentRunways.forEach(r => {
-                // Generate two ends: Ident1 and Ident2
                 [r.ident1, r.ident2].forEach(id => {
                     const num = parseInt(id.replace(/\D/g,''));
                     const diff = windData.dir - (num*10);
@@ -420,13 +423,13 @@
                     const xw = Math.round(Math.abs(Math.sin(rad) * windData.speed));
                     
                     const arrowH = hw>=0 ? '⬆' : '⬇';
-                    const arrowX = '⬅'; // Simplified
+                    const arrowX = '⬅'; 
                     const col = hw<0 ? 'var(--danger)' : 'var(--good)';
 
                     container.innerHTML += `
                         <div class="rwy-card">
                             <div class="rwy-header">
-                                <span>RWY ${id}</span> <span>${r.length_ft}' x ${r.width_ft}'</span>
+                                <span>RWY ${id}</span> <span>${r.length_ft}'</span>
                             </div>
                             <div class="rwy-data">
                                 <div class="wind-component" style="color:${col}">${arrowH} ${Math.abs(hw)}kt</div>
@@ -443,43 +446,37 @@
             ctx.clearRect(0,0,70,70);
             const cx=35, cy=35;
             
-            // North-Up Dial
             ctx.beginPath(); ctx.arc(cx, cy, 30, 0, 2*Math.PI);
             ctx.strokeStyle='#444'; ctx.lineWidth=2; ctx.stroke();
             ctx.fillStyle='#fff'; ctx.font='10px Arial'; ctx.fillText('N', cx-4, cy-22);
 
-            // Runway
             if(rwyNum) {
                 ctx.save(); ctx.translate(cx,cy); ctx.rotate(rwyNum*10 * Math.PI/180);
-                ctx.fillStyle='#555'; ctx.fillRect(-4,-24,8,48); // Grey Strip
-                ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(0,20); ctx.stroke(); // Centerline
+                ctx.fillStyle='#555'; ctx.fillRect(-4,-24,8,48); 
+                ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(0,20); ctx.stroke();
                 ctx.restore();
             }
 
-            // Wind
-            ctx.save(); ctx.translate(cx,cy); ctx.rotate((windData.dir-180)*Math.PI/180);
-            ctx.beginPath(); ctx.moveTo(0,28); ctx.lineTo(0,10);
-            ctx.strokeStyle='var(--accent)'; ctx.lineWidth=2; ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-3,16); ctx.lineTo(0,10); ctx.lineTo(3,16);
-            ctx.fillStyle='var(--accent)'; ctx.fill();
-            ctx.restore();
-        }
-
-        function updateCountdown() {
-            if(!sunsetTime) return;
-            const diff = sunsetTime - new Date();
-            const el = document.getElementById('sunCountdown');
-            if(diff>0) {
-                const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000);
-                el.innerText = `Sunset in ${h}h ${m}m`;
-            } else { el.innerText="Night Time"; }
+            if(windData.speed>0) {
+                ctx.save(); ctx.translate(cx,cy); ctx.rotate((windData.dir-180)*Math.PI/180);
+                ctx.beginPath(); ctx.moveTo(0,28); ctx.lineTo(0,10);
+                ctx.strokeStyle='var(--accent)'; ctx.lineWidth=2; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-3,16); ctx.lineTo(0,10); ctx.lineTo(3,16);
+                ctx.fillStyle='var(--accent)'; ctx.fill();
+                ctx.restore();
+            }
         }
 
         function switchTab(t) {
             ['metar','taf','atc','info','tools'].forEach(v => document.getElementById(v+'View').classList.add('hidden'));
             document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
             document.getElementById(t+'View').classList.remove('hidden');
-            // Logic to highlight correct tab button... (simplified for code length)
+            const els = document.querySelectorAll('.tab');
+            if(t==='metar') els[0].classList.add('active');
+            if(t==='taf') els[1].classList.add('active');
+            if(t==='atc') els[2].classList.add('active');
+            if(t==='info') els[3].classList.add('active');
+            if(t==='tools') els[4].classList.add('active');
         }
 
         loadData();
