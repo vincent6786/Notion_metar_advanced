@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot Widget V25</title>
+    <title>Notion Pilot Widget V26</title>
     <style>
         :root {
+            /* Dark "Pro App" Theme */
             --bg: #1e1e1e; --text: #e0e0e0; --sub-text: #a0a0a0;
             --border: #333; --card-bg: #2a2a2a; --accent: #4a90e2;
             --vfr: #2ecc71; --mvfr: #3498db; --ifr: #e74c3c; --lifr: #9b59b6;
@@ -28,7 +29,7 @@
             text-transform: uppercase; font-weight: 700; font-size: 14px; letter-spacing: 1px;
             appearance: none; -webkit-appearance: none;
         }
-        .cat-badge { padding: 4px 10px; border-radius: 6px; color: #000; font-weight: 800; font-size: 12px; min-width: 45px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .cat-badge { padding: 4px 10px; border-radius: 6px; color: #000; font-weight: 800; font-size: 12px; min-width: 45px; text-align: center; }
         .zulu-clock { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--sub-text); font-weight: 600; padding: 0 4px; }
         .print-btn { background: transparent; border: none; cursor: pointer; font-size: 16px; filter: grayscale(1); transition: filter 0.2s; }
         .print-btn:hover { filter: grayscale(0); }
@@ -48,7 +49,7 @@
         .data-item .value { font-size: 14px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 6px; }
         #windArrowIcon { width: 16px; height: 16px; fill: var(--accent); transition: transform 0.5s ease; }
 
-        /* VISUAL COMPASS */
+        /* VISUAL COMPASS (Pro Style) */
         .visual-container {
             display: flex; gap: 12px; background: var(--card-bg); 
             border-radius: 8px; padding: 12px; margin-bottom: 12px; align-items: center;
@@ -65,7 +66,7 @@
         .xwind-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; }
         .val-good { color: var(--good); } .val-bad { color: var(--bad); }
 
-        /* ADVANCED BARS */
+        /* ADVANCED BARS (Fog/Spread) */
         .bar-container { margin-bottom: 8px; }
         .bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--sub-text); margin-bottom: 3px; }
         .bar-track { height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
@@ -75,7 +76,7 @@
         .taf-timeline { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
         .taf-block { 
             background: var(--card-bg); padding: 8px; border-radius: 6px; 
-            border-left: 3px solid var(--sub-text); font-size: 12px; line-height: 1.4; 
+            border-left: 3px solid var(--sub-text); font-size: 12px; line-height: 1.4; color: #ddd;
         }
         .taf-type { font-weight: 800; font-size: 10px; text-transform: uppercase; margin-bottom: 2px; display: inline-block; padding: 2px 4px; border-radius: 3px; color: #000; }
         .type-fm { background: #9b59b6; border-left-color: #9b59b6; }
@@ -87,7 +88,6 @@
         .matrix-table td { padding: 8px; background: var(--card-bg); font-size: 13px; }
         .matrix-table tr td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; font-weight: 700; color: #fff; }
         .matrix-table tr td:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; text-align: right; font-family: 'SF Mono', monospace; }
-        .arrow-icon { font-size: 10px; vertical-align: middle; margin-right: 2px; }
 
         /* ATC & BUTTONS */
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
@@ -99,24 +99,31 @@
         }
         .action-btn:hover { background: #333; }
         .freq-list { display: flex; flex-direction: column; gap: 6px; }
-        .freq-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--card-bg); border-radius: 6px; border: 1px solid var(--border); }
-        .freq-type { font-size: 12px; font-weight: 700; color: var(--sub-text); }
+        .freq-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--card-bg); border-radius: 6px; }
+        .freq-type { font-size: 11px; font-weight: 700; color: var(--sub-text); }
         .freq-num { font-size: 14px; font-weight: 600; color: var(--accent); font-family: 'SF Mono', monospace; }
 
-        /* COMMON */
+        /* TOOLS & COMMON */
         .hidden { display: none; }
         .raw-box { 
             font-family: 'SF Mono', 'Menlo', monospace; font-size: 11px; color: var(--sub-text); 
             background: #000; padding: 8px; border-radius: 4px; white-space: pre-wrap; line-height: 1.4;
         }
         .section-header { font-size: 11px; font-weight: 700; color: var(--sub-text); text-transform: uppercase; margin: 12px 0 6px 0; letter-spacing: 0.5px; }
+        
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .tool-card { background: var(--card-bg); padding: 8px; border-radius: 6px; border: 1px solid var(--border); }
+        .mini-input { width: 100%; background: #000; color: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 6px; font-size: 12px; margin-top: 4px;}
+        
+        /* NOTAMs */
+        .notam-item { background: var(--card-bg); padding: 8px; border-radius: 6px; font-size: 11px; font-family: 'SF Mono', monospace; border-left: 3px solid var(--warn); margin-bottom: 6px; line-height: 1.4; color: #ddd; }
 
         /* PRINT OVERRIDES */
         @media print {
             body { background: #fff !important; color: #000 !important; }
             .top-bar, .tabs, .tool-bar, .visual-box, #memoView, #toolsView, #infoView, #atcView { display: none !important; }
             #metarView, #tafView { display: block !important; }
-            .data-item, .taf-block { border: 1px solid #ccc; background: none !important; color: #000 !important; }
+            .data-item, .taf-block, .notam-item { border: 1px solid #ccc; background: none !important; color: #000 !important; }
             .hidden { display: block !important; }
         }
     </style>
@@ -192,12 +199,12 @@
         <div id="tafTimeline" class="taf-timeline"></div>
 
         <div class="section-header">NOTAMs</div>
-        <div class="taf-timeline" id="notamList"></div>
+        <div class="notam-list" id="notamList"><div style="color:#666; font-size:11px;">Fetch NOTAMs...</div></div>
     </div>
 
     <div id="atcView" class="hidden">
         <div class="btn-grid">
-            <a href="#" target="_blank" id="twatcBtn" class="action-btn hidden">🇹🇼 RCTP Stream</a>
+            <a href="#" target="_blank" id="twatcBtn" class="action-btn hidden">🇹🇼 RCTP ATIS</a>
             <a href="https://www.aviationlisteners.aero/" target="_blank" class="action-btn">🎧 Practice</a>
             <a href="#" target="_blank" id="liveAtcBtn" class="action-btn">📡 LiveATC</a>
         </div>
@@ -225,23 +232,25 @@
     </div>
 
     <div id="toolsView" class="hidden">
-        <div class="section-header">Scratchpad</div>
-        <textarea id="memoInput" style="width:100%; height:100px; background:#000; border:1px solid #333; color:#eee; padding:8px; border-radius:6px; font-family:'SF Mono';" placeholder="Type clearance..."></textarea>
+        <div class="tool-card" style="margin-bottom:12px;">
+            <div class="label">METAR Decoder</div>
+            <input type="text" class="mini-input" placeholder="Code (e.g. BR, FU)" id="decodeInput" oninput="decodeCode()">
+            <div id="decodeRes" style="margin-top:4px; font-weight:600; color:var(--accent);">Type code...</div>
+        </div>
         
-        <div class="section-header">Calculators</div>
-        <div class="data-grid">
-            <div class="data-item">
-                <div class="label">Fuel (Gal -> Lbs)</div>
-                <input type="number" style="background:transparent; border:none; color:white; font-weight:700; width:100%;" placeholder="Enter Gal" oninput="this.nextElementSibling.innerText = (this.value*6).toFixed(1)+' lbs'">
-                <div style="color:var(--accent); font-size:12px; margin-top:2px;">0 lbs</div>
+        <div class="tools-grid">
+            <div class="tool-card">
+                <div class="label">Fuel (100LL)</div>
+                <input type="number" class="mini-input" placeholder="Gal" oninput="this.nextElementSibling.innerText=(this.value*6).toFixed(1)+' lbs'">
+                <div style="margin-top:4px; color:#fff; font-weight:700;">0 lbs</div>
             </div>
-            <div class="data-item">
-                <div class="label">Time (NM / Kts)</div>
+            <div class="tool-card">
+                <div class="label">Time (NM/Kt)</div>
                 <div style="display:flex; gap:4px;">
-                    <input type="number" style="width:40px; background:#333; border:none; color:white; padding:2px;" placeholder="NM" id="calDist" oninput="calcTime()">
-                    <input type="number" style="width:40px; background:#333; border:none; color:white; padding:2px;" placeholder="Kts" id="calSpd" oninput="calcTime()">
+                    <input type="number" class="mini-input" placeholder="NM" id="calDist" oninput="calcTime()">
+                    <input type="number" class="mini-input" placeholder="Kts" id="calSpd" oninput="calcTime()">
                 </div>
-                <div id="calTime" style="color:var(--accent); font-size:12px; margin-top:4px;">-- min</div>
+                <div id="calTime" style="margin-top:4px; color:#fff; font-weight:700;">-- min</div>
             </div>
         </div>
     </div>
@@ -256,23 +265,23 @@
             "RCKH": { name: "Kaohsiung Int'l", elev: 31, lat: 22.57, lon: 120.35, freqs: { ATIS: "127.8", TWR: "118.7", GND: "121.9" }, runways: [{ id: "09", len: "10335" }, { id: "27", len: "10335" }]},
             "RCMQ": { name: "Taichung Int'l", elev: 665, lat: 24.25, lon: 120.62, freqs: { TWR: "118.6", GND: "121.8" }, runways: [{ id: "18", len: "12005" }, { id: "36", len: "12005" }]}
         };
+        const WX_CODES={"BR":"Mist","FG":"Fog","FU":"Smoke","HZ":"Haze","DZ":"Drizzle","RA":"Rain","SN":"Snow","GR":"Hail","TS":"Thunderstorm","SH":"Showers","SKC":"Sky Clear","CLR":"Clear"};
 
         let currentIcao='RCTP', windData={dir:0,speed:0}, currentRunways=[], sunsetTime=null;
 
         function calcTime(){ const d=document.getElementById('calDist').value, s=document.getElementById('calSpd').value; if(d&&s) document.getElementById('calTime').innerText = Math.round((d/s)*60)+" min"; }
+        function decodeCode(){const c=document.getElementById('decodeInput').value.toUpperCase();document.getElementById('decodeRes').innerText=WX_CODES[c]||(c.length<2?"Type code...":"Unknown");}
 
         async function loadData() {
             const input = document.getElementById('icao').value.toUpperCase();
             if(!input) return; currentIcao = input;
             
-            // Link Logic
+            // Audio Link Logic
             document.getElementById('liveAtcBtn').href = `https://www.liveatc.net/search/?designator=${currentIcao}`;
             const twBtn = document.getElementById('twatcBtn');
-            
-            // UPDATE: Use Direct Stream Link
             if(currentIcao === 'RCTP') {
                 twBtn.classList.remove('hidden');
-                twBtn.href = "https://stream.twatc.net/RCTP_ATIS"; 
+                twBtn.href = "https://stream.twatc.net/RCTP_ATIS";
             } else { twBtn.classList.add('hidden'); }
 
             if(AIRPORT_DB[currentIcao]) renderInfo(AIRPORT_DB[currentIcao]);
@@ -357,8 +366,7 @@
             windData = { dir: d.wind_direction?.value||0, speed: d.wind_speed?.value||0 };
             document.getElementById('windText').innerText = `${windData.dir}° / ${windData.speed}kt`;
             const arrow = document.getElementById('windArrowIcon');
-            // Wind is FROM. Arrow points WITH. (Dir + 180).
-            arrow.style.transform = `rotate(${windData.dir + 180}deg)`;
+            arrow.style.transform = `rotate(${windData.dir}deg)`;
 
             document.getElementById('vis').innerText = d.visibility?.value + 'sm';
             document.getElementById('clouds').innerText = d.clouds?.[0]?.repr || 'CLR';
@@ -431,21 +439,26 @@
             const cx=40, cy=40, r=35;
             ctx.clearRect(0,0,80,80);
             
+            // Dial
             ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
             ctx.strokeStyle='#444'; ctx.lineWidth=2; ctx.stroke();
+            // Ticks
             for(let i=0;i<12;i++) {
                 ctx.save(); ctx.translate(cx,cy); ctx.rotate(i*30*Math.PI/180);
                 ctx.fillStyle='#666'; ctx.fillRect(-1, -r, 2, 4);
                 ctx.restore();
             }
+            // N symbol
             ctx.fillStyle='#fff'; ctx.font='10px Arial'; ctx.textAlign='center'; ctx.fillText('N', cx, cy-24);
 
+            // Runway (Light Grey Strip)
             if(rwyNum) {
                 ctx.save(); ctx.translate(cx,cy); ctx.rotate(rwyNum*10 * Math.PI/180);
                 ctx.fillStyle='#888'; ctx.fillRect(-4,-28,8,56);
                 ctx.restore();
             }
 
+            // Wind (Blue Arrow)
             if(windData.speed>0) {
                 ctx.save(); ctx.translate(cx,cy); ctx.rotate((windData.dir-180)*Math.PI/180);
                 ctx.beginPath(); ctx.moveTo(0,30); ctx.lineTo(0,10);
@@ -472,7 +485,7 @@
         }
 
         function switchTab(t) {
-            ['metar','taf','atc','info','tools','memo'].forEach(v => document.getElementById(v+'View').classList.add('hidden'));
+            ['metar','taf','atc','info','tools'].forEach(v => document.getElementById(v+'View').classList.add('hidden'));
             document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
             document.getElementById(t+'View').classList.remove('hidden');
             const els = document.querySelectorAll('.tab');
