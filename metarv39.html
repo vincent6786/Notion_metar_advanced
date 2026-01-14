@@ -3,28 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V44</title>
+    <title>Pilot EFB V45</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
             --border: #38383a; --accent: #0a84ff; 
             --danger: #ff453a; --warn: #ff9f0a; --success: #32d74b;
-            --mvfr: #0a84ff; --lifr: #bf5af2;
-            --timeline-bg: #2c2c2e; --strip-bg: #2c2c2e;
+            --mvfr: #0a84ff; --lifr: #bf5af2; --strip-bg: #2c2c2e;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
             background-color: var(--bg); color: var(--text);
             margin: 0; padding: 12px; font-size: 14px; line-height: 1.4;
             display: flex; flex-direction: column; gap: 12px;
+            max-width: 100vw; overflow-x: hidden;
         }
 
         /* HEADER */
         .top-bar { display: flex; align-items: center; gap: 8px; height: 40px; }
-        .search-wrapper { flex-grow: 1; position: relative; display: flex; align-items: center; }
         .search-box {
-            width: 100%; background: var(--card-bg); border-radius: 8px; 
+            flex-grow: 1; background: var(--card-bg); border-radius: 8px; 
             display: flex; align-items: center; border: 1px solid var(--border);
             padding-left: 8px; transition: border-color 0.2s;
         }
@@ -34,14 +33,12 @@
             padding: 8px 4px; text-transform: uppercase; font-weight: 700; 
             font-size: 16px; outline: none; width: 100%;
         }
-        .clear-btn { color: var(--sub-text); cursor: pointer; padding: 0 8px; font-size: 14px; display: none; }
         .icon-btn { 
             background: var(--card-bg); border: 1px solid var(--border); color: var(--accent); 
             width: 40px; height: 100%; border-radius: 8px; cursor: pointer; 
             display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 18px;
         }
         .badge { height: 100%; display: flex; align-items: center; justify-content: center; padding: 0 12px; border-radius: 8px; font-weight: 700; font-size: 15px; min-width: 60px; }
-        .badge-time { background: var(--card-bg); border: 1px solid var(--border); color: #fff; font-family: 'SF Mono', monospace; letter-spacing: -0.5px; }
         .badge-cat { background: var(--card-bg); color: var(--sub-text); }
         .cat-vfr { background-color: var(--success) !important; color: #000 !important; }
         .cat-mvfr { background-color: var(--mvfr) !important; color: #fff !important; }
@@ -49,125 +46,71 @@
         .cat-lifr { background-color: var(--lifr) !important; color: #fff !important; }
 
         /* TABS */
-        .tabs { display: flex; border-bottom: 1px solid var(--border); gap: 20px; padding: 0 4px; overflow-x: auto; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); gap: 20px; padding: 0 4px; overflow-x: auto; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
         .tab { padding: 10px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--sub-text); border-bottom: 2px solid transparent; text-transform: uppercase; white-space: nowrap; }
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        /* SECTIONS & UTILS */
+        /* CONTENT */
         .view-section { display: none; animation: fadeIn 0.2s; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .hidden { display: none !important; }
-        .section-title { font-weight:700; color:var(--sub-text); margin: 20px 0 8px 0; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* INFO & ATC */
+        
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-        .info-card { background: var(--card-bg); padding: 10px; border-radius: 8px; }
-        .ic-lbl { font-size: 11px; color: var(--sub-text); text-transform: uppercase; }
+        .info-card { background: var(--card-bg); padding: 10px; border-radius: 8px; border: 1px solid #2c2c2e; }
+        .ic-lbl { font-size: 10px; color: var(--sub-text); text-transform: uppercase; font-weight: 700; }
         .ic-val { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
-        .ic-val-sm { font-size: 13px; font-weight: 500; color: #fff; margin-top: 2px; font-family: 'SF Mono', monospace; }
+        .section-title { font-weight:700; color:var(--sub-text); margin: 20px 0 8px 0; font-size:11px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* FREQUENCIES */
         .freq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-        .freq-card { background: var(--card-bg); border-radius: 8px; padding: 10px; text-align: center; }
-        .freq-type { font-size: 11px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 4px; }
-        .freq-val { font-size: 16px; font-weight: 700; color: var(--accent); font-family: 'SF Mono', monospace; }
+        .freq-card { background: var(--card-bg); border-radius: 8px; padding: 10px; text-align: center; border: 1px solid #2c2c2e; }
+        .freq-val { font-size: 15px; font-weight: 700; color: var(--accent); font-family: 'SF Mono', monospace; }
 
-        /* METAR & TAF */
-        .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
-        .metar-card.full-width { grid-column: span 2; }
-        .m-label { font-size: 11px; color: var(--sub-text); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-        .m-value { font-size: 16px; font-weight: 600; color: #fff; }
-        .m-sub { font-size: 12px; color: var(--sub-text); font-weight: 400; margin-left: 4px;}
-        .metar-footer { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 4px; font-size: 12px; color: var(--sub-text); }
-        .raw-text { font-family: 'SF Mono', monospace; font-size: 11px; color: #d0d0d0; margin-top: 6px; line-height: 1.4; white-space: pre-wrap; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 6px; }
-
-        /* RUNWAY VISUALIZER */
-        .rwy-section-head { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px 0; }
-        .unit-toggle { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; cursor: pointer; }
-        .u-opt { padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--sub-text); }
-        .u-opt.active { background: #fff; color: #000; }
-        .rwy-complex { margin-bottom: 16px; }
-        .rc-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px; padding: 0 4px; }
-        .rc-idents { font-size: 16px; font-weight: 800; font-family: 'SF Mono', monospace; }
-        .rc-dims { font-size: 13px; color: #fff; font-weight: 600; }
-        .rc-strip { height: 44px; background: var(--strip-bg); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; overflow: hidden; position: relative; }
-        .rc-id-v { font-size: 12px; font-weight: 700; color: #fff; writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 0 4px; }
-        .rc-data { flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 12px; }
-        .wind-comp { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: #fff; }
-        .wc-arrow { font-size: 14px; }
-        .rc-rose { width: 36px; height: 36px; margin-left: 8px; }
-        .wind-vis-container { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-top: 12px; display: flex; gap: 15px; align-items: center; }
-        .wind-controls { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
-        .wind-stats { font-family: 'SF Mono', monospace; font-size: 13px; color: #fff; margin-top: 5px; }
-        .stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; }
-        select.stealth-select { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; font-weight: 600; outline: none; }
-
-        /* TAF STYLES */
-        .taf-viz-container { margin-top: 10px; }
-        .taf-bar { display: flex; height: 32px; width: 100%; background: #2c2c2e; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
-        .taf-axis { display: flex; width: 100%; margin-top: 4px; margin-bottom: 12px; }
-        .taf-block { cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: rgba(0,0,0,0.6); border-right: 1px solid rgba(0,0,0,0.1); transition: opacity 0.2s; text-transform: uppercase; }
-        .taf-block:hover { opacity: 0.8; }
-        .taf-block.selected { border: 2px solid #fff; z-index: 10; box-shadow: 0 0 10px rgba(0,0,0,0.5); color: #000; }
-        .taf-axis-lbl { text-align: center; font-size: 10px; color: var(--sub-text); font-family: 'SF Mono', monospace; border-right: 1px solid transparent; }
-        .taf-detail-card { background: var(--card-bg); border-radius: 8px; padding: 16px; border-left: 4px solid var(--sub-text); animation: slideDown 0.2s ease-out; }
-        .td-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
-        .td-time { font-family: 'SF Mono', monospace; font-size: 14px; font-weight: 700; color: #fff; }
-        .td-type { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #444; color: #fff; text-transform: uppercase; }
-        .td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .td-item { display: flex; flex-direction: column; }
-        .td-lbl { font-size: 11px; color: var(--sub-text); margin-bottom: 2px; }
-        .td-val { font-size: 14px; font-weight: 600; color: #fff; }
-        .atc-btn { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 16px; border-radius: 10px; text-decoration: none; color: #fff; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: background 0.2s; margin-bottom: 10px; }
-        .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
-        .tool-btn { background: #333; border: 1px solid var(--border); color: #fff; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; margin-top: 4px; font-weight: 600; }
-        .tool-btn:hover { background: #444; }
-        .code-list { background: #222; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 12px; max-height: 200px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .code-item { color: #aaa; } .code-item b { color: var(--accent); }
-        .timer-display { font-family: 'SF Mono', monospace; font-size: 32px; font-weight: 700; text-align: center; margin: 10px 0; letter-spacing: 2px; }
-        .timer-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .t-btn { padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; color: #fff; }
-        .tb-start { background: var(--success); color: #000; } .tb-stop { background: var(--danger); } .tb-lap { background: var(--accent); }
-        .lap-list { max-height: 100px; overflow-y: auto; margin-top: 10px; border-top: 1px solid var(--border); }
-        .lap-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; font-size: 12px; color: var(--sub-text); font-family: 'SF Mono', monospace; }
-        .conv-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-        .conv-inp { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; }
-        .conv-lbl { font-size: 10px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 2px; }
-
-        /* WORLD CLOCK STYLES (UPDATED) */
+        /* RUNWAY & WIND */
+        .wind-vis-container { background: var(--card-bg); border-radius: 8px; padding: 12px; display: flex; gap: 15px; align-items: center; border: 1px solid #2c2c2e; }
+        .rc-strip { height: 44px; background: var(--strip-bg); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; position: relative; margin-bottom: 16px; }
+        .rc-id-v { font-size: 12px; font-weight: 700; writing-mode: vertical-rl; transform: rotate(180deg); }
+        
+        /* WORLD CLOCK */
         .world-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
-        .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c2c2e; }
-        .clock-left { display: flex; flex-direction: column; }
-        .clock-rel { font-size: 11px; color: var(--sub-text); margin-bottom: 2px; text-transform: uppercase; }
-        .clock-city { font-weight: 700; font-size: 18px; color: #fff; }
-        .clock-codes { font-size: 12px; color: var(--accent); font-weight: 600; margin-left: 6px; font-family: 'SF Mono', monospace; }
-        .clock-time { font-family: 'SF Mono', monospace; font-size: 28px; font-weight: 400; color: #fff; letter-spacing: 0.5px; }
-        .clock-utc { color: var(--success); font-weight: 600;}
-        .del-btn { color: var(--danger); font-size: 16px; margin-left: 10px; cursor: pointer; opacity: 0.4; padding: 4px; }
-        .del-btn:hover { opacity: 1; }
+        .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2c2c2e; }
+        .clock-time { font-family: 'SF Mono', monospace; font-size: 26px; font-weight: 400; color: #fff; letter-spacing: -0.5px; }
+        .clock-utc { color: var(--success); font-weight: 600; }
 
-        /* SEARCH ADD CITY */
-        .add-city-box { display: flex; gap: 8px; margin-bottom: 12px; background: #2c2c2e; padding: 8px; border-radius: 8px; }
-        .ac-input { flex: 1; background: #1c1c1e; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; font-size:13px; }
-        .ac-btn { background: var(--accent); color: #fff; border: none; padding: 0 16px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+        /* TOOLS & UTILS */
+        .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; border: 1px solid #2c2c2e; }
+        .raw-text { font-family: 'SF Mono', monospace; font-size: 11px; color: #d0d0d0; margin-top: 6px; line-height: 1.4; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; word-break: break-all; }
+        
+        /* SPINNER */
+        .spinner {
+            width: 16px; height: 16px; border: 2px solid var(--sub-text); border-top: 2px solid var(--accent);
+            border-radius: 50%; animation: spin 1s linear infinite; display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading .spinner { display: block; }
+        .loading .search-icon { display: none; }
+
+        .hidden { display: none !important; }
+        .btn-act { background: var(--accent); color: #fff; border:none; padding: 4px 12px; border-radius:4px; cursor:pointer; font-weight:600; }
+        input, select, button { outline: none; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <div class="search-wrapper">
-            <div class="search-box">
-                <span>🔍</span>
-                <input type="text" id="icao" list="airports" placeholder="Search..." onkeydown="if(event.key==='Enter') loadData()" oninput="toggleClearBtn()">
-                <span id="clearBtn" class="clear-btn" onclick="clearSearch()">✖</span>
-            </div>
-            <datalist id="airports">
-                <option value="RCTP"><option value="RCSS"><option value="KMCC"><option value="RJAA"><option value="VHHH">
-            </datalist>
+        <div class="search-box" id="searchContainer">
+            <span class="search-icon">🔍</span>
+            <div class="spinner"></div>
+            <input type="text" id="icao" list="airports" placeholder="Search..." onkeydown="if(event.key==='Enter') loadData()">
+            <span style="color:#888; padding:0 8px; cursor:pointer;" onclick="document.getElementById('icao').value='';document.getElementById('icao').focus()">✖</span>
         </div>
+        <datalist id="airports"><option value="RCTP"><option value="RCSS"><option value="KMCC"><option value="RJAA"><option value="VHHH"></datalist>
+        
         <div id="headerCat" class="badge badge-cat">--</div>
-        <div id="zuluTime" class="badge badge-time">--:--Z</div>
-        <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
+        <button class="icon-btn" onclick="loadData()" title="Refresh">⟳</button>
+        <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Map">🗺️</a>
     </div>
 
     <div class="tabs">
@@ -182,397 +125,197 @@
     <div id="tab-metar" class="view-section active">
         <div class="wind-vis-container">
             <canvas id="windRose" width="140" height="140" style="width:140px; height:140px;"></canvas>
-            <div class="wind-controls">
-                <div class="m-label">Selected Runway</div>
-                <select id="rwySelect" class="stealth-select" onchange="drawWindRose()">
-                    <option value="">Loading...</option>
-                </select>
-                <div class="wind-stats">
-                    <div class="stat-row"><span class="info-label">Headwind</span> <span id="valHW">--</span></div>
-                    <div class="stat-row"><span class="info-label">Crosswind</span> <span id="valXW">--</span></div>
+            <div style="flex-grow:1; display:flex; flex-direction:column; gap:8px;">
+                <div class="ic-lbl">Selected Runway</div>
+                <select id="rwySelect" style="background:#2c2c2e; color:#fff; border:1px solid #38383a; padding:6px; border-radius:6px; width:100%;" onchange="drawWindRose()"></select>
+                <div style="font-family:'SF Mono',monospace; font-size:13px; margin-top:4px;">
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#8e8e93">Headwind</span> <span id="valHW">--</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#8e8e93">Crosswind</span> <span id="valXW">--</span></div>
                 </div>
             </div>
         </div>
         <div class="raw-text" id="rawMetar">Enter an airport code above.</div>
         <div class="metar-grid">
-            <div class="metar-card"><div class="m-label">WIND</div><div class="m-value" id="mWind">--</div></div>
-            <div class="metar-card"><div class="m-label">VISIBILITY</div><div class="m-value" id="mVis">--</div></div>
-            <div class="metar-card"><div class="m-label">CEILING</div><div class="m-value" id="mCeil">--</div></div>
-            <div class="metar-card"><div class="m-label">ALTIMETER</div><div class="m-value" id="mAlt">--</div></div>
-            <div class="metar-card full-width"><div class="m-label">TEMP / DEWPOINT</div><div class="m-value"><span id="mTempC">--</span> <span id="mTempF" class="m-sub">--</span></div></div>
+            <div class="metar-card"><div class="ic-lbl">WIND</div><div class="ic-val" id="mWind">--</div></div>
+            <div class="metar-card"><div class="ic-lbl">VISIBILITY</div><div class="ic-val" id="mVis">--</div></div>
+            <div class="metar-card"><div class="ic-lbl">CEILING</div><div class="ic-val" id="mCeil">--</div></div>
+            <div class="metar-card"><div class="ic-lbl">ALTIMETER</div><div class="ic-val" id="mAlt">--</div></div>
+            <div class="metar-card" style="grid-column:span 2"><div class="ic-lbl">TEMP / DEW</div><div class="ic-val"><span id="mTempC">--</span> <span id="mTempF" style="font-size:13px; color:#888;">--</span></div></div>
         </div>
-        <div class="metar-footer"><span id="mAge">--</span><span id="mSpread">Spread: --</span></div>
+        <div style="display:flex; justify-content:space-between; margin-top:8px; color:#888; font-size:11px;"><span id="mAge">--</span><span id="mSpread">Spread: --</span></div>
     </div>
 
     <div id="tab-taf" class="view-section">
-        <div style="display:flex; justify-content:space-between; color:var(--sub-text); font-size:12px; margin-bottom:8px;">
-            <span>Forecast Visualization</span><span id="tafIssued">--</span>
-        </div>
-        <div class="taf-viz-container">
-            <div id="tafBar" class="taf-bar"></div>
-            <div id="tafAxis" class="taf-axis"></div>
-            <div id="tafDetail" class="taf-detail-card hidden">
-                <div class="td-header"><span id="tdTime" class="td-time">--</span><span id="tdType" class="td-type">--</span></div>
-                <div class="td-grid">
-                    <div class="td-item"><span class="td-lbl">WIND</span><span id="tdWind" class="td-val">--</span></div>
-                    <div class="td-item"><span class="td-lbl">VISIBILITY</span><span id="tdVis" class="td-val">--</span></div>
-                    <div class="td-item"><span class="td-lbl">WEATHER</span><span id="tdWx" class="td-val">--</span></div>
-                    <div class="td-item"><span class="td-lbl">CLOUDS</span><span id="tdCloud" class="td-val">--</span></div>
-                </div>
+        <div style="display:flex; justify-content:space-between; color:#888; font-size:11px; margin-bottom:8px;"><span>Forecast</span><span id="tafIssued">--</span></div>
+        <div style="background:#2c2c2e; height:32px; border-radius:6px; display:flex; overflow:hidden;" id="tafBar"></div>
+        <div style="display:flex; margin-top:4px; font-family:'SF Mono'; font-size:10px; color:#888;" id="tafAxis"></div>
+        <div id="tafDetail" class="info-card hidden" style="margin-top:10px; border-left:4px solid #888;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span id="tdTime" style="font-weight:700;">--</span><span id="tdType" style="background:#444; padding:2px 6px; border-radius:4px; font-size:10px;">--</span></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div><div class="ic-lbl">Wind</div><div id="tdWind" style="font-weight:600;">--</div></div>
+                <div><div class="ic-lbl">Vis</div><div id="tdVis" style="font-weight:600;">--</div></div>
+                <div><div class="ic-lbl">Wx</div><div id="tdWx" style="font-weight:600;">--</div></div>
+                <div><div class="ic-lbl">Clouds</div><div id="tdCloud" style="font-weight:600;">--</div></div>
             </div>
         </div>
-        <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">Raw TAF</div>
+        <div class="section-title">Raw Text</div>
         <div class="raw-text" id="rawTaf">Loading...</div>
-        <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
-        <div id="notamList" class="raw-text" style="max-height:200px; overflow-y:auto; font-size:11px;">Loading...</div>
+        <div class="section-title">NOTAMs</div>
+        <div id="notamList" class="raw-text" style="max-height:200px; overflow-y:auto;">Loading...</div>
     </div>
-    
+
     <div id="tab-info" class="view-section">
-        <div style="font-size:20px; font-weight:700; margin-bottom:4px;" id="infoName">Unknown</div>
-        <div style="font-size:12px; color:var(--sub-text); margin-bottom:12px;" id="infoLoc">--</div>
+        <div style="font-size:20px; font-weight:700;" id="infoName">Unknown</div>
+        <div style="font-size:12px; color:#888; margin-bottom:12px;" id="infoLoc">--</div>
+        
         <div class="info-grid">
             <div class="info-card"><div class="ic-lbl">ICAO / IATA</div><div class="ic-val" id="infoCodes">--</div></div>
             <div class="info-card"><div class="ic-lbl">Elevation</div><div class="ic-val" id="infoElev">--</div></div>
-            <div class="info-card" style="grid-column: span 2;"><div class="ic-lbl">Coordinates</div><div class="ic-val-sm" id="infoCoords">--</div></div>
         </div>
+
         <div class="section-title">FREQUENCIES</div>
-        <div id="freqContainer" class="freq-grid">
-            <div style="grid-column:span 3; font-size:12px; color:#555; text-align:center;">No Data</div>
-        </div>
-        <div class="section-title">ATMOSPHERE & TIME</div>
+        <div id="freqContainer" class="freq-grid"></div>
+
+        <div class="section-title">ATMOSPHERE</div>
         <div class="info-grid">
             <div class="info-card"><div class="ic-lbl">Pressure Alt</div><div class="ic-val" id="calcPA">--</div></div>
             <div class="info-card"><div class="ic-lbl">Density Alt</div><div class="ic-val" id="calcDA">--</div></div>
             <div class="info-card"><div class="ic-lbl">ISA Dev</div><div class="ic-val" id="calcISA">--</div></div>
-            <div class="info-card"><div class="ic-lbl">Local Offset (Est)</div><div class="ic-val" id="calcOffset">--</div></div>
-            <div class="info-card"><div class="ic-lbl">Sunrise/Set</div><div class="ic-val" style="font-size:13px;" id="infoSun">--</div></div>
-            <div class="info-card"><div class="ic-lbl">Mag Variation</div><div class="ic-val" id="infoMag">--</div></div>
+            <div class="info-card"><div class="ic-lbl">UTC Offset</div><div class="ic-val" id="calcOffset">--</div></div>
         </div>
-        <div class="rwy-section-head">
-            <span style="font-weight:700; color:var(--sub-text);">RUNWAYS</span>
-            <div class="unit-toggle" onclick="toggleUnits()">
-                <div id="optM" class="u-opt active">m</div>
-                <div id="optFt" class="u-opt">ft</div>
-            </div>
-        </div>
+
+        <div class="section-title">RUNWAYS</div>
         <div id="runwayListComplex"></div>
     </div>
-    
+
     <div id="tab-atc" class="view-section">
-        <div class="info-card" style="margin-bottom: 20px;">
+        <div class="info-card" style="margin-bottom:20px;">
             <div class="ic-lbl" style="margin-bottom:8px;">RCTP ATIS (Live Stream)</div>
-            <audio controls style="width: 100%; height: 32px; filter: invert(0.9);">
-                <source src="https://stream.twatc.net/RCTP_ATIS" type="audio/mpeg">
-                Your browser does not support audio.
-            </audio>
+            <audio controls style="width:100%; height:32px; filter:invert(0.9);"><source src="https://stream.twatc.net/RCTP_ATIS" type="audio/mpeg"></audio>
         </div>
-        <div class="section-title">EXTERNAL RESOURCES</div>
-        <div style="display: flex; flex-direction: column;">
-            <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span style="color:var(--sub-text)">↗</span></a>
-            <a href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span style="color:var(--sub-text)">↗</span></a>
-            <a href="https://aviationlisteners.aero" target="_blank" class="atc-btn"><span>🎧 AviationListeners.aero</span><span style="color:var(--sub-text)">↗</span></a>
+        <div class="section-title">LINKS</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <a href="https://beta.twatc.net/" target="_blank" class="info-card" style="text-decoration:none; color:#fff; display:flex; justify-content:space-between;"><b>🇹🇼 Virtual ATC</b><span>↗</span></a>
+            <a href="https://www.liveatc.net/" target="_blank" class="info-card" style="text-decoration:none; color:#fff; display:flex; justify-content:space-between;"><b>📡 LiveATC.net</b><span>↗</span></a>
         </div>
     </div>
 
     <div id="tab-world" class="view-section">
-        <div class="add-city-box">
-            <input type="text" id="newCityInput" class="ac-input" list="cityData" placeholder="Search City, ICAO or IATA...">
-            <datalist id="cityData">
-                </datalist>
-            <button class="ac-btn" onclick="addCustomCity()">Add</button>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <input type="text" id="newCityInput" list="cityData" placeholder="Add City..." style="flex:1; padding:8px; border-radius:6px; border:1px solid #38383a; background:#1c1c1e; color:#fff;">
+            <datalist id="cityData"></datalist>
+            <button class="btn-act" onclick="addCustomCity()">+</button>
         </div>
-
-        <div class="world-grid" id="worldContainer">
-            </div>
+        <div id="worldContainer" class="world-grid"></div>
     </div>
 
     <div id="tab-tools" class="view-section">
-        <div class="section-title" style="margin-top:0;">METAR/TAF Helper</div>
-        <input type="text" placeholder="Decode (e.g. +TSRA, BCFG)" class="conv-inp" oninput="decode(this.value)">
-        <div id="decodeOut" style="color:var(--accent); margin:4px 0 8px 0; font-weight:600; font-size:14px; min-height:18px;">...</div>
-        <button class="tool-btn" onclick="document.getElementById('codeList').classList.toggle('hidden')">Show Reference Codes</button>
-        <div id="codeList" class="code-list hidden"></div>
-
-        <div class="section-title">Flight Timer</div>
+        <div class="section-title" style="margin-top:0;">METAR Helper</div>
+        <input type="text" placeholder="Code (e.g. +TSRA)" style="width:100%; padding:8px; border-radius:6px; border:1px solid #38383a; background:#1c1c1e; color:#fff;" oninput="decode(this.value)">
+        <div id="decodeOut" style="color:var(--accent); font-weight:700; margin-top:4px; min-height:20px;">...</div>
+        
+        <div class="section-title">Timer</div>
         <div class="info-card">
-            <div id="timerDisplay" class="timer-display">00:00:00</div>
-            <div class="timer-controls">
-                <button class="t-btn tb-start" onclick="startTimer()">Start</button>
-                <button class="t-btn tb-lap" onclick="lapTimer()">Lap</button>
-                <button class="t-btn tb-stop" onclick="stopTimer()">Stop</button>
+            <div id="timerDisplay" style="font-family:'SF Mono'; font-size:32px; text-align:center; font-weight:700;">00:00:00</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:8px;">
+                <button class="btn-act" style="background:var(--success); color:#000;" onclick="startTimer()">Start</button>
+                <button class="btn-act" onclick="lapTimer()">Lap</button>
+                <button class="btn-act" style="background:var(--danger);" onclick="stopTimer()">Stop</button>
             </div>
-            <div id="lapList" class="lap-list"></div>
+            <div id="lapList" style="max-height:80px; overflow-y:auto; margin-top:8px; font-size:12px; font-family:'SF Mono';"></div>
         </div>
-
-        <div class="section-title">ISA Calculator</div>
-        <div class="info-card">
-            <div style="display:flex; gap:8px;">
-                <div style="flex:1;"><div class="conv-lbl">Altitude (ft)</div><input type="number" id="isaInput" class="conv-inp" oninput="calcIsaTool()" placeholder="e.g. 5000"></div>
-                <div style="flex:1;"><div class="conv-lbl">Std Temp</div><div id="isaTempOut" class="ic-val">--</div></div>
-                <div style="flex:1;"><div class="conv-lbl">Std Press</div><div id="isaPressOut" class="ic-val" style="font-size:13px;">--</div></div>
-            </div>
-        </div>
-
-        <div class="section-title">Quick Convert</div>
-        <div class="info-card">
-            <div class="conv-row">
-                <div style="flex:1"><div class="conv-lbl">Knots</div><input type="number" id="cKts" class="conv-inp" oninput="convSpeed('kts')"></div>
-                <div style="flex:1"><div class="conv-lbl">MPH</div><input type="number" id="cMph" class="conv-inp" oninput="convSpeed('mph')"></div>
-                <div style="flex:1"><div class="conv-lbl">KPH</div><input type="number" id="cKph" class="conv-inp" oninput="convSpeed('kph')"></div>
-            </div>
-            <div class="conv-row">
-                <div style="flex:1"><div class="conv-lbl">inHg</div><input type="number" id="cInhg" class="conv-inp" oninput="convPress('inhg')"></div>
-                <div style="flex:1"><div class="conv-lbl">hPa</div><input type="number" id="cHpa" class="conv-inp" oninput="convPress('hpa')"></div>
-            </div>
+        
+        <div class="section-title">ISA Calc</div>
+        <div class="info-card" style="display:flex; gap:8px;">
+            <div style="flex:1"><div class="ic-lbl">Alt (ft)</div><input type="number" id="isaInput" oninput="calcIsaTool()" style="width:100%; background:transparent; border:none; color:#fff; border-bottom:1px solid #555;"></div>
+            <div style="flex:1"><div class="ic-lbl">Temp</div><div id="isaTempOut" class="ic-val">--</div></div>
         </div>
     </div>
 
     <script>
         const TOKEN = 'dMzS0-M9_ku1bYySTtsq4pZE8fEEiTUJaNtvqSDEgUs';
         
-        // --- GLOBALS ---
-        let currentWind = { dir:0, spd:0 }; 
-        let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
-        let stationData = null;
-        let useMetric = true; 
-        let tafDataCache = null;
-        let timerInterval = null, startTime = 0, elapsed = 0, running = false;
+        // --- STATE ---
+        let currentWind = { dir:0, spd:0 }, currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
+        let stationData = null, useMetric = true, tafDataCache = null;
+        let cityList = [], timerInterval = null, startTime = 0, elapsed = 0, running = false;
 
-        // --- TABS & UI ---
+        // --- CORE FUNCTIONS ---
         function setTab(name) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+name).classList.add('active');
             event.target.classList.add('active');
-            if(name === 'info' && stationData) renderRunwaysComplex();
-        }
-        function toggleUnits() {
-            useMetric = !useMetric;
-            document.getElementById('optM').className = useMetric ? 'u-opt active' : 'u-opt';
-            document.getElementById('optFt').className = !useMetric ? 'u-opt active' : 'u-opt';
-            if(stationData) renderRunwaysComplex();
-        }
-        function toggleClearBtn() {
-            const val = document.getElementById('icao').value;
-            document.getElementById('clearBtn').style.display = val ? 'block' : 'none';
-        }
-        function clearSearch() { document.getElementById('icao').value = ''; document.getElementById('icao').focus(); toggleClearBtn(); }
-        
-        // --- SMART WORLD CLOCK ---
-        // Embedded Database of Major Aviation Hubs
-        const AVIATION_CITIES = [
-            {n:"Taipei",z:"Asia/Taipei",icao:"RCTP",iata:"TPE"}, {n:"Tokyo Narita",z:"Asia/Tokyo",icao:"RJAA",iata:"NRT"}, {n:"Tokyo Haneda",z:"Asia/Tokyo",icao:"RJTT",iata:"HND"},
-            {n:"New York JFK",z:"America/New_York",icao:"KJFK",iata:"JFK"}, {n:"London Heathrow",z:"Europe/London",icao:"EGLL",iata:"LHR"}, {n:"Los Angeles",z:"America/Los_Angeles",icao:"KLAX",iata:"LAX"},
-            {n:"Sydney",z:"Australia/Sydney",icao:"YSSY",iata:"SYD"}, {n:"Brisbane",z:"Australia/Brisbane",icao:"YBBN",iata:"BNE"}, {n:"Singapore",z:"Asia/Singapore",icao:"WSSS",iata:"SIN"},
-            {n:"Hong Kong",z:"Asia/Hong_Kong",icao:"VHHH",iata:"HKG"}, {n:"Dubai",z:"Asia/Dubai",icao:"OMDB",iata:"DXB"}, {n:"Paris CDG",z:"Europe/Paris",icao:"LFPG",iata:"CDG"},
-            {n:"Frankfurt",z:"Europe/Berlin",icao:"EDDF",iata:"FRA"}, {n:"Amsterdam",z:"Europe/Amsterdam",icao:"EHAM",iata:"AMS"}, {n:"Chicago O'Hare",z:"America/Chicago",icao:"KORD",iata:"ORD"},
-            {n:"San Francisco",z:"America/Los_Angeles",icao:"KSFO",iata:"SFO"}, {n:"Seattle",z:"America/Los_Angeles",icao:"KSEA",iata:"SEA"}, {n:"Vancouver",z:"America/Vancouver",icao:"CYVR",iata:"YVR"},
-            {n:"Toronto",z:"America/Toronto",icao:"CYYZ",iata:"YYZ"}, {n:"Incheon",z:"Asia/Seoul",icao:"RKSI",iata:"ICN"}, {n:"Bangkok",z:"Asia/Bangkok",icao:"VTBS",iata:"BKK"},
-            {n:"Beijing",z:"Asia/Shanghai",icao:"ZBAA",iata:"PEK"}, {n:"Shanghai Pudong",z:"Asia/Shanghai",icao:"ZSPD",iata:"PVG"}, {n:"Mumbai",z:"Asia/Kolkata",icao:"VABB",iata:"BOM"},
-            {n:"Delhi",z:"Asia/Kolkata",icao:"VIDP",iata:"DEL"}, {n:"Doha",z:"Asia/Qatar",icao:"OTHH",iata:"DOH"}, {n:"Istanbul",z:"Europe/Istanbul",icao:"LTFM",iata:"IST"},
-            {n:"Zurich",z:"Europe/Zurich",icao:"LSZH",iata:"ZRH"}, {n:"Rome",z:"Europe/Rome",icao:"LIRF",iata:"FCO"}, {n:"Madrid",z:"Europe/Madrid",icao:"LEMD",iata:"MAD"},
-            {n:"Miami",z:"America/New_York",icao:"KMIA",iata:"MIA"}, {n:"Dallas",z:"America/Chicago",icao:"KDFW",iata:"DFW"}, {n:"Atlanta",z:"America/New_York",icao:"KATL",iata:"ATL"},
-            {n:"Denver",z:"America/Denver",icao:"KDEN",iata:"DEN"}, {n:"Las Vegas",z:"America/Los_Angeles",icao:"KLAS",iata:"LAS"}, {n:"Honolulu",z:"Pacific/Honolulu",icao:"PHNL",iata:"HNL"},
-            {n:"Auckland",z:"Pacific/Auckland",icao:"NZAA",iata:"AKL"}, {n:"Melbourne",z:"Australia/Melbourne",icao:"YMML",iata:"MEL"}, {n:"Johannesburg",z:"Africa/Johannesburg",icao:"FAOR",iata:"JNB"},
-            {n:"Cairo",z:"Africa/Cairo",icao:"HECA",iata:"CAI"}, {n:"Sao Paulo",z:"America/Sao_Paulo",icao:"SBGR",iata:"GRU"}, {n:"Mexico City",z:"America/Mexico_City",icao:"MMMX",iata:"MEX"}
-        ];
-
-        let cityList = [];
-
-        function initWorldClock() {
-            // Populate Datalist
-            const dl = document.getElementById('cityData');
-            AVIATION_CITIES.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = `${c.n} (${c.icao}/${c.iata})`;
-                dl.appendChild(opt);
-            });
-
-            // Load Saved
-            const stored = localStorage.getItem('efb_cities_v44');
-            if(stored) {
-                cityList = JSON.parse(stored);
-            } else {
-                cityList = [
-                    { n: "UTC (Zulu)", z: "UTC", codes: "", id: 1 },
-                    { n: "Taipei", z: "Asia/Taipei", codes: "RCTP/TPE", id: 2 },
-                    { n: "New York", z: "America/New_York", codes: "KJFK/JFK", id: 3 }
-                ];
-            }
+            if(name==='info' && stationData) renderRunwaysComplex();
         }
 
-        function addCustomCity() {
-            const val = document.getElementById('newCityInput').value;
-            if(!val) return;
-            
-            // Find in DB
-            // Format "Name (ICAO/IATA)"
-            let found = AVIATION_CITIES.find(c => `${c.n} (${c.icao}/${c.iata})` === val);
-            
-            // Fallback: Try loose match
-            if(!found) {
-                const upper = val.toUpperCase();
-                found = AVIATION_CITIES.find(c => c.icao === upper || c.iata === upper || c.n.toUpperCase().includes(upper));
-            }
-
-            if(found) {
-                cityList.push({
-                    n: found.n,
-                    z: found.z,
-                    codes: `${found.icao}/${found.iata}`,
-                    id: Date.now()
-                });
-                saveCities();
-                document.getElementById('newCityInput').value = '';
-                updateClock();
-            } else {
-                alert("City not found in database. Try using ICAO code (e.g., KJFK).");
-            }
-        }
-
-        function removeCity(id) {
-            cityList = cityList.filter(c => c.id !== id);
-            saveCities();
-            updateClock();
-        }
-
-        function saveCities() { localStorage.setItem('efb_cities_v44', JSON.stringify(cityList)); }
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('zuluTime').innerText = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
-
-            if(document.getElementById('tab-world').classList.contains('active')) {
-                const container = document.getElementById('worldContainer');
-                container.innerHTML = '';
-                
-                cityList.forEach(c => {
-                    // Time String
-                    const timeStr = now.toLocaleTimeString('en-US', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
-                    
-                    // Relative Day/Hour Logic
-                    // 1. Get current hour in local and target
-                    const localHour = now.getHours(); 
-                    const targetDateStr = now.toLocaleString('en-US', { timeZone: c.z });
-                    const targetDate = new Date(targetDateStr);
-                    const targetHour = targetDate.getHours();
-                    
-                    // 2. Day Diff
-                    const dayDiffVal = targetDate.getDate() - now.getDate();
-                    let dayLabel = "Today";
-                    // Handle month rollover simply by comparing date objects diff in ms
-                    // Precise diff in hours:
-                    const diffMs = targetDate - now; // This is tricky because 'now' is local instant.
-                    // Better approach: Get UTC offset difference.
-                    // Actually, simpler: Just check dayDiffVal.
-                    if (dayDiffVal === 1 || dayDiffVal < -20) dayLabel = "Tomorrow";
-                    if (dayDiffVal === -1 || dayDiffVal > 20) dayLabel = "Yesterday";
-
-                    // 3. Relative Hours (+8 HRS)
-                    // We need rough offset. 
-                    // Hack: use the hour diff + day diff * 24
-                    let hourDiff = (targetHour - localHour);
-                    if(dayLabel === "Tomorrow") hourDiff += 24;
-                    if(dayLabel === "Yesterday") hourDiff -= 24;
-                    const sign = hourDiff >= 0 ? "+" : "";
-                    const relTime = `${dayLabel}, ${sign}${hourDiff} HRS`;
-
-                    // Style
-                    const isUTC = c.z === "UTC";
-                    const timeClass = isUTC ? "clock-time clock-utc" : "clock-time";
-                    const delHtml = c.id !== 1 ? `<span class="del-btn" onclick="removeCity(${c.id})">×</span>` : '';
-
-                    const card = document.createElement('div');
-                    card.className = 'clock-card';
-                    card.innerHTML = `
-                        <div class="clock-left">
-                            <div class="clock-rel">${relTime}</div>
-                            <div>
-                                <span class="clock-city">${c.n}</span>
-                                <span class="clock-codes">${c.codes}</span>
-                            </div>
-                        </div>
-                        <div style="display:flex; align-items:center;">
-                            <div class="${timeClass}">${timeStr}</div>
-                            ${delHtml}
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-            }
-        }
-        setInterval(updateClock, 1000); 
-
-        // --- DATA LOADING & OTHER TABS ---
         async function loadData() {
             const icao = document.getElementById('icao').value.toUpperCase();
             if(!icao) return;
             document.getElementById('icao').blur();
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
-            updateHeaderCat('Loading', '');
+            
+            // Loading UI
+            document.getElementById('searchContainer').classList.add('loading');
+            updateHeaderCat('Load', 'cat-vfr');
 
             const headers = { 'Authorization': `Bearer ${TOKEN}` };
-            const pStation = fetch(`https://avwx.rest/api/station/${icao}`, {headers}).then(res => { if(!res.ok) throw new Error('Station'); return res.json(); });
-            const pMetar = fetch(`https://avwx.rest/api/metar/${icao}`, {headers}).then(res => res.json());
-            const pTaf = fetch(`https://avwx.rest/api/taf/${icao}`, {headers}).then(res => res.json());
-            const pNotam = fetch(`https://avwx.rest/api/notam/${icao}`, {headers}).then(res => res.json());
-
             try {
-                const [station, metar] = await Promise.all([pStation, pMetar]);
+                // Parallel Fetch
+                const [station, metar, taf, notam] = await Promise.all([
+                    fetch(`https://avwx.rest/api/station/${icao}`, {headers}).then(r=>r.ok?r.json():null),
+                    fetch(`https://avwx.rest/api/metar/${icao}`, {headers}).then(r=>r.ok?r.json():null),
+                    fetch(`https://avwx.rest/api/taf/${icao}`, {headers}).then(r=>r.ok?r.json():null),
+                    fetch(`https://avwx.rest/api/notam/${icao}`, {headers}).then(r=>r.ok?r.json():null)
+                ]);
+
+                if(station) {
+                    stationData = station;
+                    renderInfo(station);
+                    const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
+                    (station.runways||[]).forEach(r => { sel.add(new Option(`RWY ${r.ident1}`, r.ident1)); sel.add(new Option(`RWY ${r.ident2}`, r.ident2)); });
+                    if(station.runways.length>0) sel.value = station.runways[0].ident1;
+                }
                 
-                stationData = station;
-                currentWind = { dir: metar.wind_direction?.value||0, spd: metar.wind_speed?.value||0 };
-                let altVal = metar.altimeter?.value || 1013;
-                let altUnit = 'hPa';
-                if(altVal < 200) altUnit = 'inHg';
-                currentMetar = { temp: metar.temperature?.value || 15, alt: altVal, altUnit: altUnit };
+                if(metar) {
+                    currentWind = { dir: metar.wind_direction?.value||0, spd: metar.wind_speed?.value||0 };
+                    let altVal = metar.altimeter?.value || 1013, altUnit = altVal < 200 ? 'inHg' : 'hPa';
+                    currentMetar = { temp: metar.temperature?.value||15, alt: altVal, altUnit: altUnit };
+                    renderMetar(metar);
+                    drawWindRose();
+                }
 
-                renderMetar(metar);
-                renderInfo(station);
-                
-                const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
-                (station.runways || []).forEach(r => {
-                    sel.add(new Option(`RWY ${r.ident1}`, r.ident1));
-                    sel.add(new Option(`RWY ${r.ident2}`, r.ident2));
-                });
-                if(station.runways.length > 0) sel.value = station.runways[0].ident1; 
-                drawWindRose();
+                if(taf) renderTaf(taf);
+                if(notam) document.getElementById('notamList').innerHTML = notam.map(n => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${n.raw}</div>`).join('');
 
-                pTaf.then(renderTaf).catch(e => console.error("TAF err"));
-                pNotam.then(d => {
-                    document.getElementById('notamList').innerHTML = d.map(n => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${n.raw}</div>`).join('');
-                }).catch(e => console.error("NOTAM err"));
-
-            } catch(e) {
-                console.error(e);
-                updateHeaderCat('Err', 'cat-ifr');
-            }
+            } catch(e) { console.error(e); updateHeaderCat('Err', 'cat-ifr'); }
+            document.getElementById('searchContainer').classList.remove('loading');
         }
 
+        // --- RENDERERS ---
         function updateHeaderCat(status, colorClass) {
-            const badge = document.getElementById('headerCat');
-            badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
+            const badge = document.getElementById('headerCat'); badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
         }
 
         function renderMetar(d) {
             document.getElementById('rawMetar').innerText = d.raw;
             const rules = d.flight_rules; 
-            let css = 'cat-vfr';
-            if(rules==='MVFR') css='cat-mvfr'; if(rules==='IFR') css='cat-ifr'; if(rules==='LIFR') css='cat-lifr';
+            let css = 'cat-vfr'; if(rules==='MVFR') css='cat-mvfr'; if(rules==='IFR') css='cat-ifr'; if(rules==='LIFR') css='cat-lifr';
             updateHeaderCat(rules, css);
+            
             document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
             document.getElementById('mVis').innerText = `${d.visibility?.value} sm`;
             const c = d.clouds?.[0]; document.getElementById('mCeil').innerText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
-            const alt = d.altimeter?.value; 
-            if(alt) {
-                if(currentMetar.altUnit === 'hPa') { const inHg = (alt * 0.02953).toFixed(2); document.getElementById('mAlt').innerText = `Q${alt} / A${inHg}`; }
-                else { const hPa = Math.round(alt * 33.8639); document.getElementById('mAlt').innerText = `Q${hPa} / A${alt.toFixed(2)}`; }
-            }
+            
+            // Altimeter
+            const alt = d.altimeter?.value;
+            if(currentMetar.altUnit === 'hPa') document.getElementById('mAlt').innerText = `Q${alt} / A${(alt*0.02953).toFixed(2)}`;
+            else document.getElementById('mAlt').innerText = `Q${Math.round(alt*33.8639)} / A${alt.toFixed(2)}`;
+
             const t = d.temperature?.value, dew = d.dewpoint?.value;
             if(t!=null) {
                 document.getElementById('mTempC').innerText = `${t}°C / ${dew!=null?dew:'--'}°C`;
                 document.getElementById('mTempF').innerText = `(${Math.round(t*1.8+32)}°F)`;
-                document.getElementById('mSpread').innerText = `Spread: ${(t-dew).toFixed(1)}°C`;
             }
             const minAgo = Math.floor((new Date() - new Date(d.time.dt)) / 60000);
             document.getElementById('mAge').innerText = `${minAgo}m ago`;
@@ -580,49 +323,30 @@
 
         function renderInfo(d) {
             document.getElementById('infoName').innerText = d.name;
-            document.getElementById('infoLoc').innerText = `${d.city || ''}, ${d.country || ''} (${d.icao})`;
-            document.getElementById('infoCodes').innerText = `${d.icao} / ${d.iata || '--'}`;
+            document.getElementById('infoLoc').innerText = `${d.city||''}, ${d.country||''} (${d.icao})`;
+            document.getElementById('infoCodes').innerText = `${d.icao} / ${d.iata||'--'}`;
             document.getElementById('infoElev').innerText = `${d.elevation_ft} ft`;
-            document.getElementById('infoCoords').innerText = `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}`;
-
-            const fContainer = document.getElementById('freqContainer');
-            fContainer.innerHTML = '';
+            
+            // Frequencies
+            const fContainer = document.getElementById('freqContainer'); fContainer.innerHTML = '';
             if(d.frequencies && d.frequencies.length > 0) {
-                 const priority = { "ATIS":1, "TWR":2, "GND":3, "APP":4, "DEP":5 };
-                 d.frequencies.sort((a,b) => {
-                     let pa = 99, pb = 99;
-                     for(let k in priority) if(a.type.includes(k)) pa = priority[k];
-                     for(let k in priority) if(b.type.includes(k)) pb = priority[k];
-                     return pa - pb;
-                 });
-                 d.frequencies.slice(0, 6).forEach(f => {
-                     const card = document.createElement('div'); card.className = 'freq-card';
-                     card.innerHTML = `<div class="freq-type">${f.type}</div><div class="freq-val">${f.frequency}</div>`;
-                     fContainer.appendChild(card);
-                 });
-            } else { fContainer.innerHTML = `<div style="grid-column:span 3; font-size:12px; color:#555; text-align:center;">No Freq Data Available</div>`; }
+                const priority = { "ATIS":1, "TWR":2, "GND":3, "APP":4, "DEP":5 };
+                d.frequencies.sort((a,b) => {
+                    let pa=99, pb=99; for(let k in priority) if(a.type.includes(k)) pa=priority[k]; for(let k in priority) if(b.type.includes(k)) pb=priority[k]; return pa-pb;
+                }).slice(0,6).forEach(f => {
+                    fContainer.innerHTML += `<div class="freq-card"><div style="font-size:10px; color:#888;">${f.type}</div><div class="freq-val">${f.frequency}</div></div>`;
+                });
+            } else fContainer.innerHTML = `<div style="grid-column:span 3; text-align:center; color:#555;">No Data</div>`;
 
-            const elev = d.elevation_ft; 
-            const temp = currentMetar.temp;
-            let currentHpa = currentMetar.alt;
-            if(currentMetar.altUnit === 'inHg') currentHpa = currentMetar.alt * 33.8639;
-            const pa = Math.round(elev + (1013.25 - currentHpa) * 30);
-            const isaTemp = 15 - (2 * pa / 1000);
-            const isaDev = Math.round(temp - isaTemp);
-            const da = Math.round(pa + 120 * (temp - isaTemp));
-            document.getElementById('calcPA').innerText = `${pa} ft`;
-            document.getElementById('calcDA').innerText = `${da} ft`;
-            document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
-
-            fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
-                .then(r=>r.json()).then(s => {
-                    const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-                    document.getElementById('infoSun').innerText = `🌅 ${t(s.results.sunrise)}  🌇 ${t(s.results.sunset)}`;
-                }).catch(e=>{});
-            const offset = Math.round(d.longitude / 15);
-            document.getElementById('calcOffset').innerText = `UTC ${offset >= 0 ? '+' : ''}${offset}`;
-            const mv = d.magnetic_variation;
-            document.getElementById('infoMag').innerText = mv ? `${Math.abs(mv)}° ${mv < 0 ? 'W' : 'E'}` : '0°';
+            // Calcs
+            const pa = Math.round(d.elevation_ft + (1013.25 - (currentMetar.altUnit==='inHg'?currentMetar.alt*33.8639:currentMetar.alt)) * 30);
+            const isaDev = Math.round(currentMetar.temp - (15 - (2*pa/1000)));
+            const da = Math.round(pa + 120 * (currentMetar.temp - (15 - (2*pa/1000))));
+            document.getElementById('calcPA').innerText = pa + ' ft';
+            document.getElementById('calcDA').innerText = da + ' ft';
+            document.getElementById('calcISA').innerText = (isaDev>=0?'+':'') + isaDev + '°C';
+            document.getElementById('calcOffset').innerText = `UTC ${Math.round(d.longitude/15)>=0?'+':''}${Math.round(d.longitude/15)}`;
+            
             renderRunwaysComplex();
         }
 
@@ -630,140 +354,105 @@
             const container = document.getElementById('runwayListComplex'); container.innerHTML = '';
             const d = stationData; if(!d || !d.runways) return;
             d.runways.forEach((r, idx) => {
-                let dimStr = useMetric ? `${Math.round(r.length_ft * 0.3048)}m x ${Math.round(r.width_ft * 0.3048)}m` : `${r.length_ft}' x ${r.width_ft}'`;
+                let dim = useMetric ? `${Math.round(r.length_ft*0.3048)}m` : `${r.length_ft}'`;
                 const magVar = d.magnetic_variation || 0;
-                const windMagDir = currentWind.dir - magVar;
-                const rwy1Hdg = parseInt(r.ident1.replace(/\D/g,'')) * 10;
-                const diffRad = (windMagDir - rwy1Hdg) * (Math.PI/180);
-                const hw = Math.round(Math.cos(diffRad) * currentWind.spd); 
-                const xw = Math.round(Math.sin(diffRad) * currentWind.spd);
-                const color1 = hw >= 0 ? 'var(--success)' : 'var(--danger)';
-                const color2 = hw < 0 ? 'var(--success)' : 'var(--danger)';
-                const hwArrow = hw >= 0 ? '⬆' : '⬇';
-                const xwArrow = xw >= 0 ? '⬅' : '➡'; 
-                const div = document.createElement('div');
-                div.className = 'rwy-complex';
-                div.innerHTML = `
-                    <div class="rc-header"><div class="rc-idents"><span style="color:${color1}">${r.ident1}</span> / <span style="color:${color2}">${r.ident2}</span></div><div class="rc-dims">${dimStr}</div></div>
-                    <div class="rc-strip"><div class="rc-id-v">${r.ident1}</div><div class="rc-data">
-                    <div class="wind-comp"><span>${Math.abs(hw)}kt</span><span class="wc-arrow" style="color:${color1}">${hwArrow}</span></div>
-                    <div class="wind-comp"><span>${Math.abs(xw)}kt</span><span class="wc-arrow" style="color:#0a84ff">${xwArrow}</span></div>
-                    <canvas id="miniRose_${idx}" class="rc-rose" width="36" height="36"></canvas></div><div class="rc-id-v" style="transform:rotate(0deg);">${r.ident2}</div></div>`;
-                container.appendChild(div);
-                drawMiniRose(`miniRose_${idx}`, windMagDir - rwy1Hdg);
+                const windMag = currentWind.dir - magVar;
+                const rwyHdg = parseInt(r.ident1.replace(/\D/g,'')) * 10;
+                const diff = (windMag - rwyHdg) * (Math.PI/180);
+                const hw = Math.round(Math.cos(diff) * currentWind.spd);
+                const xw = Math.round(Math.sin(diff) * currentWind.spd);
+                const c1 = hw>=0?'var(--success)':'var(--danger)', c2 = hw<0?'var(--success)':'var(--danger)';
+                const arrow = hw>=0?'⬆':'⬇';
+                
+                container.innerHTML += `
+                <div class="rwy-complex">
+                    <div class="rc-header"><div><span style="color:${c1}">${r.ident1}</span> / <span style="color:${c2}">${r.ident2}</span></div><div class="rc-dims">${dim}</div></div>
+                    <div class="rc-strip"><div class="rc-id-v">${r.ident1}</div>
+                    <div class="rc-data"><div class="wind-comp"><span>${Math.abs(hw)}kt</span><span style="color:${c1}">${arrow}</span></div>
+                    <div class="wind-comp"><span>${Math.abs(xw)}kt</span><span style="color:#0a84ff">${xw>=0?'⬅':'➡'}</span></div>
+                    <canvas id="miniRose_${idx}" class="rc-rose" width="36" height="36"></canvas></div>
+                    <div class="rc-id-v" style="transform:rotate(0deg);">${r.ident2}</div></div>
+                </div>`;
+                setTimeout(()=>drawMiniRose(`miniRose_${idx}`, windMag - rwyHdg), 0);
             });
+        }
+
+        // --- DRAWING ---
+        function drawWindRose() {
+            const c = document.getElementById('windRose'), ctx = c.getContext('2d');
+            ctx.clearRect(0,0,140,140); ctx.beginPath(); ctx.arc(70,70,60,0,2*Math.PI); ctx.strokeStyle='#555'; ctx.lineWidth=2; ctx.stroke();
+            ctx.fillStyle='#888'; ctx.font='10px sans-serif'; ctx.textAlign='center'; 
+            ctx.fillText('N',70,20); ctx.fillText('E',120,74); ctx.fillText('S',70,128); ctx.fillText('W',20,74);
+            
+            const rwyIdent = document.getElementById('rwySelect').value;
+            if(rwyIdent) {
+                const hdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10;
+                ctx.save(); ctx.translate(70,70); ctx.rotate((hdg-90)*Math.PI/180);
+                ctx.fillStyle='#333'; ctx.fillRect(-45,-6,90,12); ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.strokeRect(-45,-6,90,12);
+                ctx.restore();
+                
+                // Update Calc Text
+                const mv = stationData?.magnetic_variation||0;
+                const diff = (currentWind.dir - mv - hdg) * (Math.PI/180);
+                const hw = Math.round(Math.cos(diff)*currentWind.spd), xw = Math.round(Math.sin(diff)*currentWind.spd);
+                document.getElementById('valHW').innerText = `${Math.abs(hw)}kt ${hw>=0?'Head':'Tail'}`;
+                document.getElementById('valXW').innerText = `${Math.abs(xw)}kt ${xw>=0?'L':'R'}`;
+            }
+            if(currentWind.spd > 0) {
+                const mv = stationData?.magnetic_variation||0;
+                ctx.save(); ctx.translate(70,70); ctx.rotate((currentWind.dir-mv-90)*Math.PI/180);
+                ctx.beginPath(); ctx.moveTo(55,0); ctx.lineTo(10,0); ctx.strokeStyle='#0a84ff'; ctx.lineWidth=3; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(15,-5); ctx.lineTo(5,0); ctx.lineTo(15,5); ctx.fillStyle='#0a84ff'; ctx.fill(); ctx.restore();
+            }
         }
         function drawMiniRose(id, relDeg) {
-            const canvas = document.getElementById(id); if(!canvas) return;
-            const ctx = canvas.getContext('2d'); const w=36, h=36, cx=18, cy=18, r=14;
-            ctx.clearRect(0,0,w,h);
-            ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.strokeStyle = '#8e8e93'; ctx.lineWidth=2; ctx.setLineDash([2,3]); ctx.stroke(); ctx.setLineDash([]);
-            if(currentWind.spd > 0) {
-                const rad = (relDeg - 90) * (Math.PI/180); ctx.save(); ctx.translate(cx, cy); ctx.rotate(rad);
-                ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(4, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(2, 0); ctx.lineTo(8, 3); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
+            const c = document.getElementById(id); if(!c) return; const ctx = c.getContext('2d');
+            ctx.clearRect(0,0,36,36); ctx.beginPath(); ctx.arc(18,18,14,0,2*Math.PI); ctx.strokeStyle='#555'; ctx.lineWidth=2; ctx.setLineDash([2,3]); ctx.stroke(); ctx.setLineDash([]);
+            if(currentWind.spd>0) {
+                ctx.save(); ctx.translate(18,18); ctx.rotate((relDeg-90)*Math.PI/180);
+                ctx.beginPath(); ctx.moveTo(14,0); ctx.lineTo(4,0); ctx.strokeStyle='#0a84ff'; ctx.lineWidth=2; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(8,-3); ctx.lineTo(2,0); ctx.lineTo(8,3); ctx.fillStyle='#0a84ff'; ctx.fill(); ctx.restore();
             }
         }
-        function renderTaf(d) {
-            document.getElementById('rawTaf').innerText = d.raw;
-            tafDataCache = d.forecast; const bar = document.getElementById('tafBar'); const axis = document.getElementById('tafAxis'); bar.innerHTML = ''; axis.innerHTML = '';
-            document.getElementById('tafDetail').classList.add('hidden');
-            if(!d.forecast) return;
-            d.forecast.forEach((f, index) => {
-                const block = document.createElement('div'); block.className = 'taf-block'; block.style.flex = "1";
-                let col = '#555'; if(f.flight_rules==='VFR')col='var(--success)'; if(f.flight_rules==='MVFR')col='var(--mvfr)'; if(f.flight_rules==='IFR')col='var(--danger)';
-                block.style.backgroundColor = col; block.innerText = f.type;
-                block.onclick = () => { document.querySelectorAll('.taf-block').forEach(b => b.classList.remove('selected')); block.classList.add('selected'); showTafDetail(index, col); };
-                bar.appendChild(block);
-                const start = new Date(f.start_time.dt); const lbl = document.createElement('div'); lbl.className = 'taf-axis-lbl'; lbl.style.flex = "1"; lbl.innerText = `${start.getUTCHours()}z`; axis.appendChild(lbl);
-            });
-        }
-        function showTafDetail(index, color) {
-            const f = tafDataCache[index]; const card = document.getElementById('tafDetail'); card.style.borderLeftColor = color; card.classList.remove('hidden');
-            const s = new Date(f.start_time.dt); const e = new Date(f.end_time.dt);
-            document.getElementById('tdTime').innerText = `${s.getUTCHours()}:${s.getUTCMinutes()}Z ➔ ${e.getUTCHours()}:${e.getUTCMinutes()}Z`; document.getElementById('tdType').innerText = f.type;
-            const wDir = f.wind_direction?.value || 'VRB'; const wSpd = f.wind_speed?.value || 0; document.getElementById('tdWind').innerText = `${wDir}° / ${wSpd}kt`;
-            document.getElementById('tdVis').innerText = f.visibility ? `${f.visibility.value} sm` : 'P6SM';
-            document.getElementById('tdWx').innerText = f.wx_codes ? f.wx_codes.map(x => x.repr).join(' ') : 'NSW';
-            let cStr = 'SKC'; if(f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3,'0')}`).join(', '); document.getElementById('tdCloud').innerText = cStr;
-        }
-        function drawWindRose() {
-            const canvas = document.getElementById('windRose'); const ctx = canvas.getContext('2d'); const w=140, h=140, cx=70, cy=70, r=60;
-            const rwyIdent = document.getElementById('rwySelect').value; ctx.clearRect(0,0,w,h);
-            ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = '#8e8e93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('N', cx, cy - r + 10); ctx.fillText('E', cx + r - 10, cy); ctx.fillText('S', cx, cy + r - 10); ctx.fillText('W', cx - r + 10, cy);
-            const mv = stationData?.magnetic_variation || 0; const windMag = currentWind.dir - mv;
-            if(rwyIdent) {
-                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10; const rwyRad = (rwyHdg - 90) * (Math.PI/180);
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad); ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12); ctx.restore();
-                const diff = (windMag - rwyHdg) * (Math.PI/180); const hw = Math.round(Math.cos(diff) * currentWind.spd); const xw = Math.round(Math.sin(diff) * currentWind.spd);
-                const vHW = document.getElementById('valHW'); vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
-                const vXW = document.getElementById('valXW'); vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
-            }
-            if(currentWind.spd > 0) {
-                const windRad = (windMag - 90) * (Math.PI/180); ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
-                ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
-            }
-        }
+
+        // --- WORLD CLOCK ---
+        const AVIATION_CITIES = [{n:"Taipei",z:"Asia/Taipei",c:"RCTP"},{n:"New York",z:"America/New_York",c:"KJFK"},{n:"London",z:"Europe/London",c:"EGLL"},{n:"Tokyo",z:"Asia/Tokyo",c:"RJAA"},{n:"Los Angeles",z:"America/Los_Angeles",c:"KLAX"},{n:"Dubai",z:"Asia/Dubai",c:"OMDB"},{n:"Sydney",z:"Australia/Sydney",c:"YSSY"},{n:"Singapore",z:"Asia/Singapore",c:"WSSS"},{n:"Paris",z:"Europe/Paris",c:"LFPG"},{n:"Frankfurt",z:"Europe/Berlin",c:"EDDF"}];
+        let cityList = [];
         
-        // --- TOOLS LOGIC ---
-        const WX_DATA = {
-            "MI":"Shallow", "PR":"Partial", "BC":"Patches", "DR":"Drifting", "BL":"Blowing", "SH":"Shower", "TS":"Thunderstorm", "FZ":"Freezing",
-            "DZ":"Drizzle", "RA":"Rain", "SN":"Snow", "SG":"Snow Grains", "IC":"Ice Crystals", "PL":"Ice Pellets", "GR":"Hail", "GS":"Small Hail", "UP":"Unknown",
-            "BR":"Mist", "FG":"Fog", "FU":"Smoke", "VA":"Ash", "DU":"Dust", "SA":"Sand", "HZ":"Haze", "PY":"Spray",
-            "PO":"Dust Devils", "SQ":"Squall", "FC":"Funnel Cloud", "SS":"Sandstorm", "DS":"Duststorm",
-            "SKC":"Clear", "CLR":"Clear", "FEW":"Few", "SCT":"Scattered", "BKN":"Broken", "OVC":"Overcast", "VV":"Vertical Vis", "CAVOK":"Ceiling & Vis OK"
-        };
-        const codeListEl = document.getElementById('codeList'); codeListEl.innerHTML = '';
-        Object.keys(WX_DATA).sort().forEach(key => { const item = document.createElement('div'); item.className = 'code-item'; item.innerHTML = `<b>${key}</b> ${WX_DATA[key]}`; codeListEl.appendChild(item); });
-        function decode(input) {
-            input = input.trim().toUpperCase(); if(!input) { document.getElementById('decodeOut').innerText = "..."; return; }
-            if(WX_DATA[input]) { document.getElementById('decodeOut').innerText = WX_DATA[input]; return; }
-            let res = [], rem = input;
-            if(rem.startsWith('-')) { res.push("Light"); rem = rem.substring(1); } else if(rem.startsWith('+')) { res.push("Heavy"); rem = rem.substring(1); } else if(rem.startsWith('VC')) { res.push("Vicinity"); rem = rem.substring(2); }
-            let foundAny = false;
-            while(rem.length >= 2) { let chunk = rem.substring(0,2); if(WX_DATA[chunk]) { res.push(WX_DATA[chunk]); rem = rem.substring(2); foundAny = true; } else break; }
-            if(foundAny && rem.length === 0) document.getElementById('decodeOut').innerText = res.join(" "); else document.getElementById('decodeOut').innerText = "Unknown / Custom";
+        function initWorld() {
+            const dl = document.getElementById('cityData'); AVIATION_CITIES.forEach(c => { const o = document.createElement('option'); o.value = c.n; dl.appendChild(o); });
+            const saved = localStorage.getItem('efb_cities_v45');
+            cityList = saved ? JSON.parse(saved) : [{n:"UTC",z:"UTC",c:"ZULU",id:1}, {n:"Taipei",z:"Asia/Taipei",c:"RCTP",id:2}, {n:"New York",z:"America/New_York",c:"KJFK",id:3}];
+            updateClock();
         }
-
-        // Timer
-        function formatTime(ms) { const d = new Date(ms); return d.toISOString().substr(11, 8); }
-        function updateTimerDisplay() { const now = Date.now(); const diff = now - startTime + elapsed; document.getElementById('timerDisplay').innerText = formatTime(diff); }
-        function startTimer() { if(!running) { startTime = Date.now(); timerInterval = setInterval(updateTimerDisplay, 100); running = true; } }
-        function stopTimer() { if(running) { clearInterval(timerInterval); elapsed += Date.now() - startTime; running = false; } else { elapsed = 0; document.getElementById('timerDisplay').innerText = "00:00:00"; document.getElementById('lapList').innerHTML = ""; } }
-        function lapTimer() { if(running) { const now = Date.now(); const diff = now - startTime + elapsed; const div = document.createElement('div'); div.className = 'lap-item'; div.innerHTML = `<span>Lap</span><span>${formatTime(diff)}</span>`; document.getElementById('lapList').prepend(div); } }
-
-        // ISA Calc
-        function calcIsaTool() {
-            const alt = parseFloat(document.getElementById('isaInput').value);
-            if(isNaN(alt)) { document.getElementById('isaTempOut').innerText = "--"; document.getElementById('isaPressOut').innerText = "--"; return; }
-            const t = 15 - (1.98 * (alt/1000));
-            const p = 29.92 * Math.pow((1 - (0.0000068753 * alt)), 5.2561);
-            document.getElementById('isaTempOut').innerText = t.toFixed(1) + "°C";
-            document.getElementById('isaPressOut').innerText = p.toFixed(2) + " inHg";
+        function addCustomCity() {
+            const val = document.getElementById('newCityInput').value;
+            const found = AVIATION_CITIES.find(c => c.n === val);
+            if(found) { cityList.push({...found, id:Date.now()}); localStorage.setItem('efb_cities_v45', JSON.stringify(cityList)); updateClock(); }
+            document.getElementById('newCityInput').value='';
         }
-
-        // Converters
-        function convSpeed(type) {
-            const kts = document.getElementById('cKts'), mph = document.getElementById('cMph'), kph = document.getElementById('cKph');
-            let val = 0;
-            if(type==='kts') { val = parseFloat(kts.value); mph.value=(val*1.15078).toFixed(1); kph.value=(val*1.852).toFixed(1); }
-            if(type==='mph') { val = parseFloat(mph.value); kts.value=(val/1.15078).toFixed(1); kph.value=(val*1.60934).toFixed(1); }
-            if(type==='kph') { val = parseFloat(kph.value); kts.value=(val/1.852).toFixed(1); mph.value=(val/1.60934).toFixed(1); }
+        function removeCity(id) { cityList = cityList.filter(c => c.id !== id); localStorage.setItem('efb_cities_v45', JSON.stringify(cityList)); updateClock(); }
+        function updateClock() {
+            const now = new Date();
+            if(document.getElementById('tab-world').classList.contains('active')) {
+                const con = document.getElementById('worldContainer'); con.innerHTML = '';
+                cityList.forEach(c => {
+                    const timeStr = now.toLocaleTimeString('en-US',{timeZone:c.z,hour:'2-digit',minute:'2-digit',hour12:false});
+                    const div = document.createElement('div'); div.className = 'clock-card';
+                    div.innerHTML = `<div class="clock-left"><div><span class="clock-city">${c.n}</span><span class="clock-codes">${c.c}</span></div></div><div style="display:flex;align-items:center;"><div class="clock-time ${c.z==='UTC'?'clock-utc':''}">${timeStr}</div>${c.id!==1?`<span class="del-btn" onclick="removeCity(${c.id})">×</span>`:''}</div>`;
+                    con.appendChild(div);
+                });
+            }
         }
-        function convPress(type) {
-            const inhg = document.getElementById('cInhg'), hpa = document.getElementById('cHpa');
-            let val = 0;
-            if(type==='inhg') { val = parseFloat(inhg.value); hpa.value=(val*33.8639).toFixed(1); }
-            if(type==='hpa') { val = parseFloat(hpa.value); inhg.value=(val*0.02953).toFixed(2); }
-        }
+        setInterval(updateClock, 1000);
 
-        // Init
-        initWorldClock();
-        document.getElementById('icao').value = 'RCTP'; toggleClearBtn(); loadData();
-        updateClock();
+        // --- TOOLS ---
+        const WX_DATA = {"BR":"Mist","FG":"Fog","TS":"Storm","HZ":"Haze","RA":"Rain","SN":"Snow","DZ":"Drizzle"};
+        function decode(i) { i=i.trim().toUpperCase(); if(WX_DATA[i])document.getElementById('decodeOut').innerText=WX_DATA[i]; else document.getElementById('decodeOut').innerText="..."; }
+        function calcIsaTool() { const a=parseFloat(document.getElementById('isaInput').value)||0; document.getElementById('isaTempOut').innerText=(15-(1.98*a/1000)).toFixed(1)+"°C"; }
+        
+        // --- INIT ---
+        document.getElementById('icao').value = 'RCTP'; initWorld(); loadData();
     </script>
 </body>
 </html>
