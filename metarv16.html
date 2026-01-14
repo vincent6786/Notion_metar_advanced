@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot Widget V16</title>
+    <title>Notion Pilot Widget V17</title>
     <style>
         :root {
             --bg: #ffffff;
@@ -83,7 +83,7 @@
         }
         .xwind-results { font-size: 11px; text-align: right; line-height: 1.3; }
 
-        /* --- ADVANCED DATA SECTION (Bottom) --- */
+        /* --- ADVANCED DATA --- */
         .advanced-data {
             border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px;
             display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -103,7 +103,18 @@
         .tool-card { background: var(--code-bg); padding: 8px; border-radius: 6px; }
         .tool-label { font-size: 10px; font-weight: 700; color: var(--sub-text); margin-bottom: 4px; text-transform: uppercase; }
         .mini-input-group { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
-        .mini-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px; font-size: 12px; }
+        
+        /* FIXED: Input Colors for Dark Mode */
+        .mini-input { 
+            width: 100%; 
+            background: var(--bg); 
+            color: var(--text); /* Forces white text in dark mode */
+            border: 1px solid var(--border); 
+            border-radius: 4px; 
+            padding: 4px; 
+            font-size: 12px; 
+        }
+        
         .mini-result { font-weight: 700; color: var(--accent); font-size: 12px; text-align: right; }
         .ref-table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .ref-table td { padding: 4px; border-bottom: 1px solid var(--border); }
@@ -249,50 +260,35 @@
             "RCKH": { name: "Kaohsiung Int'l", elev: 31, lat: 22.57, lon: 120.35, freqs: { ATIS: "127.8" }, runways: [{ id: "09", len: "10335" }, { id: "27", len: "10335" }]},
             "RCMQ": { name: "Taichung Int'l", elev: 665, lat: 24.25, lon: 120.62, freqs: { TWR: "118.6" }, runways: [{ id: "18", len: "12005" }, { id: "36", len: "12005" }]}
         };
+        const WX_CODES={"BR":"Mist","FG":"Fog","FU":"Smoke","HZ":"Haze","DZ":"Drizzle","RA":"Rain","SN":"Snow","GR":"Hail","TS":"Thunderstorm","SH":"Showers","SKC":"Sky Clear","CLR":"Clear"};
 
-        const WX_CODES = {
-            "BR": "Mist (Vis ≥ 5/8SM)", "FG": "Fog (Vis < 5/8SM)", "FU": "Smoke", "HZ": "Haze",
-            "DZ": "Drizzle", "RA": "Rain", "SN": "Snow", "GR": "Hail", "TS": "Thunderstorm",
-            "SH": "Showers", "FZ": "Freezing", "BL": "Blowing", "VC": "Vicinity",
-            "SKC": "Sky Clear", "CLR": "Clear (<12,000)", "NSC": "No Sig Clouds"
-        };
+        let currentIcao='RCTP', currentElev=0, windData={dir:0,speed:0};
 
-        let currentIcao = 'RCTP';
-        let currentRawText = '';
-        let currentElev = 0; 
-        let currentCoords = { lat: 0, lon: 0 };
-        let windData = { dir: 0, speed: 0 }; 
+        setInterval(()=>{
+            const now=new Date();
+            document.getElementById('zuluClock').innerText=`${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}Z`;
+        },1000);
 
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('zuluClock').innerText = 
-                `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}Z`;
-        }, 1000);
+        const memoArea=document.getElementById('memoInput');
+        memoArea.value=localStorage.getItem('pilot_memo')||"";
+        memoArea.addEventListener('input',()=>localStorage.setItem('pilot_memo',memoArea.value));
+        function clearMemo(){if(confirm("Clear?")){memoArea.value="";localStorage.setItem('pilot_memo',"");}}
 
-        const memoArea = document.getElementById('memoInput');
-        memoArea.value = localStorage.getItem('pilot_memo') || "";
-        memoArea.addEventListener('input', () => localStorage.setItem('pilot_memo', memoArea.value));
-        function clearMemo() { if(confirm("Clear?")) { memoArea.value = ""; localStorage.setItem('pilot_memo', ""); }}
-
-        // --- CALCULATORS ---
-        function calcFuel(val, type) {
-            const galInput = document.querySelector('input[placeholder="Gal"]');
-            const lbsInput = document.getElementById('fuelLbs');
-            const res = document.getElementById('fuelRes');
-            if(type === 'gal') { const lbs = (val * 6).toFixed(1); lbsInput.value = lbs; res.innerText = `${lbs} lbs`; } 
-            else { const gal = (val / 6).toFixed(1); galInput.value = gal; res.innerText = `${gal} gal`; }
+        function calcFuel(v,t){
+            const gal=document.querySelector('input[placeholder="Gal"]');
+            const lbs=document.getElementById('fuelLbs');
+            const res=document.getElementById('fuelRes');
+            if(t==='gal'){ lbs.value=(v*6).toFixed(1); res.innerText=`${lbs.value} lbs`;}
+            else{ gal.value=(v/6).toFixed(1); res.innerText=`${gal.value} gal`;}
         }
-        function calcEte() {
-            const dist = document.getElementById('eteDist').value;
-            const spd = document.getElementById('eteSpd').value;
-            if(dist && spd) document.getElementById('eteRes').innerText = `${Math.round((dist / spd) * 60)} min`;
+        function calcEte(){
+            const d=document.getElementById('eteDist').value;
+            const s=document.getElementById('eteSpd').value;
+            if(d&&s) document.getElementById('eteRes').innerText=`${Math.round((d/s)*60)} min`;
         }
-        function decodeCode() {
-            const code = document.getElementById('decodeInput').value.toUpperCase();
-            const res = document.getElementById('decodeRes');
-            if(WX_CODES[code]) res.innerText = WX_CODES[code];
-            else if(code.length < 2) res.innerText = "Type code...";
-            else res.innerText = "Unknown Code";
+        function decodeCode(){
+            const c=document.getElementById('decodeInput').value.toUpperCase();
+            document.getElementById('decodeRes').innerText=WX_CODES[c]||(c.length<2?"Type code...":"Unknown");
         }
 
         async function loadData() {
@@ -326,194 +322,162 @@
         }
 
         function renderInfo(db) {
-            const nameEl = document.getElementById('infoName');
-            const elevEl = document.getElementById('infoElev');
-            const freqGrid = document.getElementById('freqGrid');
-            const rwyList = document.getElementById('rwyList');
-            const dl = document.getElementById('dynamicRunways');
-            const sunGrid = document.getElementById('sunGrid');
-
-            freqGrid.innerHTML = ''; rwyList.innerHTML = ''; dl.innerHTML = '';
+            const nameEl=document.getElementById('infoName'), elevEl=document.getElementById('infoElev');
+            const freqGrid=document.getElementById('freqGrid'), rwyList=document.getElementById('rwyList'), dl=document.getElementById('dynamicRunways');
+            freqGrid.innerHTML=''; rwyList.innerHTML=''; dl.innerHTML='';
 
             if (db) {
-                currentElev = db.elev;
-                currentCoords = { lat: db.lat, lon: db.lon };
-                nameEl.innerText = db.name;
-                elevEl.innerText = `Elevation: ${db.elev} ft`;
-
-                // SUN CALC (Approximate)
-                if(db.lat && db.lon) {
-                    // Simple Sun Calc logic is too complex for this snippet, so we simulate logic
-                    // In a real app we'd use SunCalc library. Here we just show coords for now or basic offsets
-                    // For this V16, let's just clear values or put placeholders as "Calc req lib"
-                    // To keep it light, we won't import a huge library. We will hide sun grid if no lib.
-                    // ACTUALLY: Let's fetch it from AVWX! (It has sunrise/sunset in summary sometimes, but not always)
-                    // We'll leave placeholders.
-                    document.getElementById('srTime').innerText = "See Chart";
-                    document.getElementById('ssTime').innerText = "See Chart";
-                    document.getElementById('ctTime').innerText = "--";
-                }
+                currentElev=db.elev; nameEl.innerText=db.name; elevEl.innerText=`Elevation: ${db.elev} ft`;
+                
+                // --- NEW: FETCH SUN DATA ---
+                fetchSunData(db.lat, db.lon);
 
                 if(db.runways) {
                     db.runways.forEach(r => {
-                        const ft = parseInt(r.len);
-                        const m = Math.round(ft * 0.3048);
-                        const displayLen = isNaN(m) ? r.len : `${ft.toLocaleString()}' (${m.toLocaleString()}m)`;
-                        rwyList.innerHTML += `<div class="rwy-row"><span class="rwy-id">${r.id}</span><span style="font-family:'SF Mono'">${displayLen}</span></div>`;
-                        const opt = document.createElement('option'); opt.value = r.id; dl.appendChild(opt);
+                        const ft=parseInt(r.len), m=Math.round(ft*0.3048);
+                        const displayLen=isNaN(m)?r.len:`${ft.toLocaleString()}' (${m.toLocaleString()}m)`;
+                        rwyList.innerHTML+=`<div class="rwy-row"><span class="rwy-id">${r.id}</span><span style="font-family:'SF Mono'">${displayLen}</span></div>`;
+                        const opt=document.createElement('option'); opt.value=r.id; dl.appendChild(opt);
                     });
                 }
                 if(db.freqs) {
-                    for (const [type, freq] of Object.entries(db.freqs)) {
-                        freqGrid.innerHTML += `<div style="background:var(--code-bg); padding:6px; border-radius:4px; text-align:center;"><div style="font-size:9px; color:var(--sub-text);">${type}</div><div style="font-size:12px; font-weight:600; color:var(--accent);">${freq}</div></div>`;
-                    }
+                    for(const [t,f] of Object.entries(db.freqs)) freqGrid.innerHTML+=`<div style="background:var(--code-bg); padding:6px; border-radius:4px; text-align:center;"><div style="font-size:9px; color:var(--sub-text);">${t}</div><div style="font-size:12px; font-weight:600; color:var(--accent);">${f}</div></div>`;
                 }
-            } else { currentElev = 0; nameEl.innerText = "Info Not Found"; }
+            } else { currentElev=0; nameEl.innerText="Info Not Found"; }
+        }
+
+        async function fetchSunData(lat, lon) {
+            const sr=document.getElementById('srTime'), ss=document.getElementById('ssTime'), ct=document.getElementById('ctTime');
+            if(!lat || !lon) { sr.innerText="--"; ss.innerText="--"; ct.innerText="--"; return; }
+            
+            try {
+                // Using Free Sunrise-Sunset API
+                const res = await fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&formatted=0`);
+                const data = await res.json();
+                if(data.status === "OK") {
+                    // Convert UTC to Local time strings
+                    const parseTime = (iso) => {
+                        const date = new Date(iso);
+                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                    };
+                    sr.innerText = parseTime(data.results.sunrise);
+                    ss.innerText = parseTime(data.results.sunset);
+                    ct.innerText = parseTime(data.results.civil_twilight_end);
+                }
+            } catch(e) { sr.innerText="Error"; }
         }
 
         function updateMetar(data) {
-            currentRawText = data.raw;
-            document.getElementById('rawMetar').innerText = data.raw;
-            const cat = document.getElementById('flightCat');
-            cat.innerText = data.flight_rules;
-            cat.classList.remove('hidden');
-            const rules = { 'VFR': 'var(--vfr)', 'MVFR': 'var(--mvfr)', 'IFR': 'var(--ifr)', 'LIFR': 'var(--lifr)' };
-            cat.style.backgroundColor = rules[data.flight_rules] || '#777';
+            currentRawText=data.raw; document.getElementById('rawMetar').innerText=data.raw;
+            const cat=document.getElementById('flightCat'); cat.innerText=data.flight_rules; cat.classList.remove('hidden');
+            const rules={'VFR':'var(--vfr)','MVFR':'var(--mvfr)','IFR':'var(--ifr)','LIFR':'var(--lifr)'};
+            cat.style.backgroundColor=rules[data.flight_rules]||'#777';
 
-            const dir = data.wind_direction?.value;
-            const spd = data.wind_speed?.value || 0;
-            windData = { dir: dir, speed: spd };
-            const arrow = document.getElementById('windArrowIcon');
-            if (dir !== null) {
-                document.getElementById('windText').innerText = `${dir}° / ${spd}kt`;
-                arrow.style.transform = `rotate(${dir - 180}deg)`;
-            } else { document.getElementById('windText').innerText = 'VRB/Calm'; }
+            const dir=data.wind_direction?.value, spd=data.wind_speed?.value||0;
+            windData={dir:dir, speed:spd};
+            const arrow=document.getElementById('windArrowIcon');
+            if(dir!==null) {
+                document.getElementById('windText').innerText=`${dir}° / ${spd}kt`;
+                arrow.style.transform=`rotate(${dir-180}deg)`;
+            } else document.getElementById('windText').innerText='VRB/Calm';
             calculateCrosswind(); 
 
-            const alt = data.altimeter?.value; 
+            const alt=data.altimeter?.value; 
             if(alt) {
-                const hpa = (alt < 32) ? Math.round(alt * 33.8639) : Math.round(alt);
-                const inHg = (alt < 32) ? alt : (alt / 33.8639);
-                document.getElementById('altimeter').innerText = `Q${hpa} / A${inHg.toFixed(2)}`;
+                const hpa=(alt<32)?Math.round(alt*33.8639):Math.round(alt);
+                const inHg=(alt<32)?alt:(alt/33.8639);
+                document.getElementById('altimeter').innerText=`Q${hpa} / A${inHg.toFixed(2)}`;
             }
 
-            // DA & Cloud Base
-            const tempC = data.temperature?.value;
-            const daEl = document.getElementById('densityAlt');
-            const d = data.dewpoint?.value;
-            const baseEl = document.getElementById('estBase');
-            
-            if(tempC != null && alt != null && currentElev != 0) {
-                const altInHg = (alt < 32) ? alt : (alt / 33.8639);
-                const pa = Math.round(currentElev + (29.92 - altInHg) * 1000);
-                const isaTemp = 15 - (2 * (pa / 1000));
-                const da = Math.round(pa + (120 * (tempC - isaTemp)));
-                daEl.innerText = `${da.toLocaleString()} ft`;
-                daEl.style.color = (da > currentElev + 1000) ? 'var(--ifr)' : 'var(--text)';
-            } else { daEl.innerText = "--"; }
+            const tempC=data.temperature?.value, d=data.dewpoint?.value;
+            // DA
+            const daEl=document.getElementById('densityAlt');
+            if(tempC!=null && alt!=null && currentElev!=0) {
+                const altInHg=(alt<32)?alt:(alt/33.8639);
+                const pa=Math.round(currentElev+(29.92-altInHg)*1000);
+                const isaTemp=15-(2*(pa/1000));
+                const da=Math.round(pa+(120*(tempC-isaTemp)));
+                daEl.innerText=`${da.toLocaleString()} ft`;
+                daEl.style.color=(da>currentElev+1000)?'var(--ifr)':'var(--text)';
+            } else daEl.innerText="--";
 
+            // Cloud Base
+            const baseEl=document.getElementById('estBase');
             if(tempC!=null && d!=null) {
-                const spread = (tempC - d);
-                const base = Math.round((spread / 2.5) * 1000);
-                baseEl.innerText = `Base: ~${base.toLocaleString()}ft AGL`;
-                if(spread <= 2) baseEl.style.color = '#e67e22'; else baseEl.style.color = 'var(--text)';
+                const spread=(tempC-d);
+                const base=Math.round((spread/2.5)*1000);
+                baseEl.innerText=`Base: ~${base.toLocaleString()}ft AGL`;
             }
 
-            document.getElementById('vis').innerText = data.visibility?.value + ' sm';
-            document.getElementById('clouds').innerText = data.clouds?.[0]?.repr || 'CLR';
-
-            const diff = Math.floor((new Date() - new Date(data.time.dt)) / 60000);
-            const age = document.getElementById('metarAge');
-            age.innerText = `${diff}m ago`;
-            age.style.color = diff > 60 ? 'var(--ifr)' : 'var(--sub-text)';
-            
+            document.getElementById('vis').innerText=data.visibility?.value+' sm';
+            document.getElementById('clouds').innerText=data.clouds?.[0]?.repr||'CLR';
+            const diff=Math.floor((new Date()-new Date(data.time.dt))/60000);
+            document.getElementById('metarAge').innerText=`${diff}m ago`;
             drawVisualRunway();
         }
 
         function calculateCrosswind() {
-            const rwyStr = document.getElementById('rwyInput').value;
-            const out = document.getElementById('xwindOutput');
-            const rwyNum = parseInt(rwyStr);
-            if(!rwyNum || !windData.dir) { 
-                out.innerHTML = '<span style="color:var(--sub-text)">Select Runway</span>'; 
-                drawVisualRunway(null);
-                return; 
+            const rwyStr=document.getElementById('rwyInput').value;
+            const out=document.getElementById('xwindOutput');
+            const rwyNum=parseInt(rwyStr);
+            if(!rwyNum||!windData.dir) { 
+                out.innerHTML='<span style="color:var(--sub-text)">Select Runway</span>'; 
+                drawVisualRunway(null); return; 
             }
-            
-            const rwyHeading = rwyNum * 10;
-            let angleDiff = (windData.dir - rwyHeading + 180 + 360) % 360 - 180; 
-            const rads = angleDiff * (Math.PI / 180);
-            const headwind = Math.round(Math.cos(rads) * windData.speed);
-            const crosswind = Math.round(Math.abs(Math.sin(rads) * windData.speed));
-            const hwLabel = headwind >= 0 ? "Headwind" : "TAILWIND";
-            const hwColor = headwind >= 0 ? "var(--text)" : "var(--ifr)";
-            out.innerHTML = `<div style="color:${hwColor}; font-weight:600;">${hwLabel}: ${Math.abs(headwind)}kt</div><div>Crosswind: ${crosswind}kt</div>`;
-            
+            const rwyHeading=rwyNum*10;
+            const rads=(windData.dir-rwyHeading+180+360)%360-180 * (Math.PI/180);
+            const headwind=Math.round(Math.cos(rads)*windData.speed);
+            const crosswind=Math.round(Math.abs(Math.sin(rads)*windData.speed));
+            const hwLabel=headwind>=0?"Headwind":"TAILWIND";
+            const hwColor=headwind>=0?"var(--text)":"var(--ifr)";
+            out.innerHTML=`<div style="color:${hwColor}; font-weight:600;">${hwLabel}: ${Math.abs(headwind)}kt</div><div>Crosswind: ${crosswind}kt</div>`;
             drawVisualRunway(rwyHeading);
         }
 
         function drawVisualRunway(rwyHdg) {
             const canvas = document.getElementById('rwyCanvas');
             const ctx = canvas.getContext('2d');
-            const w = canvas.width; const h = canvas.height;
-            const cx = w/2; const cy = h/2;
+            const w = canvas.width, h = canvas.height, cx = w/2, cy = h/2;
 
-            // Clear
             ctx.clearRect(0, 0, w, h);
 
-            // Draw Compass Circle
+            // 1. Compass Circle
             ctx.beginPath();
             ctx.arc(cx, cy, 25, 0, 2*Math.PI);
-            ctx.strokeStyle = '#e9e9e8'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.strokeStyle = '#e9e9e8'; ctx.lineWidth = 1; ctx.stroke();
 
-            // Draw Runway (Rect)
+            // 2. Runway (Solid Block)
             if(rwyHdg != null) {
                 ctx.save();
                 ctx.translate(cx, cy);
-                ctx.rotate((rwyHdg - 180) * Math.PI / 180); // Canvas 0 is Right, Aviation 0 is Up. complex... 
-                // Easier: Rotate visual so UP is always track up? No, let's keep North Up.
-                // Standard: North is Up (0 deg = -90 canvas).
-                // So rotation = (rwyHdg - 90) * rad ?? 
-                // Actually: let's rotate the context so North is Up (-90deg).
-                // If Rwy is 090 (East), it should point right.
                 ctx.rotate((rwyHdg * Math.PI / 180)); 
-                ctx.fillStyle = '#37352f';
-                ctx.fillRect(-4, -20, 8, 40); // Runway Strip
-                ctx.fillStyle = '#fff';
-                ctx.font = '10px sans-serif';
-                // ctx.fillText(rwyHdg/10, -3, -8); 
+                ctx.fillStyle = '#d9d9d9'; // Light Grey (Concrete)
+                ctx.fillRect(-8, -22, 16, 44); // Thicker block
                 ctx.restore();
             }
 
-            // Draw Wind Arrow
+            // 3. Wind Arrow
             if(windData.dir != null) {
                 ctx.save();
                 ctx.translate(cx, cy);
-                // Wind is "FROM". We want arrow pointing "TO".
-                // If Wind 360 (North), it blows South (180).
-                // Canvas 0 is Right (90 deg). 
-                // So Arrow Angle = (WindDir - 90 + 180) ... Math is messy.
-                // Simpler: Rotate by WindDir. Draw line downwards (FROM).
                 ctx.rotate((windData.dir) * Math.PI / 180);
                 
-                // Draw Arrow (Blue)
+                // Draw Arrow
                 ctx.beginPath();
-                ctx.moveTo(0, -28); // Start far out
-                ctx.lineTo(0, -10); // Point in
-                ctx.strokeStyle = '#2e86de'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.moveTo(0, -28); 
+                ctx.lineTo(0, -12); 
+                ctx.strokeStyle = '#2e86de'; ctx.lineWidth = 2.5; ctx.stroke();
                 
-                // Arrowhead
                 ctx.beginPath();
-                ctx.moveTo(-3, -16); ctx.lineTo(0, -10); ctx.lineTo(3, -16);
-                ctx.stroke();
-                
+                ctx.moveTo(-4, -18); ctx.lineTo(0, -12); ctx.lineTo(4, -18);
+                ctx.fillStyle = '#2e86de'; ctx.fill();
                 ctx.restore();
             }
         }
 
         function copyText() { navigator.clipboard.writeText(currentRawText); }
         function switchTab(t) {
-            ['metar','taf','info','tools','memo'].forEach(v => { document.getElementById(v+'View').classList.add('hidden'); });
+            ['metar','taf','info','tools','memo'].forEach(v => document.getElementById(v+'View').classList.add('hidden'));
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
             document.getElementById(t+'View').classList.remove('hidden');
             const tabs = document.querySelectorAll('.tab');
