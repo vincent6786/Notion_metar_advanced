@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V42</title>
+    <title>Notion Pilot EFB V43</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
@@ -103,7 +103,7 @@
         .stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; }
         select.stealth-select { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; font-weight: 600; outline: none; }
 
-        /* TAF STYLES */
+        /* TAF & TOOLS Styles */
         .taf-viz-container { margin-top: 10px; }
         .taf-bar { display: flex; height: 32px; width: 100%; background: #2c2c2e; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
         .taf-axis { display: flex; width: 100%; margin-top: 4px; margin-bottom: 12px; }
@@ -119,24 +119,27 @@
         .td-item { display: flex; flex-direction: column; }
         .td-lbl { font-size: 11px; color: var(--sub-text); margin-bottom: 2px; }
         .td-val { font-size: 14px; font-weight: 600; color: #fff; }
-        
         .atc-btn { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 16px; border-radius: 10px; text-decoration: none; color: #fff; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: background 0.2s; margin-bottom: 10px; }
         .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
-
+        .tool-btn { background: #333; border: 1px solid var(--border); color: #fff; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; margin-top: 4px; font-weight: 600; }
+        .tool-btn:hover { background: #444; }
+        
         /* WORLD CLOCK STYLES (NEW) */
-        .world-grid {
-            display: grid; grid-template-columns: 1fr; gap: 8px;
-        }
-        .clock-card {
-            background: var(--card-bg); border-radius: 8px; padding: 12px 16px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #2c2c2e;
-        }
+        .world-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
+        .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c2c2e; }
         .clock-left { display: flex; flex-direction: column; }
         .clock-city { font-weight: 700; font-size: 15px; color: #fff; }
         .clock-meta { font-size: 11px; color: var(--sub-text); margin-top: 2px; }
         .clock-time { font-family: 'SF Mono', monospace; font-size: 20px; font-weight: 600; color: var(--accent); letter-spacing: 0.5px; }
-        .clock-utc { color: var(--success); } /* Special color for UTC */
+        .clock-utc { color: var(--success); }
+        .del-btn { color: var(--danger); font-size: 12px; margin-left: 8px; cursor: pointer; opacity: 0.5; }
+        .del-btn:hover { opacity: 1; }
+
+        /* ADD CITY FORM */
+        .add-city-box { display: flex; gap: 8px; margin-bottom: 12px; background: #2c2c2e; padding: 8px; border-radius: 8px; }
+        .ac-input { flex: 2; background: #1c1c1e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; }
+        .ac-sel { flex: 1; background: #1c1c1e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100px;}
+        .ac-btn { background: var(--accent); color: #fff; border: none; padding: 0 12px; border-radius: 6px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -261,6 +264,25 @@
     </div>
 
     <div id="tab-world" class="view-section">
+        <div class="add-city-box">
+            <input type="text" id="newCityName" class="ac-input" placeholder="Name (e.g. Seattle)">
+            <select id="newCityZone" class="ac-sel">
+                <option value="UTC">UTC</option>
+                <option value="Asia/Taipei">Taipei</option>
+                <option value="Asia/Tokyo">Tokyo</option>
+                <option value="America/New_York">New York</option>
+                <option value="Europe/London">London</option>
+                <option value="Australia/Sydney">Sydney</option>
+                <option value="America/Los_Angeles">Los Angeles</option>
+                <option value="Europe/Paris">Paris</option>
+                <option value="Asia/Dubai">Dubai</option>
+                <option value="Asia/Hong_Kong">Hong Kong</option>
+                <option value="America/Chicago">Chicago</option>
+                <option value="Asia/Singapore">Singapore</option>
+            </select>
+            <button class="ac-btn" onclick="addCustomCity()">+</button>
+        </div>
+
         <div class="world-grid" id="worldContainer">
             </div>
     </div>
@@ -268,14 +290,12 @@
     <script>
         const TOKEN = 'dMzS0-M9_ku1bYySTtsq4pZE8fEEiTUJaNtvqSDEgUs';
         
-        // --- GLOBALS ---
         let currentWind = { dir:0, spd:0 }; 
         let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
         let stationData = null;
         let useMetric = true; 
         let tafDataCache = null;
 
-        // --- TABS & UI ---
         function setTab(name) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
@@ -295,36 +315,61 @@
         }
         function clearSearch() { document.getElementById('icao').value = ''; document.getElementById('icao').focus(); toggleClearBtn(); }
         
-        // --- CLOCK & WORLD TIME LOGIC ---
-        const CITY_LIST = [
-            { name: "UTC (Zulu)", zone: "UTC", icon: "✈️" },
-            { name: "Taipei", zone: "Asia/Taipei", icon: "🇹🇼" },
-            { name: "Tokyo", zone: "Asia/Tokyo", icon: "🇯🇵" },
-            { name: "Brisbane", zone: "Australia/Brisbane", icon: "🇦🇺" },
-            { name: "Paris", zone: "Europe/Paris", icon: "🇫🇷" },
-            { name: "London", zone: "Europe/London", icon: "🇬🇧" },
-            { name: "New York", zone: "America/New_York", icon: "🇺🇸" },
-            { name: "Los Angeles", zone: "America/Los_Angeles", icon: "🇺🇸" }
+        // --- WORLD CLOCK LOGIC ---
+        // Default List
+        const DEFAULT_CITIES = [
+            { name: "UTC (Zulu)", zone: "UTC", icon: "✈️", id: 1 },
+            { name: "Taipei (RCTP/TPE)", zone: "Asia/Taipei", icon: "🇹🇼", id: 2 },
+            { name: "Tokyo (RJAA/NRT)", zone: "Asia/Tokyo", icon: "🇯🇵", id: 3 },
+            { name: "New York (KJFK/JFK)", zone: "America/New_York", icon: "🇺🇸", id: 4 },
+            { name: "London (EGLL/LHR)", zone: "Europe/London", icon: "🇬🇧", id: 5 }
         ];
+        
+        let cityList = [];
+
+        function initWorldClock() {
+            const stored = localStorage.getItem('efb_cities');
+            if(stored) {
+                cityList = JSON.parse(stored);
+            } else {
+                cityList = [...DEFAULT_CITIES];
+            }
+        }
+
+        function addCustomCity() {
+            const name = document.getElementById('newCityName').value.trim();
+            const zone = document.getElementById('newCityZone').value;
+            if(!name) return;
+            
+            cityList.push({
+                name: name,
+                zone: zone,
+                icon: "📍",
+                id: Date.now()
+            });
+            localStorage.setItem('efb_cities', JSON.stringify(cityList));
+            document.getElementById('newCityName').value = '';
+            updateClock(); // Refresh immediately
+        }
+
+        function removeCity(id) {
+            cityList = cityList.filter(c => c.id !== id);
+            localStorage.setItem('efb_cities', JSON.stringify(cityList));
+            updateClock();
+        }
 
         function updateClock() {
             const now = new Date();
-            // Header Z time
             document.getElementById('zuluTime').innerText = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
 
-            // World Tab
             if(document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer');
                 container.innerHTML = '';
                 
-                CITY_LIST.forEach(c => {
-                    // Get time in that zone
+                cityList.forEach(c => {
                     const timeStr = now.toLocaleTimeString('en-US', { timeZone: c.zone, hour: '2-digit', minute: '2-digit', hour12: false });
                     
-                    // Day diff logic (simplified)
-                    // We compare local day vs zone day
                     const localDay = now.getDate();
-                    // Hacky way to get zone date
                     const zoneDateStr = now.toLocaleDateString('en-US', { timeZone: c.zone, day: 'numeric' });
                     const zoneDay = parseInt(zoneDateStr);
                     
@@ -332,19 +377,19 @@
                     if (zoneDay > localDay) dayDiff = "+1 Day";
                     else if (zoneDay < localDay) dayDiff = "-1 Day";
                     
-                    // Day/Night Icon based on hour
                     const zoneHour = parseInt(timeStr.split(':')[0]);
                     const isDay = zoneHour >= 6 && zoneHour < 18;
                     const sunMoon = isDay ? "☀️" : "🌙";
-
-                    // Styling class
                     const timeClass = c.zone === "UTC" ? "clock-time clock-utc" : "clock-time";
 
                     const card = document.createElement('div');
                     card.className = 'clock-card';
+                    // Show delete btn for all except UTC (id=1)
+                    const delHtml = c.id !== 1 ? `<span class="del-btn" onclick="removeCity(${c.id})">🗑</span>` : '';
+
                     card.innerHTML = `
                         <div class="clock-left">
-                            <div class="clock-city">${c.icon} ${c.name}</div>
+                            <div class="clock-city">${c.icon} ${c.name} ${delHtml}</div>
                             <div class="clock-meta">${sunMoon} ${dayDiff}</div>
                         </div>
                         <div class="${timeClass}">${timeStr}</div>
@@ -354,9 +399,8 @@
             }
         }
         setInterval(updateClock, 1000); 
-        // Note: Initial call handles header, world tab renders when active/interval ticks
 
-        // --- OPTIMIZED PARALLEL DATA LOADING ---
+        // --- DATA LOADING ---
         async function loadData() {
             const icao = document.getElementById('icao').value.toUpperCase();
             if(!icao) return;
@@ -364,17 +408,13 @@
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
 
-            // 1. Create Headers
             const headers = { 'Authorization': `Bearer ${TOKEN}` };
-
-            // 2. Start Independent Requests Simultaneously
             const pStation = fetch(`https://avwx.rest/api/station/${icao}`, {headers}).then(res => { if(!res.ok) throw new Error('Station'); return res.json(); });
             const pMetar = fetch(`https://avwx.rest/api/metar/${icao}`, {headers}).then(res => res.json());
             const pTaf = fetch(`https://avwx.rest/api/taf/${icao}`, {headers}).then(res => res.json());
             const pNotam = fetch(`https://avwx.rest/api/notam/${icao}`, {headers}).then(res => res.json());
 
             try {
-                // 3. Await Critical Data (Station + Metar) to render first paint
                 const [station, metar] = await Promise.all([pStation, pMetar]);
                 
                 stationData = station;
@@ -387,7 +427,6 @@
                 renderMetar(metar);
                 renderInfo(station);
                 
-                // Populate Dropdown
                 const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
                 (station.runways || []).forEach(r => {
                     sel.add(new Option(`RWY ${r.ident1}`, r.ident1));
@@ -396,7 +435,6 @@
                 if(station.runways.length > 0) sel.value = station.runways[0].ident1; 
                 drawWindRose();
 
-                // 4. Render Non-Critical Data when available
                 pTaf.then(renderTaf).catch(e => console.error("TAF err"));
                 pNotam.then(d => {
                     document.getElementById('notamList').innerHTML = d.map(n => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${n.raw}</div>`).join('');
@@ -444,7 +482,6 @@
             document.getElementById('infoElev').innerText = `${d.elevation_ft} ft`;
             document.getElementById('infoCoords').innerText = `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}`;
 
-            // Frequencies
             const fContainer = document.getElementById('freqContainer');
             fContainer.innerHTML = '';
             if(d.frequencies && d.frequencies.length > 0) {
@@ -462,7 +499,6 @@
                  });
             } else { fContainer.innerHTML = `<div style="grid-column:span 3; font-size:12px; color:#555; text-align:center;">No Freq Data Available</div>`; }
 
-            // Calcs
             const elev = d.elevation_ft; 
             const temp = currentMetar.temp;
             let currentHpa = currentMetar.alt;
@@ -475,7 +511,6 @@
             document.getElementById('calcDA').innerText = `${da} ft`;
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
 
-            // Solar (Non-Blocking)
             fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
                 .then(r=>r.json()).then(s => {
                     const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
@@ -570,9 +605,10 @@
             }
         }
 
-        // Init
+        // INIT
+        initWorldClock();
         document.getElementById('icao').value = 'RCTP'; toggleClearBtn(); loadData();
-        updateClock(); // Run clock immediately
+        updateClock();
     </script>
 </body>
 </html>
