@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot Widget V23</title>
+    <title>Notion Pilot Widget V24</title>
     <style>
         :root {
             --bg: #ffffff; --text: #37352f; --sub-text: #787774;
@@ -53,17 +53,7 @@
         .data-item .value { font-weight: 600; display: flex; align-items: center; gap: 6px; font-size: 12px; }
         #windArrowIcon { width: 14px; height: 14px; fill: var(--text); transition: transform 0.5s ease; }
 
-        /* ADVANCED DATA BAR */
-        .advanced-data { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .adv-label { font-size: 9px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 2px; }
-        .adv-val { font-size: 11px; font-weight: 600; color: var(--text); font-family: 'SF Mono', monospace; }
-        .spread-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
-        .spread-bar-fill { height: 100%; width: 100%; transition: width 0.5s ease, background-color 0.5s ease; }
-
-        /* VISUALS & TRENDS */
-        .trend-box { background: rgba(241, 196, 15, 0.15); border-left: 3px solid var(--warn); padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; display: none; }
-        .trend-label { font-size: 9px; font-weight: 700; color: var(--warn); text-transform: uppercase; }
-        .trend-text { font-size: 11px; color: var(--text); font-family: 'SF Mono', monospace; margin-top: 2px; }
+        /* VISUAL RUNWAY */
         .visual-box { display: flex; gap: 10px; background: var(--code-bg); border-radius: 6px; padding: 8px; margin-bottom: 8px; align-items: center; }
         .visual-canvas { width: 60px; height: 60px; }
         .calc-inputs { flex-grow: 1; }
@@ -72,20 +62,32 @@
         .limit-alert { color: var(--ifr); font-weight: 800; font-size: 10px; animation: flash 1s infinite; }
         @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
+        /* ADVANCED DATA BAR */
+        .advanced-data { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .adv-label { font-size: 9px; color: var(--sub-text); text-transform: uppercase; }
+        .adv-val { font-size: 11px; font-weight: 600; color: var(--text); font-family: 'SF Mono', monospace; }
+        .spread-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+        .spread-bar-fill { height: 100%; width: 100%; transition: width 0.5s ease, background-color 0.5s ease; }
+
+        /* FORECAST TREND */
+        .trend-box { background: rgba(241, 196, 15, 0.15); border-left: 3px solid var(--warn); padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; display: none; }
+        .trend-label { font-size: 9px; font-weight: 700; color: var(--warn); text-transform: uppercase; }
+        .trend-text { font-size: 11px; color: var(--text); font-family: 'SF Mono', monospace; margin-top: 2px; }
+
         /* NOTAM & RAW */
         .notam-container { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
         .notam-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
         .notam-item { background: var(--code-bg); padding: 8px; border-radius: 4px; font-size: 11px; font-family: 'SF Mono', monospace; border-left: 2px solid var(--warn); line-height: 1.4; color: var(--text); }
         .raw-box { font-family: 'SF Mono', 'Menlo', monospace; font-size: 11px; color: var(--sub-text); white-space: pre-wrap; line-height: 1.4; padding: 0 4px; margin-bottom: 8px; }
 
-        /* INFO, MATRIX & TOOLS */
+        /* INFO & ATC */
         .info-card { padding: 4px 0; }
         .airport-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
         .section-title { font-size: 10px; color: var(--sub-text); text-transform: uppercase; font-weight:700; margin-bottom: 6px; margin-top: 10px; border-bottom: 1px solid var(--border); padding-bottom: 2px; }
+        
         .sun-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         .sun-box { background: var(--code-bg); padding: 4px; border-radius: 4px; text-align: center; }
         .countdown { font-size: 11px; color: var(--accent); font-weight: 700; text-align: center; margin-top: 8px; padding: 4px; background: var(--code-bg); border-radius: 4px; }
-        .freq-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
         
         .matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .matrix-table th { text-align: left; color: var(--sub-text); font-weight: 700; padding: 4px; border-bottom: 1px solid var(--border); font-size: 9px; }
@@ -94,6 +96,21 @@
         .val-good { color: var(--vfr); font-weight: 600; }
         .val-bad { color: var(--ifr); font-weight: 600; }
 
+        /* ATC SPECIFIC */
+        .atc-btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        .atc-btn {
+            flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border);
+            background: var(--code-bg); color: var(--text); font-weight: 700; font-size: 12px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+            text-decoration: none;
+        }
+        .atc-btn:hover { background: var(--border); }
+        .freq-list { display: flex; flex-direction: column; gap: 6px; }
+        .freq-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: var(--code-bg); border-radius: 4px; }
+        .freq-type { font-size: 11px; font-weight: 700; color: var(--sub-text); }
+        .freq-num { font-size: 13px; font-weight: 600; color: var(--accent); font-family: 'SF Mono', monospace; }
+
+        /* TOOLS */
         .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .tool-card { background: var(--code-bg); padding: 8px; border-radius: 6px; }
         .tool-label { font-size: 10px; font-weight: 700; color: var(--sub-text); margin-bottom: 4px; text-transform: uppercase; }
@@ -108,10 +125,10 @@
         .hidden { display: none; }
         .offset-badge { display: inline-block; background: var(--code-bg); color: var(--accent); border: 1px solid var(--border); border-radius: 3px; padding: 1px 4px; font-size: 10px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
         
-        /* PRINT MODE OVERRIDES */
+        /* PRINT MODE */
         @media print {
             body { background-color: #fff !important; color: #000 !important; display: block !important; }
-            .top-bar button, .top-bar input, .tabs, .tool-bar, .visual-box, #memoView, #toolsView, #infoView { display: none !important; }
+            .top-bar button, .top-bar input, .tabs, .tool-bar, .visual-box, #memoView, #toolsView, #infoView, #atcView { display: none !important; }
             #metarView, #tafView { display: block !important; }
             .hidden { display: block !important; }
             .cat-badge { border: 1px solid #000; color: #000 !important; }
@@ -140,6 +157,7 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('metar')">METAR</div>
         <div class="tab" onclick="switchTab('taf')">TAF & NOTAM</div>
+        <div class="tab" onclick="switchTab('atc')">ATC</div>
         <div class="tab" onclick="switchTab('info')">INFO</div>
         <div class="tab" onclick="switchTab('tools')">TOOLS</div>
         <div class="tab" onclick="switchTab('memo')">MEMO</div>
@@ -197,6 +215,22 @@
         </div>
     </div>
 
+    <div id="atcView" class="hidden">
+        <div class="atc-btn-row">
+            <a href="#" target="_blank" id="twatcBtn" class="atc-btn hidden">
+                <span style="font-size:16px;">🇹🇼</span> Listen TWATC
+            </a>
+            <a href="#" target="_blank" id="liveAtcBtn" class="atc-btn">
+                <span style="font-size:16px;">🔊</span> LiveATC
+            </a>
+        </div>
+        
+        <div class="section-title">Station Frequencies</div>
+        <div class="freq-list" id="fullFreqList">
+            <div style="text-align:center; color:#999; font-size:11px;">No Data</div>
+        </div>
+    </div>
+
     <div id="infoView" class="hidden">
         <div class="info-card">
             <div style="display:flex; align-items:center;">
@@ -216,9 +250,6 @@
             <table class="matrix-table" id="matrixTable">
                 <tr><td colspan="4" style="text-align:center; color:#999;">Loading...</td></tr>
             </table>
-
-            <div class="section-title">Frequencies</div>
-            <div class="freq-grid" id="freqGrid"></div>
         </div>
     </div>
 
@@ -233,17 +264,12 @@
         <div class="tools-grid">
             <div class="tool-card">
                 <div class="tool-label">ISA Temp Calc</div>
-                <div class="mini-input-group">
-                    <input type="number" class="mini-input" placeholder="Alt (ft)" oninput="calcIsa(this.value)">
-                </div>
+                <div class="mini-input-group"><input type="number" class="mini-input" placeholder="Alt (ft)" oninput="calcIsa(this.value)"></div>
                 <div class="mini-result" id="isaRes" style="font-size:11px;">15°C @ SL</div>
             </div>
             <div class="tool-card">
                 <div class="tool-label">Pressure Alt</div>
-                <div class="mini-input-group">
-                    <input type="number" class="mini-input" placeholder="QNH" oninput="calcPaManual()">
-                    <input type="number" class="mini-input" placeholder="Elev" id="manElev" oninput="calcPaManual()">
-                </div>
+                <div class="mini-input-group"><input type="number" class="mini-input" placeholder="QNH" oninput="calcPaManual()"><input type="number" class="mini-input" placeholder="Elev" id="manElev" oninput="calcPaManual()"></div>
                 <div class="mini-result" id="paRes">--</div>
             </div>
         </div>
@@ -256,8 +282,17 @@
                 <div class="mini-result" id="fuelRes">0 lbs</div>
             </div>
             <div class="tool-card">
+                <div class="tool-label">Flt Time</div>
+                <div class="mini-input-group"><input type="number" class="mini-input" placeholder="NM" id="eteDist" oninput="calcEte()"><input type="number" class="mini-input" placeholder="Kts" id="eteSpd" value="110" oninput="calcEte()"></div>
+                <div class="mini-result" id="eteRes">-- min</div>
+            </div>
+            <div class="tool-card">
                 <div class="tool-label">Dist (NM/KM)</div>
                 <div class="mini-input-group"><input type="number" class="mini-input" placeholder="NM" oninput="calcDist(this.value, 'nm')"><input type="number" class="mini-input" placeholder="KM" id="distKm" oninput="calcDist(this.value, 'km')"></div>
+            </div>
+            <div class="tool-card">
+                <div class="tool-label">Weight (KG/LB)</div>
+                <div class="mini-input-group"><input type="number" class="mini-input" placeholder="KG" oninput="calcWt(this.value, 'kg')"><input type="number" class="mini-input" placeholder="LB" id="wtLb" oninput="calcWt(this.value, 'lb')"></div>
             </div>
         </div>
         
@@ -282,12 +317,12 @@
     <script>
         const TOKEN = 'dMzS0-M9_ku1bYySTtsq4pZE8fEEiTUJaNtvqSDEgUs';
         const AIRPORT_DB = {
-            "RCTP": { name: "Taiwan Taoyuan", elev: 108, lat: 25.07, lon: 121.23, freqs: { ATIS: "127.6", TWR: "118.7", GND: "121.7" }, runways: [{ id: "05L", len: "12008" }, { id: "23R", len: "12008" }, { id: "05R", len: "12467" }, { id: "23L", len: "12467" }] },
+            "RCTP": { name: "Taiwan Taoyuan", elev: 108, lat: 25.07, lon: 121.23, freqs: { ATIS: "127.6", TWR: "118.7", GND: "121.7", APP: "125.1" }, runways: [{ id: "05L", len: "12008" }, { id: "23R", len: "12008" }, { id: "05R", len: "12467" }, { id: "23L", len: "12467" }] },
             "RCSS": { name: "Taipei Songshan", elev: 18, lat: 25.06, lon: 121.55, freqs: { ATIS: "127.4", TWR: "118.1", GND: "121.9" }, runways: [{ id: "10", len: "8547" }, { id: "28", len: "8547" }] },
             "KMCC": { name: "Sacramento Mather", elev: 98, lat: 38.55, lon: -121.29, freqs: { ATIS: "124.25", TWR: "120.65", GND: "121.85" }, runways: [{ id: "04L", len: "6081" }, { id: "22R", len: "6081" }, { id: "04R", len: "11301" }, { id: "22L", len: "11301" }] },
-            "VHHH": { name: "Hong Kong Int'l", elev: 28, lat: 22.30, lon: 113.91, freqs: { ATIS: "128.2" }, runways: [{ id: "07L", len: "12459" }, { id: "25R", len: "12459" }]},
-            "RCKH": { name: "Kaohsiung Int'l", elev: 31, lat: 22.57, lon: 120.35, freqs: { ATIS: "127.8" }, runways: [{ id: "09", len: "10335" }, { id: "27", len: "10335" }]},
-            "RCMQ": { name: "Taichung Int'l", elev: 665, lat: 24.25, lon: 120.62, freqs: { TWR: "118.6" }, runways: [{ id: "18", len: "12005" }, { id: "36", len: "12005" }]}
+            "VHHH": { name: "Hong Kong Int'l", elev: 28, lat: 22.30, lon: 113.91, freqs: { ATIS: "128.2", TWR: "118.7", GND: "121.6" }, runways: [{ id: "07L", len: "12459" }, { id: "25R", len: "12459" }]},
+            "RCKH": { name: "Kaohsiung Int'l", elev: 31, lat: 22.57, lon: 120.35, freqs: { ATIS: "127.8", TWR: "118.7", GND: "121.9" }, runways: [{ id: "09", len: "10335" }, { id: "27", len: "10335" }]},
+            "RCMQ": { name: "Taichung Int'l", elev: 665, lat: 24.25, lon: 120.62, freqs: { TWR: "118.6", GND: "121.8" }, runways: [{ id: "18", len: "12005" }, { id: "36", len: "12005" }]}
         };
         const WX_CODES={"BR":"Mist","FG":"Fog","FU":"Smoke","HZ":"Haze","DZ":"Drizzle","RA":"Rain","SN":"Snow","GR":"Hail","TS":"Thunderstorm","SH":"Showers","SKC":"Sky Clear","CLR":"Clear"};
 
@@ -307,51 +342,29 @@
         function saveLimits() { localStorage.setItem('pilot_limit_xwind', document.getElementById('limitXwind').value); calculateCrosswind(); updateMatrix(); }
         function clearMemo(){if(confirm("Clear?")){memoArea.value="";localStorage.setItem('pilot_memo',"");}}
         
-        // --- TOOLS ---
-        function calcFuel(v,t){
-            if(t==='gal'){ document.getElementById('fuelLbs').value=(v*6).toFixed(1); document.getElementById('fuelRes').innerText=`${(v*6).toFixed(1)} lbs`;}
-            else{ document.querySelector('input[placeholder="Gal"]').value=(v/6).toFixed(1); document.getElementById('fuelRes').innerText=`${(v/6).toFixed(1)} gal`;}
-        }
-        function calcDist(v,t){
-            if(t==='nm') document.getElementById('distKm').value=(v*1.852).toFixed(1);
-            else document.querySelector('input[placeholder="NM"]').value=(v/1.852).toFixed(1);
-        }
-        function calcWt(v,t){
-            if(t==='kg') document.getElementById('wtLb').value=(v*2.2046).toFixed(1);
-            else document.querySelector('input[placeholder="KG"]').value=(v/2.2046).toFixed(1);
-        }
-        function decodeCode(){
-            const c=document.getElementById('decodeInput').value.toUpperCase();
-            document.getElementById('decodeRes').innerText=WX_CODES[c]||(c.length<2?"Type code...":"Unknown");
-        }
-        
-        // --- STUDY TOOLS ---
-        function calcIsa(alt) {
-            // Standard Temp = 15 - 2 degrees per 1000ft
-            const stdTemp = 15 - (2 * (alt/1000));
-            document.getElementById('isaRes').innerText = `Std Temp: ${stdTemp.toFixed(1)}°C`;
-        }
-        function calcPaManual() {
-            const qnh = document.querySelector('input[placeholder="QNH"]').value;
-            const elev = document.getElementById('manElev').value;
-            if(qnh && elev) {
-                // If QNH > 50 it's prob hPa, else inHg
-                let delta = 0;
-                if(qnh > 50) { // hPa (Standard 1013.25) ~ 30ft per hPa
-                    delta = (1013.25 - qnh) * 30;
-                } else { // inHg (Standard 29.92) ~ 1000ft per inHg
-                    delta = (29.92 - qnh) * 1000;
-                }
-                const pa = Math.round(parseInt(elev) + delta);
-                document.getElementById('paRes').innerText = `${pa} ft`;
-            }
-        }
+        function calcFuel(v,t){if(t==='gal'){document.getElementById('fuelLbs').value=(v*6).toFixed(1);document.getElementById('fuelRes').innerText=`${(v*6).toFixed(1)} lbs`;}else{document.querySelector('input[placeholder="Gal"]').value=(v/6).toFixed(1);document.getElementById('fuelRes').innerText=`${(v/6).toFixed(1)} gal`;}}
+        function calcEte(){const d=document.getElementById('eteDist').value, s=document.getElementById('eteSpd').value;if(d&&s) document.getElementById('eteRes').innerText=`${Math.round((d/s)*60)} min`;}
+        function calcDist(v,t){if(t==='nm') document.getElementById('distKm').value=(v*1.852).toFixed(1); else document.querySelector('input[placeholder="NM"]').value=(v/1.852).toFixed(1);}
+        function calcWt(v,t){if(t==='kg') document.getElementById('wtLb').value=(v*2.2046).toFixed(1); else document.querySelector('input[placeholder="KG"]').value=(v/2.2046).toFixed(1);}
+        function decodeCode(){const c=document.getElementById('decodeInput').value.toUpperCase();document.getElementById('decodeRes').innerText=WX_CODES[c]||(c.length<2?"Type code...":"Unknown");}
+        function calcIsa(alt) { const std = 15 - (2 * (alt/1000)); document.getElementById('isaRes').innerText = `Std Temp: ${std.toFixed(1)}°C`; }
+        function calcPaManual() { const qnh = document.querySelector('input[placeholder="QNH"]').value; const elev = document.getElementById('manElev').value; if(qnh && elev) { let delta = (qnh > 50) ? (1013.25 - qnh) * 30 : (29.92 - qnh) * 1000; document.getElementById('paRes').innerText = `${Math.round(parseInt(elev) + delta)} ft`; } }
 
         async function loadData() {
             const input = document.getElementById('icao').value.toUpperCase();
             if(!input) return; currentIcao = input;
             document.getElementById('printIcao').innerText = currentIcao;
             document.getElementById('skyvectorLink').href = `https://skyvector.com/airport/${currentIcao}`;
+            
+            // Audio Links
+            document.getElementById('liveAtcBtn').href = `https://www.liveatc.net/search/?designator=${currentIcao}`;
+            const twBtn = document.getElementById('twatcBtn');
+            if(currentIcao.startsWith('RC')) {
+                twBtn.classList.remove('hidden');
+                twBtn.href = "https://twatc.net/"; // Main site for now as requested
+            } else {
+                twBtn.classList.add('hidden');
+            }
 
             if (AIRPORT_DB[currentIcao]) renderInfo(AIRPORT_DB[currentIcao]);
             else fetchStationInfo(currentIcao);
@@ -400,8 +413,8 @@
 
         function renderInfo(db) {
             const nameEl=document.getElementById('infoName'), elevEl=document.getElementById('infoElev');
-            const freqGrid=document.getElementById('freqGrid'), dl=document.getElementById('dynamicRunways');
-            freqGrid.innerHTML=''; dl.innerHTML='';
+            const freqList=document.getElementById('fullFreqList'), dl=document.getElementById('dynamicRunways');
+            freqList.innerHTML=''; dl.innerHTML='';
 
             if (db) {
                 currentElev=db.elev; nameEl.innerText=db.name; elevEl.innerText=`Elevation: ${db.elev} ft`;
@@ -411,9 +424,17 @@
                 if(db.runways) {
                     db.runways.forEach(r => { const opt=document.createElement('option'); opt.value=r.id; dl.appendChild(opt); });
                 }
+                
+                // Populate ATC Tab Freqs
                 if(db.freqs) {
-                    for(const [t,f] of Object.entries(db.freqs)) freqGrid.innerHTML+=`<div style="background:var(--code-bg); padding:6px; border-radius:4px; text-align:center;"><div style="font-size:9px; color:var(--sub-text);">${t}</div><div style="font-size:12px; font-weight:600; color:var(--accent);">${f}</div></div>`;
-                }
+                    for(const [t,f] of Object.entries(db.freqs)) {
+                        freqList.innerHTML += `
+                            <div class="freq-row">
+                                <div class="freq-type">${t}</div>
+                                <div class="freq-num">${f}</div>
+                            </div>`;
+                    }
+                } else { freqList.innerHTML = '<div style="text-align:center; color:#999; font-size:11px;">Frequencies not in DB</div>'; }
             } else { currentElev=0; nameEl.innerText="Info Not Found"; currentRunways=[]; }
         }
 
@@ -471,16 +492,6 @@
             }
 
             const tempC=data.temperature?.value, d=data.dewpoint?.value;
-            
-            // FREEZING LEVEL CALC (2 deg per 1000)
-            const fzLvlEl = document.getElementById('freezingLvl');
-            if(tempC != null) {
-                // Formula: Temp / 2 * 1000
-                const fzLvl = Math.round((tempC / 2) * 1000);
-                fzLvlEl.innerText = `${fzLvl.toLocaleString()} ft`;
-            }
-
-            // DENSITY ALT
             const daEl=document.getElementById('densityAlt');
             if(tempC!=null && alt!=null && currentElev!=0) {
                 const altInHg=(alt<32)?alt:(alt/33.8639);
@@ -490,15 +501,15 @@
                 daEl.innerText=`DA ${da.toLocaleString()} ft`;
             } else { daEl.innerText="DA --"; }
 
-            // SPREAD / HUMIDITY
+            const fzLvlEl = document.getElementById('freezingLvl');
+            if(tempC != null) fzLvlEl.innerText = `${Math.round((tempC / 2) * 1000).toLocaleString()} ft`;
+
             const baseEl=document.getElementById('estBase');
             const bar=document.getElementById('spreadBar');
             if(tempC!=null && d!=null) {
                 const spread=(tempC-d);
-                // Approx RH: 100 - (5 * spread)
                 const rh = Math.max(100 - (5 * spread), 0);
                 baseEl.innerText=`Spread ${spread.toFixed(1)}° / RH ${Math.round(rh)}%`;
-                
                 const pct = Math.min(Math.max(spread * 10, 0), 100);
                 bar.style.width = pct + "%";
                 bar.style.backgroundColor = (spread <= 2) ? "#e74c3c" : (spread <= 4) ? "#f1c40f" : "#2ecc71";
@@ -522,16 +533,13 @@
                 if(isNaN(rwyNum)) return;
                 const hdg = rwyNum * 10;
                 let diff = windData.dir - hdg;
-                while (diff <= -180) diff += 360;
-                while (diff > 180) diff -= 360;
-                
+                while (diff <= -180) diff += 360; while (diff > 180) diff -= 360;
                 const realHw = Math.round(Math.cos(diff * (Math.PI/180)) * windData.speed);
                 const realXw = Math.round(Math.abs(Math.sin(diff * (Math.PI/180)) * windData.speed));
                 const hwClass = (realHw < 0) ? 'val-bad' : 'val-good';
                 const xwClass = (realXw > limit) ? 'val-bad' : 'val-good';
                 const ft = parseInt(r.len);
                 const lenText = isNaN(ft) ? r.len : `${Math.round(ft/1000)}k'`;
-
                 table.innerHTML += `<tr><td><span class="matrix-rwy">${r.id}</span></td><td style="font-size:10px;">${lenText}</td><td class="${hwClass}">${realHw}</td><td class="${xwClass}">${realXw}</td></tr>`;
             });
         }
@@ -582,13 +590,14 @@
 
         function copyText() { navigator.clipboard.writeText(currentRawText); }
         function switchTab(t) {
-            ['metar','taf','info','tools','memo'].forEach(v => { const el = document.getElementById(v+'View'); if(el) el.classList.add('hidden'); });
+            ['metar','taf','notam','info','tools','memo','atc'].forEach(v => { const el = document.getElementById(v+'View'); if(el) el.classList.add('hidden'); });
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
             if(t==='metar') { document.getElementById('metarView').classList.remove('hidden'); document.querySelectorAll('.tab')[0].classList.add('active'); }
-            else if(t==='taf' || t==='notam') { document.getElementById('tafView').classList.remove('hidden'); document.querySelectorAll('.tab')[1].classList.add('active'); }
-            else if(t==='info') { document.getElementById('infoView').classList.remove('hidden'); document.querySelectorAll('.tab')[2].classList.add('active'); }
-            else if(t==='tools') { document.getElementById('toolsView').classList.remove('hidden'); document.querySelectorAll('.tab')[3].classList.add('active'); }
-            else if(t==='memo') { document.getElementById('memoView').classList.remove('hidden'); document.querySelectorAll('.tab')[4].classList.add('active'); }
+            else if(t==='taf') { document.getElementById('tafView').classList.remove('hidden'); document.querySelectorAll('.tab')[1].classList.add('active'); }
+            else if(t==='atc') { document.getElementById('atcView').classList.remove('hidden'); document.querySelectorAll('.tab')[2].classList.add('active'); }
+            else if(t==='info') { document.getElementById('infoView').classList.remove('hidden'); document.querySelectorAll('.tab')[3].classList.add('active'); }
+            else if(t==='tools') { document.getElementById('toolsView').classList.remove('hidden'); document.querySelectorAll('.tab')[4].classList.add('active'); }
+            else if(t==='memo') { document.getElementById('memoView').classList.remove('hidden'); document.querySelectorAll('.tab')[5].classList.add('active'); }
         }
 
         loadData();
