@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V39</title>
+    <title>Notion Pilot EFB V40</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
@@ -276,18 +276,12 @@
     </div>
 
     <div id="tab-tools" class="view-section">
-        <div class="section-title" style="margin-top:0;">METAR Helper</div>
-        <input type="text" placeholder="Decode (e.g. SN, BR)" class="conv-inp" oninput="decode(this.value)">
-        <div id="decodeOut" style="color:var(--accent); margin:4px 0 8px 0; font-weight:600; font-size:13px;">...</div>
+        <div class="section-title" style="margin-top:0;">METAR/TAF Helper</div>
+        <input type="text" placeholder="Decode (e.g. +TSRA, BCFG)" class="conv-inp" oninput="decode(this.value)">
+        <div id="decodeOut" style="color:var(--accent); margin:4px 0 8px 0; font-weight:600; font-size:14px; min-height:18px;">...</div>
         <button class="tool-btn" onclick="document.getElementById('codeList').classList.toggle('hidden')">Show Reference Codes</button>
         <div id="codeList" class="code-list hidden">
-            <div class="code-item"><b>BR</b> Mist</div> <div class="code-item"><b>FG</b> Fog</div>
-            <div class="code-item"><b>HZ</b> Haze</div> <div class="code-item"><b>FU</b> Smoke</div>
-            <div class="code-item"><b>RA</b> Rain</div> <div class="code-item"><b>SN</b> Snow</div>
-            <div class="code-item"><b>TS</b> Thunder</div> <div class="code-item"><b>DZ</b> Drizzle</div>
-            <div class="code-item"><b>SH</b> Shower</div> <div class="code-item"><b>GR</b> Hail</div>
-            <div class="code-item"><b>SQ</b> Squall</div> <div class="code-item"><b>VC</b> Vicinity</div>
-        </div>
+            </div>
 
         <div class="section-title">Flight Timer</div>
         <div class="info-card">
@@ -468,16 +462,19 @@
             // Frequencies
             const fContainer = document.getElementById('freqContainer');
             fContainer.innerHTML = '';
-            // AVWX station object sometimes has .frequencies or .frequency array
-            // Since we can't guarantee format on free tier, we map what we find if any.
-            // If empty, show PLACEHOLDER DATA based on user request "like the picture"
-            // Actually, let's look for them. If null, we might show a message.
-            // *Simulating data for display if missing, or use actual if present*
-            // Real AVWX data is often sparse on freqs. I will parse if available.
-            /* For now, if empty, I will leave it empty. 
-               (Note: RCTP usually has data in full tier. I'll code safe.)
-            */
+            // AVWX format usually: [ { type: "TOWER", frequency: "118.7" }, ... ]
+            // Note: AVWX Free tier sometimes restricts this field, but for standard airports it might appear.
             if(d.frequencies && d.frequencies.length > 0) {
+                 // Sort priority: ATIS, TWR, GND, APP, DEP
+                 const priority = { "ATIS":1, "TWR":2, "GND":3, "APP":4, "DEP":5 };
+                 d.frequencies.sort((a,b) => {
+                     // Simple sort attempt based on type string inclusion
+                     let pa = 99, pb = 99;
+                     for(let k in priority) if(a.type.includes(k)) pa = priority[k];
+                     for(let k in priority) if(b.type.includes(k)) pb = priority[k];
+                     return pa - pb;
+                 });
+                 
                  d.frequencies.forEach(f => {
                      const card = document.createElement('div'); card.className = 'freq-card';
                      card.innerHTML = `<div class="freq-type">${f.type}</div><div class="freq-val">${f.frequency}</div>`;
@@ -520,19 +517,16 @@
             const d = stationData; if(!d || !d.runways) return;
             d.runways.forEach((r, idx) => {
                 let dimStr = useMetric ? `${Math.round(r.length_ft * 0.3048)}m x ${Math.round(r.width_ft * 0.3048)}m` : `${r.length_ft}' x ${r.width_ft}'`;
-                
                 const magVar = d.magnetic_variation || 0;
                 const windMagDir = currentWind.dir - magVar;
                 const rwy1Hdg = parseInt(r.ident1.replace(/\D/g,'')) * 10;
                 const diffRad = (windMagDir - rwy1Hdg) * (Math.PI/180);
                 const hw = Math.round(Math.cos(diffRad) * currentWind.spd); 
                 const xw = Math.round(Math.sin(diffRad) * currentWind.spd);
-                
                 const color1 = hw >= 0 ? 'var(--success)' : 'var(--danger)';
                 const color2 = hw < 0 ? 'var(--success)' : 'var(--danger)';
                 const hwArrow = hw >= 0 ? '⬆' : '⬇';
                 const xwArrow = xw >= 0 ? '⬅' : '➡'; 
-
                 const div = document.createElement('div');
                 div.className = 'rwy-complex';
                 div.innerHTML = `
@@ -613,8 +607,72 @@
         }
         
         // --- TOOLS LOGIC ---
-        const WX_CODES={"BR":"Mist","FG":"Fog","TS":"Storm","HZ":"Haze","FU":"Smoke","DZ":"Drizzle","RA":"Rain","SN":"Snow","SH":"Shower","GR":"Hail"}; 
-        function decode(c){ document.getElementById('decodeOut').innerText = WX_CODES[c.toUpperCase()] || "Unknown"; }
+        // METAR Smart Decoder
+        const WX_DATA = {
+            // Descriptors
+            "MI":"Shallow", "PR":"Partial", "BC":"Patches", "DR":"Drifting", "BL":"Blowing", "SH":"Shower", "TS":"Thunderstorm", "FZ":"Freezing",
+            // Precip
+            "DZ":"Drizzle", "RA":"Rain", "SN":"Snow", "SG":"Snow Grains", "IC":"Ice Crystals", "PL":"Ice Pellets", "GR":"Hail", "GS":"Small Hail", "UP":"Unknown",
+            // Obscure
+            "BR":"Mist", "FG":"Fog", "FU":"Smoke", "VA":"Ash", "DU":"Dust", "SA":"Sand", "HZ":"Haze", "PY":"Spray",
+            // Other
+            "PO":"Dust Devils", "SQ":"Squall", "FC":"Funnel Cloud", "SS":"Sandstorm", "DS":"Duststorm",
+            // Cloud
+            "SKC":"Clear", "CLR":"Clear", "FEW":"Few", "SCT":"Scattered", "BKN":"Broken", "OVC":"Overcast", "VV":"Vertical Vis", "CAVOK":"Ceiling & Vis OK"
+        };
+        
+        // Populate the Cheat Sheet List on Load
+        const codeListEl = document.getElementById('codeList');
+        codeListEl.innerHTML = '';
+        Object.keys(WX_DATA).sort().forEach(key => {
+            const item = document.createElement('div');
+            item.className = 'code-item';
+            item.innerHTML = `<b>${key}</b> ${WX_DATA[key]}`;
+            codeListEl.appendChild(item);
+        });
+
+        function decode(input) {
+            input = input.trim().toUpperCase();
+            if(!input) { document.getElementById('decodeOut').innerText = "..."; return; }
+            
+            // Check full match
+            if(WX_DATA[input]) {
+                document.getElementById('decodeOut').innerText = WX_DATA[input];
+                return;
+            }
+
+            // Parsing Logic
+            let res = [];
+            let rem = input;
+            
+            // Intensity
+            if(rem.startsWith('-')) { res.push("Light"); rem = rem.substring(1); }
+            else if(rem.startsWith('+')) { res.push("Heavy"); rem = rem.substring(1); }
+            else if(rem.startsWith('VC')) { res.push("Vicinity"); rem = rem.substring(2); }
+
+            // Split into 2-char chunks and lookup
+            // E.g. TSRA -> TS, RA
+            // BCFG -> BC, FG
+            let foundAny = false;
+            while(rem.length >= 2) {
+                let chunk = rem.substring(0,2);
+                if(WX_DATA[chunk]) {
+                    res.push(WX_DATA[chunk]);
+                    rem = rem.substring(2);
+                    foundAny = true;
+                } else {
+                    // Try 3 chars? rare. WMO codes are mostly 2.
+                    // Just break to avoid infinite loop
+                    break;
+                }
+            }
+            
+            if(foundAny && rem.length === 0) {
+                document.getElementById('decodeOut').innerText = res.join(" ");
+            } else {
+                document.getElementById('decodeOut').innerText = "Unknown / Custom";
+            }
+        }
 
         // Timer
         function formatTime(ms) {
