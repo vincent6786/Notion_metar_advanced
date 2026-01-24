@@ -26,30 +26,41 @@
             background-color: var(--bg); color: var(--text);
             margin: 0; padding: 12px; font-size: 14px; line-height: 1.4;
             display: flex; flex-direction: column; gap: 12px;
-            padding-bottom: 50px; /* Space for scroll on mobile */
-            overscroll-behavior-y: none; /* Prevent bounce */
+            padding-bottom: 50px; 
+            overscroll-behavior-y: none;
         }
 
-        /* --- ANIMATIONS (THE COOL PART) --- */
-        @keyframes slideUpFade {
-            0% { opacity: 0; transform: translateY(20px) scale(0.98); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
+        /* --- SKELETON LOADING ANIMATION --- */
+        .skeleton {
+            display: inline-block;
+            height: 1em;
+            width: 100%;
+            background: #2c2c2e;
+            background-image: linear-gradient(to right, #2c2c2e 0%, #3a3a3c 20%, #2c2c2e 40%, #2c2c2e 100%);
+            background-repeat: no-repeat;
+            background-size: 800px 100%; 
+            animation: shimmer 1.5s infinite linear forwards;
+            border-radius: 4px;
+            color: transparent !important;
+            user-select: none;
         }
-
-        /* Staggered Delays for a "Waterfall" effect */
-        .top-bar { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-        .tabs { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both; }
+        .skeleton-text { width: 60%; }
+        .skeleton-header { width: 40%; height: 20px; margin-bottom: 4px; }
         
-        /* Animate content inside the active view */
-        .view-section.active > * {
-            animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        @keyframes shimmer {
+            0% { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
         }
-        /* Delays for the first few items in any tab */
-        .view-section.active > *:nth-child(1) { animation-delay: 0.15s; }
-        .view-section.active > *:nth-child(2) { animation-delay: 0.20s; }
-        .view-section.active > *:nth-child(3) { animation-delay: 0.25s; }
-        .view-section.active > *:nth-child(4) { animation-delay: 0.30s; }
-        .view-section.active > *:nth-child(5) { animation-delay: 0.35s; }
+
+        /* --- DATA AGE RING (REFRESH BUTTON) --- */
+        .refresh-wrapper {
+            position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); cursor: pointer;
+        }
+        .refresh-icon { font-size: 18px; color: var(--accent); z-index: 2; transition: transform 0.3s; }
+        .refresh-wrapper:hover .refresh-icon { transform: rotate(180deg); }
+        .timer-svg { position: absolute; top: 0; left: 0; width: 40px; height: 40px; transform: rotate(-90deg); pointer-events: none; }
+        .timer-circle { fill: none; stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
 
         /* HEADER */
         .top-bar { display: flex; align-items: center; gap: 8px; height: 40px; }
@@ -86,8 +97,9 @@
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
         /* SECTIONS & UTILS */
-        .view-section { display: none; } /* Animation handled by keyframes above */
+        .view-section { display: none; animation: fadeIn 0.2s; }
         .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .hidden { display: none !important; }
         .section-title { font-weight:700; color:var(--sub-text); margin: 20px 0 8px 0; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px; }
         
@@ -204,7 +216,14 @@
                 <span id="clearBtn" class="clear-btn" onclick="clearSearch()">✖</span>
             </div>
         </div>
-        <button class="icon-btn" onclick="loadData()" title="Force Refresh">↻</button>
+        
+        <div class="refresh-wrapper" onclick="loadData()" title="Refresh Data">
+            <svg class="timer-svg" viewBox="0 0 40 40">
+                <circle class="timer-circle" cx="20" cy="20" r="16" stroke="var(--sub-text)" stroke-opacity="0.2"></circle>
+                <circle id="timerRing" class="timer-circle" cx="20" cy="20" r="16" stroke="var(--success)" stroke-dasharray="100" stroke-dashoffset="0"></circle>
+            </svg>
+            <span class="refresh-icon">↻</span>
+        </div>
         
         <div id="headerCat" class="badge badge-cat">--</div>
         <div id="zuluTime" class="badge badge-time">--:--Z</div>
@@ -234,7 +253,9 @@
                 </div>
             </div>
         </div>
+        
         <div class="raw-text" id="rawMetar">Enter an airport code above.</div>
+        
         <div class="metar-grid">
             <div class="metar-card"><div class="m-label">WIND</div><div class="m-value" id="mWind">--</div></div>
             <div class="metar-card"><div class="m-label">VISIBILITY</div><div class="m-value" id="mVis">--</div></div>
@@ -395,8 +416,9 @@
         let tafDataCache = null;
         let timerInterval = null, startTime = 0, elapsed = 0, running = false;
         let lastMetarObj = null; 
+        let windPulseInterval = null;
 
-        // Embedded Database of Major Aviation Hubs
+        // Embedded Database
         const AVIATION_CITIES = [
             {n:"Taipei",z:"Asia/Taipei",icao:"RCTP",iata:"TPE"}, {n:"Tokyo Narita",z:"Asia/Tokyo",icao:"RJAA",iata:"NRT"}, {n:"Tokyo Haneda",z:"Asia/Tokyo",icao:"RJTT",iata:"HND"},
             {n:"New York JFK",z:"America/New_York",icao:"KJFK",iata:"JFK"}, {n:"London Heathrow",z:"Europe/London",icao:"EGLL",iata:"LHR"}, {n:"Los Angeles",z:"America/Los_Angeles",icao:"KLAX",iata:"LAX"},
@@ -407,14 +429,12 @@
         ];
         let cityList = [];
 
-        // --- AUTH & INIT ---
         function initApp() {
             initWorldClock();
             loadData();
             setInterval(updateClock, 1000);
         }
 
-        // --- TABS & UI ---
         function setTab(name) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
@@ -435,7 +455,16 @@
         }
         function clearSearch() { document.getElementById('icao').value = ''; document.getElementById('icao').focus(); toggleClearBtn(); }
         
-        // --- DATA LOADING ---
+        // --- SKELETON LOGIC ---
+        function toggleSkeleton(loading) {
+            const ids = ['mWind', 'mVis', 'mCeil', 'mAlt', 'mTempC', 'mAge', 'infoName', 'infoLoc', 'infoCodes'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.innerHTML = loading ? `<span class="skeleton"></span>` : '--';
+            });
+            if(loading) document.getElementById('rawMetar').innerHTML = `<span class="skeleton skeleton-header"></span><br><span class="skeleton skeleton-text"></span>`;
+        }
+
         async function loadData() {
             const inputEl = document.getElementById('icao');
             if(!inputEl.value) inputEl.value = localStorage.getItem('efb_last_station') || 'RCTP';
@@ -443,43 +472,34 @@
             const icao = inputEl.value.toUpperCase();
             if(!icao) return;
             
-            localStorage.setItem('efb_last_station', icao); // SAVE STATE
+            localStorage.setItem('efb_last_station', icao);
             inputEl.blur();
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
             
-            // --- FIX: CLEAR PREVIOUS BANNERS & SUGGESTIONS ---
-            const oldBanner = document.getElementById('staleBanner');
-            if(oldBanner) oldBanner.remove();
+            // CLEANUP
+            const oldBanner = document.getElementById('staleBanner'); if(oldBanner) oldBanner.remove();
+            const oldSuggestions = document.getElementById('nearbySuggestions'); if(oldSuggestions) oldSuggestions.remove();
             
-            const oldSuggestions = document.getElementById('nearbySuggestions');
-            if(oldSuggestions) oldSuggestions.remove();
-
-            // Clear text container
-            const rawContainer = document.getElementById('rawMetar');
-            rawContainer.innerHTML = 'Loading...';
+            toggleSkeleton(true); // START LOADING ANIMATION
 
             const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
-            const cb = Date.now(); // Cache Busting timestamp
+            const cb = Date.now(); 
             
             try {
-                // 1. Fetch Station Info FIRST (so we have coords even if METAR fails)
                 const stationResp = await fetch(`https://avwx.rest/api/station/${icao}?t=${cb}`, {headers});
                 if(!stationResp.ok) throw new Error("Station Not Found");
                 const station = await stationResp.json();
                 stationData = station;
 
-                // 2. Render Info Tab immediately
                 renderInfo(station);
 
-                // 3. Now try to fetch Weather
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
                     fetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
                     fetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
                     fetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`, {headers}).then(r=>r.json())
                 ]);
 
-                // Process METAR
                 if(metarRes.status === 'fulfilled' && metarRes.value && !metarRes.value.error) {
                     const m = metarRes.value;
                     lastMetarObj = m;
@@ -490,41 +510,33 @@
                     if(altVal < 200) altUnit = 'inHg';
                     currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit: altUnit };
                     
-                    renderMetar(m); // This renders the data OR the "Old Data" warning
+                    renderMetar(m); 
                     
-                    // CHECK IF STALE (OLD DATA)
                     const obsTime = new Date(m.time.dt);
                     const ageHrs = (new Date() - obsTime) / (1000 * 60 * 60);
                     if (ageHrs > 2) {
                         const banner = document.createElement('div');
-                        banner.id = "staleBanner"; // ID for auto-clear
+                        banner.id = "staleBanner";
                         banner.style.cssText = "background:var(--danger); color:white; padding:8px; border-radius:6px; margin-bottom:8px; text-align:center; font-weight:bold;";
                         banner.innerHTML = `⚠️ DATA OUTDATED (${Math.round(ageHrs)}h ago)<br><a href="https://metar-taf.com/metar/${stationData?stationData.icao:''}" target="_blank" style="color:white; text-decoration:underline; font-weight:400; font-size:12px;">Check Backup Source ↗</a>`;
                         const rc = document.getElementById('rawMetar');
                         rc.parentNode.insertBefore(banner, rc);
                         updateHeaderCat('OLD', 'cat-ifr'); 
                     }
-
-                    // --- NEW: ALWAYS SHOW NEARBY STATIONS ---
-                    // Called here on success so it appears at the bottom of the Raw Text
                     findNearbyStations(station.latitude, station.longitude);
 
                 } else {
-                    // METAR FAILED (e.g. 404 or empty)
                     throw new Error("No Weather Data");
                 }
 
-                // Process TAF
                 if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
-                
-                // Process NOTAMs
                 if(notamRes.status === 'fulfilled') {
                      const n = notamRes.value;
                      document.getElementById('notamList').innerHTML = Array.isArray(n) ? 
                         n.map(x => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${x.raw}</div>`).join('') : "No Data";
                 }
 
-                // --- AUTO RUNWAY START ---
+                // Runway Logic
                 const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
                 const mv = station.magnetic_variation || 0;
                 const windMag = currentWind.dir - mv;
@@ -541,9 +553,8 @@
                 });
                 if(bestRwy) sel.value = bestRwy; else if(station.runways.length > 0) sel.value = station.runways[0].ident1;
                 drawWindRose(); 
-                // --- AUTO RUNWAY END ---
 
-                // --- AUDIO START ---
+                // Audio Logic
                 const audioTarget = document.getElementById('audioPlayerTarget');
                 const audioLbl = document.getElementById('audioLabel');
                 if(icao === 'RCTP' || icao === 'RCKH' || icao === 'RCSS') {
@@ -553,27 +564,13 @@
                     audioLbl.innerText = "External Audio Source";
                     audioTarget.innerHTML = `<a href="https://www.liveatc.net/search/?q=${icao}" target="_blank" class="tool-btn" style="text-align:center; display:block; text-decoration:none;">📡 Search ${icao} on LiveATC</a>`;
                 }
-                // --- AUDIO END ---
 
             } catch(e) {
                 console.error(e);
                 updateHeaderCat('N/A', 'cat-ifr');
-                
-                // --- FAILURE HANDLING WITH SUGGESTIONS ---
-                let errorMsg = `<div style="text-align:center; padding:15px; color:var(--sub-text);">
-                    No METAR data for ${icao}.<br>
-                    <a href="https://metar-taf.com/metar/${icao}" target="_blank" class="tool-btn" style="margin-top:10px; display:inline-block; text-decoration:none;">
-                        Check External Source ↗
-                    </a>
-                </div>`;
-                
-                rawContainer.innerHTML = errorMsg;
-
-                // If we successfully loaded the STATION data before failing on METAR,
-                // we have the coordinates to search nearby!
-                if(stationData && stationData.latitude) {
-                    findNearbyStations(stationData.latitude, stationData.longitude);
-                }
+                let errorMsg = `<div style="text-align:center; padding:15px; color:var(--sub-text);">No METAR data for ${icao}.<br><a href="https://metar-taf.com/metar/${icao}" target="_blank" class="tool-btn" style="margin-top:10px; display:inline-block; text-decoration:none;">Check External Source ↗</a></div>`;
+                document.getElementById('rawMetar').innerHTML = errorMsg;
+                if(stationData && stationData.latitude) findNearbyStations(stationData.latitude, stationData.longitude);
             }
         }
 
@@ -582,10 +579,8 @@
             badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
         }
 
-        // --- UPDATED: SUGGEST NEARBY AIRPORTS (Fixed Object Error) ---
         async function findNearbyStations(lat, lon) {
             const container = document.getElementById('rawMetar');
-            
             const oldSuggestions = document.getElementById('nearbySuggestions');
             if(oldSuggestions) oldSuggestions.remove();
 
@@ -595,7 +590,6 @@
             suggestionBox.style.borderTop = "1px solid #333";
             suggestionBox.style.paddingTop = "8px";
             suggestionBox.innerHTML = `<div style="color:var(--sub-text); font-size:11px; margin-bottom:6px;">NEARBY STATIONS WITH WEATHER:</div><div id="nearList" style="display:flex; gap:6px; flex-wrap:wrap;">Loading nearby...</div>`;
-            
             container.appendChild(suggestionBox);
 
             try {
@@ -606,17 +600,10 @@
                 
                 const list = document.getElementById('nearList');
                 list.innerHTML = "";
-                
-                // Get current ICAO to filter it out
                 const inputVal = document.getElementById('icao').value.toUpperCase();
-
-                // FIX: The array items are wrappers like { station: {...}, nautical_miles: 5.2 }
                 const others = data.filter(item => item.station.icao !== inputVal);
 
-                if(others.length === 0) {
-                    list.innerHTML = "<span style='color:#555;'>No other stations found nearby.</span>";
-                    return;
-                }
+                if(others.length === 0) { list.innerHTML = "<span style='color:#555;'>No other stations found nearby.</span>"; return; }
 
                 others.forEach(item => {
                     const btn = document.createElement('button');
@@ -624,52 +611,33 @@
                     btn.style.width = "auto";
                     btn.style.margin = "0";
                     btn.style.fontSize = "12px";
-                    
-                    // FIX: Access the nested station object
                     const stn = item.station; 
-                    
                     btn.innerText = `✈ ${stn.icao}`; 
-                    
-                    // Add distance if available (AVWX usually sends 'nautical_miles')
-                    if(item.nautical_miles) {
-                        btn.innerText += ` (${Math.round(item.nautical_miles)}nm)`;
-                    }
-
+                    if(item.nautical_miles) btn.innerText += ` (${Math.round(item.nautical_miles)}nm)`;
                     btn.title = stn.name || "Nearby Station";
-
-                    btn.onclick = () => {
-                        document.getElementById('icao').value = stn.icao;
-                        loadData(); 
-                    };
+                    btn.onclick = () => { document.getElementById('icao').value = stn.icao; loadData(); };
                     list.appendChild(btn);
                 });
-
             } catch(e) {
-                console.error("Nearby search failed", e);
                 document.getElementById('nearList').innerText = "Could not load suggestions.";
             }
         }
 
-        // --- RENDERING FUNCTIONS ---
+        // --- RENDER WITH DATA AGE RING LOGIC ---
         function renderMetar(d) {
             const rawContainer = document.getElementById('rawMetar');
-            
-            // 1. Check for valid data object
-            if (!d || !d.time || !d.time.dt) {
-                rawContainer.innerHTML = "No METAR Available"; return; 
-            }
+            if (!d || !d.time || !d.time.dt) { rawContainer.innerHTML = "No METAR Available"; return; }
 
             rawContainer.innerText = d.raw;
             const rules = d.flight_rules; 
             let css = 'cat-vfr';
             if(rules==='MVFR') css='cat-mvfr'; if(rules==='IFR') css='cat-ifr'; if(rules==='LIFR') css='cat-lifr';
-            
-            // 2. STALE DATA CHECK IS NOW HANDLED IN LOAD DATA TO SEPARATE BANNER FROM RENDERING
             updateHeaderCat(rules, css);
 
             document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
             document.getElementById('mVis').innerText = d.visibility ? `${d.visibility.value} sm` : '--';
             const c = d.clouds?.[0]; document.getElementById('mCeil').innerText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
+            
             const alt = d.altimeter?.value; 
             if(alt) {
                 if(currentMetar.altUnit === 'hPa') { const inHg = (alt * 0.02953).toFixed(2); document.getElementById('mAlt').innerText = `Q${alt} / A${inHg}`; }
@@ -681,8 +649,23 @@
                 document.getElementById('mTempF').innerText = `(${Math.round(t*1.8+32)}°F)`;
                 document.getElementById('mSpread').innerText = `Spread: ${(t-dew).toFixed(1)}°C`;
             }
+            
             const minAgo = Math.floor((new Date() - new Date(d.time.dt)) / 60000);
             document.getElementById('mAge').innerText = `${minAgo}m ago`;
+
+            // UPDATE RING
+            const ring = document.getElementById('timerRing');
+            const perc = Math.max(0, 100 - (minAgo / 60 * 100)); // 100% = 0m, 0% = 60m
+            const radius = 16;
+            const circ = 2 * Math.PI * radius; 
+            const offset = circ - (perc / 100) * circ;
+            
+            ring.style.strokeDasharray = `${circ} ${circ}`;
+            ring.style.strokeDashoffset = offset;
+            
+            if(minAgo < 30) ring.style.stroke = "var(--success)";
+            else if(minAgo < 60) ring.style.stroke = "var(--warn)";
+            else ring.style.stroke = "var(--danger)";
         }
 
         function renderInfo(d) {
@@ -722,7 +705,6 @@
             document.getElementById('calcDA').innerText = `${da} ft`;
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
             
-            // Solar
             fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
                 .then(r=>r.json()).then(s => {
                     const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
@@ -736,11 +718,10 @@
             renderRunwaysComplex();
         }
 
-        // --- RUNWAY & WIND VIZ ---
+        // --- WIND PULSE VIZ ---
         function renderRunwaysComplex() {
             const container = document.getElementById('runwayListComplex'); container.innerHTML = '';
             const d = stationData; if(!d || !d.runways) return;
-            
             const magVar = d.magnetic_variation || 0;
             const windMagDir = currentWind.dir - magVar;
 
@@ -779,38 +760,58 @@
         }
         function drawWindRose() {
             const canvas = document.getElementById('windRose'); const ctx = canvas.getContext('2d'); const w=140, h=140, cx=70, cy=70, r=60;
-            const rwyIdent = document.getElementById('rwySelect').value; ctx.clearRect(0,0,w,h);
-            ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = '#8e8e93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('N', cx, cy - r + 10); ctx.fillText('E', cx + r - 10, cy); ctx.fillText('S', cx, cy + r - 10); ctx.fillText('W', cx - r + 10, cy);
+            const rwyIdent = document.getElementById('rwySelect').value; 
             
-            const mv = stationData?.magnetic_variation || 0; const windMag = currentWind.dir - mv;
+            // Clear existing animation loop if any
+            if(window.windAnimId) cancelAnimationFrame(window.windAnimId);
+
+            const speed = currentWind.spd;
+            let pulse = 0;
+            let pulseDir = 1;
             
-            if(rwyIdent) {
-                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10; const rwyRad = (rwyHdg - 90) * (Math.PI/180);
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad); ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12); ctx.restore();
-                const diff = (windMag - rwyHdg) * (Math.PI/180); const hw = Math.round(Math.cos(diff) * currentWind.spd); const xw = Math.round(Math.sin(diff) * currentWind.spd);
-                const vHW = document.getElementById('valHW'); vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
-                const vXW = document.getElementById('valXW'); vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
+            function animate() {
+                ctx.clearRect(0,0,w,h);
+                // Pulse Logic
+                if(speed > 5) {
+                    pulse += (0.02 * (speed/10)) * pulseDir; // Faster wind = Faster pulse
+                    if(pulse > 1) pulseDir = -1;
+                    if(pulse < 0) pulseDir = 1;
+                } else { pulse = 0; }
+
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = '#8e8e93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('N', cx, cy - r + 10); ctx.fillText('E', cx + r - 10, cy); ctx.fillText('S', cx, cy + r - 10); ctx.fillText('W', cx - r + 10, cy);
                 
-                checkMins(); // <--- TRIGGER MINS CHECK
+                const mv = stationData?.magnetic_variation || 0; const windMag = currentWind.dir - mv;
+                
+                if(rwyIdent) {
+                    const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10; const rwyRad = (rwyHdg - 90) * (Math.PI/180);
+                    ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad); ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12); ctx.restore();
+                    const diff = (windMag - rwyHdg) * (Math.PI/180); const hw = Math.round(Math.cos(diff) * currentWind.spd); const xw = Math.round(Math.sin(diff) * currentWind.spd);
+                    const vHW = document.getElementById('valHW'); vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
+                    const vXW = document.getElementById('valXW'); vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
+                    checkMins(); 
+                }
+                if(currentWind.spd > 0) {
+                    const windRad = (windMag - 90) * (Math.PI/180); ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
+                    // Arrow with Pulse
+                    const scale = 1 + (pulse * 0.1); 
+                    ctx.scale(scale, scale);
+                    ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
+                }
+                if(speed > 5) window.windAnimId = requestAnimationFrame(animate);
             }
-            if(currentWind.spd > 0) {
-                const windRad = (windMag - 90) * (Math.PI/180); ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
-                ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
-            }
+            animate();
         }
 
         // --- PERSONAL MINIMUMS CHECKER ---
         function checkMins() {
             if (!currentMetar || !stationData) { document.getElementById('minsResult').innerText = "LOAD METAR DATA"; return; }
-            
             const limitXW = parseFloat(document.getElementById('minXW').value) || 0;
             const limitCeil = parseFloat(document.getElementById('minCeil').value) || 0;
             const rwyIdent = document.getElementById('rwySelect').value; 
             let actualXW = 0;
-            
             if (rwyIdent) {
                 const magVar = stationData.magnetic_variation || 0;
                 const windMagDir = currentWind.dir - magVar;
@@ -818,8 +819,6 @@
                 const diffRad = (windMagDir - rwyHdg) * (Math.PI/180);
                 actualXW = Math.abs(Math.round(Math.sin(diffRad) * currentWind.spd));
             }
-
-            // Find Ceiling (Lowest BKN or OVC)
             let actualCeil = 99999;
             let ceilType = "CLR";
             if (lastMetarObj && lastMetarObj.clouds) {
@@ -829,15 +828,12 @@
                     ceilType = ceilingLayer.type;
                 }
             }
-
             const minsCard = document.getElementById('minsCard');
             const resDiv = document.getElementById('minsResult');
             const reasonDiv = document.getElementById('minsReason');
-            
             let fails = [];
             if (actualXW > limitXW) fails.push(`X-Wind ${actualXW}kt > ${limitXW}kt`);
             if (actualCeil < limitCeil) fails.push(`Ceiling ${ceilType}${actualCeil < 10000 ? actualCeil : 'UNL'} < ${limitCeil}ft`);
-
             if (fails.length > 0) {
                 resDiv.innerText = "NO-GO ⛔"; resDiv.style.backgroundColor = "var(--danger)"; resDiv.style.color = "#fff";
                 minsCard.style.borderLeftColor = "var(--danger)"; reasonDiv.innerText = fails.join(" • ");
@@ -847,37 +843,24 @@
             }
         }
 
-        // --- E6B CALC ---
         function calcE6B() {
-            // Inputs
             const alt = parseFloat(document.getElementById('e6bAlt').value) || 0;
             const qnh = parseFloat(document.getElementById('e6bQnh').value) || 1013.25;
             let tempInput = document.getElementById('e6bTemp').value;
-            // Default to Std if empty
             const stdTempC = 15 - (0.0019812 * alt);
             const actTempC = tempInput === "" ? stdTempC : parseFloat(tempInput);
             const ias = parseFloat(document.getElementById('e6bIas').value) || 0;
-
-            // PA: Alt + (1013 - QNH) * 30 
             const pa = alt + (1013.25 - qnh) * 27.3;
             document.getElementById('resPA').innerText = Math.round(pa) + " ft";
-
-            // ISA Dev
             const isaDev = actTempC - (15 - (0.00198 * pa));
             const devSign = isaDev >= 0 ? "+" : "";
             document.getElementById('resISA').innerText = `ISA ${devSign}${Math.round(isaDev)}°C`;
-
-            // DA: PA + [118.8 * (ActTemp - StdTempAtPA)]
             const da = pa + (118.8 * (actTempC - (15 - (0.00198 * pa))));
             document.getElementById('resDA').innerText = Math.round(da) + " ft";
-
-            // TAS & Mach
             const tempK = actTempC + 273.15;
             const speedOfSoundKts = 38.967854 * Math.sqrt(tempK);
             document.getElementById('resSoS').innerText = Math.round(speedOfSoundKts) + " kts";
-
             if (ias > 0) {
-                // TAS = IAS * sqrt(stdDensity / density)
                 const pressAtPA = 1013.25 * Math.pow(1 - (0.0000225577 * pa), 5.25588);
                 const density = (pressAtPA * 100) / (287.05 * tempK);
                 const stdDensity = 1.225;
@@ -891,7 +874,6 @@
             }
         }
 
-        // --- TAF RENDER ---
         function renderTaf(d) {
             document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
             tafDataCache = d.forecast; const bar = document.getElementById('tafBar'); const axis = document.getElementById('tafAxis'); bar.innerHTML = ''; axis.innerHTML = '';
@@ -916,13 +898,9 @@
             let cStr = 'SKC'; if(f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3,'0')}`).join(', '); document.getElementById('tdCloud').innerText = cStr;
         }
 
-        // --- WORLD CLOCK WITH ONLINE SEARCH ---
         function initWorldClock() {
-            // Load Saved
             const stored = localStorage.getItem('efb_cities_v46');
-            if(stored) {
-                cityList = JSON.parse(stored);
-            } else {
+            if(stored) { cityList = JSON.parse(stored); } else {
                 cityList = [
                     { n: "UTC (Zulu)", z: "UTC", codes: "", id: 1 },
                     { n: "Taipei", z: "Asia/Taipei", codes: "RCTP/TPE", id: 2 },
@@ -935,27 +913,19 @@
             if (!val) return;
             const btn = document.querySelector('.ac-btn');
             const originalText = btn.innerText; btn.innerText = "Searching..."; btn.disabled = true;
-
-            // 1. Try DB
             let found = AVIATION_CITIES.find(c => `${c.n} (${c.icao}/${c.iata})` === val);
             if (!found) {
                 const upper = val.toUpperCase();
                 found = AVIATION_CITIES.find(c => c.icao === upper || c.iata === upper || c.n.toUpperCase().includes(upper));
             }
-
-            if (found) {
-                addCityToList(found.n, found.z, `${found.icao}/${found.iata}`);
-            } else {
-                // 2. Try Online
+            if (found) { addCityToList(found.n, found.z, `${found.icao}/${found.iata}`); } else {
                 try {
                     const resp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=1&language=en&format=json`);
                     const data = await resp.json();
                     if (data.results && data.results.length > 0) {
                         const res = data.results[0];
                         addCityToList(res.name, res.timezone, `ONLINE/${res.country_code||''}`);
-                    } else {
-                        alert("City not found locally or online.");
-                    }
+                    } else { alert("City not found locally or online."); }
                 } catch (e) { console.error(e); alert("Search Error"); }
             }
             btn.innerText = originalText; btn.disabled = false;
@@ -971,15 +941,11 @@
         
         function updateClock() {
             const now = new Date();
-            // Header
             document.getElementById('zuluTime').innerText = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
-
             if(document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer'); container.innerHTML = '';
                 cityList.forEach(c => {
                     const timeStr = now.toLocaleTimeString('en-US', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
-                    
-                    // Relative Time Logic
                     const targetDateStr = now.toLocaleString('en-US', { timeZone: c.z });
                     const targetDate = new Date(targetDateStr);
                     const localDay = now.getDay(); const targetDay = targetDate.getDay();
@@ -988,26 +954,16 @@
                         if(targetDay === (localDay + 1) % 7) dayLabel = "Tomorrow";
                         else if(localDay === (targetDay + 1) % 7) dayLabel = "Yesterday";
                     }
-
                     const isUTC = c.z === "UTC";
                     const timeClass = isUTC ? "clock-time clock-utc" : "clock-time";
                     const delHtml = c.id !== 1 ? `<span class="del-btn" onclick="removeCity(${c.id})">×</span>` : '';
-                    
                     const card = document.createElement('div'); card.className = 'clock-card';
-                    card.innerHTML = `
-                        <div class="clock-left">
-                            <div class="clock-rel">${dayLabel}</div>
-                            <div><span class="clock-city">${c.n}</span><span class="clock-codes">${c.codes}</span></div>
-                        </div>
-                        <div style="display:flex; align-items:center;">
-                            <div class="${timeClass}">${timeStr}</div>${delHtml}
-                        </div>`;
+                    card.innerHTML = `<div class="clock-left"><div class="clock-rel">${dayLabel}</div><div><span class="clock-city">${c.n}</span><span class="clock-codes">${c.codes}</span></div></div><div style="display:flex; align-items:center;"><div class="${timeClass}">${timeStr}</div>${delHtml}</div>`;
                     container.appendChild(card);
                 });
             }
         }
 
-        // --- TOOLS ---
         const WX_DATA = {
             "MI":"Shallow", "PR":"Partial", "BC":"Patches", "DR":"Drifting", "BL":"Blowing", "SH":"Shower", "TS":"Thunderstorm", "FZ":"Freezing",
             "DZ":"Drizzle", "RA":"Rain", "SN":"Snow", "SG":"Snow Grains", "IC":"Ice Crystals", "PL":"Ice Pellets", "GR":"Hail", "GS":"Small Hail", "UP":"Unknown",
@@ -1026,14 +982,12 @@
             while(rem.length >= 2) { let chunk = rem.substring(0,2); if(WX_DATA[chunk]) { res.push(WX_DATA[chunk]); rem = rem.substring(2); foundAny = true; } else break; }
             if(foundAny && rem.length === 0) document.getElementById('decodeOut').innerText = res.join(" "); else document.getElementById('decodeOut').innerText = "Unknown / Custom";
         }
-        // Timer
         function formatTime(ms) { const d = new Date(ms); return d.toISOString().substr(11, 8); }
         function updateTimerDisplay() { const now = Date.now(); const diff = now - startTime + elapsed; document.getElementById('timerDisplay').innerText = formatTime(diff); }
         function startTimer() { if(!running) { startTime = Date.now(); timerInterval = setInterval(updateTimerDisplay, 100); running = true; } }
         function stopTimer() { if(running) { clearInterval(timerInterval); elapsed += Date.now() - startTime; running = false; } else { elapsed = 0; document.getElementById('timerDisplay').innerText = "00:00:00"; document.getElementById('lapList').innerHTML = ""; } }
         function lapTimer() { if(running) { const now = Date.now(); const diff = now - startTime + elapsed; const div = document.createElement('div'); div.className = 'lap-item'; div.innerHTML = `<span>Lap</span><span>${formatTime(diff)}</span>`; document.getElementById('lapList').prepend(div); } }
         
-        // START
         initApp();
     </script>
 </body>
