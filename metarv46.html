@@ -8,7 +8,6 @@
     <meta name="apple-mobile-web-app-title" content="METAR PLUS">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -26,30 +25,20 @@
             background-color: var(--bg); color: var(--text);
             margin: 0; padding: 12px; font-size: 14px; line-height: 1.4;
             display: flex; flex-direction: column; gap: 12px;
-            padding-bottom: 50px; /* Space for scroll on mobile */
-            overscroll-behavior-y: none; /* Prevent bounce */
+            padding-bottom: 50px; overscroll-behavior-y: none;
         }
 
-        /* --- ANIMATIONS (THE COOL PART) --- */
+        /* ANIMATIONS */
         @keyframes slideUpFade {
             0% { opacity: 0; transform: translateY(20px) scale(0.98); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-
-        /* Staggered Delays for a "Waterfall" effect */
         .top-bar { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
         .tabs { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both; }
-        
-        /* Animate content inside the active view */
-        .view-section.active > * {
-            animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-        }
-        /* Delays for the first few items in any tab */
+        .view-section.active > * { animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
         .view-section.active > *:nth-child(1) { animation-delay: 0.15s; }
         .view-section.active > *:nth-child(2) { animation-delay: 0.20s; }
         .view-section.active > *:nth-child(3) { animation-delay: 0.25s; }
-        .view-section.active > *:nth-child(4) { animation-delay: 0.30s; }
-        .view-section.active > *:nth-child(5) { animation-delay: 0.35s; }
 
         /* HEADER */
         .top-bar { display: flex; align-items: center; gap: 8px; height: 40px; }
@@ -85,17 +74,14 @@
         .tab { padding: 10px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--sub-text); border-bottom: 2px solid transparent; text-transform: uppercase; white-space: nowrap; }
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        /* SECTIONS & UTILS */
-        .view-section { display: none; } /* Animation handled by keyframes above */
+        /* UTILS */
+        .view-section { display: none; }
         .view-section.active { display: block; }
         .hidden { display: none !important; }
         .section-title { font-weight:700; color:var(--sub-text); margin: 20px 0 8px 0; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        /* TEXT HANDLING FIX */
         .raw-text { 
             font-family: 'SF Mono', monospace; font-size: 13px; color: #d0d0d0; 
-            margin-top: 6px; line-height: 1.4; 
-            white-space: pre-wrap; word-break: break-word; 
+            margin-top: 6px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; 
             background: rgba(255,255,255,0.05); padding: 6px; border-radius: 6px; 
         }
 
@@ -110,7 +96,7 @@
         .freq-type { font-size: 11px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 4px; }
         .freq-val { font-size: 16px; font-weight: 700; color: var(--accent); font-family: 'SF Mono', monospace; }
 
-        /* METAR & TAF */
+        /* METAR */
         .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
         .metar-card.full-width { grid-column: span 2; }
@@ -139,19 +125,37 @@
         .wind-stats { font-family: 'SF Mono', monospace; font-size: 13px; color: #fff; margin-top: 5px; }
         .stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; }
         
-        /* DROPDOWN COLOR FIX */
         select.stealth-select { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; font-weight: 600; outline: none; }
         select.stealth-select option { background-color: #2c2c2e; color: #fff; }
 
         /* TAF STYLES */
-        .taf-viz-container { margin-top: 10px; }
-        .taf-bar { display: flex; height: 32px; width: 100%; background: #2c2c2e; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+        .taf-viz-container { margin-top: 10px; position: relative; }
+        
+        /* The container for the blocks */
+        .taf-bar { display: flex; height: 32px; width: 100%; background: #2c2c2e; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); position: relative; z-index: 2; }
+        
+        /* The Sky Strip (Gradient) */
+        .taf-sky-strip { height: 6px; width: 100%; margin-top: 2px; border-radius: 3px; background: #333; overflow: hidden; position: relative; }
+        
         .taf-axis { display: flex; width: 100%; margin-top: 4px; margin-bottom: 12px; }
         .taf-block { cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: rgba(0,0,0,0.6); border-right: 1px solid rgba(0,0,0,0.1); transition: opacity 0.2s; text-transform: uppercase; }
         .taf-block:hover { opacity: 0.8; }
         .taf-block.selected { border: 2px solid #fff; z-index: 10; box-shadow: 0 0 10px rgba(0,0,0,0.5); color: #000; }
         .taf-axis-lbl { text-align: center; font-size: 10px; color: var(--sub-text); font-family: 'SF Mono', monospace; border-right: 1px solid transparent; }
         .taf-detail-card { background: var(--card-bg); border-radius: 8px; padding: 16px; border-left: 4px solid var(--sub-text); animation: slideDown 0.2s ease-out; }
+        
+        /* NEEDLE OVERLAY */
+        #tafNeedle {
+            position: absolute; top: -4px; bottom: -8px; width: 2px; background: #ff453a; 
+            z-index: 20; pointer-events: none; box-shadow: 0 0 8px #ff453a;
+            transition: left 0.5s ease-out; display: none;
+        }
+        #tafNeedle::after {
+            content: ''; position: absolute; top: -4px; left: -4px; 
+            width: 10px; height: 10px; background: #ff453a; 
+            border-radius: 50%; border: 2px solid #000;
+        }
+
         .td-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
         .td-time { font-family: 'SF Mono', monospace; font-size: 14px; font-weight: 700; color: #fff; }
         .td-type { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #444; color: #fff; text-transform: uppercase; }
@@ -160,11 +164,12 @@
         .td-lbl { font-size: 11px; color: var(--sub-text); margin-bottom: 2px; }
         .td-val { font-size: 14px; font-weight: 600; color: #fff; }
 
-        /* BUTTONS & TOOLS */
+        /* BUTTONS */
         .atc-btn { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 16px; border-radius: 10px; text-decoration: none; color: #fff; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: background 0.2s; margin-bottom: 10px; }
         .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
         .tool-btn { background: #333; border: 1px solid var(--border); color: #fff; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; margin-top: 4px; font-weight: 600; }
         .tool-btn:hover { background: #444; }
+        
         .code-list { background: #222; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 12px; max-height: 200px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .code-item { color: #aaa; } .code-item b { color: var(--accent); }
         .timer-display { font-family: 'SF Mono', monospace; font-size: 32px; font-weight: 700; text-align: center; margin: 10px 0; letter-spacing: 2px; }
@@ -177,7 +182,7 @@
         .conv-inp { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; }
         .conv-lbl { font-size: 10px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 2px; }
 
-        /* WORLD CLOCK STYLES */
+        /* WORLD CLOCK */
         .world-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
         .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c2c2e; }
         .clock-left { display: flex; flex-direction: column; }
@@ -250,7 +255,12 @@
             <span>Forecast Visualization</span><span id="tafIssued">--</span>
         </div>
         <div class="taf-viz-container">
+            <div id="tafNeedle"></div>
+            
             <div id="tafBar" class="taf-bar"></div>
+            
+            <div id="tafSkyStrip" class="taf-sky-strip"></div>
+            
             <div id="tafAxis" class="taf-axis"></div>
             <div id="tafDetail" class="taf-detail-card hidden">
                 <div class="td-header"><span id="tdTime" class="td-time">--</span><span id="tdType" class="td-type">--</span></div>
@@ -391,6 +401,7 @@
         let currentWind = { dir:0, spd:0 }; 
         let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
         let stationData = null;
+        let stationSunTimes = null; // Store for TAF gradient
         let useMetric = true; 
         let tafDataCache = null;
         let timerInterval = null, startTime = 0, elapsed = 0, running = false;
@@ -448,14 +459,12 @@
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
             
-            // --- FIX: CLEAR PREVIOUS BANNERS & SUGGESTIONS ---
             const oldBanner = document.getElementById('staleBanner');
             if(oldBanner) oldBanner.remove();
             
             const oldSuggestions = document.getElementById('nearbySuggestions');
             if(oldSuggestions) oldSuggestions.remove();
 
-            // Clear text container
             const rawContainer = document.getElementById('rawMetar');
             rawContainer.innerHTML = 'Loading...';
 
@@ -463,23 +472,19 @@
             const cb = Date.now(); // Cache Busting timestamp
             
             try {
-                // 1. Fetch Station Info FIRST (so we have coords even if METAR fails)
                 const stationResp = await fetch(`https://avwx.rest/api/station/${icao}?t=${cb}`, {headers});
                 if(!stationResp.ok) throw new Error("Station Not Found");
                 const station = await stationResp.json();
                 stationData = station;
 
-                // 2. Render Info Tab immediately
-                renderInfo(station);
+                renderInfo(station); // This triggers Sun fetch
 
-                // 3. Now try to fetch Weather
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
                     fetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
                     fetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
                     fetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`, {headers}).then(r=>r.json())
                 ]);
 
-                // Process METAR
                 if(metarRes.status === 'fulfilled' && metarRes.value && !metarRes.value.error) {
                     const m = metarRes.value;
                     lastMetarObj = m;
@@ -490,14 +495,13 @@
                     if(altVal < 200) altUnit = 'inHg';
                     currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit: altUnit };
                     
-                    renderMetar(m); // This renders the data OR the "Old Data" warning
+                    renderMetar(m); 
                     
-                    // CHECK IF STALE (OLD DATA)
                     const obsTime = new Date(m.time.dt);
                     const ageHrs = (new Date() - obsTime) / (1000 * 60 * 60);
                     if (ageHrs > 2) {
                         const banner = document.createElement('div');
-                        banner.id = "staleBanner"; // ID for auto-clear
+                        banner.id = "staleBanner"; 
                         banner.style.cssText = "background:var(--danger); color:white; padding:8px; border-radius:6px; margin-bottom:8px; text-align:center; font-weight:bold;";
                         banner.innerHTML = `⚠️ DATA OUTDATED (${Math.round(ageHrs)}h ago)<br><a href="https://metar-taf.com/metar/${stationData?stationData.icao:''}" target="_blank" style="color:white; text-decoration:underline; font-weight:400; font-size:12px;">Check Backup Source ↗</a>`;
                         const rc = document.getElementById('rawMetar');
@@ -505,26 +509,20 @@
                         updateHeaderCat('OLD', 'cat-ifr'); 
                     }
 
-                    // --- NEW: ALWAYS SHOW NEARBY STATIONS ---
-                    // Called here on success so it appears at the bottom of the Raw Text
                     findNearbyStations(station.latitude, station.longitude);
 
                 } else {
-                    // METAR FAILED (e.g. 404 or empty)
                     throw new Error("No Weather Data");
                 }
 
-                // Process TAF
                 if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
                 
-                // Process NOTAMs
                 if(notamRes.status === 'fulfilled') {
                      const n = notamRes.value;
                      document.getElementById('notamList').innerHTML = Array.isArray(n) ? 
                         n.map(x => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${x.raw}</div>`).join('') : "No Data";
                 }
 
-                // --- AUTO RUNWAY START ---
                 const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
                 const mv = station.magnetic_variation || 0;
                 const windMag = currentWind.dir - mv;
@@ -541,9 +539,7 @@
                 });
                 if(bestRwy) sel.value = bestRwy; else if(station.runways.length > 0) sel.value = station.runways[0].ident1;
                 drawWindRose(); 
-                // --- AUTO RUNWAY END ---
 
-                // --- AUDIO START ---
                 const audioTarget = document.getElementById('audioPlayerTarget');
                 const audioLbl = document.getElementById('audioLabel');
                 if(icao === 'RCTP' || icao === 'RCKH' || icao === 'RCSS') {
@@ -553,24 +549,17 @@
                     audioLbl.innerText = "External Audio Source";
                     audioTarget.innerHTML = `<a href="https://www.liveatc.net/search/?q=${icao}" target="_blank" class="tool-btn" style="text-align:center; display:block; text-decoration:none;">📡 Search ${icao} on LiveATC</a>`;
                 }
-                // --- AUDIO END ---
 
             } catch(e) {
                 console.error(e);
                 updateHeaderCat('N/A', 'cat-ifr');
-                
-                // --- FAILURE HANDLING WITH SUGGESTIONS ---
                 let errorMsg = `<div style="text-align:center; padding:15px; color:var(--sub-text);">
                     No METAR data for ${icao}.<br>
                     <a href="https://metar-taf.com/metar/${icao}" target="_blank" class="tool-btn" style="margin-top:10px; display:inline-block; text-decoration:none;">
                         Check External Source ↗
                     </a>
                 </div>`;
-                
                 rawContainer.innerHTML = errorMsg;
-
-                // If we successfully loaded the STATION data before failing on METAR,
-                // we have the coordinates to search nearby!
                 if(stationData && stationData.latitude) {
                     findNearbyStations(stationData.latitude, stationData.longitude);
                 }
@@ -582,10 +571,8 @@
             badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
         }
 
-        // --- UPDATED: SUGGEST NEARBY AIRPORTS (Fixed Object Error) ---
         async function findNearbyStations(lat, lon) {
             const container = document.getElementById('rawMetar');
-            
             const oldSuggestions = document.getElementById('nearbySuggestions');
             if(oldSuggestions) oldSuggestions.remove();
 
@@ -595,7 +582,6 @@
             suggestionBox.style.borderTop = "1px solid #333";
             suggestionBox.style.paddingTop = "8px";
             suggestionBox.innerHTML = `<div style="color:var(--sub-text); font-size:11px; margin-bottom:6px;">NEARBY STATIONS WITH WEATHER:</div><div id="nearList" style="display:flex; gap:6px; flex-wrap:wrap;">Loading nearby...</div>`;
-            
             container.appendChild(suggestionBox);
 
             try {
@@ -606,11 +592,7 @@
                 
                 const list = document.getElementById('nearList');
                 list.innerHTML = "";
-                
-                // Get current ICAO to filter it out
                 const inputVal = document.getElementById('icao').value.toUpperCase();
-
-                // FIX: The array items are wrappers like { station: {...}, nautical_miles: 5.2 }
                 const others = data.filter(item => item.station.icao !== inputVal);
 
                 if(others.length === 0) {
@@ -624,47 +606,33 @@
                     btn.style.width = "auto";
                     btn.style.margin = "0";
                     btn.style.fontSize = "12px";
-                    
-                    // FIX: Access the nested station object
                     const stn = item.station; 
-                    
                     btn.innerText = `✈ ${stn.icao}`; 
-                    
-                    // Add distance if available (AVWX usually sends 'nautical_miles')
                     if(item.nautical_miles) {
                         btn.innerText += ` (${Math.round(item.nautical_miles)}nm)`;
                     }
-
                     btn.title = stn.name || "Nearby Station";
-
                     btn.onclick = () => {
                         document.getElementById('icao').value = stn.icao;
                         loadData(); 
                     };
                     list.appendChild(btn);
                 });
-
             } catch(e) {
                 console.error("Nearby search failed", e);
                 document.getElementById('nearList').innerText = "Could not load suggestions.";
             }
         }
 
-        // --- RENDERING FUNCTIONS ---
         function renderMetar(d) {
             const rawContainer = document.getElementById('rawMetar');
-            
-            // 1. Check for valid data object
             if (!d || !d.time || !d.time.dt) {
                 rawContainer.innerHTML = "No METAR Available"; return; 
             }
-
             rawContainer.innerText = d.raw;
             const rules = d.flight_rules; 
             let css = 'cat-vfr';
             if(rules==='MVFR') css='cat-mvfr'; if(rules==='IFR') css='cat-ifr'; if(rules==='LIFR') css='cat-lifr';
-            
-            // 2. STALE DATA CHECK IS NOW HANDLED IN LOAD DATA TO SEPARATE BANNER FROM RENDERING
             updateHeaderCat(rules, css);
 
             document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
@@ -709,7 +677,6 @@
                  });
             } else { fContainer.innerHTML = `<div style="grid-column:span 3; font-size:12px; color:#555; text-align:center;">No Freq Data Available</div>`; }
 
-            // Calcs
             const elev = d.elevation_ft; 
             const temp = currentMetar.temp;
             let currentHpa = currentMetar.alt;
@@ -722,11 +689,18 @@
             document.getElementById('calcDA').innerText = `${da} ft`;
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
             
-            // Solar
+            // Solar & SKY GRADIENT Logic
             fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
                 .then(r=>r.json()).then(s => {
                     const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
                     document.getElementById('infoSun').innerText = `🌅 ${t(s.results.sunrise)}  🌇 ${t(s.results.sunset)}`;
+                    
+                    // SAVE SUN TIMES for TAF Visualization
+                    stationSunTimes = {
+                        sunrise: new Date(s.results.sunrise),
+                        sunset: new Date(s.results.sunset)
+                    };
+                    updateTafSkyGradient(); // Try to update gradient if TAF is ready
                 }).catch(e=>{});
             
             const offset = Math.round(d.longitude / 15);
@@ -740,10 +714,8 @@
         function renderRunwaysComplex() {
             const container = document.getElementById('runwayListComplex'); container.innerHTML = '';
             const d = stationData; if(!d || !d.runways) return;
-            
             const magVar = d.magnetic_variation || 0;
             const windMagDir = currentWind.dir - magVar;
-
             d.runways.forEach((r, idx) => {
                 let dimStr = useMetric ? `${Math.round(r.length_ft * 0.3048)}m x ${Math.round(r.width_ft * 0.3048)}m` : `${r.length_ft}' x ${r.width_ft}'`;
                 const rwy1Hdg = parseInt(r.ident1.replace(/\D/g,'')) * 10;
@@ -792,8 +764,7 @@
                 const diff = (windMag - rwyHdg) * (Math.PI/180); const hw = Math.round(Math.cos(diff) * currentWind.spd); const xw = Math.round(Math.sin(diff) * currentWind.spd);
                 const vHW = document.getElementById('valHW'); vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
                 const vXW = document.getElementById('valXW'); vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
-                
-                checkMins(); // <--- TRIGGER MINS CHECK
+                checkMins(); 
             }
             if(currentWind.spd > 0) {
                 const windRad = (windMag - 90) * (Math.PI/180); ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
@@ -805,12 +776,10 @@
         // --- PERSONAL MINIMUMS CHECKER ---
         function checkMins() {
             if (!currentMetar || !stationData) { document.getElementById('minsResult').innerText = "LOAD METAR DATA"; return; }
-            
             const limitXW = parseFloat(document.getElementById('minXW').value) || 0;
             const limitCeil = parseFloat(document.getElementById('minCeil').value) || 0;
             const rwyIdent = document.getElementById('rwySelect').value; 
             let actualXW = 0;
-            
             if (rwyIdent) {
                 const magVar = stationData.magnetic_variation || 0;
                 const windMagDir = currentWind.dir - magVar;
@@ -818,8 +787,6 @@
                 const diffRad = (windMagDir - rwyHdg) * (Math.PI/180);
                 actualXW = Math.abs(Math.round(Math.sin(diffRad) * currentWind.spd));
             }
-
-            // Find Ceiling (Lowest BKN or OVC)
             let actualCeil = 99999;
             let ceilType = "CLR";
             if (lastMetarObj && lastMetarObj.clouds) {
@@ -829,15 +796,12 @@
                     ceilType = ceilingLayer.type;
                 }
             }
-
             const minsCard = document.getElementById('minsCard');
             const resDiv = document.getElementById('minsResult');
             const reasonDiv = document.getElementById('minsReason');
-            
             let fails = [];
             if (actualXW > limitXW) fails.push(`X-Wind ${actualXW}kt > ${limitXW}kt`);
             if (actualCeil < limitCeil) fails.push(`Ceiling ${ceilType}${actualCeil < 10000 ? actualCeil : 'UNL'} < ${limitCeil}ft`);
-
             if (fails.length > 0) {
                 resDiv.innerText = "NO-GO ⛔"; resDiv.style.backgroundColor = "var(--danger)"; resDiv.style.color = "#fff";
                 minsCard.style.borderLeftColor = "var(--danger)"; reasonDiv.innerText = fails.join(" • ");
@@ -849,35 +813,23 @@
 
         // --- E6B CALC ---
         function calcE6B() {
-            // Inputs
             const alt = parseFloat(document.getElementById('e6bAlt').value) || 0;
             const qnh = parseFloat(document.getElementById('e6bQnh').value) || 1013.25;
             let tempInput = document.getElementById('e6bTemp').value;
-            // Default to Std if empty
             const stdTempC = 15 - (0.0019812 * alt);
             const actTempC = tempInput === "" ? stdTempC : parseFloat(tempInput);
             const ias = parseFloat(document.getElementById('e6bIas').value) || 0;
-
-            // PA: Alt + (1013 - QNH) * 30 
             const pa = alt + (1013.25 - qnh) * 27.3;
             document.getElementById('resPA').innerText = Math.round(pa) + " ft";
-
-            // ISA Dev
             const isaDev = actTempC - (15 - (0.00198 * pa));
             const devSign = isaDev >= 0 ? "+" : "";
             document.getElementById('resISA').innerText = `ISA ${devSign}${Math.round(isaDev)}°C`;
-
-            // DA: PA + [118.8 * (ActTemp - StdTempAtPA)]
             const da = pa + (118.8 * (actTempC - (15 - (0.00198 * pa))));
             document.getElementById('resDA').innerText = Math.round(da) + " ft";
-
-            // TAS & Mach
             const tempK = actTempC + 273.15;
             const speedOfSoundKts = 38.967854 * Math.sqrt(tempK);
             document.getElementById('resSoS').innerText = Math.round(speedOfSoundKts) + " kts";
-
             if (ias > 0) {
-                // TAS = IAS * sqrt(stdDensity / density)
                 const pressAtPA = 1013.25 * Math.pow(1 - (0.0000225577 * pa), 5.25588);
                 const density = (pressAtPA * 100) / (287.05 * tempK);
                 const stdDensity = 1.225;
@@ -896,16 +848,125 @@
             document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
             tafDataCache = d.forecast; const bar = document.getElementById('tafBar'); const axis = document.getElementById('tafAxis'); bar.innerHTML = ''; axis.innerHTML = '';
             document.getElementById('tafDetail').classList.add('hidden');
-            if(!d.forecast) return;
+            document.getElementById('tafNeedle').style.display = 'none'; // Hide needle initially
+            
+            if(!d.forecast || d.forecast.length === 0) return;
+            
+            // --- NEW: Calculate Total Duration for Needle & Gradient ---
+            const startT = new Date(d.forecast[0].start_time.dt);
+            const endT = new Date(d.forecast[d.forecast.length-1].end_time.dt);
+            const totalDur = endT - startT; 
+            const now = new Date();
+
+            // Render Needle
+            if (now >= startT && now <= endT) {
+                const p = ((now - startT) / totalDur) * 100;
+                const needle = document.getElementById('tafNeedle');
+                needle.style.display = 'block';
+                needle.style.left = `${p}%`;
+            }
+
+            // Render Blocks
             d.forecast.forEach((f, index) => {
                 const block = document.createElement('div'); block.className = 'taf-block'; block.style.flex = "1";
                 let col = '#555'; if(f.flight_rules==='VFR')col='var(--success)'; if(f.flight_rules==='MVFR')col='var(--mvfr)'; if(f.flight_rules==='IFR')col='var(--danger)';
                 block.style.backgroundColor = col; block.innerText = f.type;
                 block.onclick = () => { document.querySelectorAll('.taf-block').forEach(b => b.classList.remove('selected')); block.classList.add('selected'); showTafDetail(index, col); };
                 bar.appendChild(block);
-                const start = new Date(f.start_time.dt); const lbl = document.createElement('div'); lbl.className = 'taf-axis-lbl'; lbl.style.flex = "1"; lbl.innerText = `${start.getUTCHours()}z`; axis.appendChild(lbl);
+                
+                // Axis Labels (Simplified)
+                if(index % 2 === 0) { // Don't crowd labels
+                    const s = new Date(f.start_time.dt); 
+                    const lbl = document.createElement('div'); 
+                    lbl.className = 'taf-axis-lbl'; lbl.style.flex = "2"; // span 2 blocks roughly
+                    lbl.innerText = `${s.getUTCHours()}z`; 
+                    axis.appendChild(lbl);
+                }
             });
+            
+            // Trigger gradient update now that we have TAF times
+            updateTafSkyGradient(startT, endT);
         }
+
+        function updateTafSkyGradient(startT, endT) {
+            // Need both TAF times and Sun Times to work
+            if(!stationSunTimes || !startT || !endT) return;
+            
+            const sr = stationSunTimes.sunrise;
+            const ss = stationSunTimes.sunset;
+            
+            // Normalize dates to comparable timestamps within the 24h TAF window
+            // This is complex because TAFs cross days. Simplified logic:
+            // Just create a repeating gradient pattern: Night -> Dawn -> Day -> Dusk -> Night
+            // Visual Approximation based on Local Hour relative to UTC Hour
+            
+            // Actually, simpler is better for V1:
+            // Just set a fixed "Day/Night" strip? No, let's try to be smart.
+            // Map Sunrise/Sunset onto the timeline %
+            
+            const totalDur = endT - startT;
+            
+            // Find "relevant" sunrise/set that falls inside the TAF window
+            // Since TAF is usually <30h, there is usually 1 sunrise and 1 sunset, or maybe 2.
+            
+            let stops = [];
+            
+            // Check previous day, current day, next day sun events
+            [-1, 0, 1].forEach(offset => {
+                let checkSR = new Date(sr.getTime() + (offset * 24 * 60 * 60 * 1000));
+                let checkSS = new Date(ss.getTime() + (offset * 24 * 60 * 60 * 1000));
+                
+                if(checkSR >= startT && checkSR <= endT) stops.push({t: checkSR, type: 'sr'});
+                if(checkSS >= startT && checkSS <= endT) stops.push({t: checkSS, type: 'ss'});
+            });
+            
+            stops.sort((a,b) => a.t - b.t);
+            
+            // Construct Gradient String
+            // Base color depends on if we start in day or night. 
+            // Simple check: is startT between a previous SR and next SS?
+            
+            // Let's assume start is Night (#0f172a) or Day (#0ea5e9)
+            // We can check sun altitude... or simpler:
+            // Just use the API provided SR/SS to check if startT is "day".
+            // If startT > todaySR and startT < todaySS -> Day start.
+            
+            let css = "linear-gradient(to right";
+            let currentState = "night"; // default
+            
+            // Determine initial state
+            // Normalize startT to today to compare with Today's SR/SS
+            let dSR = new Date(startT); dSR.setUTCHours(sr.getUTCHours(), sr.getUTCMinutes());
+            let dSS = new Date(startT); dSS.setUTCHours(ss.getUTCHours(), ss.getUTCMinutes());
+            
+            if (startT > dSR && startT < dSS) currentState = "day";
+            
+            // Colors
+            const cNight = "#0f172a";
+            const cDawn = "#f97316"; // Orange
+            const cDay = "#0ea5e9"; // Sky Blue
+            
+            // Initial Color
+            css += `, ${currentState === 'day' ? cDay : cNight} 0%`;
+            
+            stops.forEach(stop => {
+                let pct = ((stop.t - startT) / totalDur) * 100;
+                // Transition width (tw)
+                let tw = 5; 
+                
+                if(stop.type === 'sr') {
+                    // Night -> Sunrise -> Day
+                    css += `, ${cNight} ${Math.max(0, pct-tw)}%, ${cDawn} ${pct}%, ${cDay} ${Math.min(100, pct+tw)}%`;
+                } else {
+                    // Day -> Sunset -> Night
+                    css += `, ${cDay} ${Math.max(0, pct-tw)}%, ${cDawn} ${pct}%, ${cNight} ${Math.min(100, pct+tw)}%`;
+                }
+            });
+            
+            css += ")";
+            document.getElementById('tafSkyStrip').style.background = css;
+        }
+
         function showTafDetail(index, color) {
             const f = tafDataCache[index]; const card = document.getElementById('tafDetail'); card.style.borderLeftColor = color; card.classList.remove('hidden');
             const s = new Date(f.start_time.dt); const e = new Date(f.end_time.dt);
@@ -1038,4 +1099,3 @@
     </script>
 </body>
 </html>
-
