@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V49 (Smart Fallback)</title>
+    <title>Notion Pilot EFB V50 (Auto-Clear Fix)</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
@@ -416,7 +416,14 @@
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
             
-            // Clear Warnings & Results
+            // --- FIX: CLEAR PREVIOUS BANNERS & SUGGESTIONS ---
+            const oldBanner = document.getElementById('staleBanner');
+            if(oldBanner) oldBanner.remove();
+            
+            const oldSuggestions = document.getElementById('nearbySuggestions');
+            if(oldSuggestions) oldSuggestions.remove();
+
+            // Clear text container
             const rawContainer = document.getElementById('rawMetar');
             rawContainer.innerHTML = 'Loading...';
 
@@ -434,7 +441,6 @@
                 renderInfo(station);
 
                 // 3. Now try to fetch Weather
-                // We use Promise.allSettled so if METAR fails, we don't crash everything
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
                     fetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
                     fetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
@@ -538,8 +544,10 @@
         // --- NEW FEATURE: SUGGEST NEARBY AIRPORTS ---
         async function findNearbyStations(lat, lon) {
             const container = document.getElementById('rawMetar');
-            // Don't overwrite if we already have a warning, just append
+            
+            // Create box with Specific ID so we can delete it later
             const suggestionBox = document.createElement('div');
+            suggestionBox.id = "nearbySuggestions"; // <--- ADDED ID
             suggestionBox.style.marginTop = "10px";
             suggestionBox.style.borderTop = "1px solid #333";
             suggestionBox.style.paddingTop = "8px";
@@ -610,6 +618,7 @@
             if (ageHrs > 2) {
                 updateHeaderCat('OLD', 'cat-ifr'); 
                 const banner = document.createElement('div');
+                banner.id = "staleBanner"; // <--- ADDED ID FOR AUTO-CLEAR
                 banner.style.cssText = "background:var(--danger); color:white; padding:8px; border-radius:6px; margin-bottom:8px; text-align:center; font-weight:bold;";
                 banner.innerHTML = `⚠️ DATA OUTDATED (${Math.round(ageHrs)}h ago)<br><a href="https://metar-taf.com/metar/${stationData?stationData.icao:''}" target="_blank" style="color:white; text-decoration:underline; font-weight:400; font-size:12px;">Check Backup Source ↗</a>`;
                 rawContainer.parentNode.insertBefore(banner, rawContainer);
