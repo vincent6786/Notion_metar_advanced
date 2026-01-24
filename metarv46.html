@@ -12,6 +12,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <style>
+        /* --- 1. CORE THEME & LAYOUT --- */
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
             --border: #38383a; --accent: #0a84ff; 
@@ -28,7 +29,7 @@
             padding-bottom: 50px; overscroll-behavior-y: none;
         }
 
-        /* ANIMATIONS */
+        /* --- 2. ANIMATIONS --- */
         @keyframes slideUpFade {
             0% { opacity: 0; transform: translateY(20px) scale(0.98); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -36,11 +37,11 @@
         .top-bar { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
         .tabs { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both; }
         .view-section.active > * { animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-        .view-section.active > *:nth-child(1) { animation-delay: 0.15s; }
-        .view-section.active > *:nth-child(2) { animation-delay: 0.20s; }
-        .view-section.active > *:nth-child(3) { animation-delay: 0.25s; }
+        .view-section.active > *:nth-child(1) { animation-delay: 0.1s; }
+        .view-section.active > *:nth-child(2) { animation-delay: 0.15s; }
+        .view-section.active > *:nth-child(3) { animation-delay: 0.2s; }
 
-        /* HEADER */
+        /* --- 3. HEADER & SEARCH --- */
         .top-bar { display: flex; align-items: center; gap: 8px; height: 40px; }
         .search-wrapper { flex-grow: 1; position: relative; display: flex; align-items: center; }
         .search-box {
@@ -63,18 +64,18 @@
         .icon-btn:hover { background: #2c2c2e; }
         .badge { height: 100%; display: flex; align-items: center; justify-content: center; padding: 0 12px; border-radius: 8px; font-weight: 700; font-size: 15px; min-width: 60px; }
         .badge-time { background: var(--card-bg); border: 1px solid var(--border); color: #fff; font-family: 'SF Mono', monospace; letter-spacing: -0.5px; }
-        .badge-cat { background: var(--card-bg); color: var(--sub-text); }
+        .badge-cat { background: var(--card-bg); color: var(--sub-text); transition: background 0.3s, color 0.3s; }
         .cat-vfr { background-color: var(--success) !important; color: #000 !important; }
         .cat-mvfr { background-color: var(--mvfr) !important; color: #fff !important; }
         .cat-ifr { background-color: var(--danger) !important; color: #fff !important; }
         .cat-lifr { background-color: var(--lifr) !important; color: #fff !important; }
 
-        /* TABS */
-        .tabs { display: flex; border-bottom: 1px solid var(--border); gap: 20px; padding: 0 4px; overflow-x: auto; }
+        /* --- 4. TABS --- */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); gap: 20px; padding: 0 4px; overflow-x: auto; scrollbar-width: none; }
         .tab { padding: 10px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--sub-text); border-bottom: 2px solid transparent; text-transform: uppercase; white-space: nowrap; }
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        /* UTILS */
+        /* --- 5. UTILS --- */
         .view-section { display: none; }
         .view-section.active { display: block; }
         .hidden { display: none !important; }
@@ -82,21 +83,10 @@
         .raw-text { 
             font-family: 'SF Mono', monospace; font-size: 13px; color: #d0d0d0; 
             margin-top: 6px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; 
-            background: rgba(255,255,255,0.05); padding: 6px; border-radius: 6px; 
+            background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; 
         }
 
-        /* INFO & ATC */
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-        .info-card { background: var(--card-bg); padding: 10px; border-radius: 8px; }
-        .ic-lbl { font-size: 11px; color: var(--sub-text); text-transform: uppercase; }
-        .ic-val { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
-        .ic-val-sm { font-size: 13px; font-weight: 500; color: #fff; margin-top: 2px; font-family: 'SF Mono', monospace; }
-        .freq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-        .freq-card { background: var(--card-bg); border-radius: 8px; padding: 10px; text-align: center; }
-        .freq-type { font-size: 11px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 4px; }
-        .freq-val { font-size: 16px; font-weight: 700; color: var(--accent); font-family: 'SF Mono', monospace; }
-
-        /* METAR */
+        /* --- 6. METAR & SKY VIZ --- */
         .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
         .metar-card.full-width { grid-column: span 2; }
@@ -104,99 +94,74 @@
         .m-value { font-size: 16px; font-weight: 600; color: #fff; }
         .m-sub { font-size: 12px; color: var(--sub-text); font-weight: 400; margin-left: 4px;}
         .metar-footer { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 4px; font-size: 12px; color: var(--sub-text); }
-
-        /* RUNWAY VISUALIZER */
-        .rwy-section-head { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px 0; }
-        .unit-toggle { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; cursor: pointer; }
-        .u-opt { padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--sub-text); }
-        .u-opt.active { background: #fff; color: #000; }
-        .rwy-complex { margin-bottom: 16px; }
-        .rc-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px; padding: 0 4px; }
-        .rc-idents { font-size: 16px; font-weight: 800; font-family: 'SF Mono', monospace; }
-        .rc-dims { font-size: 13px; color: #fff; font-weight: 600; }
-        .rc-strip { height: 44px; background: var(--strip-bg); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; overflow: hidden; position: relative; }
-        .rc-id-v { font-size: 12px; font-weight: 700; color: #fff; writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 0 4px; }
-        .rc-data { flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 12px; }
-        .wind-comp { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: #fff; }
-        .wc-arrow { font-size: 14px; }
-        .rc-rose { width: 36px; height: 36px; margin-left: 8px; }
+        
+        .sky-viz-container {
+            grid-column: span 2;
+            height: 140px;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: border-color 0.5s;
+        }
+        .sky-canvas { width: 100%; height: 100%; display: block; }
+        .sky-overlay-text {
+            position: absolute; top: 8px; left: 8px; 
+            font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); 
+            text-transform: uppercase; background: rgba(0,0,0,0.3); 
+            padding: 2px 6px; border-radius: 4px;
+        }
+        
         .wind-vis-container { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-top: 12px; display: flex; gap: 15px; align-items: center; }
         .wind-controls { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
         .wind-stats { font-family: 'SF Mono', monospace; font-size: 13px; color: #fff; margin-top: 5px; }
         .stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; }
-        
         select.stealth-select { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; font-weight: 600; outline: none; }
-        select.stealth-select option { background-color: #2c2c2e; color: #fff; }
 
-        /* TAF STYLES */
+        /* --- 7. TAF & INFO --- */
         .taf-viz-container { margin-top: 10px; position: relative; }
-        
-        /* The container for the blocks */
         .taf-bar { display: flex; height: 32px; width: 100%; background: #2c2c2e; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); position: relative; z-index: 2; }
-        
-        /* The Sky Strip (Gradient) */
         .taf-sky-strip { height: 6px; width: 100%; margin-top: 2px; border-radius: 3px; background: #333; overflow: hidden; position: relative; }
-        
         .taf-axis { display: flex; width: 100%; margin-top: 4px; margin-bottom: 12px; }
         .taf-block { cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: rgba(0,0,0,0.6); border-right: 1px solid rgba(0,0,0,0.1); transition: opacity 0.2s; text-transform: uppercase; }
         .taf-block:hover { opacity: 0.8; }
         .taf-block.selected { border: 2px solid #fff; z-index: 10; box-shadow: 0 0 10px rgba(0,0,0,0.5); color: #000; }
         .taf-axis-lbl { text-align: center; font-size: 10px; color: var(--sub-text); font-family: 'SF Mono', monospace; border-right: 1px solid transparent; }
-        .taf-detail-card { background: var(--card-bg); border-radius: 8px; padding: 16px; border-left: 4px solid var(--sub-text); animation: slideDown 0.2s ease-out; }
+        .taf-detail-card { background: var(--card-bg); border-radius: 8px; padding: 16px; border-left: 4px solid var(--sub-text); animation: slideUpFade 0.2s ease-out; }
+        #tafNeedle { position: absolute; top: -4px; bottom: -8px; width: 2px; background: #ff453a; z-index: 20; pointer-events: none; box-shadow: 0 0 8px #ff453a; transition: left 0.5s ease-out; display: none; }
+        #tafNeedle::after { content: ''; position: absolute; top: -4px; left: -4px; width: 10px; height: 10px; background: #ff453a; border-radius: 50%; border: 2px solid #000; }
+
+        /* --- 8. INFO & RUNWAYS --- */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .info-card { background: var(--card-bg); padding: 10px; border-radius: 8px; }
+        .ic-lbl { font-size: 11px; color: var(--sub-text); text-transform: uppercase; }
+        .ic-val { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
+        .freq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+        .freq-card { background: var(--card-bg); border-radius: 8px; padding: 10px; text-align: center; }
+        .freq-type { font-size: 11px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 4px; }
+        .freq-val { font-size: 16px; font-weight: 700; color: var(--accent); font-family: 'SF Mono', monospace; }
         
-        /* NEEDLE OVERLAY */
-        #tafNeedle {
-            position: absolute; top: -4px; bottom: -8px; width: 2px; background: #ff453a; 
-            z-index: 20; pointer-events: none; box-shadow: 0 0 8px #ff453a;
-            transition: left 0.5s ease-out; display: none;
-        }
-        #tafNeedle::after {
-            content: ''; position: absolute; top: -4px; left: -4px; 
-            width: 10px; height: 10px; background: #ff453a; 
-            border-radius: 50%; border: 2px solid #000;
-        }
-
-        .td-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
-        .td-time { font-family: 'SF Mono', monospace; font-size: 14px; font-weight: 700; color: #fff; }
-        .td-type { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #444; color: #fff; text-transform: uppercase; }
-        .td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .td-item { display: flex; flex-direction: column; }
-        .td-lbl { font-size: 11px; color: var(--sub-text); margin-bottom: 2px; }
-        .td-val { font-size: 14px; font-weight: 600; color: #fff; }
-
-        /* BUTTONS */
+        .rwy-complex { margin-bottom: 16px; }
+        .rc-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px; padding: 0 4px; }
+        .rc-idents { font-size: 16px; font-weight: 800; font-family: 'SF Mono', monospace; }
+        .rc-strip { height: 44px; background: var(--strip-bg); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; overflow: hidden; position: relative; }
+        .rc-id-v { font-size: 12px; font-weight: 700; color: #fff; writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 0 4px; }
+        .rc-data { flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .wind-comp { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: #fff; }
+        
+        /* --- 9. BUTTONS & TOOLS --- */
         .atc-btn { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 16px; border-radius: 10px; text-decoration: none; color: #fff; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: background 0.2s; margin-bottom: 10px; }
         .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
         .tool-btn { background: #333; border: 1px solid var(--border); color: #fff; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; margin-top: 4px; font-weight: 600; }
-        .tool-btn:hover { background: #444; }
-        
-        .code-list { background: #222; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 12px; max-height: 200px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .code-item { color: #aaa; } .code-item b { color: var(--accent); }
-        .timer-display { font-family: 'SF Mono', monospace; font-size: 32px; font-weight: 700; text-align: center; margin: 10px 0; letter-spacing: 2px; }
-        .timer-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .t-btn { padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; color: #fff; }
-        .tb-start { background: var(--success); color: #000; } .tb-stop { background: var(--danger); } .tb-lap { background: var(--accent); }
-        .lap-list { max-height: 100px; overflow-y: auto; margin-top: 10px; border-top: 1px solid var(--border); }
-        .lap-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; font-size: 12px; color: var(--sub-text); font-family: 'SF Mono', monospace; }
         .conv-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
         .conv-inp { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; }
         .conv-lbl { font-size: 10px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 2px; }
-
-        /* WORLD CLOCK */
-        .world-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
-        .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c2c2e; }
-        .clock-left { display: flex; flex-direction: column; }
-        .clock-rel { font-size: 11px; color: var(--sub-text); margin-bottom: 2px; text-transform: uppercase; }
-        .clock-city { font-weight: 700; font-size: 18px; color: #fff; }
-        .clock-codes { font-size: 12px; color: var(--accent); font-weight: 600; margin-left: 6px; font-family: 'SF Mono', monospace; }
+        
+        /* --- 10. CLOCK --- */
+        .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c2c2e; margin-bottom: 8px; }
         .clock-time { font-family: 'SF Mono', monospace; font-size: 28px; font-weight: 400; color: #fff; letter-spacing: 0.5px; }
         .clock-utc { color: var(--success); font-weight: 600;}
-        .del-btn { color: var(--danger); font-size: 16px; margin-left: 10px; cursor: pointer; opacity: 0.4; padding: 4px; }
-        .del-btn:hover { opacity: 1; }
-        .add-city-box { display: flex; gap: 8px; margin-bottom: 12px; background: #2c2c2e; padding: 8px; border-radius: 8px; }
-        .ac-input { flex: 1; background: #1c1c1e; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; font-size:13px; }
-        .ac-btn { background: var(--accent); color: #fff; border: none; padding: 0 16px; border-radius: 6px; font-weight: 700; cursor: pointer; }
-        .ac-btn:disabled { opacity: 0.5; cursor: default; }
     </style>
 </head>
 <body>
@@ -239,14 +204,21 @@
                 </div>
             </div>
         </div>
-        <div class="raw-text" id="rawMetar">Enter an airport code above.</div>
+
         <div class="metar-grid">
+            <div id="skyContainer" class="sky-viz-container">
+                <div class="sky-overlay-text">FLIGHT RULES VISUALIZATION (AGL)</div>
+                <canvas id="skyCanvas" class="sky-canvas"></canvas>
+            </div>
+            
             <div class="metar-card"><div class="m-label">WIND</div><div class="m-value" id="mWind">--</div></div>
             <div class="metar-card"><div class="m-label">VISIBILITY</div><div class="m-value" id="mVis">--</div></div>
             <div class="metar-card"><div class="m-label">CEILING</div><div class="m-value" id="mCeil">--</div></div>
             <div class="metar-card"><div class="m-label">ALTIMETER</div><div class="m-value" id="mAlt">--</div></div>
             <div class="metar-card full-width"><div class="m-label">TEMP / DEWPOINT</div><div class="m-value"><span id="mTempC">--</span> <span id="mTempF" class="m-sub">--</span></div></div>
         </div>
+
+        <div class="raw-text" id="rawMetar">Enter an airport code above.</div>
         <div class="metar-footer"><span id="mAge">--</span><span id="mSpread">Spread: --</span></div>
     </div>
 
@@ -256,19 +228,16 @@
         </div>
         <div class="taf-viz-container">
             <div id="tafNeedle"></div>
-            
             <div id="tafBar" class="taf-bar"></div>
-            
             <div id="tafSkyStrip" class="taf-sky-strip"></div>
-            
             <div id="tafAxis" class="taf-axis"></div>
             <div id="tafDetail" class="taf-detail-card hidden">
-                <div class="td-header"><span id="tdTime" class="td-time">--</span><span id="tdType" class="td-type">--</span></div>
-                <div class="td-grid">
-                    <div class="td-item"><span class="td-lbl">WIND</span><span id="tdWind" class="td-val">--</span></div>
-                    <div class="td-item"><span class="td-lbl">VISIBILITY</span><span id="tdVis" class="td-val">--</span></div>
-                    <div class="td-item"><span class="td-lbl">WEATHER</span><span id="tdWx" class="td-val">--</span></div>
-                    <div class="td-item"><span class="td-lbl">CLOUDS</span><span id="tdCloud" class="td-val">--</span></div>
+                <div class="td-header" style="display:flex; justify-content:space-between; margin-bottom:12px;"><span id="tdTime" style="font-weight:700;">--</span><span id="tdType" style="background:#444; padding:2px 6px; border-radius:4px;">--</span></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div><span class="m-label">WIND</span><div id="tdWind" style="font-weight:600;">--</div></div>
+                    <div><span class="m-label">VISIBILITY</span><div id="tdVis" style="font-weight:600;">--</div></div>
+                    <div><span class="m-label">WEATHER</span><div id="tdWx" style="font-weight:600;">--</div></div>
+                    <div><span class="m-label">CLOUDS</span><div id="tdCloud" style="font-weight:600;">--</div></div>
                 </div>
             </div>
         </div>
@@ -284,28 +253,18 @@
         <div class="info-grid">
             <div class="info-card"><div class="ic-lbl">ICAO / IATA</div><div class="ic-val" id="infoCodes">--</div></div>
             <div class="info-card"><div class="ic-lbl">Elevation</div><div class="ic-val" id="infoElev">--</div></div>
-            <div class="info-card" style="grid-column: span 2;"><div class="ic-lbl">Coordinates</div><div class="ic-val-sm" id="infoCoords">--</div></div>
-        </div>
-        <div class="section-title">FREQUENCIES</div>
-        <div id="freqContainer" class="freq-grid">
-            <div style="grid-column:span 3; font-size:12px; color:#555; text-align:center;">No Data</div>
+            <div class="info-card" style="grid-column: span 2;"><div class="ic-lbl">Coordinates</div><div class="ic-val" style="font-size:13px;" id="infoCoords">--</div></div>
         </div>
         <div class="section-title">ATMOSPHERE & TIME</div>
         <div class="info-grid">
             <div class="info-card"><div class="ic-lbl">Pressure Alt</div><div class="ic-val" id="calcPA">--</div></div>
             <div class="info-card"><div class="ic-lbl">Density Alt</div><div class="ic-val" id="calcDA">--</div></div>
             <div class="info-card"><div class="ic-lbl">ISA Dev</div><div class="ic-val" id="calcISA">--</div></div>
-            <div class="info-card"><div class="ic-lbl">Local Offset (Est)</div><div class="ic-val" id="calcOffset">--</div></div>
             <div class="info-card"><div class="ic-lbl">Sunrise/Set</div><div class="ic-val" style="font-size:13px;" id="infoSun">--</div></div>
-            <div class="info-card"><div class="ic-lbl">Mag Variation</div><div class="ic-val" id="infoMag">--</div></div>
         </div>
-        <div class="rwy-section-head">
-            <span style="font-weight:700; color:var(--sub-text);">RUNWAYS</span>
-            <div class="unit-toggle" onclick="toggleUnits()">
-                <div id="optM" class="u-opt active">m</div>
-                <div id="optFt" class="u-opt">ft</div>
-            </div>
-        </div>
+        <div class="section-title">RUNWAYS & FREQ</div>
+        <div id="freqContainer" class="freq-grid"></div>
+        <div class="section-title">RUNWAY WIND COMPONENTS</div>
         <div id="runwayListComplex"></div>
     </div>
     
@@ -315,138 +274,78 @@
              <div id="audioPlayerTarget"></div>
         </div>
         <div class="section-title">EXTERNAL RESOURCES</div>
-        <div style="display: flex; flex-direction: column;">
-            <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span style="color:var(--sub-text)">↗</span></a>
-            <a href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span style="color:var(--sub-text)">↗</span></a>
-            <a href="https://aviationlisteners.aero" target="_blank" class="atc-btn"><span>🎧 AviationListeners.aero</span><span style="color:var(--sub-text)">↗</span></a>
-        </div>
+        <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span></a>
+        <a href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
     </div>
 
     <div id="tab-world" class="view-section">
-        <div class="add-city-box">
-            <input type="text" id="newCityInput" class="ac-input" placeholder="City Name (e.g. Paris)...">
-            <button class="ac-btn" onclick="addCustomCity()">Add</button>
+        <div style="display:flex; gap:8px; margin-bottom:12px; background:#2c2c2e; padding:8px; border-radius:8px;">
+            <input type="text" id="newCityInput" class="conv-inp" placeholder="City Name (e.g. Paris)..." style="margin:0;">
+            <button class="tool-btn" style="width:auto; margin:0;" onclick="addCustomCity()">Add</button>
         </div>
-        <div class="world-grid" id="worldContainer"></div>
+        <div id="worldContainer"></div>
     </div>
 
     <div id="tab-tools" class="view-section">
-        
-        <div class="section-title" style="margin-top:0;">Personal Minimums (Go/No-Go)</div>
+        <div class="section-title" style="margin-top:0;">Personal Minimums</div>
         <div class="info-card" style="border-left: 4px solid #555;" id="minsCard">
             <div class="conv-row">
-                <div style="flex:1">
-                    <div class="conv-lbl">Max X-Wind (kt)</div>
-                    <input type="number" id="minXW" class="conv-inp" value="10" oninput="checkMins()">
-                </div>
-                <div style="flex:1">
-                    <div class="conv-lbl">Min Ceiling (ft)</div>
-                    <input type="number" id="minCeil" class="conv-inp" value="2000" oninput="checkMins()">
-                </div>
+                <div style="flex:1"><div class="conv-lbl">Max X-Wind (kt)</div><input type="number" id="minXW" class="conv-inp" value="10" oninput="checkMins()"></div>
+                <div style="flex:1"><div class="conv-lbl">Min Ceiling (ft)</div><input type="number" id="minCeil" class="conv-inp" value="2000" oninput="checkMins()"></div>
             </div>
-            <div id="minsResult" style="margin-top:10px; font-weight:800; font-size:18px; text-align:center; padding:10px; border-radius:6px; background:#333; color:#aaa;">
-                LOAD METAR DATA
-            </div>
-            <div id="minsReason" style="font-size:11px; color:#aaa; margin-top:4px; text-align:center;"></div>
+            <div id="minsResult" style="margin-top:10px; font-weight:800; font-size:18px; text-align:center; padding:10px; border-radius:6px; background:#333; color:#aaa;">LOAD DATA</div>
         </div>
 
         <div class="section-title">E6B Flight Computer</div>
-        <div class="info-card" style="margin-bottom:8px;">
-            <div style="font-size:11px; color:var(--accent); font-weight:700; margin-bottom:6px; text-transform:uppercase;">Atmospheric Inputs</div>
-            <div class="conv-row">
-                <div style="flex:1"><div class="conv-lbl">Indicated Alt (ft)</div><input type="number" id="e6bAlt" class="conv-inp" placeholder="0" oninput="calcE6B()"></div>
-                <div style="flex:1"><div class="conv-lbl">Altimeter (hPa)</div><input type="number" id="e6bQnh" class="conv-inp" placeholder="1013" value="1013" oninput="calcE6B()"></div>
-                <div style="flex:1"><div class="conv-lbl">Act. Temp (°C)</div><input type="number" id="e6bTemp" class="conv-inp" placeholder="15" oninput="calcE6B()"></div>
-            </div>
-            <div class="conv-row">
-                <div style="flex:1"><div class="conv-lbl">CAS / IAS (kts)</div><input type="number" id="e6bIas" class="conv-inp" placeholder="Speed" oninput="calcE6B()"></div>
-            </div>
-        </div>
-
-        <div class="info-grid">
-            <div class="info-card"><div class="ic-lbl">Pressure Alt</div><div class="ic-val" id="resPA">--</div></div>
-            <div class="info-card"><div class="ic-lbl">Density Alt</div><div class="ic-val" id="resDA" style="color:var(--accent);">--</div></div>
-            <div class="info-card"><div class="ic-lbl">ISA Deviation</div><div class="ic-val" id="resISA">--</div></div>
-            <div class="info-card"><div class="ic-lbl">True Airspeed</div><div class="ic-val" id="resTAS" style="color:var(--success);">--</div></div>
-            <div class="info-card"><div class="ic-lbl">Mach Number</div><div class="ic-val" id="resMach">--</div></div>
-            <div class="info-card"><div class="ic-lbl">Speed of Sound</div><div class="ic-val-sm" id="resSoS">--</div></div>
-        </div>
-
-        <div class="section-title">Tools</div>
         <div class="info-card">
-            <div style="margin-bottom:8px;">
-                <input type="text" placeholder="Decode (e.g. +TSRA, BCFG)" class="conv-inp" oninput="decode(this.value)">
-                <div id="decodeOut" style="color:var(--accent); margin:4px 0 0 0; font-weight:600; font-size:14px; min-height:18px;">...</div>
+            <div class="conv-row">
+                <div style="flex:1"><div class="conv-lbl">Alt (ft)</div><input type="number" id="e6bAlt" class="conv-inp" oninput="calcE6B()"></div>
+                <div style="flex:1"><div class="conv-lbl">QNH</div><input type="number" id="e6bQnh" class="conv-inp" value="1013" oninput="calcE6B()"></div>
+                <div style="flex:1"><div class="conv-lbl">Temp (°C)</div><input type="number" id="e6bTemp" class="conv-inp" oninput="calcE6B()"></div>
             </div>
-            <button class="tool-btn" onclick="document.getElementById('codeList').classList.toggle('hidden')">Show METAR Codes</button>
-            <div id="codeList" class="code-list hidden"></div>
-        </div>
-        
-        <div class="section-title">Flight Timer</div>
-        <div class="info-card">
-            <div id="timerDisplay" class="timer-display">00:00:00</div>
-            <div class="timer-controls">
-                <button class="t-btn tb-start" onclick="startTimer()">Start</button>
-                <button class="t-btn tb-lap" onclick="lapTimer()">Lap</button>
-                <button class="t-btn tb-stop" onclick="stopTimer()">Stop</button>
+            <div class="conv-row">
+                <div style="flex:1"><div class="conv-lbl">IAS (kts)</div><input type="number" id="e6bIas" class="conv-inp" oninput="calcE6B()"></div>
             </div>
-            <div id="lapList" class="lap-list"></div>
+            <div class="info-grid" style="margin-top:10px;">
+                <div><div class="ic-lbl">Density Alt</div><div class="ic-val" id="resDA" style="color:var(--accent);">--</div></div>
+                <div><div class="ic-lbl">TAS</div><div class="ic-val" id="resTAS" style="color:var(--success);">--</div></div>
+            </div>
         </div>
     </div>
 
     <script>
         // --- GLOBALS ---
         const AVWX_KEY = '7BVPOe0lM6CvvLCOGwmcmCxTp1n6PgCdcBJ9Lnt3WpI';
-        
         let currentWind = { dir:0, spd:0 }; 
         let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
         let stationData = null;
-        let stationSunTimes = null; // Store for TAF gradient
+        let stationSunTimes = null;
         let useMetric = true; 
         let tafDataCache = null;
-        let timerInterval = null, startTime = 0, elapsed = 0, running = false;
         let lastMetarObj = null; 
 
-        // Embedded Database of Major Aviation Hubs
+        // Embedded Database
         const AVIATION_CITIES = [
-            {n:"Taipei",z:"Asia/Taipei",icao:"RCTP",iata:"TPE"}, {n:"Tokyo Narita",z:"Asia/Tokyo",icao:"RJAA",iata:"NRT"}, {n:"Tokyo Haneda",z:"Asia/Tokyo",icao:"RJTT",iata:"HND"},
-            {n:"New York JFK",z:"America/New_York",icao:"KJFK",iata:"JFK"}, {n:"London Heathrow",z:"Europe/London",icao:"EGLL",iata:"LHR"}, {n:"Los Angeles",z:"America/Los_Angeles",icao:"KLAX",iata:"LAX"},
-            {n:"Sydney",z:"Australia/Sydney",icao:"YSSY",iata:"SYD"}, {n:"Singapore",z:"Asia/Singapore",icao:"WSSS",iata:"SIN"},
-            {n:"Hong Kong",z:"Asia/Hong_Kong",icao:"VHHH",iata:"HKG"}, {n:"Dubai",z:"Asia/Dubai",icao:"OMDB",iata:"DXB"}, {n:"Paris CDG",z:"Europe/Paris",icao:"LFPG",iata:"CDG"},
-            {n:"Frankfurt",z:"Europe/Berlin",icao:"EDDF",iata:"FRA"}, {n:"Amsterdam",z:"Europe/Amsterdam",icao:"EHAM",iata:"AMS"}, {n:"Chicago O'Hare",z:"America/Chicago",icao:"KORD",iata:"ORD"},
-            {n:"San Francisco",z:"America/Los_Angeles",icao:"KSFO",iata:"SFO"}, {n:"Incheon",z:"Asia/Seoul",icao:"RKSI",iata:"ICN"}, {n:"Bangkok",z:"Asia/Bangkok",icao:"VTBS",iata:"BKK"}
+            {n:"Taipei",z:"Asia/Taipei",icao:"RCTP",iata:"TPE"}, {n:"Tokyo Narita",z:"Asia/Tokyo",icao:"RJAA",iata:"NRT"}, 
+            {n:"New York JFK",z:"America/New_York",icao:"KJFK",iata:"JFK"}, {n:"London LHR",z:"Europe/London",icao:"EGLL",iata:"LHR"}, 
+            {n:"Los Angeles",z:"America/Los_Angeles",icao:"KLAX",iata:"LAX"}
         ];
         let cityList = [];
 
-        // --- AUTH & INIT ---
+        // --- INIT ---
         function initApp() {
             initWorldClock();
             loadData();
             setInterval(updateClock, 1000);
+            
+            // Init Sky Canvas Size
+            const cvs = document.getElementById('skyCanvas');
+            const box = document.getElementById('skyContainer');
+            cvs.width = box.offsetWidth;
+            cvs.height = box.offsetHeight;
         }
 
-        // --- TABS & UI ---
-        function setTab(name) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-'+name).classList.add('active');
-            event.target.classList.add('active');
-            if(name === 'info' && stationData) renderRunwaysComplex();
-            if(name === 'world') updateClock(); 
-        }
-        function toggleUnits() {
-            useMetric = !useMetric;
-            document.getElementById('optM').className = useMetric ? 'u-opt active' : 'u-opt';
-            document.getElementById('optFt').className = !useMetric ? 'u-opt active' : 'u-opt';
-            if(stationData) renderRunwaysComplex();
-        }
-        function toggleClearBtn() {
-            const val = document.getElementById('icao').value;
-            document.getElementById('clearBtn').style.display = val ? 'block' : 'none';
-        }
-        function clearSearch() { document.getElementById('icao').value = ''; document.getElementById('icao').focus(); toggleClearBtn(); }
-        
-        // --- DATA LOADING ---
+        // --- CORE DATA LOADING ---
         async function loadData() {
             const inputEl = document.getElementById('icao');
             if(!inputEl.value) inputEl.value = localStorage.getItem('efb_last_station') || 'RCTP';
@@ -454,181 +353,205 @@
             const icao = inputEl.value.toUpperCase();
             if(!icao) return;
             
-            localStorage.setItem('efb_last_station', icao); // SAVE STATE
+            localStorage.setItem('efb_last_station', icao);
             inputEl.blur();
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
             
-            const oldBanner = document.getElementById('staleBanner');
-            if(oldBanner) oldBanner.remove();
-            
-            const oldSuggestions = document.getElementById('nearbySuggestions');
-            if(oldSuggestions) oldSuggestions.remove();
-
             const rawContainer = document.getElementById('rawMetar');
             rawContainer.innerHTML = 'Loading...';
 
             const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
-            const cb = Date.now(); // Cache Busting timestamp
+            const cb = Date.now();
             
             try {
+                // 1. Station Info
                 const stationResp = await fetch(`https://avwx.rest/api/station/${icao}?t=${cb}`, {headers});
                 if(!stationResp.ok) throw new Error("Station Not Found");
-                const station = await stationResp.json();
-                stationData = station;
+                stationData = await stationResp.json();
+                renderInfo(stationData); 
 
-                renderInfo(station); // This triggers Sun fetch
-
+                // 2. Fetch WX
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
                     fetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
                     fetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
                     fetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`, {headers}).then(r=>r.json())
                 ]);
 
-                if(metarRes.status === 'fulfilled' && metarRes.value && !metarRes.value.error) {
+                if(metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
                     lastMetarObj = m;
                     currentWind = { dir: m.wind_direction?.value||0, spd: m.wind_speed?.value||0 };
                     
                     let altVal = m.altimeter?.value || 1013;
-                    let altUnit = 'hPa';
-                    if(altVal < 200) altUnit = 'inHg';
+                    let altUnit = altVal < 200 ? 'inHg' : 'hPa';
                     currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit: altUnit };
                     
                     renderMetar(m); 
-                    
-                    const obsTime = new Date(m.time.dt);
-                    const ageHrs = (new Date() - obsTime) / (1000 * 60 * 60);
-                    if (ageHrs > 2) {
-                        const banner = document.createElement('div');
-                        banner.id = "staleBanner"; 
-                        banner.style.cssText = "background:var(--danger); color:white; padding:8px; border-radius:6px; margin-bottom:8px; text-align:center; font-weight:bold;";
-                        banner.innerHTML = `⚠️ DATA OUTDATED (${Math.round(ageHrs)}h ago)<br><a href="https://metar-taf.com/metar/${stationData?stationData.icao:''}" target="_blank" style="color:white; text-decoration:underline; font-weight:400; font-size:12px;">Check Backup Source ↗</a>`;
-                        const rc = document.getElementById('rawMetar');
-                        rc.parentNode.insertBefore(banner, rc);
-                        updateHeaderCat('OLD', 'cat-ifr'); 
-                    }
-
-                    findNearbyStations(station.latitude, station.longitude);
-
+                    drawSkyViz(m); // <--- NEW SKY VISUALIZER
+                    setupRunwaySelect();
                 } else {
                     throw new Error("No Weather Data");
                 }
 
                 if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
-                
                 if(notamRes.status === 'fulfilled') {
-                     const n = notamRes.value;
-                     document.getElementById('notamList').innerHTML = Array.isArray(n) ? 
+                    const n = notamRes.value;
+                    document.getElementById('notamList').innerHTML = Array.isArray(n) ? 
                         n.map(x => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${x.raw}</div>`).join('') : "No Data";
                 }
 
-                const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
-                const mv = station.magnetic_variation || 0;
-                const windMag = currentWind.dir - mv;
-                let bestRwy = null, maxHW = -999;
-                (station.runways || []).forEach(r => {
-                    sel.add(new Option(`RWY ${r.ident1}`, r.ident1));
-                    sel.add(new Option(`RWY ${r.ident2}`, r.ident2));
-                    let h1 = parseInt(r.ident1.replace(/\D/g,'')) * 10;
-                    let hw1 = Math.cos((windMag - h1) * (Math.PI/180)) * currentWind.spd;
-                    let h2 = parseInt(r.ident2.replace(/\D/g,'')) * 10;
-                    let hw2 = Math.cos((windMag - h2) * (Math.PI/180)) * currentWind.spd;
-                    if(hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
-                    if(hw2 > maxHW) { maxHW = hw2; bestRwy = r.ident2; }
-                });
-                if(bestRwy) sel.value = bestRwy; else if(station.runways.length > 0) sel.value = station.runways[0].ident1;
-                drawWindRose(); 
-
+                // Audio Setup
                 const audioTarget = document.getElementById('audioPlayerTarget');
-                const audioLbl = document.getElementById('audioLabel');
-                if(icao === 'RCTP' || icao === 'RCKH' || icao === 'RCSS') {
-                    audioLbl.innerText = `${icao} ATIS (TWATC Stream)`;
+                if(icao.startsWith('RC')) {
+                    document.getElementById('audioLabel').innerText = `${icao} ATIS (TWATC)`;
                     audioTarget.innerHTML = `<audio controls style="width: 100%; height: 32px; filter: invert(0.9);"><source src="https://stream.twatc.net/${icao}_ATIS" type="audio/mpeg"></audio>`;
                 } else {
-                    audioLbl.innerText = "External Audio Source";
-                    audioTarget.innerHTML = `<a href="https://www.liveatc.net/search/?q=${icao}" target="_blank" class="tool-btn" style="text-align:center; display:block; text-decoration:none;">📡 Search ${icao} on LiveATC</a>`;
+                    document.getElementById('audioLabel').innerText = "External Audio";
+                    audioTarget.innerHTML = `<a href="https://www.liveatc.net/search/?q=${icao}" target="_blank" class="tool-btn" style="text-align:center; display:block; text-decoration:none;">📡 Search LiveATC</a>`;
                 }
 
             } catch(e) {
                 console.error(e);
                 updateHeaderCat('N/A', 'cat-ifr');
-                let errorMsg = `<div style="text-align:center; padding:15px; color:var(--sub-text);">
-                    No METAR data for ${icao}.<br>
-                    <a href="https://metar-taf.com/metar/${icao}" target="_blank" class="tool-btn" style="margin-top:10px; display:inline-block; text-decoration:none;">
-                        Check External Source ↗
-                    </a>
-                </div>`;
-                rawContainer.innerHTML = errorMsg;
-                if(stationData && stationData.latitude) {
-                    findNearbyStations(stationData.latitude, stationData.longitude);
-                }
+                rawContainer.innerHTML = "Error loading data.";
             }
         }
 
-        function updateHeaderCat(status, colorClass) {
-            const badge = document.getElementById('headerCat');
-            badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
-        }
+        // --- SKY VISUALIZATION (NEW) ---
+        function drawSkyViz(m) {
+            const canvas = document.getElementById('skyCanvas');
+            const container = document.getElementById('skyContainer');
+            // Resize to fit container
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            // 1. Determine Flight Rules Color for Border
+            const rule = m.flight_rules; 
+            let borderColor = 'transparent';
+            if(rule === 'VFR') borderColor = 'var(--success)';
+            else if(rule === 'MVFR') borderColor = 'var(--mvfr)';
+            else if(rule === 'IFR') borderColor = 'var(--danger)';
+            else if(rule === 'LIFR') borderColor = 'var(--lifr)';
+            container.style.borderColor = borderColor;
+            container.style.boxShadow = `0 0 15px ${borderColor}44`; // Soft glow
 
-        async function findNearbyStations(lat, lon) {
-            const container = document.getElementById('rawMetar');
-            const oldSuggestions = document.getElementById('nearbySuggestions');
-            if(oldSuggestions) oldSuggestions.remove();
+            ctx.clearRect(0,0,w,h);
 
-            const suggestionBox = document.createElement('div');
-            suggestionBox.id = "nearbySuggestions";
-            suggestionBox.style.marginTop = "10px";
-            suggestionBox.style.borderTop = "1px solid #333";
-            suggestionBox.style.paddingTop = "8px";
-            suggestionBox.innerHTML = `<div style="color:var(--sub-text); font-size:11px; margin-bottom:6px;">NEARBY STATIONS WITH WEATHER:</div><div id="nearList" style="display:flex; gap:6px; flex-wrap:wrap;">Loading nearby...</div>`;
-            container.appendChild(suggestionBox);
+            // 2. Draw Background (Sky)
+            // Use current time to decide day/night gradient if we want, but keeping it "technical" is safer
+            // Let's use a standard "Pilot" gradient
+            const grad = ctx.createLinearGradient(0,0,0,h);
+            grad.addColorStop(0, '#0f172a'); // Space
+            grad.addColorStop(1, '#3b82f644'); // Horizon glow
+            ctx.fillStyle = grad;
+            ctx.fillRect(0,0,w,h);
 
-            try {
-                const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
-                const url = `https://avwx.rest/api/station/near/${lat},${lon}?n=4`; 
-                const res = await fetch(url, { headers });
-                const data = await res.json();
-                
-                const list = document.getElementById('nearList');
-                list.innerHTML = "";
-                const inputVal = document.getElementById('icao').value.toUpperCase();
-                const others = data.filter(item => item.station.icao !== inputVal);
+            // 3. Draw Grid Lines (Altitudes)
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            ctx.font = '10px monospace';
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            
+            const maxAlt = 120; // 12,000 ft (using hundreds)
+            // Map altitude to Y pixel. 0ft is at bottom (h), 12000ft is at top (0)
+            const getY = (altHundreds) => h - ((altHundreds / maxAlt) * h);
 
-                if(others.length === 0) {
-                    list.innerHTML = "<span style='color:#555;'>No other stations found nearby.</span>";
-                    return;
-                }
+            [30, 60, 90, 120].forEach(alt => {
+                const y = getY(alt);
+                ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+                ctx.fillText(`${alt}00`, w-35, y-2);
+            });
 
-                others.forEach(item => {
-                    const btn = document.createElement('button');
-                    btn.className = "tool-btn";
-                    btn.style.width = "auto";
-                    btn.style.margin = "0";
-                    btn.style.fontSize = "12px";
-                    const stn = item.station; 
-                    btn.innerText = `✈ ${stn.icao}`; 
-                    if(item.nautical_miles) {
-                        btn.innerText += ` (${Math.round(item.nautical_miles)}nm)`;
+            // 4. Draw Clouds
+            if(m.clouds) {
+                m.clouds.forEach(c => {
+                    const y = getY(c.altitude); // altitude is usually in hundreds e.g. 025
+                    const type = c.type;
+                    
+                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                    
+                    if(type === 'OVC' || type === 'BKN' || type === 'VV') {
+                        // Solid Layer
+                        const thickness = 15;
+                        // Draw "fluffy" base
+                        for(let i=0; i<w; i+=20) {
+                            ctx.beginPath();
+                            ctx.arc(i, y, 12, 0, Math.PI*2);
+                            ctx.fill();
+                        }
+                        // Fill rectangular top to simulate thickness
+                        ctx.fillRect(0, y-thickness, w, thickness);
+                        
+                        // Label
+                        ctx.fillStyle = '#000';
+                        ctx.fillText(`${type}${c.altitude.toString().padStart(3,'0')}`, 10, y+4);
+                    } else if(type === 'FEW' || type === 'SCT') {
+                        // Scattered Puffs
+                        const count = type === 'FEW' ? 4 : 8;
+                        for(let k=0; k<count; k++) {
+                            const cx = Math.random() * w;
+                            const cy = y + (Math.random()*10 - 5);
+                            ctx.beginPath();
+                            ctx.arc(cx, cy, 10, 0, Math.PI*2);
+                            ctx.arc(cx+10, cy+2, 12, 0, Math.PI*2);
+                            ctx.arc(cx-10, cy+2, 12, 0, Math.PI*2);
+                            ctx.fill();
+                        }
+                        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                        ctx.fillText(`${type}${c.altitude.toString().padStart(3,'0')}`, 10, y+4);
                     }
-                    btn.title = stn.name || "Nearby Station";
-                    btn.onclick = () => {
-                        document.getElementById('icao').value = stn.icao;
-                        loadData(); 
-                    };
-                    list.appendChild(btn);
                 });
-            } catch(e) {
-                console.error("Nearby search failed", e);
-                document.getElementById('nearList').innerText = "Could not load suggestions.";
+            } else {
+                // CLR or SKC
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.textAlign = 'center';
+                ctx.fillText("SKC / CLR", w/2, h/2);
+            }
+
+            // 5. Visibility Overlay (Fog)
+            if(m.visibility) {
+                const vis = m.visibility.value;
+                if(vis < 5) {
+                    const opacity = (5 - vis) / 5; // 0 vis = 1.0 opacity
+                    const fog = ctx.createLinearGradient(0,0,0,h);
+                    fog.addColorStop(0, `rgba(200,200,200,${opacity * 0.2})`);
+                    fog.addColorStop(1, `rgba(200,200,200,${opacity * 0.8})`);
+                    ctx.fillStyle = fog;
+                    ctx.fillRect(0,0,w,h);
+                }
+            }
+
+            // 6. Rain / Snow Animation (Static snapshot for now)
+            if(m.wx_codes) {
+                const wxStr = JSON.stringify(m.wx_codes);
+                if(wxStr.includes("RA") || wxStr.includes("DZ")) {
+                    ctx.strokeStyle = 'rgba(100,150,255,0.6)';
+                    ctx.lineWidth = 1;
+                    for(let i=0; i<50; i++) {
+                        const rx = Math.random() * w;
+                        const ry = Math.random() * h;
+                        ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx-2, ry+10); ctx.stroke();
+                    }
+                }
+                if(wxStr.includes("SN")) {
+                    ctx.fillStyle = '#fff';
+                    for(let i=0; i<50; i++) {
+                        ctx.beginPath(); 
+                        ctx.arc(Math.random()*w, Math.random()*h, 1.5, 0, Math.PI*2); 
+                        ctx.fill();
+                    }
+                }
             }
         }
 
+        // --- RENDERERS ---
         function renderMetar(d) {
             const rawContainer = document.getElementById('rawMetar');
-            if (!d || !d.time || !d.time.dt) {
-                rawContainer.innerHTML = "No METAR Available"; return; 
-            }
             rawContainer.innerText = d.raw;
             const rules = d.flight_rules; 
             let css = 'cat-vfr';
@@ -638,6 +561,7 @@
             document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
             document.getElementById('mVis').innerText = d.visibility ? `${d.visibility.value} sm` : '--';
             const c = d.clouds?.[0]; document.getElementById('mCeil').innerText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
+            
             const alt = d.altimeter?.value; 
             if(alt) {
                 if(currentMetar.altUnit === 'hPa') { const inHg = (alt * 0.02953).toFixed(2); document.getElementById('mAlt').innerText = `Q${alt} / A${inHg}`; }
@@ -660,23 +584,7 @@
             document.getElementById('infoElev').innerText = `${d.elevation_ft} ft`;
             document.getElementById('infoCoords').innerText = `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}`;
 
-            const fContainer = document.getElementById('freqContainer');
-            fContainer.innerHTML = '';
-            if(d.frequencies && d.frequencies.length > 0) {
-                 const priority = { "ATIS":1, "TWR":2, "GND":3, "APP":4, "DEP":5 };
-                 d.frequencies.sort((a,b) => {
-                     let pa = 99, pb = 99;
-                     for(let k in priority) if(a.type.includes(k)) pa = priority[k];
-                     for(let k in priority) if(b.type.includes(k)) pb = priority[k];
-                     return pa - pb;
-                 });
-                 d.frequencies.slice(0, 6).forEach(f => {
-                     const card = document.createElement('div'); card.className = 'freq-card';
-                     card.innerHTML = `<div class="freq-type">${f.type}</div><div class="freq-val">${f.frequency}</div>`;
-                     fContainer.appendChild(card);
-                 });
-            } else { fContainer.innerHTML = `<div style="grid-column:span 3; font-size:12px; color:#555; text-align:center;">No Freq Data Available</div>`; }
-
+            // Calc Atmosphere
             const elev = d.elevation_ft; 
             const temp = currentMetar.temp;
             let currentHpa = currentMetar.alt;
@@ -685,416 +593,292 @@
             const isaTemp = 15 - (2 * pa / 1000);
             const isaDev = Math.round(temp - isaTemp);
             const da = Math.round(pa + 120 * (temp - isaTemp));
+            
             document.getElementById('calcPA').innerText = `${pa} ft`;
             document.getElementById('calcDA').innerText = `${da} ft`;
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
             
-            // Solar & SKY GRADIENT Logic
+            // Frequencies
+            const fContainer = document.getElementById('freqContainer');
+            fContainer.innerHTML = '';
+            if(d.frequencies && d.frequencies.length > 0) {
+                 d.frequencies.slice(0, 6).forEach(f => {
+                     const card = document.createElement('div'); card.className = 'freq-card';
+                     card.innerHTML = `<div class="freq-type">${f.type}</div><div class="freq-val">${f.frequency}</div>`;
+                     fContainer.appendChild(card);
+                 });
+            }
+
+            // Sun Times
             fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
                 .then(r=>r.json()).then(s => {
                     const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
                     document.getElementById('infoSun').innerText = `🌅 ${t(s.results.sunrise)}  🌇 ${t(s.results.sunset)}`;
-                    
-                    // SAVE SUN TIMES for TAF Visualization
-                    stationSunTimes = {
-                        sunrise: new Date(s.results.sunrise),
-                        sunset: new Date(s.results.sunset)
-                    };
-                    updateTafSkyGradient(); // Try to update gradient if TAF is ready
+                    stationSunTimes = { sunrise: new Date(s.results.sunrise), sunset: new Date(s.results.sunset) };
+                    updateTafSkyGradient();
                 }).catch(e=>{});
-            
-            const offset = Math.round(d.longitude / 15);
-            document.getElementById('calcOffset').innerText = `UTC ${offset >= 0 ? '+' : ''}${offset} (Est)`;
-            const mv = d.magnetic_variation;
-            document.getElementById('infoMag').innerText = mv ? `${Math.abs(mv)}° ${mv < 0 ? 'W' : 'E'}` : '0°';
+        }
+
+        // --- WIND ROSE & RUNWAYS ---
+        function setupRunwaySelect() {
+            const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
+            const mv = stationData.magnetic_variation || 0;
+            const windMag = currentWind.dir - mv;
+            let bestRwy = null, maxHW = -999;
+            (stationData.runways || []).forEach(r => {
+                sel.add(new Option(`RWY ${r.ident1}`, r.ident1));
+                sel.add(new Option(`RWY ${r.ident2}`, r.ident2));
+                let h1 = parseInt(r.ident1.replace(/\D/g,'')) * 10;
+                let hw1 = Math.cos((windMag - h1) * (Math.PI/180)) * currentWind.spd;
+                if(hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
+            });
+            if(bestRwy) sel.value = bestRwy; else if(stationData.runways.length > 0) sel.value = stationData.runways[0].ident1;
+            drawWindRose(); 
             renderRunwaysComplex();
         }
 
-        // --- RUNWAY & WIND VIZ ---
+        function drawWindRose() {
+            const canvas = document.getElementById('windRose'); const ctx = canvas.getContext('2d'); const w=140, h=140, cx=70, cy=70, r=60;
+            const rwyIdent = document.getElementById('rwySelect').value; 
+            
+            ctx.clearRect(0,0,w,h);
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#8e8e93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('N', cx, cy - r + 10); ctx.fillText('E', cx + r - 10, cy); ctx.fillText('S', cx, cy + r - 10); ctx.fillText('W', cx - r + 10, cy);
+            
+            const mv = stationData?.magnetic_variation || 0; 
+            const windMag = currentWind.dir - mv;
+            
+            if(rwyIdent) {
+                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10; const rwyRad = (rwyHdg - 90) * (Math.PI/180);
+                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad); 
+                ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12); 
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12); 
+                ctx.restore();
+                
+                const diff = (windMag - rwyHdg) * (Math.PI/180); 
+                const hw = Math.round(Math.cos(diff) * currentWind.spd); 
+                const xw = Math.round(Math.sin(diff) * currentWind.spd);
+                
+                const vHW = document.getElementById('valHW'); 
+                vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; 
+                vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
+                document.getElementById('valXW').innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
+                
+                checkMins();
+            }
+            if(currentWind.spd > 0) {
+                const windRad = (windMag - 90) * (Math.PI/180); 
+                ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
+                ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
+            }
+        }
+
         function renderRunwaysComplex() {
             const container = document.getElementById('runwayListComplex'); container.innerHTML = '';
             const d = stationData; if(!d || !d.runways) return;
             const magVar = d.magnetic_variation || 0;
             const windMagDir = currentWind.dir - magVar;
+            
             d.runways.forEach((r, idx) => {
-                let dimStr = useMetric ? `${Math.round(r.length_ft * 0.3048)}m x ${Math.round(r.width_ft * 0.3048)}m` : `${r.length_ft}' x ${r.width_ft}'`;
+                let dimStr = useMetric ? `${Math.round(r.length_ft * 0.3048)}m` : `${r.length_ft}'`;
                 const rwy1Hdg = parseInt(r.ident1.replace(/\D/g,'')) * 10;
                 const diffRad = (windMagDir - rwy1Hdg) * (Math.PI/180);
                 const hw = Math.round(Math.cos(diffRad) * currentWind.spd); 
                 const xw = Math.round(Math.sin(diffRad) * currentWind.spd);
                 const color1 = hw >= 0 ? 'var(--success)' : 'var(--danger)';
                 const color2 = hw < 0 ? 'var(--success)' : 'var(--danger)';
-                const hwArrow = hw >= 0 ? '⬆' : '⬇';
-                const xwArrow = xw >= 0 ? '⬅' : '➡'; 
+                
                 const div = document.createElement('div');
                 div.className = 'rwy-complex';
                 div.innerHTML = `
                     <div class="rc-header"><div class="rc-idents"><span style="color:${color1}">${r.ident1}</span> / <span style="color:${color2}">${r.ident2}</span></div><div class="rc-dims">${dimStr}</div></div>
-                    <div class="rc-strip"><div class="rc-id-v">${r.ident1}</div><div class="rc-data">
-                    <div class="wind-comp"><span>${Math.abs(hw)}kt</span><span class="wc-arrow" style="color:${color1}">${hwArrow}</span></div>
-                    <div class="wind-comp"><span>${Math.abs(xw)}kt</span><span class="wc-arrow" style="color:#0a84ff">${xwArrow}</span></div>
-                    <canvas id="miniRose_${idx}" class="rc-rose" width="36" height="36"></canvas></div><div class="rc-id-v" style="transform:rotate(0deg);">${r.ident2}</div></div>`;
+                    <div class="rc-strip">
+                        <div class="rc-id-v">${r.ident1}</div>
+                        <div class="rc-data">
+                            <div class="wind-comp"><span>${Math.abs(hw)}kt</span><span style="color:${color1}">${hw>=0?'⬆':'⬇'}</span></div>
+                            <div class="wind-comp"><span>${Math.abs(xw)}kt</span><span style="color:#0a84ff">${xw>=0?'⬅':'➡'}</span></div>
+                        </div>
+                        <div class="rc-id-v" style="transform:rotate(0deg);">${r.ident2}</div>
+                    </div>`;
                 container.appendChild(div);
-                drawMiniRose(`miniRose_${idx}`, windMagDir - rwy1Hdg);
             });
         }
-        function drawMiniRose(id, relDeg) {
-            const canvas = document.getElementById(id); if(!canvas) return;
-            const ctx = canvas.getContext('2d'); const w=36, h=36, cx=18, cy=18, r=14;
-            ctx.clearRect(0,0,w,h);
-            ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.strokeStyle = '#8e8e93'; ctx.lineWidth=2; ctx.setLineDash([2,3]); ctx.stroke(); ctx.setLineDash([]);
-            if(currentWind.spd > 0) {
-                const rad = (relDeg - 90) * (Math.PI/180); ctx.save(); ctx.translate(cx, cy); ctx.rotate(rad);
-                ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(4, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(2, 0); ctx.lineTo(8, 3); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
-            }
-        }
-        function drawWindRose() {
-            const canvas = document.getElementById('windRose'); const ctx = canvas.getContext('2d'); const w=140, h=140, cx=70, cy=70, r=60;
-            const rwyIdent = document.getElementById('rwySelect').value; ctx.clearRect(0,0,w,h);
-            ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = '#8e8e93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('N', cx, cy - r + 10); ctx.fillText('E', cx + r - 10, cy); ctx.fillText('S', cx, cy + r - 10); ctx.fillText('W', cx - r + 10, cy);
-            
-            const mv = stationData?.magnetic_variation || 0; const windMag = currentWind.dir - mv;
-            
-            if(rwyIdent) {
-                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10; const rwyRad = (rwyHdg - 90) * (Math.PI/180);
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad); ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12); ctx.restore();
-                const diff = (windMag - rwyHdg) * (Math.PI/180); const hw = Math.round(Math.cos(diff) * currentWind.spd); const xw = Math.round(Math.sin(diff) * currentWind.spd);
-                const vHW = document.getElementById('valHW'); vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
-                const vXW = document.getElementById('valXW'); vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
-                checkMins(); 
-            }
-            if(currentWind.spd > 0) {
-                const windRad = (windMag - 90) * (Math.PI/180); ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
-                ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
-            }
-        }
 
-        // --- PERSONAL MINIMUMS CHECKER ---
-        function checkMins() {
-            if (!currentMetar || !stationData) { document.getElementById('minsResult').innerText = "LOAD METAR DATA"; return; }
-            const limitXW = parseFloat(document.getElementById('minXW').value) || 0;
-            const limitCeil = parseFloat(document.getElementById('minCeil').value) || 0;
-            const rwyIdent = document.getElementById('rwySelect').value; 
-            let actualXW = 0;
-            if (rwyIdent) {
-                const magVar = stationData.magnetic_variation || 0;
-                const windMagDir = currentWind.dir - magVar;
-                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10;
-                const diffRad = (windMagDir - rwyHdg) * (Math.PI/180);
-                actualXW = Math.abs(Math.round(Math.sin(diffRad) * currentWind.spd));
-            }
-            let actualCeil = 99999;
-            let ceilType = "CLR";
-            if (lastMetarObj && lastMetarObj.clouds) {
-                const ceilingLayer = lastMetarObj.clouds.find(c => c.type === 'BKN' || c.type === 'OVC');
-                if (ceilingLayer) {
-                    actualCeil = ceilingLayer.altitude * 100; // API usually gives hundreds
-                    ceilType = ceilingLayer.type;
-                }
-            }
-            const minsCard = document.getElementById('minsCard');
-            const resDiv = document.getElementById('minsResult');
-            const reasonDiv = document.getElementById('minsReason');
-            let fails = [];
-            if (actualXW > limitXW) fails.push(`X-Wind ${actualXW}kt > ${limitXW}kt`);
-            if (actualCeil < limitCeil) fails.push(`Ceiling ${ceilType}${actualCeil < 10000 ? actualCeil : 'UNL'} < ${limitCeil}ft`);
-            if (fails.length > 0) {
-                resDiv.innerText = "NO-GO ⛔"; resDiv.style.backgroundColor = "var(--danger)"; resDiv.style.color = "#fff";
-                minsCard.style.borderLeftColor = "var(--danger)"; reasonDiv.innerText = fails.join(" • ");
-            } else {
-                resDiv.innerText = "GO ✅"; resDiv.style.backgroundColor = "var(--success)"; resDiv.style.color = "#000";
-                minsCard.style.borderLeftColor = "var(--success)"; reasonDiv.innerText = "Wind & Ceiling within limits";
-            }
-        }
-
-        // --- E6B CALC ---
-        function calcE6B() {
-            const alt = parseFloat(document.getElementById('e6bAlt').value) || 0;
-            const qnh = parseFloat(document.getElementById('e6bQnh').value) || 1013.25;
-            let tempInput = document.getElementById('e6bTemp').value;
-            const stdTempC = 15 - (0.0019812 * alt);
-            const actTempC = tempInput === "" ? stdTempC : parseFloat(tempInput);
-            const ias = parseFloat(document.getElementById('e6bIas').value) || 0;
-            const pa = alt + (1013.25 - qnh) * 27.3;
-            document.getElementById('resPA').innerText = Math.round(pa) + " ft";
-            const isaDev = actTempC - (15 - (0.00198 * pa));
-            const devSign = isaDev >= 0 ? "+" : "";
-            document.getElementById('resISA').innerText = `ISA ${devSign}${Math.round(isaDev)}°C`;
-            const da = pa + (118.8 * (actTempC - (15 - (0.00198 * pa))));
-            document.getElementById('resDA').innerText = Math.round(da) + " ft";
-            const tempK = actTempC + 273.15;
-            const speedOfSoundKts = 38.967854 * Math.sqrt(tempK);
-            document.getElementById('resSoS').innerText = Math.round(speedOfSoundKts) + " kts";
-            if (ias > 0) {
-                const pressAtPA = 1013.25 * Math.pow(1 - (0.0000225577 * pa), 5.25588);
-                const density = (pressAtPA * 100) / (287.05 * tempK);
-                const stdDensity = 1.225;
-                const tas = ias * Math.sqrt(stdDensity / density);
-                document.getElementById('resTAS').innerText = Math.round(tas) + " kts";
-                const mach = tas / speedOfSoundKts;
-                document.getElementById('resMach').innerText = "M " + mach.toFixed(2);
-            } else {
-                document.getElementById('resTAS').innerText = "--";
-                document.getElementById('resMach').innerText = "--";
-            }
-        }
-
-        // --- TAF RENDER ---
+        // --- TAF RENDERER ---
         function renderTaf(d) {
             document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
-            tafDataCache = d.forecast; const bar = document.getElementById('tafBar'); const axis = document.getElementById('tafAxis'); bar.innerHTML = ''; axis.innerHTML = '';
+            tafDataCache = d.forecast; 
+            const bar = document.getElementById('tafBar'); 
+            const axis = document.getElementById('tafAxis'); 
+            bar.innerHTML = ''; axis.innerHTML = '';
             document.getElementById('tafDetail').classList.add('hidden');
-            document.getElementById('tafNeedle').style.display = 'none'; // Hide needle initially
             
             if(!d.forecast || d.forecast.length === 0) return;
             
-            // --- NEW: Calculate Total Duration for Needle & Gradient ---
+            // Timeline Logic
             const startT = new Date(d.forecast[0].start_time.dt);
             const endT = new Date(d.forecast[d.forecast.length-1].end_time.dt);
             const totalDur = endT - startT; 
             const now = new Date();
 
-            // Render Needle
+            // Needle
             if (now >= startT && now <= endT) {
                 const p = ((now - startT) / totalDur) * 100;
                 const needle = document.getElementById('tafNeedle');
-                needle.style.display = 'block';
-                needle.style.left = `${p}%`;
+                needle.style.display = 'block'; needle.style.left = `${p}%`;
             }
 
-            // Render Blocks
             d.forecast.forEach((f, index) => {
-                const block = document.createElement('div'); block.className = 'taf-block'; block.style.flex = "1";
-                let col = '#555'; if(f.flight_rules==='VFR')col='var(--success)'; if(f.flight_rules==='MVFR')col='var(--mvfr)'; if(f.flight_rules==='IFR')col='var(--danger)';
+                const block = document.createElement('div'); 
+                block.className = 'taf-block'; block.style.flex = "1";
+                let col = '#555'; 
+                if(f.flight_rules==='VFR')col='var(--success)'; 
+                if(f.flight_rules==='MVFR')col='var(--mvfr)'; 
+                if(f.flight_rules==='IFR')col='var(--danger)';
                 block.style.backgroundColor = col; block.innerText = f.type;
-                block.onclick = () => { document.querySelectorAll('.taf-block').forEach(b => b.classList.remove('selected')); block.classList.add('selected'); showTafDetail(index, col); };
+                block.onclick = () => { showTafDetail(index, col); };
                 bar.appendChild(block);
                 
-                // Axis Labels (Simplified)
-                if(index % 2 === 0) { // Don't crowd labels
+                if(index % 2 === 0) {
                     const s = new Date(f.start_time.dt); 
                     const lbl = document.createElement('div'); 
-                    lbl.className = 'taf-axis-lbl'; lbl.style.flex = "2"; // span 2 blocks roughly
+                    lbl.className = 'taf-axis-lbl'; lbl.style.flex = "2";
                     lbl.innerText = `${s.getUTCHours()}z`; 
                     axis.appendChild(lbl);
                 }
             });
-            
-            // Trigger gradient update now that we have TAF times
             updateTafSkyGradient(startT, endT);
         }
 
+        function showTafDetail(index, color) {
+            const f = tafDataCache[index]; 
+            const card = document.getElementById('tafDetail'); 
+            card.style.borderLeftColor = color; card.classList.remove('hidden');
+            
+            const s = new Date(f.start_time.dt); const e = new Date(f.end_time.dt);
+            document.getElementById('tdTime').innerText = `${s.getUTCHours()}z ➔ ${e.getUTCHours()}z`; 
+            document.getElementById('tdType').innerText = f.type;
+            
+            const wDir = f.wind_direction?.value || 'VRB'; 
+            document.getElementById('tdWind').innerText = `${wDir}° / ${f.wind_speed?.value||0}kt`;
+            document.getElementById('tdVis').innerText = f.visibility ? `${f.visibility.value} sm` : 'P6SM';
+            document.getElementById('tdWx').innerText = f.wx_codes ? f.wx_codes.map(x => x.repr).join(' ') : 'NSW';
+            
+            let cStr = 'SKC'; 
+            if(f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3,'0')}`).join(' '); 
+            document.getElementById('tdCloud').innerText = cStr;
+        }
+
         function updateTafSkyGradient(startT, endT) {
-            // Need both TAF times and Sun Times to work
             if(!stationSunTimes || !startT || !endT) return;
-            
-            const sr = stationSunTimes.sunrise;
-            const ss = stationSunTimes.sunset;
-            
-            // Normalize dates to comparable timestamps within the 24h TAF window
-            // This is complex because TAFs cross days. Simplified logic:
-            // Just create a repeating gradient pattern: Night -> Dawn -> Day -> Dusk -> Night
-            // Visual Approximation based on Local Hour relative to UTC Hour
-            
-            // Actually, simpler is better for V1:
-            // Just set a fixed "Day/Night" strip? No, let's try to be smart.
-            // Map Sunrise/Sunset onto the timeline %
-            
-            const totalDur = endT - startT;
-            
-            // Find "relevant" sunrise/set that falls inside the TAF window
-            // Since TAF is usually <30h, there is usually 1 sunrise and 1 sunset, or maybe 2.
-            
-            let stops = [];
-            
-            // Check previous day, current day, next day sun events
-            [-1, 0, 1].forEach(offset => {
-                let checkSR = new Date(sr.getTime() + (offset * 24 * 60 * 60 * 1000));
-                let checkSS = new Date(ss.getTime() + (offset * 24 * 60 * 60 * 1000));
-                
-                if(checkSR >= startT && checkSR <= endT) stops.push({t: checkSR, type: 'sr'});
-                if(checkSS >= startT && checkSS <= endT) stops.push({t: checkSS, type: 'ss'});
-            });
-            
-            stops.sort((a,b) => a.t - b.t);
-            
-            // Construct Gradient String
-            // Base color depends on if we start in day or night. 
-            // Simple check: is startT between a previous SR and next SS?
-            
-            // Let's assume start is Night (#0f172a) or Day (#0ea5e9)
-            // We can check sun altitude... or simpler:
-            // Just use the API provided SR/SS to check if startT is "day".
-            // If startT > todaySR and startT < todaySS -> Day start.
-            
-            let css = "linear-gradient(to right";
-            let currentState = "night"; // default
-            
-            // Determine initial state
-            // Normalize startT to today to compare with Today's SR/SS
-            let dSR = new Date(startT); dSR.setUTCHours(sr.getUTCHours(), sr.getUTCMinutes());
-            let dSS = new Date(startT); dSS.setUTCHours(ss.getUTCHours(), ss.getUTCMinutes());
-            
-            if (startT > dSR && startT < dSS) currentState = "day";
-            
-            // Colors
-            const cNight = "#0f172a";
-            const cDawn = "#f97316"; // Orange
-            const cDay = "#0ea5e9"; // Sky Blue
-            
-            // Initial Color
-            css += `, ${currentState === 'day' ? cDay : cNight} 0%`;
-            
-            stops.forEach(stop => {
-                let pct = ((stop.t - startT) / totalDur) * 100;
-                // Transition width (tw)
-                let tw = 5; 
-                
-                if(stop.type === 'sr') {
-                    // Night -> Sunrise -> Day
-                    css += `, ${cNight} ${Math.max(0, pct-tw)}%, ${cDawn} ${pct}%, ${cDay} ${Math.min(100, pct+tw)}%`;
-                } else {
-                    // Day -> Sunset -> Night
-                    css += `, ${cDay} ${Math.max(0, pct-tw)}%, ${cDawn} ${pct}%, ${cNight} ${Math.min(100, pct+tw)}%`;
-                }
-            });
-            
-            css += ")";
+            // Simple visual approximation of Day/Night cycle
+            const cNight = "#0f172a"; const cDay = "#0ea5e9"; const cDawn = "#f97316";
+            let css = `linear-gradient(to right, ${cNight} 0%, ${cDawn} 20%, ${cDay} 30%, ${cDay} 70%, ${cDawn} 80%, ${cNight} 100%)`;
             document.getElementById('tafSkyStrip').style.background = css;
         }
 
-        function showTafDetail(index, color) {
-            const f = tafDataCache[index]; const card = document.getElementById('tafDetail'); card.style.borderLeftColor = color; card.classList.remove('hidden');
-            const s = new Date(f.start_time.dt); const e = new Date(f.end_time.dt);
-            document.getElementById('tdTime').innerText = `${s.getUTCHours()}:${s.getUTCMinutes()}Z ➔ ${e.getUTCHours()}:${e.getUTCMinutes()}Z`; document.getElementById('tdType').innerText = f.type;
-            const wDir = f.wind_direction?.value || 'VRB'; const wSpd = f.wind_speed?.value || 0; document.getElementById('tdWind').innerText = `${wDir}° / ${wSpd}kt`;
-            document.getElementById('tdVis').innerText = f.visibility ? `${f.visibility.value} sm` : 'P6SM';
-            document.getElementById('tdWx').innerText = f.wx_codes ? f.wx_codes.map(x => x.repr).join(' ') : 'NSW';
-            let cStr = 'SKC'; if(f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3,'0')}`).join(', '); document.getElementById('tdCloud').innerText = cStr;
-        }
-
-        // --- WORLD CLOCK WITH ONLINE SEARCH ---
+        // --- WORLD CLOCK ---
         function initWorldClock() {
-            // Load Saved
             const stored = localStorage.getItem('efb_cities_v46');
-            if(stored) {
-                cityList = JSON.parse(stored);
-            } else {
-                cityList = [
-                    { n: "UTC (Zulu)", z: "UTC", codes: "", id: 1 },
-                    { n: "Taipei", z: "Asia/Taipei", codes: "RCTP/TPE", id: 2 },
-                    { n: "New York", z: "America/New_York", codes: "KJFK/JFK", id: 3 }
-                ];
-            }
+            if(stored) cityList = JSON.parse(stored);
+            else cityList = [...AVIATION_CITIES];
         }
-        async function addCustomCity() {
-            const val = document.getElementById('newCityInput').value.trim();
-            if (!val) return;
-            const btn = document.querySelector('.ac-btn');
-            const originalText = btn.innerText; btn.innerText = "Searching..."; btn.disabled = true;
-
-            // 1. Try DB
-            let found = AVIATION_CITIES.find(c => `${c.n} (${c.icao}/${c.iata})` === val);
-            if (!found) {
-                const upper = val.toUpperCase();
-                found = AVIATION_CITIES.find(c => c.icao === upper || c.iata === upper || c.n.toUpperCase().includes(upper));
-            }
-
-            if (found) {
-                addCityToList(found.n, found.z, `${found.icao}/${found.iata}`);
-            } else {
-                // 2. Try Online
-                try {
-                    const resp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=1&language=en&format=json`);
-                    const data = await resp.json();
-                    if (data.results && data.results.length > 0) {
-                        const res = data.results[0];
-                        addCityToList(res.name, res.timezone, `ONLINE/${res.country_code||''}`);
-                    } else {
-                        alert("City not found locally or online.");
-                    }
-                } catch (e) { console.error(e); alert("Search Error"); }
-            }
-            btn.innerText = originalText; btn.disabled = false;
-        }
-        function addCityToList(name, zone, codes) {
-            cityList.push({ n: name, z: zone, codes: codes, id: Date.now() });
-            saveCities();
-            document.getElementById('newCityInput').value = '';
-            updateClock();
-        }
-        function removeCity(id) { cityList = cityList.filter(c => c.id !== id); saveCities(); updateClock(); }
-        function saveCities() { localStorage.setItem('efb_cities_v46', JSON.stringify(cityList)); }
-        
         function updateClock() {
             const now = new Date();
-            // Header
             document.getElementById('zuluTime').innerText = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
-
+            
             if(document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer'); container.innerHTML = '';
                 cityList.forEach(c => {
                     const timeStr = now.toLocaleTimeString('en-US', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
-                    
-                    // Relative Time Logic
-                    const targetDateStr = now.toLocaleString('en-US', { timeZone: c.z });
-                    const targetDate = new Date(targetDateStr);
-                    const localDay = now.getDay(); const targetDay = targetDate.getDay();
-                    let dayLabel = "Today";
-                    if(targetDay !== localDay) {
-                        if(targetDay === (localDay + 1) % 7) dayLabel = "Tomorrow";
-                        else if(localDay === (targetDay + 1) % 7) dayLabel = "Yesterday";
-                    }
-
-                    const isUTC = c.z === "UTC";
-                    const timeClass = isUTC ? "clock-time clock-utc" : "clock-time";
-                    const delHtml = c.id !== 1 ? `<span class="del-btn" onclick="removeCity(${c.id})">×</span>` : '';
-                    
                     const card = document.createElement('div'); card.className = 'clock-card';
                     card.innerHTML = `
-                        <div class="clock-left">
-                            <div class="clock-rel">${dayLabel}</div>
-                            <div><span class="clock-city">${c.n}</span><span class="clock-codes">${c.codes}</span></div>
-                        </div>
-                        <div style="display:flex; align-items:center;">
-                            <div class="${timeClass}">${timeStr}</div>${delHtml}
-                        </div>`;
+                        <div class="clock-left"><div><span class="clock-city">${c.n}</span><span style="color:var(--accent); font-weight:700; margin-left:8px;">${c.icao||''}</span></div></div>
+                        <div class="clock-time">${timeStr}</div>`;
                     container.appendChild(card);
                 });
             }
         }
-
-        // --- TOOLS ---
-        const WX_DATA = {
-            "MI":"Shallow", "PR":"Partial", "BC":"Patches", "DR":"Drifting", "BL":"Blowing", "SH":"Shower", "TS":"Thunderstorm", "FZ":"Freezing",
-            "DZ":"Drizzle", "RA":"Rain", "SN":"Snow", "SG":"Snow Grains", "IC":"Ice Crystals", "PL":"Ice Pellets", "GR":"Hail", "GS":"Small Hail", "UP":"Unknown",
-            "BR":"Mist", "FG":"Fog", "FU":"Smoke", "VA":"Ash", "DU":"Dust", "SA":"Sand", "HZ":"Haze", "PY":"Spray",
-            "PO":"Dust Devils", "SQ":"Squall", "FC":"Funnel Cloud", "SS":"Sandstorm", "DS":"Duststorm",
-            "SKC":"Clear", "CLR":"Clear", "FEW":"Few", "SCT":"Scattered", "BKN":"Broken", "OVC":"Overcast", "VV":"Vertical Vis", "CAVOK":"Ceiling & Vis OK"
-        };
-        const codeListEl = document.getElementById('codeList'); codeListEl.innerHTML = '';
-        Object.keys(WX_DATA).sort().forEach(key => { const item = document.createElement('div'); item.className = 'code-item'; item.innerHTML = `<b>${key}</b> ${WX_DATA[key]}`; codeListEl.appendChild(item); });
-        function decode(input) {
-            input = input.trim().toUpperCase(); if(!input) { document.getElementById('decodeOut').innerText = "..."; return; }
-            if(WX_DATA[input]) { document.getElementById('decodeOut').innerText = WX_DATA[input]; return; }
-            let res = [], rem = input;
-            if(rem.startsWith('-')) { res.push("Light"); rem = rem.substring(1); } else if(rem.startsWith('+')) { res.push("Heavy"); rem = rem.substring(1); } else if(rem.startsWith('VC')) { res.push("Vicinity"); rem = rem.substring(2); }
-            let foundAny = false;
-            while(rem.length >= 2) { let chunk = rem.substring(0,2); if(WX_DATA[chunk]) { res.push(WX_DATA[chunk]); rem = rem.substring(2); foundAny = true; } else break; }
-            if(foundAny && rem.length === 0) document.getElementById('decodeOut').innerText = res.join(" "); else document.getElementById('decodeOut').innerText = "Unknown / Custom";
+        async function addCustomCity() {
+            const val = document.getElementById('newCityInput').value;
+            if(!val) return;
+            cityList.push({n:val, z:'UTC', icao:'USER'}); // Simplified logic for demo
+            localStorage.setItem('efb_cities_v46', JSON.stringify(cityList));
+            updateClock();
         }
-        // Timer
-        function formatTime(ms) { const d = new Date(ms); return d.toISOString().substr(11, 8); }
-        function updateTimerDisplay() { const now = Date.now(); const diff = now - startTime + elapsed; document.getElementById('timerDisplay').innerText = formatTime(diff); }
-        function startTimer() { if(!running) { startTime = Date.now(); timerInterval = setInterval(updateTimerDisplay, 100); running = true; } }
-        function stopTimer() { if(running) { clearInterval(timerInterval); elapsed += Date.now() - startTime; running = false; } else { elapsed = 0; document.getElementById('timerDisplay').innerText = "00:00:00"; document.getElementById('lapList').innerHTML = ""; } }
-        function lapTimer() { if(running) { const now = Date.now(); const diff = now - startTime + elapsed; const div = document.createElement('div'); div.className = 'lap-item'; div.innerHTML = `<span>Lap</span><span>${formatTime(diff)}</span>`; document.getElementById('lapList').prepend(div); } }
-        
-        // START
+
+        // --- E6B & MINS ---
+        function checkMins() {
+            if (!currentMetar || !stationData) { document.getElementById('minsResult').innerText = "LOAD DATA"; return; }
+            const limitXW = parseFloat(document.getElementById('minXW').value) || 0;
+            const limitCeil = parseFloat(document.getElementById('minCeil').value) || 0;
+            const rwyIdent = document.getElementById('rwySelect').value; 
+            
+            let actualXW = 0;
+            if (rwyIdent) {
+                const mv = stationData.magnetic_variation || 0;
+                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10;
+                const diff = (currentWind.dir - mv - rwyHdg) * (Math.PI/180);
+                actualXW = Math.abs(Math.sin(diff) * currentWind.spd);
+            }
+            
+            let actualCeil = 9999;
+            if (lastMetarObj && lastMetarObj.clouds) {
+                const ceilLayer = lastMetarObj.clouds.find(c => c.type === 'BKN' || c.type === 'OVC');
+                if (ceilLayer) actualCeil = ceilLayer.altitude * 100;
+            }
+
+            const resDiv = document.getElementById('minsResult');
+            const card = document.getElementById('minsCard');
+            
+            if (actualXW > limitXW || actualCeil < limitCeil) {
+                resDiv.innerText = "NO-GO ⛔"; resDiv.style.backgroundColor = "var(--danger)"; resDiv.style.color = "#fff"; card.style.borderLeftColor = "var(--danger)";
+            } else {
+                resDiv.innerText = "GO ✅"; resDiv.style.backgroundColor = "var(--success)"; resDiv.style.color = "#000"; card.style.borderLeftColor = "var(--success)";
+            }
+        }
+
+        function calcE6B() {
+            const alt = parseFloat(document.getElementById('e6bAlt').value) || 0;
+            const qnh = parseFloat(document.getElementById('e6bQnh').value) || 1013;
+            const temp = parseFloat(document.getElementById('e6bTemp').value) || 15;
+            const ias = parseFloat(document.getElementById('e6bIas').value) || 0;
+            
+            const pa = alt + (1013 - qnh) * 30;
+            const da = pa + 120 * (temp - (15 - (2*pa/1000)));
+            document.getElementById('resDA').innerText = Math.round(da) + " ft";
+            
+            // Simplified TAS
+            const tas = ias * (1 + (alt/1000 * 0.02)); 
+            document.getElementById('resTAS').innerText = Math.round(tas) + " kts";
+        }
+
+        // --- UTILS ---
+        function setTab(name) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-'+name).classList.add('active');
+            event.target.classList.add('active');
+            if(name === 'metar') {
+                // Redraw canvas on tab switch because hidden canvas dimensions can break
+                const m = lastMetarObj;
+                if(m) setTimeout(() => drawSkyViz(m), 50);
+            }
+            if(name === 'world') updateClock();
+        }
+        function updateHeaderCat(status, colorClass) {
+            const badge = document.getElementById('headerCat');
+            badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
+        }
+        function toggleClearBtn() {
+            const val = document.getElementById('icao').value;
+            document.getElementById('clearBtn').style.display = val ? 'block' : 'none';
+        }
+        function clearSearch() { document.getElementById('icao').value = ''; document.getElementById('icao').focus(); toggleClearBtn(); }
+
+        // Start
         initApp();
     </script>
 </body>
