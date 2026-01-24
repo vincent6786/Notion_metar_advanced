@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V50 (Auto-Clear Fix)</title>
+    <title>Notion Pilot EFB V53 (Always Suggest Nearby)</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
@@ -460,13 +460,22 @@
                     
                     renderMetar(m); // This renders the data OR the "Old Data" warning
                     
-                    // CHECK IF STALE (OLD DATA) -> SUGGEST NEARBY
+                    // CHECK IF STALE (OLD DATA)
                     const obsTime = new Date(m.time.dt);
                     const ageHrs = (new Date() - obsTime) / (1000 * 60 * 60);
                     if (ageHrs > 2) {
-                        // If data is old, suggest nearby airports
-                        findNearbyStations(station.latitude, station.longitude);
+                        const banner = document.createElement('div');
+                        banner.id = "staleBanner"; // ID for auto-clear
+                        banner.style.cssText = "background:var(--danger); color:white; padding:8px; border-radius:6px; margin-bottom:8px; text-align:center; font-weight:bold;";
+                        banner.innerHTML = `⚠️ DATA OUTDATED (${Math.round(ageHrs)}h ago)<br><a href="https://metar-taf.com/metar/${stationData?stationData.icao:''}" target="_blank" style="color:white; text-decoration:underline; font-weight:400; font-size:12px;">Check Backup Source ↗</a>`;
+                        const rc = document.getElementById('rawMetar');
+                        rc.parentNode.insertBefore(banner, rc);
+                        updateHeaderCat('OLD', 'cat-ifr'); 
                     }
+
+                    // --- NEW: ALWAYS SHOW NEARBY STATIONS ---
+                    // Called here on success so it appears at the bottom of the Raw Text
+                    findNearbyStations(station.latitude, station.longitude);
 
                 } else {
                     // METAR FAILED (e.g. 404 or empty)
@@ -541,7 +550,6 @@
             badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
         }
 
-        // --- NEW FEATURE: SUGGEST NEARBY AIRPORTS ---
         // --- UPDATED: SUGGEST NEARBY AIRPORTS (Fixed Object Error) ---
         async function findNearbyStations(lat, lon) {
             const container = document.getElementById('rawMetar');
@@ -624,21 +632,8 @@
             let css = 'cat-vfr';
             if(rules==='MVFR') css='cat-mvfr'; if(rules==='IFR') css='cat-ifr'; if(rules==='LIFR') css='cat-lifr';
             
-            // 2. STALE DATA CHECK (Updated for YPPF fix)
-            const obsTime = new Date(d.time.dt);
-            const now = new Date();
-            const ageHrs = (now - obsTime) / (1000 * 60 * 60);
-            
-            if (ageHrs > 2) {
-                updateHeaderCat('OLD', 'cat-ifr'); 
-                const banner = document.createElement('div');
-                banner.id = "staleBanner"; // <--- ADDED ID FOR AUTO-CLEAR
-                banner.style.cssText = "background:var(--danger); color:white; padding:8px; border-radius:6px; margin-bottom:8px; text-align:center; font-weight:bold;";
-                banner.innerHTML = `⚠️ DATA OUTDATED (${Math.round(ageHrs)}h ago)<br><a href="https://metar-taf.com/metar/${stationData?stationData.icao:''}" target="_blank" style="color:white; text-decoration:underline; font-weight:400; font-size:12px;">Check Backup Source ↗</a>`;
-                rawContainer.parentNode.insertBefore(banner, rawContainer);
-            } else {
-                updateHeaderCat(rules, css);
-            }
+            // 2. STALE DATA CHECK IS NOW HANDLED IN LOAD DATA TO SEPARATE BANNER FROM RENDERING
+            updateHeaderCat(rules, css);
 
             document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
             document.getElementById('mVis').innerText = d.visibility ? `${d.visibility.value} sm` : '--';
