@@ -424,11 +424,13 @@
             const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
             
             try {
+                // NEW CODE (With Cache Busting)
+                const cb = Date.now(); // Get current timestamp
                 const [station, metar, taf, notams] = await Promise.all([
-                    fetch(`https://avwx.rest/api/station/${icao}`, {headers}).then(r=>{if(!r.ok)throw new Error('Station');return r.json()}),
-                    fetch(`https://avwx.rest/api/metar/${icao}`, {headers}).then(r=>r.json()),
-                    fetch(`https://avwx.rest/api/taf/${icao}`, {headers}).then(r=>r.json()).catch(e=>({raw:"TAF Error"})),
-                    fetch(`https://avwx.rest/api/notam/${icao}`, {headers}).then(r=>r.json()).catch(e=>[])
+                    fetch(`https://avwx.rest/api/station/${icao}?t=${cb}`, {headers}).then(r=>{if(!r.ok)throw new Error('Station');return r.json()}),
+                    fetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
+                    fetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`, {headers}).then(r=>r.json()).catch(e=>({raw:"TAF Error"})),
+                    fetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`, {headers}).then(r=>r.json()).catch(e=>[])
                 ]);
                 
                 stationData = station;
