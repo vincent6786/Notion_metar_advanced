@@ -542,15 +542,13 @@
         }
 
         // --- NEW FEATURE: SUGGEST NEARBY AIRPORTS ---
-        // --- UPDATED: SUGGEST NEARBY AIRPORTS (Fixed "Undefined" Bug) ---
+        // --- UPDATED: SUGGEST NEARBY AIRPORTS (Fixed Object Error) ---
         async function findNearbyStations(lat, lon) {
             const container = document.getElementById('rawMetar');
             
-            // Clear old list if exists
             const oldSuggestions = document.getElementById('nearbySuggestions');
             if(oldSuggestions) oldSuggestions.remove();
 
-            // Create box
             const suggestionBox = document.createElement('div');
             suggestionBox.id = "nearbySuggestions";
             suggestionBox.style.marginTop = "10px";
@@ -564,7 +562,7 @@
                 const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
                 const url = `https://avwx.rest/api/station/near/${lat},${lon}?n=4`; 
                 const res = await fetch(url, { headers });
-                const stations = await res.json();
+                const data = await res.json();
                 
                 const list = document.getElementById('nearList');
                 list.innerHTML = "";
@@ -572,32 +570,35 @@
                 // Get current ICAO to filter it out
                 const inputVal = document.getElementById('icao').value.toUpperCase();
 
-                // FIX: API uses 'station' key for the code in this endpoint, not 'icao'
-                const others = stations.filter(s => s.station !== inputVal);
+                // FIX: The array items are wrappers like { station: {...}, nautical_miles: 5.2 }
+                const others = data.filter(item => item.station.icao !== inputVal);
 
                 if(others.length === 0) {
                     list.innerHTML = "<span style='color:#555;'>No other stations found nearby.</span>";
                     return;
                 }
 
-                others.forEach(s => {
+                others.forEach(item => {
                     const btn = document.createElement('button');
                     btn.className = "tool-btn";
                     btn.style.width = "auto";
                     btn.style.margin = "0";
                     btn.style.fontSize = "12px";
                     
-                    // FIX: Use s.station here
-                    btn.innerText = `✈ ${s.station}`; 
-                    btn.title = s.name || "Nearby Station";
+                    // FIX: Access the nested station object
+                    const stn = item.station; 
                     
-                    // Add distance if available (converting nautical miles roughly)
-                    if(s.distance) {
-                        btn.innerText += ` (${Math.round(s.distance)}nm)`;
+                    btn.innerText = `✈ ${stn.icao}`; 
+                    
+                    // Add distance if available (AVWX usually sends 'nautical_miles')
+                    if(item.nautical_miles) {
+                        btn.innerText += ` (${Math.round(item.nautical_miles)}nm)`;
                     }
 
+                    btn.title = stn.name || "Nearby Station";
+
                     btn.onclick = () => {
-                        document.getElementById('icao').value = s.station; // FIX: Use s.station
+                        document.getElementById('icao').value = stn.icao;
                         loadData(); 
                     };
                     list.appendChild(btn);
