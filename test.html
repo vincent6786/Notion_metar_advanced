@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Pilot EFB V48 (Smart Update)</title>
+    <title>Notion Pilot EFB V49 (Smart Fallback)</title>
     <style>
         :root {
             --bg: #000000; --card-bg: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
@@ -416,67 +416,87 @@
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
             
-            // Clear Warnings
+            // Clear Warnings & Results
             const rawContainer = document.getElementById('rawMetar');
             rawContainer.innerHTML = 'Loading...';
 
             const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
-            const cb = Date.now(); // Cache Buster
+            const cb = Date.now(); // Cache Busting timestamp
             
             try {
-                const [station, metar, taf, notams] = await Promise.all([
-                    fetch(`https://avwx.rest/api/station/${icao}?t=${cb}`, {headers}).then(r=>{if(!r.ok)throw new Error('Station');return r.json()}),
-                    fetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
-                    fetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`, {headers}).then(r=>r.json()).catch(e=>({raw:"TAF Error"})),
-                    fetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`, {headers}).then(r=>r.json()).catch(e=>[])
-                ]);
-                
+                // 1. Fetch Station Info FIRST (so we have coords even if METAR fails)
+                const stationResp = await fetch(`https://avwx.rest/api/station/${icao}?t=${cb}`, {headers});
+                if(!stationResp.ok) throw new Error("Station Not Found");
+                const station = await stationResp.json();
                 stationData = station;
-                lastMetarObj = metar;
-                
-                // Parse Wind
-                currentWind = { dir: metar.wind_direction?.value||0, spd: metar.wind_speed?.value||0 };
-                
-                // Parse Altimeter
-                let altVal = metar.altimeter?.value || 1013;
-                let altUnit = 'hPa';
-                if(altVal < 200) altUnit = 'inHg';
-                currentMetar = { temp: metar.temperature?.value || 15, alt: altVal, altUnit: altUnit };
 
-                renderMetar(metar);
+                // 2. Render Info Tab immediately
                 renderInfo(station);
+
+                // 3. Now try to fetch Weather
+                // We use Promise.allSettled so if METAR fails, we don't crash everything
+                const [metarRes, tafRes, notamRes] = await Promise.allSettled([
+                    fetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
+                    fetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
+                    fetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`, {headers}).then(r=>r.json())
+                ]);
+
+                // Process METAR
+                if(metarRes.status === 'fulfilled' && metarRes.value && !metarRes.value.error) {
+                    const m = metarRes.value;
+                    lastMetarObj = m;
+                    currentWind = { dir: m.wind_direction?.value||0, spd: m.wind_speed?.value||0 };
+                    
+                    let altVal = m.altimeter?.value || 1013;
+                    let altUnit = 'hPa';
+                    if(altVal < 200) altUnit = 'inHg';
+                    currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit: altUnit };
+                    
+                    renderMetar(m); // This renders the data OR the "Old Data" warning
+                    
+                    // CHECK IF STALE (OLD DATA) -> SUGGEST NEARBY
+                    const obsTime = new Date(m.time.dt);
+                    const ageHrs = (new Date() - obsTime) / (1000 * 60 * 60);
+                    if (ageHrs > 2) {
+                        // If data is old, suggest nearby airports
+                        findNearbyStations(station.latitude, station.longitude);
+                    }
+
+                } else {
+                    // METAR FAILED (e.g. 404 or empty)
+                    throw new Error("No Weather Data");
+                }
+
+                // Process TAF
+                if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
                 
-                // --- AUTO RUNWAY SELECTION ---
+                // Process NOTAMs
+                if(notamRes.status === 'fulfilled') {
+                     const n = notamRes.value;
+                     document.getElementById('notamList').innerHTML = Array.isArray(n) ? 
+                        n.map(x => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${x.raw}</div>`).join('') : "No Data";
+                }
+
+                // --- AUTO RUNWAY START ---
                 const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
                 const mv = station.magnetic_variation || 0;
                 const windMag = currentWind.dir - mv;
                 let bestRwy = null, maxHW = -999;
-
                 (station.runways || []).forEach(r => {
                     sel.add(new Option(`RWY ${r.ident1}`, r.ident1));
                     sel.add(new Option(`RWY ${r.ident2}`, r.ident2));
-                    
-                    // Logic to find best headwind
                     let h1 = parseInt(r.ident1.replace(/\D/g,'')) * 10;
                     let hw1 = Math.cos((windMag - h1) * (Math.PI/180)) * currentWind.spd;
                     let h2 = parseInt(r.ident2.replace(/\D/g,'')) * 10;
                     let hw2 = Math.cos((windMag - h2) * (Math.PI/180)) * currentWind.spd;
-                    
                     if(hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
                     if(hw2 > maxHW) { maxHW = hw2; bestRwy = r.ident2; }
                 });
-                
-                if(bestRwy) sel.value = bestRwy;
-                else if(station.runways.length > 0) sel.value = station.runways[0].ident1;
-                
+                if(bestRwy) sel.value = bestRwy; else if(station.runways.length > 0) sel.value = station.runways[0].ident1;
                 drawWindRose(); 
-                renderTaf(taf);
-                
-                // NOTAMs
-                document.getElementById('notamList').innerHTML = Array.isArray(notams) ? 
-                    notams.map(n => `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px;">${n.raw}</div>`).join('') : "No Data";
+                // --- AUTO RUNWAY END ---
 
-                // --- AUDIO PLAYER LOGIC ---
+                // --- AUDIO START ---
                 const audioTarget = document.getElementById('audioPlayerTarget');
                 const audioLbl = document.getElementById('audioLabel');
                 if(icao === 'RCTP' || icao === 'RCKH' || icao === 'RCSS') {
@@ -486,24 +506,86 @@
                     audioLbl.innerText = "External Audio Source";
                     audioTarget.innerHTML = `<a href="https://www.liveatc.net/search/?q=${icao}" target="_blank" class="tool-btn" style="text-align:center; display:block; text-decoration:none;">📡 Search ${icao} on LiveATC</a>`;
                 }
+                // --- AUDIO END ---
 
             } catch(e) {
                 console.error(e);
-                updateHeaderCat('Err', 'cat-ifr');
-                // Smart Error Handling
-                const rawContainer = document.getElementById('rawMetar');
-                rawContainer.innerHTML = `<div style="text-align:center; padding:15px; color:var(--sub-text);">
-                    Unable to load data for this station.<br>
+                updateHeaderCat('N/A', 'cat-ifr');
+                
+                // --- FAILURE HANDLING WITH SUGGESTIONS ---
+                let errorMsg = `<div style="text-align:center; padding:15px; color:var(--sub-text);">
+                    No METAR data for ${icao}.<br>
                     <a href="https://metar-taf.com/metar/${icao}" target="_blank" class="tool-btn" style="margin-top:10px; display:inline-block; text-decoration:none;">
-                        Try External Source ↗
+                        Check External Source ↗
                     </a>
                 </div>`;
+                
+                rawContainer.innerHTML = errorMsg;
+
+                // If we successfully loaded the STATION data before failing on METAR,
+                // we have the coordinates to search nearby!
+                if(stationData && stationData.latitude) {
+                    findNearbyStations(stationData.latitude, stationData.longitude);
+                }
             }
         }
 
         function updateHeaderCat(status, colorClass) {
             const badge = document.getElementById('headerCat');
             badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
+        }
+
+        // --- NEW FEATURE: SUGGEST NEARBY AIRPORTS ---
+        async function findNearbyStations(lat, lon) {
+            const container = document.getElementById('rawMetar');
+            // Don't overwrite if we already have a warning, just append
+            const suggestionBox = document.createElement('div');
+            suggestionBox.style.marginTop = "10px";
+            suggestionBox.style.borderTop = "1px solid #333";
+            suggestionBox.style.paddingTop = "8px";
+            suggestionBox.innerHTML = `<div style="color:var(--sub-text); font-size:11px; margin-bottom:6px;">NEARBY STATIONS WITH WEATHER:</div><div id="nearList" style="display:flex; gap:6px; flex-wrap:wrap;">Loading nearby...</div>`;
+            
+            container.appendChild(suggestionBox);
+
+            try {
+                const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
+                // Ask for 4 stations near the coordinates
+                const url = `https://avwx.rest/api/station/near/${lat},${lon}?n=4`; 
+                const res = await fetch(url, { headers });
+                const stations = await res.json();
+                
+                const list = document.getElementById('nearList');
+                list.innerHTML = "";
+                
+                // Filter out the current station itself
+                const currentICAO = document.getElementById('icao').value.toUpperCase();
+                const others = stations.filter(s => s.icao !== currentICAO);
+
+                if(others.length === 0) {
+                    list.innerHTML = "<span style='color:#555;'>No other stations found nearby.</span>";
+                    return;
+                }
+
+                others.forEach(s => {
+                    // Create a button for each nearby airport
+                    const btn = document.createElement('button');
+                    btn.className = "tool-btn";
+                    btn.style.width = "auto";
+                    btn.style.margin = "0";
+                    btn.style.fontSize = "12px";
+                    btn.innerText = `✈ ${s.icao}`; 
+                    btn.title = s.name;
+                    btn.onclick = () => {
+                        document.getElementById('icao').value = s.icao;
+                        loadData(); // Reload the tool with this new airport
+                    };
+                    list.appendChild(btn);
+                });
+
+            } catch(e) {
+                console.error("Nearby search failed", e);
+                document.getElementById('nearList').innerText = "Could not load suggestions.";
+            }
         }
 
         // --- RENDERING FUNCTIONS ---
