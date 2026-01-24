@@ -30,6 +30,27 @@
             overscroll-behavior-y: none; /* Prevent bounce */
         }
 
+        /* --- ANIMATIONS (THE COOL PART) --- */
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translateY(20px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Staggered Delays for a "Waterfall" effect */
+        .top-bar { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+        .tabs { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both; }
+        
+        /* Animate content inside the active view */
+        .view-section.active > * {
+            animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        /* Delays for the first few items in any tab */
+        .view-section.active > *:nth-child(1) { animation-delay: 0.15s; }
+        .view-section.active > *:nth-child(2) { animation-delay: 0.20s; }
+        .view-section.active > *:nth-child(3) { animation-delay: 0.25s; }
+        .view-section.active > *:nth-child(4) { animation-delay: 0.30s; }
+        .view-section.active > *:nth-child(5) { animation-delay: 0.35s; }
+
         /* HEADER */
         .top-bar { display: flex; align-items: center; gap: 8px; height: 40px; }
         .search-wrapper { flex-grow: 1; position: relative; display: flex; align-items: center; }
@@ -65,9 +86,8 @@
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
         /* SECTIONS & UTILS */
-        .view-section { display: none; animation: fadeIn 0.2s; }
+        .view-section { display: none; } /* Animation handled by keyframes above */
         .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .hidden { display: none !important; }
         .section-title { font-weight:700; color:var(--sub-text); margin: 20px 0 8px 0; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px; }
         
