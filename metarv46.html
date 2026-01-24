@@ -18,7 +18,7 @@
             --border: #38383a; --accent: #0a84ff; 
             --danger: #ff453a; --warn: #ff9f0a; --success: #32d74b;
             --mvfr: #0a84ff; --lifr: #bf5af2;
-            --timeline-bg: #2c2c2e; --strip-bg: #2c2c2e;
+            --sky-bg: #131d2e; /* Matches the dark blue in screenshot */
         }
         * { box-sizing: border-box; }
         body {
@@ -34,11 +34,7 @@
             0% { opacity: 0; transform: translateY(20px) scale(0.98); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .top-bar { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-        .tabs { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both; }
         .view-section.active > * { animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-        .view-section.active > *:nth-child(1) { animation-delay: 0.1s; }
-        .view-section.active > *:nth-child(2) { animation-delay: 0.15s; }
 
         /* --- 3. HEADER & SEARCH --- */
         .top-bar { display: flex; align-items: center; gap: 8px; height: 40px; }
@@ -85,7 +81,7 @@
             background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; 
         }
 
-        /* --- 6. METAR & SKY VIZ --- */
+        /* --- 6. METAR & SKY VIZ (REDESIGNED) --- */
         .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
         .metar-card.full-width { grid-column: span 2; }
@@ -94,34 +90,39 @@
         .m-sub { font-size: 12px; color: var(--sub-text); font-weight: 400; margin-left: 4px;}
         .metar-footer { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 4px; font-size: 12px; color: var(--sub-text); }
         
-        .sky-viz-container {
+        /* NEW SKY LAYOUT */
+        .sky-section {
             grid-column: span 2;
-            height: 140px;
-            background: linear-gradient(to bottom, #0f172a, #1e293b);
-            border-radius: 8px;
+            background: var(--sky-bg);
+            border-radius: 12px;
+            padding: 16px;
             position: relative;
             overflow: hidden;
-            border: 2px solid transparent;
-            transition: border-color 0.5s;
         }
-        .sky-canvas { width: 100%; height: 100%; display: block; }
-        .sky-overlay-text {
-            position: absolute; top: 8px; left: 8px; 
-            font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); 
-            text-transform: uppercase; background: rgba(0,0,0,0.3); 
-            padding: 2px 6px; border-radius: 4px;
-        }
+        .sky-header { font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 700; margin-bottom: 12px; text-transform: uppercase; }
         
-        /* Nearby Stations */
-        .nearby-container { grid-column: span 2; display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
-        .nearby-header { font-size: 11px; color: var(--sub-text); font-weight: 700; }
-        .nearby-list { display: flex; gap: 6px; flex-wrap: wrap; }
-        .nearby-btn {
-            background: #2c2c2e; border: 1px solid var(--border); color: #fff;
-            padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
-            cursor: pointer; display: flex; align-items: center; gap: 4px;
-        }
-        .nearby-btn:hover { background: #3a3a3c; }
+        .sky-layer { display: flex; flex-direction: column; margin-bottom: 14px; }
+        .sky-icons-row { display: flex; gap: 12px; margin-bottom: 4px; align-items: flex-end; }
+        .sky-icon { width: 32px; height: 20px; fill: #d1d5db; opacity: 0.9; }
+        .sky-layer-text { font-size: 15px; font-weight: 500; color: #fff; }
+        .sky-no-data { text-align: center; color: rgba(255,255,255,0.3); padding: 20px; font-style: italic; }
+
+        /* NEW FLIGHT RULE BAR */
+        .fr-bar-container { grid-column: span 2; background: var(--card-bg); padding: 12px; border-radius: 8px; margin-top: 4px; }
+        .fr-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }
+        .fr-title { font-size: 11px; color: var(--sub-text); font-weight: 700; text-transform: uppercase; }
+        .fr-track { display: flex; height: 6px; width: 100%; background: #333; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+        .fr-seg { flex: 1; margin-right: 2px; background: #444; opacity: 0.3; transition: opacity 0.3s; }
+        .fr-seg:last-child { margin-right: 0; }
+        
+        .fr-seg.active.lifr { background: var(--lifr); opacity: 1; box-shadow: 0 0 8px var(--lifr); }
+        .fr-seg.active.ifr { background: var(--danger); opacity: 1; box-shadow: 0 0 8px var(--danger); }
+        .fr-seg.active.mvfr { background: var(--mvfr); opacity: 1; box-shadow: 0 0 8px var(--mvfr); }
+        .fr-seg.active.vfr { background: var(--success); opacity: 1; box-shadow: 0 0 8px var(--success); }
+
+        .fr-labels { display: flex; font-size: 10px; color: #666; font-weight: 700; width: 100%; text-transform: uppercase; }
+        .fr-lbl-item { flex: 1; text-align: left; padding-left: 2px; }
+        .fr-msg { margin-top: 8px; font-size: 14px; color: #fff; font-weight: 500; }
 
         .wind-vis-container { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-top: 12px; display: flex; gap: 15px; align-items: center; }
         .wind-controls { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
@@ -164,10 +165,16 @@
         .atc-btn { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 16px; border-radius: 10px; text-decoration: none; color: #fff; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: background 0.2s; margin-bottom: 10px; }
         .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
         .tool-btn { background: #333; border: 1px solid var(--border); color: #fff; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; margin-top: 4px; font-weight: 600; }
-        .conv-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-        .conv-inp { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; }
-        .conv-lbl { font-size: 10px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 2px; }
-        
+        .nearby-container { grid-column: span 2; display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+        .nearby-header { font-size: 11px; color: var(--sub-text); font-weight: 700; }
+        .nearby-list { display: flex; gap: 6px; flex-wrap: wrap; }
+        .nearby-btn {
+            background: #2c2c2e; border: 1px solid var(--border); color: #fff;
+            padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 4px;
+        }
+        .nearby-btn:hover { background: #3a3a3c; }
+
         /* --- 10. CLOCK --- */
         .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c2c2e; margin-bottom: 8px; }
         .clock-time { font-family: 'SF Mono', monospace; font-size: 28px; font-weight: 400; color: #fff; letter-spacing: 0.5px; }
@@ -201,6 +208,7 @@
     </div>
 
     <div id="tab-metar" class="view-section active">
+        
         <div class="wind-vis-container">
             <canvas id="windRose" width="140" height="140" style="width:140px; height:140px;"></canvas>
             <div class="wind-controls">
@@ -216,9 +224,32 @@
         </div>
 
         <div class="metar-grid">
-            <div id="skyContainer" class="sky-viz-container">
-                <div class="sky-overlay-text">FLIGHT RULES VISUALIZATION (AGL)</div>
-                <canvas id="skyCanvas" class="sky-canvas"></canvas>
+            
+            <div id="skyVisuals" class="sky-section">
+                <div class="sky-header">Sky Cover (AGL)</div>
+                <div id="skyLayersContainer">
+                    <div class="sky-no-data">Scanning Sky...</div>
+                </div>
+            </div>
+
+            <div class="fr-bar-container">
+                <div class="fr-header-row">
+                    <div class="fr-title">Visibility / Ceiling</div>
+                    <div class="fr-title" style="color:#fff;">Ceiling + Visibility</div>
+                </div>
+                <div class="fr-track">
+                    <div id="frSegLIFR" class="fr-seg"></div>
+                    <div id="frSegIFR" class="fr-seg"></div>
+                    <div id="frSegMVFR" class="fr-seg"></div>
+                    <div id="frSegVFR" class="fr-seg"></div>
+                </div>
+                <div class="fr-labels">
+                    <div class="fr-lbl-item">LIFR</div>
+                    <div class="fr-lbl-item">IFR</div>
+                    <div class="fr-lbl-item">MVFR</div>
+                    <div class="fr-lbl-item">VFR</div>
+                </div>
+                <div id="frMessage" class="fr-msg">--</div>
             </div>
             
             <div class="metar-card"><div class="m-label">WIND</div><div class="m-value" id="mWind">--</div></div>
@@ -348,18 +379,15 @@
             {n:"Los Angeles",z:"America/Los_Angeles",icao:"KLAX",iata:"LAX"}
         ];
         let cityList = [];
+        
+        // Cloud Icon SVG Path
+        const CLOUD_ICON_PATH = "M25 15C25 10.58 21.42 7 17 7C16.5 7 16 7.05 15.54 7.15C14.73 4.19 12.06 2 9 2C5.13 2 2 5.13 2 9C2 9.17 2 9.35 2.03 9.5C0.84 10.19 0 11.5 0 13C0 15.21 1.79 17 4 17H25C27.76 17 30 14.76 30 12C30 9.24 27.76 7 25 7V15Z";
 
         // --- INIT ---
         function initApp() {
             initWorldClock();
             loadData();
             setInterval(updateClock, 1000);
-            
-            // Init Sky Canvas Size
-            const cvs = document.getElementById('skyCanvas');
-            const box = document.getElementById('skyContainer');
-            cvs.width = box.offsetWidth;
-            cvs.height = box.offsetHeight;
         }
 
         // --- CORE DATA LOADING ---
@@ -406,9 +434,13 @@
                     currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit: altUnit };
                     
                     renderMetar(m); 
-                    drawSkyViz(m); 
+                    
+                    // CALL NEW RENDERERS
+                    renderSkyVisuals(m);
+                    renderFlightRuleBar(m);
+
                     setupRunwaySelect();
-                    findNearbyStations(stationData.latitude, stationData.longitude); // <--- RESTORED
+                    findNearbyStations(stationData.latitude, stationData.longitude); 
                 } else {
                     throw new Error("No Weather Data");
                 }
@@ -434,6 +466,83 @@
                 console.error(e);
                 updateHeaderCat('N/A', 'cat-ifr');
                 rawContainer.innerHTML = "Error loading data.";
+            }
+        }
+
+        // --- NEW: SKY VISUALIZER (ICONS) ---
+        function renderSkyVisuals(m) {
+            const container = document.getElementById('skyLayersContainer');
+            container.innerHTML = '';
+
+            // Handle clear skies
+            if (!m.clouds || m.clouds.length === 0) {
+                container.innerHTML = '<div class="sky-no-data">Sky Clear (SKC/CLR)</div>';
+                return;
+            }
+
+            // Sort clouds descending (Highest first) to mimic visual stacking
+            // Copy array to avoid mutating original
+            const sortedClouds = [...m.clouds].sort((a,b) => b.altitude - a.altitude);
+
+            sortedClouds.forEach(c => {
+                const layer = document.createElement('div');
+                layer.className = 'sky-layer';
+                
+                // Determine icon count
+                let count = 0;
+                if(c.type === 'FEW') count = 2;
+                else if(c.type === 'SCT') count = 4;
+                else if(c.type === 'BKN') count = 7;
+                else if(c.type === 'OVC' || c.type === 'VV') count = 8;
+
+                // Icons Row
+                let iconsHtml = '';
+                for(let i=0; i<count; i++) {
+                    iconsHtml += `<svg class="sky-icon" viewBox="0 0 30 20"><path d="${CLOUD_ICON_PATH}"/></svg>`;
+                }
+
+                const typeName = {
+                    'FEW': 'Few', 'SCT': 'Scattered', 'BKN': 'Broken', 'OVC': 'Overcast', 'VV': 'Vert. Vis'
+                }[c.type] || c.type;
+
+                const altFt = c.altitude * 100;
+
+                layer.innerHTML = `
+                    <div class="sky-icons-row">${iconsHtml}</div>
+                    <div class="sky-layer-text">${typeName} ${altFt}'</div>
+                `;
+                container.appendChild(layer);
+            });
+        }
+
+        // --- NEW: FLIGHT RULE BAR ---
+        function renderFlightRuleBar(m) {
+            // Reset
+            ['LIFR', 'IFR', 'MVFR', 'VFR'].forEach(r => document.getElementById(`frSeg${r}`).classList.remove('active', 'lifr', 'ifr', 'mvfr', 'vfr'));
+            
+            const rule = m.flight_rules; // e.g., "VFR"
+            const vis = m.visibility ? m.visibility.value : 99;
+            const ceilObj = m.clouds ? m.clouds.find(c => c.type === 'BKN' || c.type === 'OVC') : null;
+            const ceil = ceilObj ? ceilObj.altitude * 100 : 99999;
+
+            // Highlight Logic
+            const seg = document.getElementById(`frSeg${rule}`);
+            if(seg) seg.classList.add('active', rule.toLowerCase());
+
+            // Explanation Text
+            const msgEl = document.getElementById('frMessage');
+            if (rule === 'VFR') {
+                msgEl.innerText = `Visibility > 5 SM and Ceiling > 3000'`;
+                msgEl.style.color = 'var(--success)';
+            } else if (rule === 'MVFR') {
+                msgEl.innerText = `Ceiling 1000-3000' or Vis 3-5 SM`;
+                msgEl.style.color = 'var(--mvfr)';
+            } else if (rule === 'IFR') {
+                msgEl.innerText = `Ceiling < 1000' or Vis < 3 SM`;
+                msgEl.style.color = 'var(--danger)';
+            } else if (rule === 'LIFR') {
+                msgEl.innerText = `Ceiling < 500' or Vis < 1 SM`;
+                msgEl.style.color = 'var(--lifr)';
             }
         }
 
@@ -471,123 +580,6 @@
             } catch(e) {
                 console.error("Nearby search failed", e);
                 document.getElementById('nearList').innerHTML = "<span style='color:var(--danger)'>Nearby search failed</span>";
-            }
-        }
-
-        // --- SKY VISUALIZATION (UPDATED) ---
-        function drawSkyViz(m) {
-            const canvas = document.getElementById('skyCanvas');
-            const container = document.getElementById('skyContainer');
-            canvas.width = container.offsetWidth;
-            canvas.height = container.offsetHeight;
-            
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-            
-            const rule = m.flight_rules; 
-            let borderColor = 'transparent';
-            if(rule === 'VFR') borderColor = 'var(--success)';
-            else if(rule === 'MVFR') borderColor = 'var(--mvfr)';
-            else if(rule === 'IFR') borderColor = 'var(--danger)';
-            else if(rule === 'LIFR') borderColor = 'var(--lifr)';
-            container.style.borderColor = borderColor;
-            container.style.boxShadow = `0 0 15px ${borderColor}44`; 
-
-            ctx.clearRect(0,0,w,h);
-
-            // Sky Background
-            const grad = ctx.createLinearGradient(0,0,0,h);
-            grad.addColorStop(0, '#0f172a'); 
-            grad.addColorStop(1, '#3b82f644'); 
-            ctx.fillStyle = grad;
-            ctx.fillRect(0,0,w,h);
-
-            // Grid Lines
-            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-            ctx.lineWidth = 1;
-            ctx.font = '10px monospace';
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            const maxAlt = 120; 
-            const getY = (altHundreds) => h - ((altHundreds / maxAlt) * h);
-
-            [30, 60, 90, 120].forEach(alt => {
-                const y = getY(alt);
-                ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
-                ctx.fillText(`${alt}00`, w-35, y-2);
-            });
-
-            // CLOUDS LOGIC UPDATED
-            if(m.clouds) {
-                m.clouds.forEach(c => {
-                    const y = getY(c.altitude); 
-                    const type = c.type;
-                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                    
-                    // Logic based on Coverage (Oktas equivalent)
-                    if(type === 'OVC') {
-                        // Solid Block
-                        ctx.fillRect(0, y-15, w, 20);
-                        // Fluffy bottom
-                        for(let i=0; i<w; i+=15) {
-                            ctx.beginPath(); ctx.arc(i, y+5, 12, 0, Math.PI*2); ctx.fill();
-                        }
-                    } else if(type === 'BKN') {
-                        // Broken: Dense layer but with gaps
-                        // Draw many overlapping circles to create a heavy layer
-                        for(let i=0; i<w; i+=10) {
-                            // Skip random spots to create gaps
-                            if(Math.random() > 0.8) continue; 
-                            ctx.beginPath();
-                            ctx.arc(i, y, 15, 0, Math.PI*2);
-                            ctx.fill();
-                        }
-                    } else if(type === 'SCT') {
-                        // Scattered: Moderate number of clouds (approx 15-20)
-                        for(let k=0; k<18; k++) {
-                            const cx = Math.random() * w;
-                            const cy = y + (Math.random()*15 - 7.5);
-                            ctx.beginPath();
-                            ctx.arc(cx, cy, 12, 0, Math.PI*2); // Main body
-                            ctx.arc(cx+8, cy+3, 10, 0, Math.PI*2);
-                            ctx.fill();
-                        }
-                    } else if(type === 'FEW') {
-                        // Few: Very sparse (approx 5 small puffs)
-                        for(let k=0; k<5; k++) {
-                            const cx = Math.random() * w;
-                            const cy = y;
-                            ctx.beginPath();
-                            ctx.arc(cx, cy, 8, 0, Math.PI*2);
-                            ctx.fill();
-                        }
-                    }
-
-                    // Label
-                    ctx.fillStyle = (type==='OVC'||type==='BKN') ? '#000' : '#ccc';
-                    if(type==='SCT'||type==='FEW') ctx.fillStyle = '#fff';
-                    
-                    // Shadow for text readability if needed
-                    ctx.font = "bold 10px sans-serif";
-                    ctx.fillText(`${type}${c.altitude.toString().padStart(3,'0')}`, 10, y+4);
-                });
-            } else {
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                ctx.textAlign = 'center';
-                ctx.fillText("SKC / CLR", w/2, h/2);
-            }
-
-            // Visibility Overlay
-            if(m.visibility) {
-                const vis = m.visibility.value;
-                if(vis < 5) {
-                    const opacity = (5 - vis) / 5; 
-                    const fog = ctx.createLinearGradient(0,0,0,h);
-                    fog.addColorStop(0, `rgba(200,200,200,${opacity * 0.2})`);
-                    fog.addColorStop(1, `rgba(200,200,200,${opacity * 0.8})`);
-                    ctx.fillStyle = fog;
-                    ctx.fillRect(0,0,w,h);
-                }
             }
         }
 
@@ -903,10 +895,6 @@
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+name).classList.add('active');
             event.target.classList.add('active');
-            if(name === 'metar') {
-                const m = lastMetarObj;
-                if(m) setTimeout(() => drawSkyViz(m), 50);
-            }
             if(name === 'world') updateClock();
         }
         function updateHeaderCat(status, colorClass) {
