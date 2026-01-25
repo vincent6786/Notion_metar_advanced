@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <title>METAR PLUS</title>
     <meta name="apple-mobile-web-app-title" content="METAR PLUS">
@@ -26,7 +26,11 @@
             background-color: var(--bg); color: var(--text);
             margin: 0; padding: 12px; font-size: 14px; line-height: 1.4;
             display: flex; flex-direction: column; gap: 12px;
-            padding-bottom: 50px; overscroll-behavior-y: none;
+            /* Padding for iPhone Home Bar area */
+            padding-bottom: max(20px, env(safe-area-inset-bottom)); 
+            /* Padding for Status Bar */
+            padding-top: max(12px, env(safe-area-inset-top));
+            overscroll-behavior-y: none;
         }
 
         /* --- 2. ANIMATIONS --- */
@@ -36,7 +40,44 @@
         }
         .view-section.active > * { animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
-        /* --- 3. HEADER & SEARCH --- */
+        /* --- 3. LIQUID GLASS MODE (iOS Home Screen Only) --- */
+        @media all and (display-mode: standalone) {
+            body {
+                /* Deep gradient to mimic a premium glass background */
+                background: linear-gradient(160deg, #1a1a2e 0%, #000000 100%);
+                background-attachment: fixed;
+            }
+
+            /* Glassmorphism for Cards */
+            .metar-card, .info-card, .freq-card, .clock-card, .search-box, .wind-vis-container, .taf-detail-card, .fr-bar-container, .atc-btn, .nearby-btn, .tabs, .sky-section {
+                background: rgba(35, 35, 40, 0.65) !important;
+                backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            }
+
+            /* Floating Search Bar */
+            .search-box {
+                background: rgba(60, 60, 65, 0.5) !important;
+            }
+            
+            /* Tabs Floating Bar */
+            .tabs {
+                background: rgba(0, 0, 0, 0.3) !important;
+                border-radius: 12px;
+                margin-top: 4px;
+                padding: 4px;
+                border: 1px solid rgba(255,255,255,0.05);
+            }
+            
+            .tab.active {
+                color: #fff;
+                text-shadow: 0 0 10px rgba(10, 132, 255, 0.8);
+            }
+        }
+
+        /* --- 4. HEADER & SEARCH --- */
         .top-bar { display: flex; align-items: center; gap: 8px; height: 40px; }
         .search-wrapper { flex-grow: 1; position: relative; display: flex; align-items: center; }
         .search-box {
@@ -65,12 +106,12 @@
         .cat-ifr { background-color: var(--danger) !important; color: #fff !important; }
         .cat-lifr { background-color: var(--lifr) !important; color: #fff !important; }
 
-        /* --- 4. TABS --- */
+        /* --- 5. TABS --- */
         .tabs { display: flex; border-bottom: 1px solid var(--border); gap: 20px; padding: 0 4px; overflow-x: auto; scrollbar-width: none; }
         .tab { padding: 10px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--sub-text); border-bottom: 2px solid transparent; text-transform: uppercase; white-space: nowrap; }
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        /* --- 5. UTILS --- */
+        /* --- 6. UTILS --- */
         .view-section { display: none; }
         .view-section.active { display: block; }
         .hidden { display: none !important; }
@@ -81,7 +122,7 @@
             background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; 
         }
 
-        /* --- 6. METAR & SKY VIZ --- */
+        /* --- 7. METAR & SKY VIZ --- */
         .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
         .metar-card.full-width { grid-column: span 2; }
@@ -90,7 +131,6 @@
         .m-sub { font-size: 12px; color: var(--sub-text); font-weight: 400; margin-left: 4px;}
         .metar-footer { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 4px; font-size: 12px; color: var(--sub-text); }
         
-        /* NEW SKY LAYOUT */
         .sky-section {
             grid-column: span 2;
             background: var(--sky-bg);
@@ -107,7 +147,6 @@
         .sky-layer-text { font-size: 15px; font-weight: 500; color: #fff; }
         .sky-no-data { text-align: center; color: rgba(255,255,255,0.3); padding: 20px; font-style: italic; }
 
-        /* NEW FLIGHT RULE BAR */
         .fr-bar-container { grid-column: span 2; background: var(--card-bg); padding: 12px; border-radius: 8px; margin-top: 4px; }
         .fr-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }
         .fr-title { font-size: 11px; color: var(--sub-text); font-weight: 700; text-transform: uppercase; }
@@ -130,7 +169,7 @@
         .stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; }
         select.stealth-select { background: #2c2c2e; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 6px; width: 100%; font-weight: 600; outline: none; }
 
-        /* --- 7. TAF & INFO --- */
+        /* --- 8. TAF & INFO --- */
         .taf-viz-container { margin-top: 10px; position: relative; }
         .taf-bar { display: flex; height: 32px; width: 100%; background: #2c2c2e; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); position: relative; z-index: 2; }
         .taf-sky-strip { height: 6px; width: 100%; margin-top: 2px; border-radius: 3px; background: #333; overflow: hidden; position: relative; }
@@ -143,7 +182,7 @@
         #tafNeedle { position: absolute; top: -4px; bottom: -8px; width: 2px; background: #ff453a; z-index: 20; pointer-events: none; box-shadow: 0 0 8px #ff453a; transition: left 0.5s ease-out; display: none; }
         #tafNeedle::after { content: ''; position: absolute; top: -4px; left: -4px; width: 10px; height: 10px; background: #ff453a; border-radius: 50%; border: 2px solid #000; }
 
-        /* --- 8. INFO & RUNWAYS --- */
+        /* --- 9. INFO & RUNWAYS --- */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
         .info-card { background: var(--card-bg); padding: 10px; border-radius: 8px; }
         .ic-lbl { font-size: 11px; color: var(--sub-text); text-transform: uppercase; }
@@ -161,7 +200,7 @@
         .rc-data { flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 12px; }
         .wind-comp { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: #fff; }
         
-        /* --- 9. BUTTONS & TOOLS --- */
+        /* --- 10. BUTTONS & TOOLS --- */
         .atc-btn { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 16px; border-radius: 10px; text-decoration: none; color: #fff; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: background 0.2s; margin-bottom: 10px; }
         .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
         .tool-btn { background: #333; border: 1px solid var(--border); color: #fff; width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; margin-top: 4px; font-weight: 600; }
@@ -175,7 +214,7 @@
         }
         .nearby-btn:hover { background: #3a3a3c; }
 
-        /* --- 10. CLOCK --- */
+        /* --- 11. CLOCK --- */
         .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c2c2e; margin-bottom: 8px; }
         .clock-time { font-family: 'SF Mono', monospace; font-size: 28px; font-weight: 400; color: #fff; letter-spacing: 0.5px; }
         .clock-utc { color: var(--success); font-weight: 600;}
@@ -466,7 +505,7 @@
             } catch(e) {
                 console.error(e);
                 updateHeaderCat('N/A', 'cat-ifr');
-                // --- NEW ERROR HANDLING: FALLBACK TO METAR-TAF.COM ---
+                // --- FALLBACK TO METAR-TAF.COM ---
                 const icao = document.getElementById('icao').value.toUpperCase();
                 rawContainer.innerHTML = `
                     <div style="text-align:center; padding:20px 10px;">
@@ -484,6 +523,79 @@
             }
         }
 
+        // --- RENDERERS ---
+        
+        // --- UPDATED RENDERER WITH STALE DATA CHECK ---
+        function renderMetar(d) {
+            const rawContainer = document.getElementById('rawMetar');
+            
+            // 1. Calculate Age
+            const now = new Date();
+            const metarTime = new Date(d.time.dt);
+            const minAgo = Math.floor((now - metarTime) / 60000);
+
+            // 2. Render Smart Text
+            rawContainer.innerHTML = formatRawMetar(d.raw);
+            
+            // 3. Check for Stale Data (> 60 mins)
+            if (minAgo > 60) {
+                const icao = document.getElementById('icao').value.toUpperCase();
+                const staleHtml = `
+                    <div style="margin-top:12px; padding:10px; background:rgba(255, 69, 58, 0.1); border:1px solid var(--danger); border-radius:6px; text-align:center;">
+                        <div style="color:var(--danger); font-weight:800; font-size:12px; margin-bottom:8px;">⚠️ DATA OUTDATED (${minAgo}m old)</div>
+                        <div style="font-size:11px; color:var(--sub-text); margin-bottom:8px;">Station might be offline.</div>
+                        <a href="https://metar-taf.com/${icao}" target="_blank" class="atc-btn" style="justify-content:center; background:#000; border-color:var(--danger); padding:8px; height:auto; margin-bottom:0;">
+                            <span style="font-size:13px;">Check Metar-Taf.com ↗</span>
+                        </a>
+                    </div>
+                `;
+                rawContainer.insertAdjacentHTML('beforeend', staleHtml);
+            }
+
+            // 4. Update Header Badge
+            const rules = d.flight_rules; 
+            let css = 'cat-vfr';
+            if(rules==='MVFR') css='cat-mvfr'; 
+            if(rules==='IFR') css='cat-ifr'; 
+            if(rules==='LIFR') css='cat-lifr';
+            updateHeaderCat(rules, css);
+
+            // 5. Update Cards
+            document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
+            document.getElementById('mVis').innerText = d.visibility ? `${d.visibility.value} sm` : '--';
+            const c = d.clouds?.[0]; 
+            document.getElementById('mCeil').innerText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
+            
+            const alt = d.altimeter?.value; 
+            if(alt) {
+                if(currentMetar.altUnit === 'hPa') { 
+                    const inHg = (alt * 0.02953).toFixed(2); 
+                    document.getElementById('mAlt').innerText = `Q${alt} / A${inHg}`; 
+                } else { 
+                    const hPa = Math.round(alt * 33.8639); 
+                    document.getElementById('mAlt').innerText = `Q${hPa} / A${alt.toFixed(2)}`; 
+                }
+            }
+
+            const t = d.temperature?.value, dew = d.dewpoint?.value;
+            if(t!=null) {
+                document.getElementById('mTempC').innerText = `${t}°C / ${dew!=null?dew:'--'}°C`;
+                document.getElementById('mTempF').innerText = `(${Math.round(t*1.8+32)}°F)`;
+                document.getElementById('mSpread').innerText = `Spread: ${(t-dew).toFixed(1)}°C`;
+            }
+
+            // 6. Update Age Footer
+            const ageEl = document.getElementById('mAge');
+            ageEl.innerText = `${minAgo}m ago`;
+            if (minAgo > 60) {
+                ageEl.style.color = 'var(--danger)';
+                ageEl.style.fontWeight = '700';
+            } else {
+                ageEl.style.color = 'var(--sub-text)';
+                ageEl.style.fontWeight = '400';
+            }
+        }
+
         // --- NEW: SKY VISUALIZER (ICONS) ---
         function renderSkyVisuals(m) {
             const container = document.getElementById('skyLayersContainer');
@@ -496,7 +608,6 @@
             }
 
             // Sort clouds descending (Highest first) to mimic visual stacking
-            // Copy array to avoid mutating original
             const sortedClouds = [...m.clouds].sort((a,b) => b.altitude - a.altitude);
 
             sortedClouds.forEach(c => {
@@ -536,10 +647,7 @@
             ['LIFR', 'IFR', 'MVFR', 'VFR'].forEach(r => document.getElementById(`frSeg${r}`).classList.remove('active', 'lifr', 'ifr', 'mvfr', 'vfr'));
             
             const rule = m.flight_rules; // e.g., "VFR"
-            const vis = m.visibility ? m.visibility.value : 99;
-            const ceilObj = m.clouds ? m.clouds.find(c => c.type === 'BKN' || c.type === 'OVC') : null;
-            const ceil = ceilObj ? ceilObj.altitude * 100 : 99999;
-
+            
             // Highlight Logic
             const seg = document.getElementById(`frSeg${rule}`);
             if(seg) seg.classList.add('active', rule.toLowerCase());
@@ -573,7 +681,6 @@
                 list.innerHTML = "";
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
                 
-                // Filter out current station
                 const others = data.filter(item => item.station.icao !== currentIcao).slice(0, 4);
 
                 if(others.length === 0) {
@@ -595,83 +702,6 @@
             } catch(e) {
                 console.error("Nearby search failed", e);
                 document.getElementById('nearList').innerHTML = "<span style='color:var(--danger)'>Nearby search failed</span>";
-            }
-        }
-
-        // --- RENDERERS ---
-        
-        // --- UPDATED RENDERER WITH STALE DATA CHECK ---
-        function renderMetar(d) {
-            const rawContainer = document.getElementById('rawMetar');
-            
-            // 1. Calculate Age First
-            const now = new Date();
-            const metarTime = new Date(d.time.dt);
-            const minAgo = Math.floor((now - metarTime) / 60000);
-
-            // 2. Render Smart Text
-            rawContainer.innerHTML = formatRawMetar(d.raw);
-            
-            // 3. Check for Stale Data (> 60 mins)
-            if (minAgo > 60) {
-                const icao = document.getElementById('icao').value.toUpperCase();
-                const staleHtml = `
-                    <div style="margin-top:12px; padding:10px; background:rgba(255, 69, 58, 0.1); border:1px solid var(--danger); border-radius:6px; text-align:center;">
-                        <div style="color:var(--danger); font-weight:800; font-size:12px; margin-bottom:8px;">⚠️ DATA OUTDATED (${minAgo}m old)</div>
-                        <div style="font-size:11px; color:var(--sub-text); margin-bottom:8px;">Station might be offline.</div>
-                        <a href="https://metar-taf.com/${icao}" target="_blank" class="atc-btn" style="justify-content:center; background:#000; border-color:var(--danger); padding:8px; height:auto; margin-bottom:0;">
-                            <span style="font-size:13px;">Check Metar-Taf.com ↗</span>
-                        </a>
-                    </div>
-                `;
-                rawContainer.insertAdjacentHTML('beforeend', staleHtml);
-            }
-
-            // 4. Update Header Badge (Flight Rules)
-            const rules = d.flight_rules; 
-            let css = 'cat-vfr';
-            if(rules==='MVFR') css='cat-mvfr'; 
-            if(rules==='IFR') css='cat-ifr'; 
-            if(rules==='LIFR') css='cat-lifr';
-            
-            // If stale, we keep the color but maybe add a marker? 
-            // For now, we stick to the standard rules but the Big Red Box above handles the warning.
-            updateHeaderCat(rules, css);
-
-            // 5. Update Cards
-            document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
-            document.getElementById('mVis').innerText = d.visibility ? `${d.visibility.value} sm` : '--';
-            const c = d.clouds?.[0]; 
-            document.getElementById('mCeil').innerText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
-            
-            const alt = d.altimeter?.value; 
-            if(alt) {
-                if(currentMetar.altUnit === 'hPa') { 
-                    const inHg = (alt * 0.02953).toFixed(2); 
-                    document.getElementById('mAlt').innerText = `Q${alt} / A${inHg}`; 
-                } else { 
-                    const hPa = Math.round(alt * 33.8639); 
-                    document.getElementById('mAlt').innerText = `Q${hPa} / A${alt.toFixed(2)}`; 
-                }
-            }
-
-            const t = d.temperature?.value, dew = d.dewpoint?.value;
-            if(t!=null) {
-                document.getElementById('mTempC').innerText = `${t}°C / ${dew!=null?dew:'--'}°C`;
-                document.getElementById('mTempF').innerText = `(${Math.round(t*1.8+32)}°F)`;
-                document.getElementById('mSpread').innerText = `Spread: ${(t-dew).toFixed(1)}°C`;
-            }
-
-            // 6. Update Age Footer
-            const ageEl = document.getElementById('mAge');
-            ageEl.innerText = `${minAgo}m ago`;
-            // Turn the age text RED if old
-            if (minAgo > 60) {
-                ageEl.style.color = 'var(--danger)';
-                ageEl.style.fontWeight = '700';
-            } else {
-                ageEl.style.color = 'var(--sub-text)';
-                ageEl.style.fontWeight = '400';
             }
         }
 
@@ -871,7 +901,6 @@
 
         function updateTafSkyGradient(startT, endT) {
             if(!stationSunTimes || !startT || !endT) return;
-            // Simple visual approximation of Day/Night cycle
             const cNight = "#0f172a"; const cDay = "#0ea5e9"; const cDawn = "#f97316";
             let css = `linear-gradient(to right, ${cNight} 0%, ${cDawn} 20%, ${cDay} 30%, ${cDay} 70%, ${cDawn} 80%, ${cNight} 100%)`;
             document.getElementById('tafSkyStrip').style.background = css;
@@ -902,7 +931,7 @@
         async function addCustomCity() {
             const val = document.getElementById('newCityInput').value;
             if(!val) return;
-            cityList.push({n:val, z:'UTC', icao:'USER'}); // Simplified logic for demo
+            cityList.push({n:val, z:'UTC', icao:'USER'}); 
             localStorage.setItem('efb_cities_v46', JSON.stringify(cityList));
             updateClock();
         }
@@ -955,17 +984,13 @@
 
         // --- UTILS ---
         
-        // --- NEW: SMART FORMATTER ---
+        // --- SMART FORMATTER ---
         function formatRawMetar(rawText) {
             if (!rawText) return "";
             let html = rawText;
-            // 1. Gusts (e.g. G25KT) - Red
             html = html.replace(/(G\d{2,3}KT)/g, '<span style="color:var(--danger); font-weight:800;">$1</span>');
-            // 2. Low Vis (e.g. 1/2SM) - Purple
             html = html.replace(/(\s)(M?(\d\/\d|[0-2]))(SM)/g, '$1<span style="color:var(--lifr); font-weight:800;">$2$4</span>');
-            // 3. Low Ceiling/VV - Red
             html = html.replace(/(VV\d{3}|OVC00[0-4])/g, '<span style="color:var(--danger); font-weight:800;">$1</span>');
-            // 4. TS/Heavy Precip - Orange
             html = html.replace(/(\s)(\+?\w*TS\w*|\+RA|\+SN|SQ|FC)(\s|$)/g, '$1<span style="color:var(--warn); font-weight:800;">$2</span>$3');
             return html;
         }
@@ -992,4 +1017,3 @@
     </script>
 </body>
 </html>
-
