@@ -322,6 +322,7 @@
              <div id="audioPlayerTarget"></div>
         </div>
         <div class="section-title">EXTERNAL RESOURCES</div>
+        <a href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
         <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span></a>
         <a href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
     </div>
@@ -465,7 +466,21 @@
             } catch(e) {
                 console.error(e);
                 updateHeaderCat('N/A', 'cat-ifr');
-                rawContainer.innerHTML = "Error loading data.";
+                // --- NEW ERROR HANDLING: FALLBACK TO METAR-TAF.COM ---
+                const icao = document.getElementById('icao').value.toUpperCase();
+                rawContainer.innerHTML = `
+                    <div style="text-align:center; padding:20px 10px;">
+                        <div style="color:var(--danger); font-weight:800; margin-bottom:15px;">STATION DATA UNAVAILABLE</div>
+                        <div style="color:var(--sub-text); font-size:12px; margin-bottom:15px;">The API could not fetch data for <b>${icao}</b>. It might be offline or incorrect.</div>
+                        <a href="https://metar-taf.com/${icao}" target="_blank" class="atc-btn" style="justify-content:center; background:var(--accent); border:none; color:#fff;">
+                            <span>View on Metar-Taf.com ↗</span>
+                        </a>
+                        <a href="https://skyvector.com/airport/${icao}" target="_blank" class="tool-btn" style="display:block; text-align:center; text-decoration:none; margin-top:8px;">
+                            Check SkyVector
+                        </a>
+                    </div>
+                `;
+                document.getElementById('nearList').innerHTML = '<span style="color:var(--danger)">Search failed</span>';
             }
         }
 
