@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <title>METAR PLUS v2</title>
+    <title>METAR PLUS Pro</title>
     <meta name="apple-mobile-web-app-title" content="METAR PLUS">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png">
@@ -79,7 +79,7 @@
             text-shadow: none !important; border-color: #440000 !important;
         }
         body.cockpit-dark .sky-section, body.cockpit-dark canvas, 
-        body.cockpit-dark .icon-btn, body.cockpit-dark .fr-track, 
+        body.cockpit-dark .icon-btn, body.cockpit-dark .fr-track-modern, 
         body.cockpit-dark .taf-sky-strip {
             filter: grayscale(100%) sepia(100%) saturate(1000%) hue-rotate(-50deg) contrast(1.5);
         }
@@ -91,7 +91,6 @@
         .n-crit { color: #ff453a; font-weight: 800; background: rgba(255, 69, 58, 0.15); padding: 0 4px; border-radius: 3px; }
         .n-warn { color: #ff9f0a; font-weight: 700; }
         .n-bold { color: #ffffff; font-weight: 700; text-decoration: underline; text-decoration-color: #555; }
-        /* Night Mode Overrides for Highlighter */
         body.cockpit-dark .n-crit { color: #ff0000; background: #330000; }
         body.cockpit-dark .n-warn { color: #cc3300; }
         body.cockpit-dark .n-bold { color: #ff3333; }
@@ -133,14 +132,13 @@
         .hidden { display: none !important; }
         .section-title { font-weight:700; color:var(--sub-text); margin: 20px 0 8px 0; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Text blocks */
         .raw-text { 
             font-family: 'SF Mono', monospace; font-size: 13px; color: #d0d0d0; 
             margin-top: 6px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; 
             background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; 
         }
 
-        /* Metar Cards */
+        /* --- METAR GRID & VISUALS --- */
         .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
         .metar-card.full-width { grid-column: span 2; }
@@ -160,20 +158,24 @@
         .sky-layer-text { font-size: 15px; font-weight: 500; color: #fff; }
         .sky-no-data { text-align: center; color: rgba(255,255,255,0.3); padding: 20px; font-style: italic; }
 
-        /* Flight Rule Bar */
+        /* --- NEW FLIGHT RULE GAUGES --- */
         .fr-bar-container { grid-column: span 2; background: var(--card-bg); padding: 12px; border-radius: 8px; margin-top: 4px; }
-        .fr-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }
+        .fr-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .fr-title { font-size: 11px; color: var(--sub-text); font-weight: 700; text-transform: uppercase; }
-        .fr-track { display: flex; height: 6px; width: 100%; background: #333; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
-        .fr-seg { flex: 1; margin-right: 2px; background: #444; opacity: 0.3; transition: opacity 0.3s; }
-        .fr-seg:last-child { margin-right: 0; }
-        .fr-seg.active.lifr { background: var(--lifr); opacity: 1; box-shadow: 0 0 8px var(--lifr); }
-        .fr-seg.active.ifr { background: var(--danger); opacity: 1; box-shadow: 0 0 8px var(--danger); }
-        .fr-seg.active.mvfr { background: var(--mvfr); opacity: 1; box-shadow: 0 0 8px var(--mvfr); }
-        .fr-seg.active.vfr { background: var(--success); opacity: 1; box-shadow: 0 0 8px var(--success); }
-        .fr-labels { display: flex; font-size: 10px; color: #666; font-weight: 700; width: 100%; text-transform: uppercase; }
-        .fr-lbl-item { flex: 1; text-align: left; padding-left: 2px; }
-        .fr-msg { margin-top: 8px; font-size: 14px; color: var(--text); font-weight: 500; }
+        
+        .fr-gauge-group { display: flex; flex-direction: column; gap: 14px; }
+        .fr-row-label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--sub-text); margin-bottom: 6px; text-transform: uppercase; }
+        .fr-val-text { color: var(--text); font-family: 'SF Mono', monospace; font-size: 12px; }
+
+        /* The Background Track (Ruler) */
+        .fr-track-modern { position: relative; height: 10px; background: #333; border-radius: 5px; overflow: hidden; display: flex; }
+        .fr-sec { height: 100%; border-right: 1px solid rgba(0,0,0,0.3); position: relative; background: rgba(255,255,255,0.02); }
+        .fr-sec span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 7px; color: rgba(255,255,255,0.2); font-weight: 800; pointer-events: none; z-index: 1; letter-spacing: 0.5px; }
+
+        /* The Colored Fill Bar */
+        .fr-fill-bar { position: absolute; top: 0; left: 0; bottom: 0; background: var(--accent); border-right: 2px solid #fff; box-shadow: 2px 0 8px rgba(0,0,0,0.5); transition: width 1s cubic-bezier(0.1, 1.2, 0.3, 1), background-color 0.3s; z-index: 2; opacity: 0.9; border-radius: 5px 0 0 5px; }
+
+        .fr-msg { margin-top: 12px; font-size: 13px; color: var(--text); font-weight: 500; border-top: 1px solid var(--border); padding-top: 8px; }
 
         /* Wind & Vis */
         .wind-vis-container { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-top: 12px; display: flex; gap: 15px; align-items: center; }
@@ -236,7 +238,14 @@
         <div class="search-wrapper">
             <div class="search-box">
                 <span style="padding-left:4px">🔍</span>
-                <input type="text" id="icao" placeholder="Search (e.g. KJFK)" onkeydown="if(event.key==='Enter') loadData()" oninput="toggleClearBtn()">
+                <input type="text" id="icao" 
+                       placeholder="Search (e.g. KJFK)" 
+                       onkeydown="if(event.key==='Enter') loadData()" 
+                       oninput="toggleClearBtn()"
+                       autocapitalize="characters" 
+                       autocomplete="off" 
+                       autocorrect="off" 
+                       spellcheck="false">
                 <span id="clearBtn" class="clear-btn" onclick="clearSearch()">✖</span>
             </div>
         </div>
@@ -245,6 +254,10 @@
         <div id="headerCat" class="badge badge-cat">--</div>
         <div id="zuluTime" class="badge badge-time">--:--Z</div>
         <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
+    </div>
+
+    <div id="minBanner" class="hidden" style="padding: 8px; text-align: center; font-weight: 800; font-size: 14px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; background: var(--danger);" onclick="setTab('tools')">
+        ⚠️ NO-GO CHECK TOOLS
     </div>
 
     <div class="tabs">
@@ -283,20 +296,37 @@
 
             <div class="fr-bar-container">
                 <div class="fr-header-row">
-                    <div class="fr-title">Visibility / Ceiling</div>
-                    <div class="fr-title" style="color:var(--text);">Ceiling + Visibility</div>
+                    <div class="fr-title">Flight Category Breakdown</div>
                 </div>
-                <div class="fr-track">
-                    <div id="frSegLIFR" class="fr-seg"></div>
-                    <div id="frSegIFR" class="fr-seg"></div>
-                    <div id="frSegMVFR" class="fr-seg"></div>
-                    <div id="frSegVFR" class="fr-seg"></div>
-                </div>
-                <div class="fr-labels">
-                    <div class="fr-lbl-item">LIFR</div>
-                    <div class="fr-lbl-item">IFR</div>
-                    <div class="fr-lbl-item">MVFR</div>
-                    <div class="fr-lbl-item">VFR</div>
+                
+                <div class="fr-gauge-group">
+                    <div>
+                        <div class="fr-row-label">
+                            <span>Ceiling</span>
+                            <span id="labelCeilVal" class="fr-val-text">--</span>
+                        </div>
+                        <div class="fr-track-modern">
+                            <div class="fr-sec" style="width: 25%"><span>LIFR</span></div> 
+                            <div class="fr-sec" style="width: 25%"><span>IFR</span></div>  
+                            <div class="fr-sec" style="width: 25%"><span>MVFR</span></div> 
+                            <div class="fr-sec" style="width: 25%; border:none;"><span>VFR</span></div>  
+                            <div id="gaugeCeil" class="fr-fill-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="fr-row-label">
+                            <span>Visibility</span>
+                            <span id="labelVisVal" class="fr-val-text">--</span>
+                        </div>
+                        <div class="fr-track-modern">
+                            <div class="fr-sec" style="width: 25%"><span>LIFR</span></div>
+                            <div class="fr-sec" style="width: 25%"><span>IFR</span></div>
+                            <div class="fr-sec" style="width: 25%"><span>MVFR</span></div>
+                            <div class="fr-sec" style="width: 25%; border:none;"><span>VFR</span></div>
+                            <div id="gaugeVis" class="fr-fill-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
                 </div>
                 <div id="frMessage" class="fr-msg">--</div>
             </div>
@@ -341,7 +371,7 @@
         <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">Raw TAF</div>
         <div class="raw-text" id="rawTaf">Loading...</div>
         <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
-        <div id="notamList" class="raw-text" style="max-height:200px; overflow-y:auto; font-size:11px;">Loading...</div>
+        <div id="notamList" class="raw-text" style="max-height:300px; overflow-y:auto; font-size:11px; background:transparent; padding:0;">Loading...</div>
     </div>
     
     <div id="tab-info" class="view-section">
@@ -402,7 +432,7 @@
         <div class="info-card">
             <div class="conv-row">
                 <div style="flex:1"><div class="conv-lbl">Alt (ft)</div><input type="number" id="e6bAlt" class="conv-inp" oninput="calcE6B()"></div>
-                <div style="flex:1"><div class="conv-lbl">QNH</div><input type="number" id="e6bQnh" class="conv-inp" value="1013" oninput="calcE6B()"></div>
+                <div style="flex:1"><div class="conv-lbl">QNH (hPa)</div><input type="number" id="e6bQnh" class="conv-inp" value="1013" oninput="calcE6B()"></div>
                 <div style="flex:1"><div class="conv-lbl">Temp (°C)</div><input type="number" id="e6bTemp" class="conv-inp" oninput="calcE6B()"></div>
             </div>
             <div class="conv-row">
@@ -416,8 +446,9 @@
     </div>
 
     <script>
-        // --- GLOBALS ---
+        // --- SECURITY WARNING: DO NOT UPLOAD TO PUBLIC REPOS ---
         const AVWX_KEY = '7BVPOe0lM6CvvLCOGwmcmCxTp1n6PgCdcBJ9Lnt3WpI';
+        
         let currentWind = { dir:0, spd:0 }; 
         let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
         let stationData = null;
@@ -438,12 +469,9 @@
         // --- INIT ---
         function initApp() {
             initWorldClock();
-            checkNightModeSaved(); // Check user pref for Night Mode
-            
-            // Load saved minimums
+            checkNightModeSaved();
             document.getElementById('minXW').value = localStorage.getItem('efb_min_xw') || 10;
             document.getElementById('minCeil').value = localStorage.getItem('efb_min_ceil') || 2000;
-
             loadData();
             setInterval(updateClock, 1000);
         }
@@ -493,7 +521,7 @@
                     
                     renderMetar(m); 
                     renderSkyVisuals(m);
-                    renderFlightRuleBar(m);
+                    renderFlightRuleBar(m); // NEW DUAL GAUGES
                     setupRunwaySelect();
                     findNearbyStations(stationData.latitude, stationData.longitude); 
                 } else {
@@ -502,14 +530,26 @@
 
                 if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
                 
-                // NOTAMs with Highlighter
+                // NOTAMs with Highlighter & Sorting
                 if(notamRes.status === 'fulfilled') {
                     const n = notamRes.value;
                     const notamContainer = document.getElementById('notamList');
                     if (Array.isArray(n) && n.length > 0) {
+                        n.sort((a, b) => {
+                            const crit = /CLSD|CLOSED|U\/S|UNSERVICEABLE/;
+                            return crit.test(b.raw) - crit.test(a.raw); // Critical first
+                        });
+
                         notamContainer.innerHTML = n.map(x => {
-                            const hlText = formatNotamText(x.raw);
-                            return `<div style="margin-bottom:8px; border-left:3px solid var(--warn); padding-left:6px; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.05);">${hlText}</div>`;
+                            const raw = x.raw;
+                            let borderCol = 'rgba(255,255,255,0.1)';
+                            if (/(CLSD|CLOSED|U\/S)/.test(raw)) borderCol = 'var(--danger)';
+                            else if (/(OBST|WORK|WIP)/.test(raw)) borderCol = 'var(--warn)';
+                            
+                            return `<div style="margin-bottom:8px; border-left:4px solid ${borderCol}; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 0 4px 4px 0;">
+                                <div style="font-size:10px; color:#888; margin-bottom:2px;">${x.start_time?.dt ? new Date(x.start_time.dt).toLocaleDateString() : ''} - ${x.end_time?.dt ? new Date(x.end_time.dt).toLocaleDateString() : 'PERM'}</div>
+                                ${formatNotamText(raw)}
+                            </div>`;
                         }).join('');
                     } else {
                         notamContainer.innerHTML = "No NOTAMs Found";
@@ -550,7 +590,6 @@
             rawContainer.innerHTML = formatRawMetar(d.raw);
             
             if (minAgo > 60) {
-                const icao = document.getElementById('icao').value.toUpperCase();
                 rawContainer.insertAdjacentHTML('beforeend', `<div style="margin-top:12px; padding:10px; background:rgba(255, 69, 58, 0.1); border:1px solid var(--danger); border-radius:6px; text-align:center;"><div style="color:var(--danger); font-weight:800; font-size:12px;">⚠️ DATA OUTDATED (${minAgo}m old)</div></div>`);
             }
 
@@ -603,16 +642,58 @@
             });
         }
 
+        // --- NEW: DUAL LINEAR GAUGES ---
         function renderFlightRuleBar(m) {
-            ['LIFR', 'IFR', 'MVFR', 'VFR'].forEach(r => document.getElementById(`frSeg${r}`).classList.remove('active', 'lifr', 'ifr', 'mvfr', 'vfr'));
-            const rule = m.flight_rules; 
-            const seg = document.getElementById(`frSeg${rule}`);
-            if(seg) seg.classList.add('active', rule.toLowerCase());
+            let ceiling = 99999;
+            if (m.clouds && m.clouds.length > 0) {
+                const ceilLayer = m.clouds.find(c => c.type === 'BKN' || c.type === 'OVC' || c.type === 'VV');
+                if (ceilLayer) ceiling = ceilLayer.altitude * 100;
+            }
+            let vis = 10;
+            if (m.visibility) vis = m.visibility.value;
+
+            function getGaugeStats(val, type) {
+                let pct = 0;
+                let color = 'var(--success)';
+                
+                if (type === 'ceil') {
+                    // Scale: 0-500 (25%), 500-1000 (25%), 1000-3000 (25%), >3000 (25%)
+                    if (val < 500) { pct = (val / 500) * 25; color = 'var(--lifr)'; } 
+                    else if (val < 1000) { pct = 25 + ((val - 500) / 500) * 25; color = 'var(--danger)'; } 
+                    else if (val < 3000) { pct = 50 + ((val - 1000) / 2000) * 25; color = 'var(--mvfr)'; } 
+                    else { pct = 75 + Math.min(1, (val - 3000) / 3000) * 25; color = 'var(--success)'; }
+                } 
+                if (type === 'vis') {
+                    // Scale: 0-1 (25%), 1-3 (25%), 3-5 (25%), >5 (25%)
+                    if (val < 1) { pct = (val / 1) * 25; color = 'var(--lifr)'; } 
+                    else if (val < 3) { pct = 25 + ((val - 1) / 2) * 25; color = 'var(--danger)'; } 
+                    else if (val < 5) { pct = 50 + ((val - 3) / 2) * 25; color = 'var(--mvfr)'; } 
+                    else { pct = 100; color = 'var(--success)'; }
+                }
+                return { width: Math.max(5, pct) + '%', color: color };
+            }
+
+            const cStats = getGaugeStats(ceiling, 'ceil');
+            const vStats = getGaugeStats(vis, 'vis');
+
+            const ceilBar = document.getElementById('gaugeCeil');
+            ceilBar.style.width = cStats.width;
+            ceilBar.style.backgroundColor = cStats.color;
+            document.getElementById('labelCeilVal').innerText = ceiling === 99999 ? 'Unlimited' : `${ceiling} ft`;
+            document.getElementById('labelCeilVal').style.color = cStats.color;
+
+            const visBar = document.getElementById('gaugeVis');
+            visBar.style.width = vStats.width;
+            visBar.style.backgroundColor = vStats.color;
+            document.getElementById('labelVisVal').innerText = `${vis} sm`;
+            document.getElementById('labelVisVal').style.color = vStats.color;
+
+            const rule = m.flight_rules;
             const msgEl = document.getElementById('frMessage');
-            if (rule === 'VFR') { msgEl.innerText = `Visibility > 5 SM and Ceiling > 3000'`; msgEl.style.color = 'var(--success)'; }
-            else if (rule === 'MVFR') { msgEl.innerText = `Ceiling 1000-3000' or Vis 3-5 SM`; msgEl.style.color = 'var(--mvfr)'; }
-            else if (rule === 'IFR') { msgEl.innerText = `Ceiling < 1000' or Vis < 3 SM`; msgEl.style.color = 'var(--danger)'; }
-            else if (rule === 'LIFR') { msgEl.innerText = `Ceiling < 500' or Vis < 1 SM`; msgEl.style.color = 'var(--lifr)'; }
+            if (rule === 'VFR') { msgEl.innerText = `Visual Flight Rules (Vis > 5sm & Ceil > 3000')`; msgEl.style.color = 'var(--success)'; }
+            else if (rule === 'MVFR') { msgEl.innerText = `Marginal VFR (Ceil 1000-3000' or Vis 3-5sm)`; msgEl.style.color = 'var(--mvfr)'; }
+            else if (rule === 'IFR') { msgEl.innerText = `Instrument Flight Rules (Ceil < 1000' or Vis < 3sm)`; msgEl.style.color = 'var(--danger)'; }
+            else if (rule === 'LIFR') { msgEl.innerText = `Low IFR (Ceil < 500' or Vis < 1sm)`; msgEl.style.color = 'var(--lifr)'; }
         }
 
         async function findNearbyStations(lat, lon) {
@@ -646,11 +727,16 @@
             document.getElementById('infoElev').innerText = `${d.elevation_ft} ft`;
             document.getElementById('infoCoords').innerText = `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}`;
 
-            const elev = d.elevation_ft; const temp = currentMetar.temp;
-            let currentHpa = currentMetar.alt;
-            if(currentMetar.altUnit === 'inHg') currentHpa = currentMetar.alt * 33.8639;
-            const pa = Math.round(elev + (1013.25 - currentHpa) * 30);
-            const isaTemp = 15 - (2 * pa / 1000); const isaDev = Math.round(temp - isaTemp);
+            const elev = d.elevation_ft; 
+            const temp = currentMetar.temp;
+            let qnhHpa = currentMetar.alt;
+            if(currentMetar.altUnit === 'inHg') qnhHpa = currentMetar.alt * 33.8639;
+            
+            // Standard Aviation Calc: PA = Elev + (1013 - QNH) * 30
+            const pa = Math.round(elev + (1013.25 - qnhHpa) * 30);
+            const isaTemp = 15 - (2 * pa / 1000); 
+            const isaDev = Math.round(temp - isaTemp);
+            // DA Rule of thumb: PA + 120 * (OAT - ISA)
             const da = Math.round(pa + 120 * (temp - isaTemp));
             
             document.getElementById('calcPA').innerText = `${pa} ft`;
@@ -838,6 +924,7 @@
             if(document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer'); container.innerHTML = '';
                 cityList.forEach(c => {
+                    // Fix: Use station timezone from AVWX if available, else simple fallback
                     const timeStr = now.toLocaleTimeString('en-US', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
                     const card = document.createElement('div'); card.className = 'clock-card';
                     card.innerHTML = `<div class="clock-left"><div><span class="clock-city">${c.n}</span><span style="color:var(--accent); font-weight:700; margin-left:8px;">${c.icao||''}</span></div></div><div class="clock-time">${timeStr}</div>`;
@@ -870,14 +957,21 @@
             }
             let actualCeil = 9999;
             if (lastMetarObj && lastMetarObj.clouds) {
-                const ceilLayer = lastMetarObj.clouds.find(c => c.type === 'BKN' || c.type === 'OVC');
+                const ceilLayer = lastMetarObj.clouds.find(c => c.type === 'BKN' || c.type === 'OVC' || c.type === 'VV');
                 if (ceilLayer) actualCeil = ceilLayer.altitude * 100;
             }
-            const resDiv = document.getElementById('minsResult'); const card = document.getElementById('minsCard');
+            
+            const resDiv = document.getElementById('minsResult'); 
+            const card = document.getElementById('minsCard');
+            const banner = document.getElementById('minBanner');
+
             if (actualXW > limitXW || actualCeil < limitCeil) {
                 resDiv.innerText = "NO-GO ⛔"; resDiv.style.backgroundColor = "var(--danger)"; resDiv.style.color = "#fff"; card.style.borderLeftColor = "var(--danger)";
+                banner.className = ''; // Show Banner
+                banner.innerText = `⚠️ NO-GO: ${actualXW > limitXW ? 'X-WIND' : 'CEILING'} EXCEEDED`;
             } else {
                 resDiv.innerText = "GO ✅"; resDiv.style.backgroundColor = "var(--success)"; resDiv.style.color = "#000"; card.style.borderLeftColor = "var(--success)";
+                banner.className = 'hidden';
             }
         }
 
@@ -886,6 +980,7 @@
             const qnh = parseFloat(document.getElementById('e6bQnh').value) || 1013;
             const temp = parseFloat(document.getElementById('e6bTemp').value) || 15;
             const ias = parseFloat(document.getElementById('e6bIas').value) || 0;
+            
             const pa = alt + (1013 - qnh) * 30;
             const da = pa + 120 * (temp - (15 - (2*pa/1000)));
             document.getElementById('resDA').innerText = Math.round(da) + " ft";
@@ -916,7 +1011,6 @@
             return h;
         }
 
-        // --- NIGHT MODE LOGIC ---
         function toggleNightMode() {
             const body = document.body;
             body.classList.toggle('cockpit-dark');
