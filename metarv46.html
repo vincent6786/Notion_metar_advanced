@@ -46,7 +46,7 @@
                 background: linear-gradient(160deg, #1a1a2e 0%, #000000 100%);
                 background-attachment: fixed;
             }
-            .metar-card, .info-card, .freq-card, .clock-card, .search-box, .wind-vis-container, .taf-detail-card, .fr-bar-container, .atc-btn, .nearby-btn, .tabs, .sky-section {
+            .metar-card, .info-card, .freq-card, .clock-card, .search-box, .wind-vis-container, .taf-detail-card, .fr-bar-container, .atc-btn, .nearby-btn, .tabs, .sky-section, .meteogram-container {
                 background: rgba(35, 35, 40, 0.65) !important;
                 backdrop-filter: blur(25px);
                 -webkit-backdrop-filter: blur(25px);
@@ -80,7 +80,7 @@
         }
         body.cockpit-dark .sky-section, body.cockpit-dark canvas, 
         body.cockpit-dark .icon-btn, body.cockpit-dark .fr-track-modern, 
-        body.cockpit-dark .taf-sky-strip {
+        body.cockpit-dark .taf-sky-strip, body.cockpit-dark .meteogram-container {
             filter: grayscale(100%) sepia(100%) saturate(1000%) hue-rotate(-50deg) contrast(1.5);
         }
         body.cockpit-dark .badge-cat { color: #000 !important; background: #ff0000 !important; font-weight: 900; }
@@ -176,6 +176,21 @@
         .fr-fill-bar { position: absolute; top: 0; left: 0; bottom: 0; background: var(--accent); border-right: 2px solid #fff; box-shadow: 2px 0 8px rgba(0,0,0,0.5); transition: width 1s cubic-bezier(0.1, 1.2, 0.3, 1), background-color 0.3s; z-index: 2; opacity: 0.9; border-radius: 5px 0 0 5px; }
 
         .fr-msg { margin-top: 12px; font-size: 13px; color: var(--text); font-weight: 500; border-top: 1px solid var(--border); padding-top: 8px; }
+
+        /* --- METEOGRAM STYLES --- */
+        .meteogram-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 8px;
+            position: relative;
+            border: 1px solid var(--border);
+            overflow-x: auto; 
+        }
+        #meteoCanvas {
+            width: 100%;
+            height: 150px;
+            display: block;
+        }
 
         /* Wind & Vis */
         .wind-vis-container { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-top: 12px; display: flex; gap: 15px; align-items: center; }
@@ -351,7 +366,14 @@
 
     <div id="tab-taf" class="view-section">
         <div style="display:flex; justify-content:space-between; color:var(--sub-text); font-size:12px; margin-bottom:8px;">
-            <span>Forecast Visualization</span><span id="tafIssued">--</span>
+            <span>24H Model Trend (Open-Meteo)</span>
+        </div>
+        <div class="meteogram-container">
+            <canvas id="meteoCanvas" height="150"></canvas>
+            <div id="meteoLoading" class="sky-no-data" style="position:absolute; top:50%; left:0; right:0; text-align:center;">Loading Model Data...</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
+            <span>Official Forecast Visualization</span><span id="tafIssued">--</span>
         </div>
         <div class="taf-viz-container">
             <div id="tafNeedle"></div>
@@ -477,8 +499,7 @@
             initWorldClock();
             checkNightModeSaved();
 
-            // CRITICAL FIX: FORCE CLEAR INPUTS ON START
-            // This prevents "stuck" values from previous sessions causing the banner to show immediately.
+            // FORCE CLEAR INPUTS ON START to prevent banner pop-up
             document.getElementById('minXW').value = "";
             document.getElementById('minCeil').value = "";
 
@@ -512,6 +533,9 @@
                 if(!stationResp.ok) throw new Error("Station Not Found");
                 stationData = await stationResp.json();
                 renderInfo(stationData); 
+                
+                // NEW: Fetch Meteogram
+                fetchMeteogram(stationData.latitude, stationData.longitude);
 
                 // 2. Fetch WX
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
@@ -531,7 +555,7 @@
                     
                     renderMetar(m); 
                     renderSkyVisuals(m);
-                    renderFlightRuleBar(m); // NEW DUAL GAUGES
+                    renderFlightRuleBar(m); 
                     setupRunwaySelect();
                     findNearbyStations(stationData.latitude, stationData.longitude); 
                 } else {
@@ -540,14 +564,13 @@
 
                 if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
                 
-                // NOTAMs with Highlighter & Sorting
                 if(notamRes.status === 'fulfilled') {
                     const n = notamRes.value;
                     const notamContainer = document.getElementById('notamList');
                     if (Array.isArray(n) && n.length > 0) {
                         n.sort((a, b) => {
                             const crit = /CLSD|CLOSED|U\/S|UNSERVICEABLE/;
-                            return crit.test(b.raw) - crit.test(a.raw); // Critical first
+                            return crit.test(b.raw) - crit.test(a.raw); 
                         });
 
                         notamContainer.innerHTML = n.map(x => {
@@ -587,6 +610,112 @@
                             <span>View on Metar-Taf.com ↗</span>
                         </a>
                     </div>`;
+            }
+        }
+
+        // --- NEW: HOURLY METEOGRAM (OPEN-METEO) ---
+        async function fetchMeteogram(lat, lon) {
+            const loader = document.getElementById('meteoLoading');
+            loader.style.display = 'block';
+            
+            try {
+                // Fetch 24h forecast for: Temp, Dewpoint, WindSpeed, WindDir
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m&forecast_days=1`;
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if(data.hourly) drawMeteogram(data.hourly);
+                loader.style.display = 'none';
+            } catch(e) {
+                console.error("Meteo Error:", e);
+                loader.innerText = "Model Data Unavailable";
+            }
+        }
+
+        function drawMeteogram(h) {
+            const cvs = document.getElementById('meteoCanvas');
+            const ctx = cvs.getContext('2d');
+            
+            // Fix scaling for retina screens
+            const dpr = window.devicePixelRatio || 1;
+            const rect = cvs.getBoundingClientRect();
+            cvs.width = rect.width * dpr;
+            cvs.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const W = rect.width;
+            const H = rect.height;
+            const padding = {top: 20, bottom: 30, left: 10, right: 10};
+            
+            // Clear
+            ctx.clearRect(0,0,W,H);
+            
+            // Use first 24 points
+            const len = 24; 
+            
+            // Helper: Map value to Y coordinate
+            // Temp Range: Find Min/Max to scale graph dynamically
+            let minT = 100, maxT = -100;
+            for(let i=0; i<len; i++) {
+                minT = Math.min(minT, h.temperature_2m[i], h.dewpoint_2m[i]);
+                maxT = Math.max(maxT, h.temperature_2m[i], h.dewpoint_2m[i]);
+            }
+            minT -= 2; maxT += 2; // Padding
+            const rangeT = maxT - minT;
+            
+            const getX = (i) => padding.left + (i / (len-1)) * (W - padding.left - padding.right);
+            const getY = (val) => H - padding.bottom - ((val - minT) / rangeT) * (H - padding.top - padding.bottom);
+
+            // 1. DRAW TEMP & DEWPOINT LINES
+            function drawLine(dataArr, color, width) {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = width;
+                for(let i=0; i<len; i++) {
+                    const x = getX(i);
+                    const y = getY(dataArr[i]);
+                    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+            }
+            
+            // Draw Dewpoint (Blue)
+            drawLine(h.dewpoint_2m, '#0a84ff', 2);
+            // Draw Temp (Red)
+            drawLine(h.temperature_2m, '#ff453a', 2);
+            
+            // 2. DRAW SPREAD FILL (Visual Fog Risk)
+            ctx.globalAlpha = 0.1;
+            ctx.fillStyle = '#ffcc00'; // Yellowish fill
+            ctx.beginPath();
+            for(let i=0; i<len; i++) ctx.lineTo(getX(i), getY(h.temperature_2m[i]));
+            for(let i=len-1; i>=0; i--) ctx.lineTo(getX(i), getY(h.dewpoint_2m[i]));
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+
+            // 3. DRAW WIND ARROWS & TIME
+            ctx.textAlign = 'center';
+            ctx.font = '10px sans-serif';
+            ctx.fillStyle = '#8e8e93';
+            
+            for(let i=0; i<len; i+=3) { // Every 3 hours
+                const x = getX(i);
+                const windDir = h.wind_direction_10m[i];
+                
+                // Time Label
+                ctx.fillText(`${i}z`, x, H - 5);
+                
+                // Wind Arrow
+                ctx.save();
+                ctx.translate(x, H - 20);
+                ctx.rotate((windDir + 180) * Math.PI / 180); // Point WITH wind
+                
+                // Arrow Path
+                ctx.beginPath();
+                ctx.moveTo(0, -5); ctx.lineTo(-3, 3); ctx.lineTo(0, 0); ctx.lineTo(3, 3); ctx.closePath();
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                ctx.restore();
             }
         }
 
@@ -948,10 +1077,8 @@
 
         // --- E6B & MINS ---
         function checkMins() {
-            // Get raw values
             const xwVal = document.getElementById('minXW').value;
             const ceilVal = document.getElementById('minCeil').value;
-            
             const resDiv = document.getElementById('minsResult'); 
             const card = document.getElementById('minsCard');
             const banner = document.getElementById('minBanner');
@@ -962,14 +1089,13 @@
                 resDiv.style.backgroundColor = "#333"; 
                 resDiv.style.color = "#aaa"; 
                 card.style.borderLeftColor = "#555";
-                banner.className = 'hidden'; // Hide banner
+                banner.className = 'hidden'; 
                 return;
             }
 
             // 2. ACTIVE CHECK
             const limitXW = parseFloat(xwVal);
             const limitCeil = parseFloat(ceilVal);
-            
             localStorage.setItem('efb_min_xw', limitXW);
             localStorage.setItem('efb_min_ceil', limitCeil);
 
@@ -978,7 +1104,6 @@
                 return; 
             }
 
-            // Calc X-Wind
             const rwyIdent = document.getElementById('rwySelect').value; 
             let actualXW = 0;
             if (rwyIdent) {
@@ -987,28 +1112,25 @@
                 const diff = (currentWind.dir - mv - rwyHdg) * (Math.PI/180);
                 actualXW = Math.abs(Math.sin(diff) * currentWind.spd);
             }
-            
-            // Calc Ceiling
             let actualCeil = 9999;
             if (lastMetarObj && lastMetarObj.clouds) {
                 const ceilLayer = lastMetarObj.clouds.find(c => c.type === 'BKN' || c.type === 'OVC' || c.type === 'VV');
                 if (ceilLayer) actualCeil = ceilLayer.altitude * 100;
             }
             
-            // Compare
             if (actualXW > limitXW || actualCeil < limitCeil) {
                 resDiv.innerText = "NO-GO ⛔"; 
                 resDiv.style.backgroundColor = "var(--danger)"; 
                 resDiv.style.color = "#fff"; 
                 card.style.borderLeftColor = "var(--danger)";
-                banner.className = ''; // Show
+                banner.className = ''; 
                 banner.innerText = `⚠️ NO-GO: ${actualXW > limitXW ? 'X-WIND' : 'CEILING'} EXCEEDED`;
             } else {
                 resDiv.innerText = "GO ✅"; 
                 resDiv.style.backgroundColor = "var(--success)"; 
                 resDiv.style.color = "#000"; 
                 card.style.borderLeftColor = "var(--success)";
-                banner.className = 'hidden'; // Hide
+                banner.className = 'hidden';
             }
         }
 
@@ -1017,7 +1139,6 @@
             const qnh = parseFloat(document.getElementById('e6bQnh').value) || 1013;
             const temp = parseFloat(document.getElementById('e6bTemp').value) || 15;
             const ias = parseFloat(document.getElementById('e6bIas').value) || 0;
-            
             const pa = alt + (1013 - qnh) * 30;
             const da = pa + 120 * (temp - (15 - (2*pa/1000)));
             document.getElementById('resDA').innerText = Math.round(da) + " ft";
