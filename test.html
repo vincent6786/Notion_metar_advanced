@@ -533,6 +533,7 @@
         let useMetric = true; 
         let tafDataCache = null;
         let lastMetarObj = null; 
+        let meteoDataCache = null;
 
         // UPDATED: Pre-defined list for World Clock (matches Quick Select)
         const AVIATION_CITIES = [
@@ -749,13 +750,20 @@
             const loader = document.getElementById('meteoLoading');
             loader.style.display = 'block';
             
+            // Reset cache on new fetch
+            meteoDataCache = null; 
+        
             try {
-                // Fetch with wind_speed_unit=kn and wind_gusts
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn&forecast_days=1`;
                 const res = await fetch(url);
                 const data = await res.json();
                 
-                if(data.hourly) drawMeteogram(data.hourly);
+                if(data.hourly) {
+                    // 1. SAVE DATA TO CACHE
+                    meteoDataCache = data.hourly; 
+                    // 2. Attempt to draw (will work if TAF tab is already open)
+                    drawMeteogram(meteoDataCache);
+                }
                 loader.style.display = 'none';
             } catch(e) {
                 console.error("Meteo Error:", e);
@@ -1371,11 +1379,28 @@
         }
 
         function setTab(name) {
+            // Standard Tab Switching
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+name).classList.add('active');
-            event.target.classList.add('active');
+            
+            // Find the button that was clicked and make it active
+            // (We iterate to find the one with the matching onclick)
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => {
+                if(t.getAttribute('onclick').includes(name)) t.classList.add('active');
+            });
+        
+            // --- FIX FOR WORLD CLOCK ---
             if(name === 'world') updateClock();
+        
+            // --- FIX FOR TAF CHART ---
+            // If opening TAF tab and we have data, wait 50ms for the div to become visible, then redraw
+            if(name === 'taf' && meteoDataCache) {
+                setTimeout(() => {
+                    drawMeteogram(meteoDataCache);
+                }, 50);
+            }
         }
         function updateHeaderCat(status, colorClass) {
             const badge = document.getElementById('headerCat');
