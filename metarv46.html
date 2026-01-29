@@ -124,7 +124,7 @@
         .cat-ifr { background-color: var(--danger) !important; color: #fff !important; }
         .cat-lifr { background-color: var(--lifr) !important; color: #fff !important; }
 
-        .tabs { display: flex; border-bottom: 1px solid var(--border); gap: 20px; padding: 0 4px; overflow-x: auto; scrollbar-width: none; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); gap: 15px; padding: 0 4px; overflow-x: auto; scrollbar-width: none; }
         .tab { padding: 10px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--sub-text); border-bottom: 2px solid transparent; text-transform: uppercase; white-space: nowrap; }
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
@@ -302,6 +302,7 @@
         <div class="tab" onclick="setTab('atc')">ATC</div>
         <div class="tab" onclick="setTab('world')">WORLD</div>
         <div class="tab" onclick="setTab('tools')">TOOLS</div>
+        <div class="tab" onclick="setTab('settings')">SETTINGS</div>
     </div>
 
     <div id="tab-metar" class="view-section active">
@@ -439,14 +440,18 @@
     </div>
     
     <div id="tab-atc" class="view-section">
-        <div class="info-card" style="margin-bottom: 20px;" id="audioContainer">
-             <div class="ic-lbl" style="margin-bottom:8px;" id="audioLabel">AUDIO / ATIS</div>
-             <div id="audioPlayerTarget"></div>
+        <div class="info-card" style="margin-bottom: 20px;">
+             <div class="ic-lbl" style="margin-bottom:8px;" id="audioLabel">AUDIO STREAMS</div>
+             <div id="audioPlayerTarget">
+                 <div style="color:var(--sub-text); font-style:italic; padding:10px; text-align:center;">
+                     Select an airport to check for streams.
+                 </div>
+             </div>
         </div>
         <div class="section-title">EXTERNAL RESOURCES</div>
         <a href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
         <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span></a>
-        <a href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
+        <a id="btnLiveAtc" href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
     </div>
 
     <div id="tab-world" class="view-section">
@@ -458,10 +463,7 @@
     </div>
 
     <div id="tab-tools" class="view-section">
-        <button id="btnNightMode" class="atc-btn" onclick="toggleNightMode()" style="justify-content:center; margin-bottom:20px; border:1px solid var(--danger);">
-            <span>🔴 Cockpit Night Mode</span>
-        </button>
-
+        
         <div class="section-title" style="margin-top:0;">Personal Minimums</div>
         <div class="info-card" style="border-left: 4px solid #555;" id="minsCard">
             <div class="conv-row">
@@ -494,6 +496,32 @@
         </div>
     </div>
 
+    <div id="tab-settings" class="view-section">
+        <div class="section-title" style="margin-top:0;">Startup Preferences</div>
+        
+        <div class="info-card">
+            <div class="conv-lbl">Default Airport (ICAO)</div>
+            <div class="conv-row" style="margin-bottom:0;">
+                <input type="text" id="defaultIcaoInput" class="conv-inp" placeholder="e.g. RCTP" style="text-transform:uppercase;" maxlength="4">
+                <button class="tool-btn" style="width:auto; margin:0;" onclick="saveDefaultStation()">Save</button>
+            </div>
+            <div id="saveMsg" style="font-size:12px; color:var(--success); margin-top:8px; height:14px;"></div>
+        </div>
+    
+        <div class="section-title">Visuals</div>
+        <button id="btnNightMode" class="atc-btn" onclick="toggleNightMode()" style="justify-content:center; margin-bottom:20px; border:1px solid var(--danger);">
+            <span>🔴 Cockpit Night Mode</span>
+        </button>
+        
+        <div class="section-title">Data & Storage</div>
+        <div class="info-card">
+            <div style="font-size:12px; color:var(--sub-text); margin-bottom:8px;">
+                Clear all saved data (Minimums, Default Airport, Cities).
+            </div>
+            <button class="tool-btn" style="background:var(--card-bg); border:1px solid var(--danger); color:var(--danger);" onclick="resetApp()">Factory Reset App</button>
+        </div>
+    </div>
+
     <script>
         // --- SECURITY WARNING: DO NOT UPLOAD TO PUBLIC REPOS ---
         const AVWX_KEY = '7BVPOe0lM6CvvLCOGwmcmCxTp1n6PgCdcBJ9Lnt3WpI';
@@ -505,6 +533,7 @@
         let useMetric = true; 
         let tafDataCache = null;
         let lastMetarObj = null; 
+        let meteoDataCache = null;
 
         // UPDATED: Pre-defined list for World Clock (matches Quick Select)
         const AVIATION_CITIES = [
@@ -522,12 +551,28 @@
             initWorldClock();
             checkNightModeSaved();
 
-            // FORCE CLEAR INPUTS (Clean Slate)
-            document.getElementById('minXW').value = "";
-            document.getElementById('minCeil').value = "";
-            document.getElementById('icao').value = ""; // Ensure search is empty
+            // Load Default Station Preference
+            const savedDefault = localStorage.getItem('efb_default_station');
+            const inputField = document.getElementById('defaultIcaoInput');
+            
+            if (savedDefault) {
+                // Populate the settings input
+                inputField.value = savedDefault;
+                // Auto-load the station on the main screen
+                document.getElementById('icao').value = savedDefault;
+                loadData(); 
+            } else {
+                // No default saved, just clear the box
+                document.getElementById('icao').value = "";
+            }
+            
+            // Load Personal Minimums inputs if they exist
+            const savedXW = localStorage.getItem('efb_min_xw');
+            const savedCeil = localStorage.getItem('efb_min_ceil');
+            if(savedXW) document.getElementById('minXW').value = savedXW;
+            if(savedCeil) document.getElementById('minCeil').value = savedCeil;
 
-            // Start Clock but DO NOT load data yet
+            // Start Clock
             setInterval(updateClock, 1000);
         }
 
@@ -535,6 +580,27 @@
         function quickLoad(code) {
             document.getElementById('icao').value = code;
             loadData();
+        }
+
+        function saveDefaultStation() {
+            const val = document.getElementById('defaultIcaoInput').value.trim().toUpperCase();
+            const msg = document.getElementById('saveMsg');
+            
+            if(val.length >= 3) {
+                localStorage.setItem('efb_default_station', val);
+                msg.innerText = "Default station saved! Will load on startup.";
+                setTimeout(() => { msg.innerText = ""; }, 3000);
+            } else {
+                msg.style.color = "var(--warn)";
+                msg.innerText = "Invalid ICAO code.";
+            }
+        }
+
+        function resetApp() {
+            if(confirm("Reset all settings and clear local data?")) {
+                localStorage.clear();
+                location.reload();
+            }
         }
 
         // --- CORE DATA LOADING ---
@@ -587,6 +653,9 @@
                     renderFlightRuleBar(m); 
                     setupRunwaySelect();
                     findNearbyStations(stationData.latitude, stationData.longitude); 
+                    
+                    // --- ATC AUDIO UPDATE ---
+                    updateAudioSection(icao);
                 } else {
                     throw new Error("No Weather Data");
                 }
@@ -618,16 +687,6 @@
                     }
                 }
 
-                // Audio Setup
-                const audioTarget = document.getElementById('audioPlayerTarget');
-                if(icao.startsWith('RC')) {
-                    document.getElementById('audioLabel').innerText = `${icao} ATIS (TWATC)`;
-                    audioTarget.innerHTML = `<audio controls style="width: 100%; height: 32px; filter: invert(0.9);"><source src="https://stream.twatc.net/${icao}_ATIS" type="audio/mpeg"></audio>`;
-                } else {
-                    document.getElementById('audioLabel').innerText = "External Audio";
-                    audioTarget.innerHTML = `<a href="https://www.liveatc.net/search/?q=${icao}" target="_blank" class="tool-btn" style="text-align:center; display:block; text-decoration:none;">📡 Search LiveATC</a>`;
-                }
-
             } catch(e) {
                 console.error(e);
                 updateHeaderCat('N/A', 'cat-ifr');
@@ -642,18 +701,69 @@
             }
         }
 
+        function updateAudioSection(icao) {
+            const container = document.getElementById('audioPlayerTarget');
+            const label = document.getElementById('audioLabel');
+            const liveAtcBtn = document.getElementById('btnLiveAtc');
+
+            // 1. Update the LiveATC Button Link dynamically
+            if (liveAtcBtn) {
+                liveAtcBtn.href = `https://www.liveatc.net/search/?icao=${icao}`;
+                liveAtcBtn.innerHTML = `<span>📡 LiveATC (${icao})</span><span>↗</span>`;
+            }
+
+            // 2. Handle Specific Streams (RCTP)
+            if (icao === 'RCTP') {
+                label.innerText = "RCTP LIVE STREAMS (TWATC)";
+                container.innerHTML = `
+                    <div style="margin-bottom:12px;">
+                        <div class="m-label" style="color:var(--accent);">ATIS (127.6)</div>
+                        <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                            <source src="https://stream.twatc.net/RCTP_ATIS" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <div>
+                        <div class="m-label" style="color:var(--success);">ATC SCANNER (GND/TWR/APP)</div>
+                        <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                            <source src="https://stream.twatc.net/RCTP_Scan2" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <div style="font-size:10px; color:#555; margin-top:8px; text-align:right;">Source: TWATC.net</div>
+                `;
+            } 
+            else {
+                // Default View for other airports
+                label.innerText = "AUDIO STREAMS";
+                container.innerHTML = `
+                    <div style="color:var(--sub-text); font-size:13px; text-align:center; padding:10px 0;">
+                        No direct in-app stream available for ${icao}.<br>
+                        <span style="font-size:11px; color:#555;">Use the LiveATC button below to search external feeds.</span>
+                    </div>
+                `;
+            }
+        }
+
         // --- UPDATED: ADVISORY METEOGRAM WITH BIGGER ARROWS ---
         async function fetchMeteogram(lat, lon) {
             const loader = document.getElementById('meteoLoading');
             loader.style.display = 'block';
             
+            // Reset cache on new fetch
+            meteoDataCache = null; 
+        
             try {
-                // Fetch with wind_speed_unit=kn and wind_gusts
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn&forecast_days=1`;
                 const res = await fetch(url);
                 const data = await res.json();
                 
-                if(data.hourly) drawMeteogram(data.hourly);
+                if(data.hourly) {
+                    // 1. SAVE DATA TO CACHE
+                    meteoDataCache = data.hourly; 
+                    // 2. Attempt to draw (will work if TAF tab is already open)
+                    drawMeteogram(meteoDataCache);
+                }
                 loader.style.display = 'none';
             } catch(e) {
                 console.error("Meteo Error:", e);
@@ -1269,11 +1379,28 @@
         }
 
         function setTab(name) {
+            // Standard Tab Switching
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+name).classList.add('active');
-            event.target.classList.add('active');
+            
+            // Find the button that was clicked and make it active
+            // (We iterate to find the one with the matching onclick)
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => {
+                if(t.getAttribute('onclick').includes(name)) t.classList.add('active');
+            });
+        
+            // --- FIX FOR WORLD CLOCK ---
             if(name === 'world') updateClock();
+        
+            // --- FIX FOR TAF CHART ---
+            // If opening TAF tab and we have data, wait 50ms for the div to become visible, then redraw
+            if(name === 'taf' && meteoDataCache) {
+                setTimeout(() => {
+                    drawMeteogram(meteoDataCache);
+                }, 50);
+            }
         }
         function updateHeaderCat(status, colorClass) {
             const badge = document.getElementById('headerCat');
