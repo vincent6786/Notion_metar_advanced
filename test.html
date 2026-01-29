@@ -752,16 +752,15 @@
             
             // Reset cache on new fetch
             meteoDataCache = null; 
-        
+
             try {
+                // Fetch with wind_speed_unit=kn and wind_gusts
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn&forecast_days=1`;
                 const res = await fetch(url);
                 const data = await res.json();
                 
                 if(data.hourly) {
-                    // 1. SAVE DATA TO CACHE
                     meteoDataCache = data.hourly; 
-                    // 2. Attempt to draw (will work if TAF tab is already open)
                     drawMeteogram(meteoDataCache);
                 }
                 loader.style.display = 'none';
@@ -873,18 +872,17 @@
                 const windSpd = Math.round(h.wind_speed_10m[i]);
                 const windGust = Math.round(h.wind_gusts_10m[i]);
                 
-                // --- BIGGER ARROW LOGIC ---
+                // --- BIGGER ARROW LOGIC (POINTS WITH WIND) ---
                 ctx.save();
                 ctx.translate(x, H - 25);
-                ctx.rotate((windDir + 180) * Math.PI / 180); 
+                ctx.rotate((windDir + 180) * Math.PI / 180); // +180 ensures "flow with wind"
                 ctx.beginPath();
-                // Increased size: (0,-8) instead of (0,-4)
                 ctx.moveTo(0, -8); 
                 ctx.lineTo(-5, 5); 
                 ctx.lineTo(0, 2); 
                 ctx.lineTo(5, 5); 
                 ctx.closePath();
-                ctx.fillStyle = '#0a84ff'; // Cyan/Blue for better visibility
+                ctx.fillStyle = '#0a84ff'; 
                 ctx.fill();
                 ctx.restore();
                 
@@ -1021,318 +1019,6 @@
             else if (rule === 'LIFR') { msgEl.innerText = `Low IFR (Ceil < 500' or Vis < 1sm)`; msgEl.style.color = 'var(--lifr)'; }
         }
 
-        async function findNearbyStations(lat, lon) {
-            try {
-                const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
-                const url = `https://avwx.rest/api/station/near/${lat},${lon}?n=5`; 
-                const res = await fetch(url, { headers });
-                const data = await res.json();
-                
-                const list = document.getElementById('nearList');
-                list.innerHTML = "";
-                const currentIcao = document.getElementById('icao').value.toUpperCase();
-                const others = data.filter(item => item.station.icao !== currentIcao).slice(0, 4);
-
-                if(others.length === 0) { list.innerHTML = "<span style='color:#555;'>No stations found nearby.</span>"; return; }
-
-                others.forEach(item => {
-                    const stn = item.station;
-                    const btn = document.createElement('div'); btn.className = "nearby-btn";
-                    btn.innerHTML = `<span>✈</span><span>${stn.icao}</span><span style="color:var(--sub-text); font-size:10px;">${Math.round(item.nautical_miles)}nm</span>`;
-                    btn.onclick = () => { document.getElementById('icao').value = stn.icao; loadData(); };
-                    list.appendChild(btn);
-                });
-            } catch(e) { console.error(e); }
-        }
-
-        function renderInfo(d) {
-            document.getElementById('infoName').innerText = d.name;
-            document.getElementById('infoLoc').innerText = `${d.city || ''}, ${d.country || ''} (${d.icao})`;
-            document.getElementById('infoCodes').innerText = `${d.icao} / ${d.iata || '--'}`;
-            document.getElementById('infoElev').innerText = `${d.elevation_ft} ft`;
-            document.getElementById('infoCoords').innerText = `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}`;
-
-            const elev = d.elevation_ft; 
-            const temp = currentMetar.temp;
-            let qnhHpa = currentMetar.alt;
-            if(currentMetar.altUnit === 'inHg') qnhHpa = currentMetar.alt * 33.8639;
-            
-            // Standard Aviation Calc: PA = Elev + (1013 - QNH) * 30
-            const pa = Math.round(elev + (1013.25 - qnhHpa) * 30);
-            const isaTemp = 15 - (2 * pa / 1000); 
-            const isaDev = Math.round(temp - isaTemp);
-            // DA Rule of thumb: PA + 120 * (OAT - ISA)
-            const da = Math.round(pa + 120 * (temp - isaTemp));
-            
-            document.getElementById('calcPA').innerText = `${pa} ft`;
-            document.getElementById('calcDA').innerText = `${da} ft`;
-            document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
-            
-            const fContainer = document.getElementById('freqContainer');
-            fContainer.innerHTML = '';
-            if(d.frequencies && d.frequencies.length > 0) {
-                 d.frequencies.slice(0, 6).forEach(f => {
-                     const card = document.createElement('div'); card.className = 'freq-card';
-                     card.innerHTML = `<div class="freq-type">${f.type}</div><div class="freq-val">${f.frequency}</div>`;
-                     fContainer.appendChild(card);
-                 });
-            }
-
-            fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
-                .then(r=>r.json()).then(s => {
-                    const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-                    document.getElementById('infoSun').innerText = `🌅 ${t(s.results.sunrise)}  🌇 ${t(s.results.sunset)}`;
-                    stationSunTimes = { sunrise: new Date(s.results.sunrise), sunset: new Date(s.results.sunset) };
-                    if(tafDataCache) updateTafSkyGradient(new Date(tafDataCache[0].start_time.dt), new Date(tafDataCache[tafDataCache.length-1].end_time.dt));
-                }).catch(e=>{});
-        }
-
-        // --- WIND ROSE & RUNWAYS ---
-        function setupRunwaySelect() {
-            const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
-            const mv = stationData.magnetic_variation || 0;
-            const windMag = currentWind.dir - mv;
-            let bestRwy = null, maxHW = -999;
-            (stationData.runways || []).forEach(r => {
-                sel.add(new Option(`RWY ${r.ident1}`, r.ident1)); sel.add(new Option(`RWY ${r.ident2}`, r.ident2));
-                let h1 = parseInt(r.ident1.replace(/\D/g,'')) * 10;
-                let hw1 = Math.cos((windMag - h1) * (Math.PI/180)) * currentWind.spd;
-                if(hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
-            });
-            if(bestRwy) sel.value = bestRwy; else if(stationData.runways.length > 0) sel.value = stationData.runways[0].ident1;
-            drawWindRose(); renderRunwaysComplex();
-        }
-
-        function drawWindRose() {
-            const canvas = document.getElementById('windRose'); const ctx = canvas.getContext('2d'); const w=140, h=140, cx=70, cy=70, r=60;
-            const rwyIdent = document.getElementById('rwySelect').value; 
-            
-            ctx.clearRect(0,0,w,h);
-            ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = '#8e8e93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('N', cx, cy - r + 10); ctx.fillText('E', cx + r - 10, cy); ctx.fillText('S', cx, cy + r - 10); ctx.fillText('W', cx - r + 10, cy);
-            
-            const mv = stationData?.magnetic_variation || 0; 
-            const windMag = currentWind.dir - mv;
-            
-            if(rwyIdent) {
-                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10; const rwyRad = (rwyHdg - 90) * (Math.PI/180);
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad); 
-                ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12); 
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12); 
-                ctx.restore();
-                
-                const diff = (windMag - rwyHdg) * (Math.PI/180); 
-                const hw = Math.round(Math.cos(diff) * currentWind.spd); 
-                const xw = Math.round(Math.sin(diff) * currentWind.spd);
-                
-                const vHW = document.getElementById('valHW'); 
-                vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; 
-                vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
-                document.getElementById('valXW').innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
-                
-                checkMins();
-            }
-            if(currentWind.spd > 0) {
-                const windRad = (windMag - 90) * (Math.PI/180); 
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
-                ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
-            }
-        }
-
-        function renderRunwaysComplex() {
-            const container = document.getElementById('runwayListComplex'); container.innerHTML = '';
-            const d = stationData; if(!d || !d.runways) return;
-            const magVar = d.magnetic_variation || 0;
-            const windMagDir = currentWind.dir - magVar;
-            
-            d.runways.forEach((r, idx) => {
-                let dimStr = useMetric ? `${Math.round(r.length_ft * 0.3048)}m` : `${r.length_ft}'`;
-                const rwy1Hdg = parseInt(r.ident1.replace(/\D/g,'')) * 10;
-                const diffRad = (windMagDir - rwy1Hdg) * (Math.PI/180);
-                const hw = Math.round(Math.cos(diffRad) * currentWind.spd); 
-                const xw = Math.round(Math.sin(diffRad) * currentWind.spd);
-                const color1 = hw >= 0 ? 'var(--success)' : 'var(--danger)';
-                const color2 = hw < 0 ? 'var(--success)' : 'var(--danger)';
-                
-                const div = document.createElement('div');
-                div.className = 'rwy-complex';
-                div.innerHTML = `
-                    <div class="rc-header"><div class="rc-idents"><span style="color:${color1}">${r.ident1}</span> / <span style="color:${color2}">${r.ident2}</span></div><div class="rc-dims">${dimStr}</div></div>
-                    <div class="rc-strip">
-                        <div class="rc-id-v">${r.ident1}</div>
-                        <div class="rc-data">
-                            <div class="wind-comp"><span>${Math.abs(hw)}kt</span><span style="color:${color1}">${hw>=0?'⬆':'⬇'}</span></div>
-                            <div class="wind-comp"><span>${Math.abs(xw)}kt</span><span style="color:#0a84ff">${xw>=0?'⬅':'➡'}</span></div>
-                        </div>
-                        <div class="rc-id-v" style="transform:rotate(0deg);">${r.ident2}</div>
-                    </div>`;
-                container.appendChild(div);
-            });
-        }
-
-        // --- TAF RENDERER ---
-        function renderTaf(d) {
-            document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
-            tafDataCache = d.forecast; 
-            const bar = document.getElementById('tafBar'); const axis = document.getElementById('tafAxis'); 
-            bar.innerHTML = ''; axis.innerHTML = '';
-            document.getElementById('tafDetail').classList.add('hidden');
-            
-            if(!d.forecast || d.forecast.length === 0) return;
-            
-            const startT = new Date(d.forecast[0].start_time.dt);
-            const endT = new Date(d.forecast[d.forecast.length-1].end_time.dt);
-            const totalDur = endT - startT; const now = new Date();
-
-            if (now >= startT && now <= endT) {
-                const p = ((now - startT) / totalDur) * 100;
-                const needle = document.getElementById('tafNeedle');
-                needle.style.display = 'block'; needle.style.left = `${p}%`;
-            }
-
-            d.forecast.forEach((f, index) => {
-                const block = document.createElement('div'); block.className = 'taf-block'; block.style.flex = "1";
-                let col = '#555'; 
-                if(f.flight_rules==='VFR')col='var(--success)'; if(f.flight_rules==='MVFR')col='var(--mvfr)'; if(f.flight_rules==='IFR')col='var(--danger)';
-                block.style.backgroundColor = col; block.innerText = f.type;
-                block.onclick = () => { showTafDetail(index, col); };
-                bar.appendChild(block);
-                
-                if(index % 2 === 0) {
-                    const s = new Date(f.start_time.dt); const lbl = document.createElement('div'); 
-                    lbl.className = 'taf-axis-lbl'; lbl.style.flex = "2"; lbl.innerText = `${s.getUTCHours()}z`; axis.appendChild(lbl);
-                }
-            });
-            if (stationSunTimes) updateTafSkyGradient(startT, endT);
-        }
-
-        function showTafDetail(index, color) {
-            const f = tafDataCache[index]; const card = document.getElementById('tafDetail'); 
-            card.style.borderLeftColor = color; card.classList.remove('hidden');
-            const s = new Date(f.start_time.dt); const e = new Date(f.end_time.dt);
-            document.getElementById('tdTime').innerText = `${s.getUTCHours()}z ➔ ${e.getUTCHours()}z`; 
-            document.getElementById('tdType').innerText = f.type;
-            const wDir = f.wind_direction?.value || 'VRB'; 
-            document.getElementById('tdWind').innerText = `${wDir}° / ${f.wind_speed?.value||0}kt`;
-            document.getElementById('tdVis').innerText = f.visibility ? `${f.visibility.value} sm` : 'P6SM';
-            document.getElementById('tdWx').innerText = f.wx_codes ? f.wx_codes.map(x => x.repr).join(' ') : 'NSW';
-            let cStr = 'SKC'; if(f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3,'0')}`).join(' '); 
-            document.getElementById('tdCloud').innerText = cStr;
-        }
-
-        function updateTafSkyGradient(startT, endT) {
-            if (!stationSunTimes || !startT || !endT) return;
-            const getDecHour = (d) => d.getUTCHours() + (d.getUTCMinutes() / 60);
-            const sr = getDecHour(stationSunTimes.sunrise); const ss = getDecHour(stationSunTimes.sunset);
-            const cNight = "#0f172a"; const cDay = "#0ea5e9"; const cDawn = "#f97316"; 
-            const stops = []; const totalDur = endT - startT; let curr = new Date(startT);
-            while (curr <= endT) {
-                const h = getDecHour(curr); const pct = ((curr - startT) / totalDur) * 100;
-                let isDay = (h >= sr && h < ss);
-                const distSR = Math.abs(h - sr); const distSS = Math.abs(h - ss);
-                let color = isDay ? cDay : cNight; if (distSR < 0.8 || distSS < 0.8) color = cDawn;
-                stops.push(`${color} ${pct.toFixed(1)}%`); curr.setMinutes(curr.getMinutes() + 30);
-            }
-            document.getElementById('tafSkyStrip').style.background = `linear-gradient(to right, ${stops.join(', ')})`;
-        }
-
-        // --- WORLD CLOCK ---
-        function initWorldClock() {
-            const stored = localStorage.getItem('efb_cities_v46');
-            if(stored) cityList = JSON.parse(stored); else cityList = [...AVIATION_CITIES];
-        }
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('zuluTime').innerText = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
-            if(document.getElementById('tab-world').classList.contains('active')) {
-                const container = document.getElementById('worldContainer'); container.innerHTML = '';
-                cityList.forEach(c => {
-                    const timeStr = now.toLocaleTimeString('en-US', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
-                    const card = document.createElement('div'); card.className = 'clock-card';
-                    card.innerHTML = `<div class="clock-left"><div><span class="clock-city">${c.n}</span><span style="color:var(--accent); font-weight:700; margin-left:8px;">${c.icao||''}</span></div></div><div class="clock-time">${timeStr}</div>`;
-                    container.appendChild(card);
-                });
-            }
-        }
-        async function addCustomCity() {
-            const val = document.getElementById('newCityInput').value; if(!val) return;
-            cityList.push({n:val, z:'UTC', icao:'USER'}); localStorage.setItem('efb_cities_v46', JSON.stringify(cityList)); updateClock();
-        }
-
-        // --- E6B & MINS ---
-        function checkMins() {
-            const xwVal = document.getElementById('minXW').value;
-            const ceilVal = document.getElementById('minCeil').value;
-            const resDiv = document.getElementById('minsResult'); 
-            const card = document.getElementById('minsCard');
-            const banner = document.getElementById('minBanner');
-
-            // 1. NEUTRAL STATE (If inputs are empty)
-            if (xwVal === '' || ceilVal === '') {
-                resDiv.innerText = "SET LIMITS"; 
-                resDiv.style.backgroundColor = "#333"; 
-                resDiv.style.color = "#aaa"; 
-                card.style.borderLeftColor = "#555";
-                banner.className = 'hidden'; 
-                return;
-            }
-
-            // 2. ACTIVE CHECK
-            const limitXW = parseFloat(xwVal);
-            const limitCeil = parseFloat(ceilVal);
-            localStorage.setItem('efb_min_xw', limitXW);
-            localStorage.setItem('efb_min_ceil', limitCeil);
-
-            if (!currentMetar || !stationData) { 
-                resDiv.innerText = "LOAD DATA"; 
-                return; 
-            }
-
-            const rwyIdent = document.getElementById('rwySelect').value; 
-            let actualXW = 0;
-            if (rwyIdent) {
-                const mv = stationData.magnetic_variation || 0;
-                const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10;
-                const diff = (currentWind.dir - mv - rwyHdg) * (Math.PI/180);
-                actualXW = Math.abs(Math.sin(diff) * currentWind.spd);
-            }
-            let actualCeil = 9999;
-            if (lastMetarObj && lastMetarObj.clouds) {
-                const ceilLayer = lastMetarObj.clouds.find(c => c.type === 'BKN' || c.type === 'OVC' || c.type === 'VV');
-                if (ceilLayer) actualCeil = ceilLayer.altitude * 100;
-            }
-            
-            if (actualXW > limitXW || actualCeil < limitCeil) {
-                resDiv.innerText = "NO-GO ⛔"; 
-                resDiv.style.backgroundColor = "var(--danger)"; 
-                resDiv.style.color = "#fff"; 
-                card.style.borderLeftColor = "var(--danger)";
-                banner.className = ''; 
-                banner.innerText = `⚠️ NO-GO: ${actualXW > limitXW ? 'X-WIND' : 'CEILING'} EXCEEDED`;
-            } else {
-                resDiv.innerText = "GO ✅"; 
-                resDiv.style.backgroundColor = "var(--success)"; 
-                resDiv.style.color = "#000"; 
-                card.style.borderLeftColor = "var(--success)";
-                banner.className = 'hidden';
-            }
-        }
-
-        function calcE6B() {
-            const alt = parseFloat(document.getElementById('e6bAlt').value) || 0;
-            const qnh = parseFloat(document.getElementById('e6bQnh').value) || 1013;
-            const temp = parseFloat(document.getElementById('e6bTemp').value) || 15;
-            const ias = parseFloat(document.getElementById('e6bIas').value) || 0;
-            const pa = alt + (1013 - qnh) * 30;
-            const da = pa + 120 * (temp - (15 - (2*pa/1000)));
-            document.getElementById('resDA').innerText = Math.round(da) + " ft";
-            const tas = ias * (1 + (alt/1000 * 0.02)); 
-            document.getElementById('resTAS').innerText = Math.round(tas) + " kts";
-        }
-
-        // --- UTILS ---
         function formatRawMetar(rawText) {
             if (!rawText) return "";
             let html = rawText;
@@ -1379,23 +1065,19 @@
         }
 
         function setTab(name) {
-            // Standard Tab Switching
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+name).classList.add('active');
             
-            // Find the button that was clicked and make it active
-            // (We iterate to find the one with the matching onclick)
+            // Find active tab btn
             const tabs = document.querySelectorAll('.tab');
             tabs.forEach(t => {
                 if(t.getAttribute('onclick').includes(name)) t.classList.add('active');
             });
-        
-            // --- FIX FOR WORLD CLOCK ---
+
             if(name === 'world') updateClock();
-        
-            // --- FIX FOR TAF CHART ---
-            // If opening TAF tab and we have data, wait 50ms for the div to become visible, then redraw
+
+            // --- FIX: REDRAW TAF IF CACHED ---
             if(name === 'taf' && meteoDataCache) {
                 setTimeout(() => {
                     drawMeteogram(meteoDataCache);
