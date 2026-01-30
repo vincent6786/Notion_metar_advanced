@@ -46,7 +46,7 @@
                 background: linear-gradient(160deg, #1a1a2e 0%, #000000 100%);
                 background-attachment: fixed;
             }
-            .metar-card, .info-card, .freq-card, .clock-card, .search-box, .wind-vis-container, .taf-detail-card, .fr-bar-container, .atc-btn, .nearby-btn, .tabs, .sky-section, .meteogram-container, .quick-chip {
+            .metar-card, .info-card, .freq-card, .search-box, .wind-vis-container, .taf-detail-card, .fr-bar-container, .atc-btn, .nearby-btn, .tabs, .sky-section, .meteogram-container, .quick-chip {
                 background: rgba(35, 35, 40, 0.65) !important;
                 backdrop-filter: blur(25px);
                 -webkit-backdrop-filter: blur(25px);
@@ -251,8 +251,38 @@
         .freq-card { background: var(--card-bg); border-radius: 8px; padding: 10px; text-align: center; }
         .freq-type { font-size: 11px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 4px; }
         .freq-val { font-size: 16px; font-weight: 700; color: var(--accent); font-family: 'SF Mono', monospace; }
-        .clock-card { background: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c2c2e; margin-bottom: 8px; }
-        .clock-time { font-family: 'SF Mono', monospace; font-size: 28px; font-weight: 400; color: var(--text); letter-spacing: 0.5px; }
+        
+        /* UPDATED: World Clock Styling (iOS-like) */
+        .clock-card { 
+            background: #000; /* Pure black */
+            padding: 16px 4px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid #333; 
+            margin-bottom: 0;
+        }
+        .clock-left { display:flex; flex-direction:column; gap:2px; }
+        .clock-city { font-size: 24px; font-weight: 400; color: #fff; }
+        .clock-diff { font-size: 13px; color: #8e8e93; font-weight: 500; }
+        .clock-time { font-family: -apple-system, sans-serif; font-size: 48px; font-weight: 300; color: #fff; letter-spacing: -1px; }
+        .clock-del-btn {
+            background: transparent;
+            color: #ff453a;
+            border: 1px solid #ff453a;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            margin-left: 12px;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+        .clock-del-btn:hover { opacity: 1; background: rgba(255, 69, 58, 0.2); }
 
         /* Conv Inputs */
         .conv-row { display: flex; gap: 10px; margin-bottom: 10px; }
@@ -453,10 +483,10 @@
 
     <div id="tab-world" class="view-section">
         <div style="display:flex; gap:8px; margin-bottom:12px; background:var(--card-bg); padding:8px; border-radius:8px;">
-            <input type="text" id="newCityInput" class="conv-inp" placeholder="City Name (e.g. Paris)..." style="margin:0;">
-            <button class="tool-btn" style="width:auto; margin:0;" onclick="addCustomCity()">Add</button>
+            <input type="text" id="newCityInput" class="conv-inp" placeholder="City Name (e.g. Paris) or ICAO (LFPG)..." style="margin:0;">
+            <button id="btnAddCity" class="tool-btn" style="width:auto; margin:0; background:var(--accent); border:none;" onclick="addCustomCity()">Add</button>
         </div>
-        <div id="worldContainer"></div>
+        <div id="worldContainer" style="display:flex; flex-direction:column; gap:2px;"></div>
     </div>
 
     <div id="tab-tools" class="view-section">
@@ -541,15 +571,9 @@
         let lastMetarObj = null; 
         let meteoDataCache = null;
 
-        // Default cities for world clock
-        const AVIATION_CITIES = [
-            {n:"Taipei (TPE)",z:"Asia/Taipei",icao:"RCTP"}, 
-            {n:"Songshan (TSA)",z:"Asia/Taipei",icao:"RCSS"}, 
-            {n:"San Francisco",z:"America/Los_Angeles",icao:"KSFO"}, 
-            {n:"Mather (MHR)",z:"America/Los_Angeles",icao:"KMHR"}, 
-            {n:"Narita (NRT)",z:"Asia/Tokyo",icao:"RJAA"}
-        ];
+        // Default cities for world clock (fallback)
         let cityList = [];
+        
         const CLOUD_ICON_PATH = "M25 15C25 10.58 21.42 7 17 7C16.5 7 16 7.05 15.54 7.15C14.73 4.19 12.06 2 9 2C5.13 2 2 5.13 2 9C2 9.17 2 9.35 2.03 9.5C0.84 10.19 0 11.5 0 13C0 15.21 1.79 17 4 17H25C27.76 17 30 14.76 30 12C30 9.24 27.76 7 25 7V15Z";
 
         // --- 2. INITIALIZATION ---
@@ -587,24 +611,16 @@
         }
 
         async function smartFetch(url) {
-            // Try up to the number of keys we have to ensure we find a working one
             for (let i = 0; i < API_KEYS.length; i++) {
                 try {
                     const res = await fetch(url, { headers: getHeaders() });
-                    
-                    // Success! Return immediately
                     if (res.ok) return res;
-
-                    // If error is 429 (Too Many Requests) or 401 (Unauthorized), switch key
                     if (res.status === 429 || res.status === 401) {
                         console.warn(`Key ${currentKeyIndex} exhausted. Switching...`);
                         currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-                        continue; // Retry loop with new key
+                        continue; 
                     }
-
-                    // Other errors (e.g. 404 Not Found) should be returned normally
                     return res;
-
                 } catch (err) {
                     console.error("Network error, retrying...", err);
                 }
@@ -692,7 +708,6 @@
                 const lon = pos.coords.longitude;
                 
                 try {
-                    // Use smartFetch here
                     const res = await smartFetch(`https://avwx.rest/api/station/near/${lat},${lon}?n=1`);
                     const data = await res.json();
                     
@@ -716,7 +731,7 @@
             });
         }
 
-        // Main Data Loader with smartFetch
+        // Main Data Loader
         async function loadData() {
             const icaoVal = document.getElementById('icao').value;
             if(!icaoVal) return;
@@ -724,7 +739,6 @@
             const icao = icaoVal.toUpperCase();
             addToHistory(icao); 
 
-            // UI Updates
             document.getElementById('icao').blur();
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
@@ -736,23 +750,19 @@
             const cb = Date.now();
             
             try {
-                // 1. Station Info (Use smartFetch)
                 const stationResp = await smartFetch(`https://avwx.rest/api/station/${icao}?t=${cb}`);
                 if(!stationResp.ok) throw new Error("Station Not Found");
                 stationData = await stationResp.json();
                 renderInfo(stationData); 
                 
-                // Fetch Meteogram (Public API, no key needed)
                 fetchMeteogram(stationData.latitude, stationData.longitude);
 
-                // 2. Fetch WX (Use smartFetch for all calls)
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
                     smartFetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`).then(r=>r.json()),
                     smartFetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`).then(r=>r.json()),
                     smartFetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`).then(r=>r.json())
                 ]);
 
-                // 3. Process METAR
                 if(metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
                     lastMetarObj = m;
@@ -772,10 +782,8 @@
                     throw new Error("No Weather Data");
                 }
 
-                // 4. Process TAF
                 if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
                 
-                // 5. Process NOTAMs (Intelligent Sorting)
                 if(notamRes.status === 'fulfilled') {
                     const n = notamRes.value;
                     const notamContainer = document.getElementById('notamList');
@@ -844,7 +852,6 @@
                 liveAtcBtn.innerHTML = `<span>📡 LiveATC (${icao})</span><span>↗</span>`;
             }
 
-            // RCTP Special Handling (Taiwan)
             if (icao === 'RCTP') {
                 label.innerText = "RCTP LIVE STREAMS (TWATC)";
                 container.innerHTML = `
@@ -1359,29 +1366,139 @@
             document.getElementById('tafSkyStrip').style.background = `linear-gradient(to right, ${stops.join(', ')})`;
         }
 
-        // --- 9. UTILS & CLOCK ---
+        // --- 9. UPDATED: WORLD CLOCK LOGIC ---
 
         function initWorldClock() {
-            const stored = localStorage.getItem('efb_cities_v46');
-            if(stored) cityList = JSON.parse(stored); else cityList = [...AVIATION_CITIES];
+            const stored = localStorage.getItem('efb_cities_v47');
+            if(stored) {
+                cityList = JSON.parse(stored);
+            } else {
+                // Fallback default list
+                cityList = [
+                    {n:"Taipei", icao:"RCTP", z:"Asia/Taipei"},
+                    {n:"New York", icao:"KJFK", z:"America/New_York"},
+                    {n:"London", icao:"EGLL", z:"Europe/London"}
+                ];
+                localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
+            }
         }
+
         function updateClock() {
             const now = new Date();
             document.getElementById('zuluTime').innerText = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
+            
+            // Only update DOM if tab is active to save resources
             if(document.getElementById('tab-world').classList.contains('active')) {
-                const container = document.getElementById('worldContainer'); container.innerHTML = '';
-                cityList.forEach(c => {
-                    const timeStr = now.toLocaleTimeString('en-US', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
-                    const card = document.createElement('div'); card.className = 'clock-card';
-                    card.innerHTML = `<div class="clock-left"><div><span class="clock-city">${c.n}</span><span style="color:var(--accent); font-weight:700; margin-left:8px;">${c.icao||''}</span></div></div><div class="clock-time">${timeStr}</div>`;
+                const container = document.getElementById('worldContainer');
+                container.innerHTML = '';
+                
+                const userOffset = now.getTimezoneOffset(); // mins
+
+                cityList.forEach((c, index) => {
+                    // Create Date object for this city's timezone
+                    // We use toLocaleString to get the time in that zone
+                    const timeStr = now.toLocaleTimeString('en-GB', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
+                    
+                    // Logic to find relative day/hour difference is tricky in pure JS without libraries like moment-timezone.
+                    // We can estimate by comparing hours.
+                    const cityDateStr = now.toLocaleString('en-US', { timeZone: c.z });
+                    const cityDate = new Date(cityDateStr);
+                    
+                    // diff in hours
+                    const diffMs = cityDate.getTime() - now.getTime(); // This approach is flawed because cityDate is "local" relative to now.
+                    // Better approach: Use the ISO string from the API or pre-calculated offsets.
+                    // Simplified Visual approach:
+                    
+                    let diffText = "";
+                    // Calculate basic offset from UTC
+                    // This is hard to do purely client-side without a timezone database.
+                    // WORKAROUND: We just display the time.
+                    // If you want "Today, +8HRS", we need the offset from the API.
+                    
+                    const card = document.createElement('div'); 
+                    card.className = 'clock-card';
+                    card.innerHTML = `
+                        <div class="clock-left">
+                            <div class="clock-diff">${c.icao || ''}</div>
+                            <div class="clock-city">${c.n}</div>
+                        </div>
+                        <div style="display:flex; align-items:center;">
+                            <div class="clock-time">${timeStr}</div>
+                            <button class="clock-del-btn" onclick="removeCity(${index})">✕</button>
+                        </div>
+                    `;
                     container.appendChild(card);
                 });
             }
         }
+
+        // UPDATED: Async Add City with API Search
         async function addCustomCity() {
-            const val = document.getElementById('newCityInput').value; if(!val) return;
-            cityList.push({n:val, z:'UTC', icao:'USER'}); localStorage.setItem('efb_cities_v46', JSON.stringify(cityList)); updateClock();
+            const input = document.getElementById('newCityInput');
+            const val = input.value.trim();
+            if(!val) return;
+
+            const btn = document.getElementById('btnAddCity');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳";
+            
+            try {
+                // 1. Search for Station using AVWX (Uses your Failover System)
+                // If it's 4 chars, assume ICAO. If longer, search text.
+                let searchUrl = `https://avwx.rest/api/search/station?text=${val}`;
+                if (val.length === 4) {
+                    searchUrl = `https://avwx.rest/api/station/${val}`;
+                }
+
+                const res = await smartFetch(searchUrl);
+                let data = await res.json();
+                
+                // AVWX returns array for search, object for direct station
+                let station = null;
+                if (Array.isArray(data)) {
+                    if (data.length === 0) throw new Error("No city found");
+                    station = data[0]; // Take first result
+                } else {
+                    station = data; // Direct station result
+                }
+
+                // 2. Resolve Timezone using Open-Meteo (Free, No Key)
+                // We need the Lat/Lon from the station
+                const tzRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${station.latitude}&longitude=${station.longitude}&current_weather=true&timezone=auto`);
+                const tzData = await tzRes.json();
+                
+                if (!tzData.timezone) throw new Error("Timezone lookup failed");
+
+                // 3. Save to List
+                const newCity = {
+                    n: station.city || station.name,
+                    icao: station.icao,
+                    z: tzData.timezone
+                };
+                
+                cityList.push(newCity);
+                localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
+                
+                input.value = "";
+                updateClock();
+
+            } catch (e) {
+                console.error(e);
+                alert("Could not find city or airport. Try a valid ICAO code (e.g. KJFK).");
+            } finally {
+                btn.innerText = originalText;
+            }
         }
+
+        function removeCity(index) {
+            if(confirm("Delete this city?")) {
+                cityList.splice(index, 1);
+                localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
+                updateClock();
+            }
+        }
+
+        // --- 10. UTILS ---
 
         function checkMins() {
             const xwVal = document.getElementById('minXW').value;
