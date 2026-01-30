@@ -520,9 +520,18 @@
     </div>
 
     <script>
-        // --- SECURITY WARNING: DO NOT UPLOAD TO PUBLIC REPOS ---
-        const AVWX_KEY = '7BVPOe0lM6CvvLCOGwmcmCxTp1n6PgCdcBJ9Lnt3WpI';
+        // --- 1. CONFIGURATION & STATE ---
+
+        // SECURITY NOTE: We use 4 keys in a rotation pool. 
+        // If one hits the 429 limit, the next one is used automatically.
+        const API_KEYS = [
+            'L1rylGsq_pzzgadZkxQGIp3V_VJmLhDIy7UZe_XjhL4',
+            '2mT6ZhJh6GZygRttPVdMTt_XgGNnCZCg9ulp_wlnSDI',
+            'MfB7DS2UFeFiE95bbEzMhdHXWLJdFGOkMwqNaQieGEw',
+            '7BVPOe0lM6CvvLCOGwmcmCxTp1n6PgCdcBJ9Lnt3WpI'
+        ];
         
+        let currentKeyIndex = 0;
         let currentWind = { dir:0, spd:0 }; 
         let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
         let stationData = null;
@@ -532,7 +541,7 @@
         let lastMetarObj = null; 
         let meteoDataCache = null;
 
-        // UPDATED: Pre-defined list for World Clock (matches Quick Select)
+        // Default cities for world clock
         const AVIATION_CITIES = [
             {n:"Taipei (TPE)",z:"Asia/Taipei",icao:"RCTP"}, 
             {n:"Songshan (TSA)",z:"Asia/Taipei",icao:"RCSS"}, 
@@ -543,38 +552,68 @@
         let cityList = [];
         const CLOUD_ICON_PATH = "M25 15C25 10.58 21.42 7 17 7C16.5 7 16 7.05 15.54 7.15C14.73 4.19 12.06 2 9 2C5.13 2 2 5.13 2 9C2 9.17 2 9.35 2.03 9.5C0.84 10.19 0 11.5 0 13C0 15.21 1.79 17 4 17H25C27.76 17 30 14.76 30 12C30 9.24 27.76 7 25 7V15Z";
 
-        // --- INIT ---
+        // --- 2. INITIALIZATION ---
+
         function initApp() {
             initWorldClock();
             checkNightModeSaved();
-            renderHistory(); // Init Recent History
+            renderHistory(); 
 
             // Load Default Station Preference
             const savedDefault = localStorage.getItem('efb_default_station');
             const inputField = document.getElementById('defaultIcaoInput');
             
             if (savedDefault) {
-                // Populate the settings input
                 inputField.value = savedDefault;
-                // Auto-load the station on the main screen
                 document.getElementById('icao').value = savedDefault;
                 loadData(); 
             } else {
-                // No default saved, just clear the box
                 document.getElementById('icao').value = "";
             }
             
-            // Load Personal Minimums inputs if they exist
+            // Load Personal Minimums
             const savedXW = localStorage.getItem('efb_min_xw');
             const savedCeil = localStorage.getItem('efb_min_ceil');
             if(savedXW) document.getElementById('minXW').value = savedXW;
             if(savedCeil) document.getElementById('minCeil').value = savedCeil;
 
-            // Start Clock
             setInterval(updateClock, 1000);
         }
 
-        // --- NEW: QUICK LOAD HANDLER ---
+        // --- 3. FAILOVER NETWORK LAYER (SMART FETCH) ---
+
+        function getHeaders() {
+            return { 'Authorization': `Bearer ${API_KEYS[currentKeyIndex]}` };
+        }
+
+        async function smartFetch(url) {
+            // Try up to the number of keys we have to ensure we find a working one
+            for (let i = 0; i < API_KEYS.length; i++) {
+                try {
+                    const res = await fetch(url, { headers: getHeaders() });
+                    
+                    // Success! Return immediately
+                    if (res.ok) return res;
+
+                    // If error is 429 (Too Many Requests) or 401 (Unauthorized), switch key
+                    if (res.status === 429 || res.status === 401) {
+                        console.warn(`Key ${currentKeyIndex} exhausted. Switching...`);
+                        currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+                        continue; // Retry loop with new key
+                    }
+
+                    // Other errors (e.g. 404 Not Found) should be returned normally
+                    return res;
+
+                } catch (err) {
+                    console.error("Network error, retrying...", err);
+                }
+            }
+            throw new Error("All API keys exhausted or network down.");
+        }
+
+        // --- 4. CORE DATA LOGIC ---
+
         function quickLoad(code) {
             document.getElementById('icao').value = code;
             loadData();
@@ -601,14 +640,12 @@
             }
         }
 
-        // --- NEW: DYNAMIC HISTORY ---
         function renderHistory() {
             const history = JSON.parse(localStorage.getItem('efb_history')) || [];
             const container = document.getElementById('recentHistoryRow');
             container.innerHTML = '';
             
             if (history.length === 0) {
-                // Fallback to default recommended airports if empty
                 const defaults = ['RCTP', 'RCSS', 'KSFO', 'RJAA'];
                 defaults.forEach(d => {
                      const chip = document.createElement('div');
@@ -631,14 +668,14 @@
 
         function addToHistory(icao) {
             let history = JSON.parse(localStorage.getItem('efb_history')) || [];
-            history = history.filter(item => item !== icao); // Remove dupe
-            history.unshift(icao); // Add to top
-            if (history.length > 5) history.pop(); // Keep max 5
+            history = history.filter(item => item !== icao); 
+            history.unshift(icao); 
+            if (history.length > 5) history.pop(); 
             localStorage.setItem('efb_history', JSON.stringify(history));
             renderHistory();
         }
 
-        // --- NEW: GPS LOCATE ---
+        // GPS Locate with smartFetch
         function locateUser() {
             const btn = document.querySelector('.search-box button');
             const originalIcon = '📍';
@@ -655,8 +692,8 @@
                 const lon = pos.coords.longitude;
                 
                 try {
-                    const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
-                    const res = await fetch(`https://avwx.rest/api/station/near/${lat},${lon}?n=1`, { headers });
+                    // Use smartFetch here
+                    const res = await smartFetch(`https://avwx.rest/api/station/near/${lat},${lon}?n=1`);
                     const data = await res.json();
                     
                     if (data.length > 0) {
@@ -679,13 +716,13 @@
             });
         }
 
-        // --- CORE DATA LOADING ---
+        // Main Data Loader with smartFetch
         async function loadData() {
             const icaoVal = document.getElementById('icao').value;
             if(!icaoVal) return;
             
             const icao = icaoVal.toUpperCase();
-            addToHistory(icao); // Save to history
+            addToHistory(icao); 
 
             // UI Updates
             document.getElementById('icao').blur();
@@ -696,26 +733,26 @@
             rawContainer.innerHTML = 'Loading...';
             document.getElementById('nearList').innerHTML = '<span style="color:#555;">Scanning...</span>';
 
-            const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
             const cb = Date.now();
             
             try {
-                // 1. Station Info
-                const stationResp = await fetch(`https://avwx.rest/api/station/${icao}?t=${cb}`, {headers});
+                // 1. Station Info (Use smartFetch)
+                const stationResp = await smartFetch(`https://avwx.rest/api/station/${icao}?t=${cb}`);
                 if(!stationResp.ok) throw new Error("Station Not Found");
                 stationData = await stationResp.json();
                 renderInfo(stationData); 
                 
-                // NEW: Fetch Meteogram (Knots)
+                // Fetch Meteogram (Public API, no key needed)
                 fetchMeteogram(stationData.latitude, stationData.longitude);
 
-                // 2. Fetch WX
+                // 2. Fetch WX (Use smartFetch for all calls)
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
-                    fetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
-                    fetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`, {headers}).then(r=>r.json()),
-                    fetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`, {headers}).then(r=>r.json())
+                    smartFetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`).then(r=>r.json()),
+                    smartFetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`).then(r=>r.json()),
+                    smartFetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`).then(r=>r.json())
                 ]);
 
+                // 3. Process METAR
                 if(metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
                     lastMetarObj = m;
@@ -730,29 +767,26 @@
                     renderFlightRuleBar(m); 
                     setupRunwaySelect();
                     findNearbyStations(stationData.latitude, stationData.longitude); 
-                    
-                    // --- ATC AUDIO UPDATE ---
                     updateAudioSection(icao);
                 } else {
                     throw new Error("No Weather Data");
                 }
 
+                // 4. Process TAF
                 if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
                 
-                // --- INTELLIGENT NOTAM SORTING ---
+                // 5. Process NOTAMs (Intelligent Sorting)
                 if(notamRes.status === 'fulfilled') {
                     const n = notamRes.value;
                     const notamContainer = document.getElementById('notamList');
                     
                     if (Array.isArray(n) && n.length > 0) {
-                        // Buckets
                         const critical = [];
                         const warning = [];
                         const info = [];
 
                         n.forEach(x => {
                             const raw = x.raw;
-                            // Check keywords
                             if (/(CLSD|CLOSED|U\/S|UNSERVICEABLE|FAIL)/.test(raw)) {
                                 critical.push(x);
                             } else if (/(OBST|WORK|WIP|TRIGGER|SNOW|ICE|DANGER)/.test(raw)) {
@@ -799,18 +833,18 @@
             }
         }
 
+        // --- 5. AUDIO & EXTERNAL ---
         function updateAudioSection(icao) {
             const container = document.getElementById('audioPlayerTarget');
             const label = document.getElementById('audioLabel');
             const liveAtcBtn = document.getElementById('btnLiveAtc');
 
-            // 1. Update the LiveATC Button Link dynamically
             if (liveAtcBtn) {
                 liveAtcBtn.href = `https://www.liveatc.net/search/?icao=${icao}`;
                 liveAtcBtn.innerHTML = `<span>📡 LiveATC (${icao})</span><span>↗</span>`;
             }
 
-            // 2. Handle Specific Streams (RCTP)
+            // RCTP Special Handling (Taiwan)
             if (icao === 'RCTP') {
                 label.innerText = "RCTP LIVE STREAMS (TWATC)";
                 container.innerHTML = `
@@ -832,7 +866,6 @@
                 `;
             } 
             else {
-                // Default View for other airports
                 label.innerText = "AUDIO STREAMS";
                 container.innerHTML = `
                     <div style="color:var(--sub-text); font-size:13px; text-align:center; padding:10px 0;">
@@ -843,12 +876,11 @@
             }
         }
 
-        // --- UPDATED: ADVISORY METEOGRAM WITH BIGGER ARROWS ---
+        // --- 6. CHARTS & VISUALIZATIONS ---
+
         async function fetchMeteogram(lat, lon) {
             const loader = document.getElementById('meteoLoading');
             loader.style.display = 'block';
-            
-            // Reset cache on new fetch
             meteoDataCache = null; 
         
             try {
@@ -857,9 +889,7 @@
                 const data = await res.json();
                 
                 if(data.hourly) {
-                    // 1. SAVE DATA TO CACHE
                     meteoDataCache = data.hourly; 
-                    // 2. Attempt to draw (will work if TAF tab is already open)
                     drawMeteogram(meteoDataCache);
                 }
                 loader.style.display = 'none';
@@ -910,7 +940,7 @@
                 return '☁️';
             }
 
-            // 1. Vertical Grid
+            // Vertical Grid
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -921,7 +951,7 @@
             }
             ctx.stroke();
 
-            // 2. Fog Risk Shading
+            // Fog Risk Shading
             const stepX = (W - padding.left - padding.right) / (len - 1);
             for(let i=0; i<len-1; i++) {
                 const spread = h.temperature_2m[i] - h.dewpoint_2m[i];
@@ -939,7 +969,7 @@
                 ctx.fill();
             }
 
-            // 3. Lines
+            // Lines
             function drawLine(dataArr, color, width) {
                 ctx.beginPath();
                 ctx.strokeStyle = color;
@@ -955,7 +985,7 @@
             drawLine(h.dewpoint_2m, '#0a84ff', 2);
             drawLine(h.temperature_2m, '#ff453a', 2);
 
-            // 4. Data Points & BIGGER ARROWS
+            // Data Points
             ctx.textAlign = 'center';
             for(let i=0; i<len; i+=3) {
                 const x = getX(i);
@@ -971,18 +1001,16 @@
                 const windSpd = Math.round(h.wind_speed_10m[i]);
                 const windGust = Math.round(h.wind_gusts_10m[i]);
                 
-                // --- BIGGER ARROW LOGIC ---
                 ctx.save();
                 ctx.translate(x, H - 25);
                 ctx.rotate((windDir + 180) * Math.PI / 180); 
                 ctx.beginPath();
-                // Increased size: (0,-8) instead of (0,-4)
                 ctx.moveTo(0, -8); 
                 ctx.lineTo(-5, 5); 
                 ctx.lineTo(0, 2); 
                 ctx.lineTo(5, 5); 
                 ctx.closePath();
-                ctx.fillStyle = '#0a84ff'; // Cyan/Blue for better visibility
+                ctx.fillStyle = '#0a84ff'; 
                 ctx.fill();
                 ctx.restore();
                 
@@ -994,16 +1022,16 @@
                     spdText += `G${windGust}`;
                     ctx.fillStyle = '#ff9f0a';
                 }
-                ctx.fillText(spdText, x, H - 10); // Moved slightly down
+                ctx.fillText(spdText, x, H - 10);
                 
-                // Time
                 ctx.fillStyle = '#666';
                 ctx.font = '10px sans-serif';
                 ctx.fillText(`${i}z`, x, H);
             }
         }
 
-        // --- RENDERERS ---
+        // --- 7. RENDERING UTILS ---
+
         function renderMetar(d) {
             const rawContainer = document.getElementById('rawMetar');
             const now = new Date();
@@ -1065,7 +1093,6 @@
             });
         }
 
-        // --- DUAL LINEAR GAUGES ---
         function renderFlightRuleBar(m) {
             let ceiling = 99999;
             if (m.clouds && m.clouds.length > 0) {
@@ -1080,14 +1107,12 @@
                 let color = 'var(--success)';
                 
                 if (type === 'ceil') {
-                    // Scale: 0-500 (25%), 500-1000 (25%), 1000-3000 (25%), >3000 (25%)
                     if (val < 500) { pct = (val / 500) * 25; color = 'var(--lifr)'; } 
                     else if (val < 1000) { pct = 25 + ((val - 500) / 500) * 25; color = 'var(--danger)'; } 
                     else if (val < 3000) { pct = 50 + ((val - 1000) / 2000) * 25; color = 'var(--mvfr)'; } 
                     else { pct = 75 + Math.min(1, (val - 3000) / 3000) * 25; color = 'var(--success)'; }
                 } 
                 if (type === 'vis') {
-                    // Scale: 0-1 (25%), 1-3 (25%), 3-5 (25%), >5 (25%)
                     if (val < 1) { pct = (val / 1) * 25; color = 'var(--lifr)'; } 
                     else if (val < 3) { pct = 25 + ((val - 1) / 2) * 25; color = 'var(--danger)'; } 
                     else if (val < 5) { pct = 50 + ((val - 3) / 2) * 25; color = 'var(--mvfr)'; } 
@@ -1121,9 +1146,9 @@
 
         async function findNearbyStations(lat, lon) {
             try {
-                const headers = { 'Authorization': `Bearer ${AVWX_KEY}` };
+                // Use smartFetch
                 const url = `https://avwx.rest/api/station/near/${lat},${lon}?n=5`; 
-                const res = await fetch(url, { headers });
+                const res = await smartFetch(url); 
                 const data = await res.json();
                 
                 const list = document.getElementById('nearList');
@@ -1155,11 +1180,9 @@
             let qnhHpa = currentMetar.alt;
             if(currentMetar.altUnit === 'inHg') qnhHpa = currentMetar.alt * 33.8639;
             
-            // Standard Aviation Calc: PA = Elev + (1013 - QNH) * 30
             const pa = Math.round(elev + (1013.25 - qnhHpa) * 30);
             const isaTemp = 15 - (2 * pa / 1000); 
             const isaDev = Math.round(temp - isaTemp);
-            // DA Rule of thumb: PA + 120 * (OAT - ISA)
             const da = Math.round(pa + 120 * (temp - isaTemp));
             
             document.getElementById('calcPA').innerText = `${pa} ft`;
@@ -1185,7 +1208,8 @@
                 }).catch(e=>{});
         }
 
-        // --- WIND ROSE & RUNWAYS ---
+        // --- 8. RUNWAY & WIND ROSE ---
+
         function setupRunwaySelect() {
             const sel = document.getElementById('rwySelect'); sel.innerHTML = '';
             const mv = stationData.magnetic_variation || 0;
@@ -1270,7 +1294,6 @@
             });
         }
 
-        // --- TAF RENDERER ---
         function renderTaf(d) {
             document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
             tafDataCache = d.forecast; 
@@ -1336,7 +1359,8 @@
             document.getElementById('tafSkyStrip').style.background = `linear-gradient(to right, ${stops.join(', ')})`;
         }
 
-        // --- WORLD CLOCK ---
+        // --- 9. UTILS & CLOCK ---
+
         function initWorldClock() {
             const stored = localStorage.getItem('efb_cities_v46');
             if(stored) cityList = JSON.parse(stored); else cityList = [...AVIATION_CITIES];
@@ -1359,7 +1383,6 @@
             cityList.push({n:val, z:'UTC', icao:'USER'}); localStorage.setItem('efb_cities_v46', JSON.stringify(cityList)); updateClock();
         }
 
-        // --- E6B & MINS ---
         function checkMins() {
             const xwVal = document.getElementById('minXW').value;
             const ceilVal = document.getElementById('minCeil').value;
@@ -1367,7 +1390,6 @@
             const card = document.getElementById('minsCard');
             const banner = document.getElementById('minBanner');
 
-            // 1. NEUTRAL STATE (If inputs are empty)
             if (xwVal === '' || ceilVal === '') {
                 resDiv.innerText = "SET LIMITS"; 
                 resDiv.style.backgroundColor = "#333"; 
@@ -1377,7 +1399,6 @@
                 return;
             }
 
-            // 2. ACTIVE CHECK
             const limitXW = parseFloat(xwVal);
             const limitCeil = parseFloat(ceilVal);
             localStorage.setItem('efb_min_xw', limitXW);
@@ -1430,7 +1451,6 @@
             document.getElementById('resTAS').innerText = Math.round(tas) + " kts";
         }
 
-        // --- UTILS ---
         function formatRawMetar(rawText) {
             if (!rawText) return "";
             let html = rawText;
@@ -1477,25 +1497,18 @@
         }
 
         function setTab(name) {
-            // Standard Tab Switching
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+name).classList.add('active');
             
-            // Find the button that was clicked and make it active
             const tabs = document.querySelectorAll('.tab');
             tabs.forEach(t => {
                 if(t.getAttribute('onclick').includes(name)) t.classList.add('active');
             });
         
-            // --- FIX FOR WORLD CLOCK ---
             if(name === 'world') updateClock();
-        
-            // --- FIX FOR TAF CHART ---
             if(name === 'taf' && meteoDataCache) {
-                setTimeout(() => {
-                    drawMeteogram(meteoDataCache);
-                }, 50);
+                setTimeout(() => { drawMeteogram(meteoDataCache); }, 50);
             }
         }
         function updateHeaderCat(status, colorClass) {
