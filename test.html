@@ -1682,62 +1682,60 @@
                 const btn = document.getElementById('btnFetchLive');
                 const panel = document.getElementById('liveAwosPanel');
                 
-                btn.innerHTML = "⏳ Downloading Text Feed...";
+                btn.innerHTML = "⏳ Connecting to Sensor...";
                 btn.disabled = true;
             
-                // 1. CHANGE TARGET: We now aim for the "text.php" version
-                // This page has the data baked in!
+                // 1. TARGET THE XML SOURCE DIRECTLY
                 const proxyUrl = 'https://api.allorigins.win/get?url=';
-                const targetUrl = encodeURIComponent('http://kmhr.awosnet.com/text.php'); 
+                const targetUrl = encodeURIComponent('http://kmhr.awosnet.com/awiAwosNet.php');
                 const cb = Date.now();
             
                 try {
                     const response = await fetch(`${proxyUrl}${targetUrl}&t=${cb}`);
                     const data = await response.json();
             
-                    if (!data.contents) throw new Error("No data received");
+                    if (!data.contents) throw new Error("No signal received");
                     
-                    // The text version usually looks like a simple list or table.
-                    // We will stick to the "Fuzzy Search" because it works on both HTML and Text.
-                    const rawText = data.contents;
-                    
-                    // --- DEBUG: Check the console to see what the text version looks like ---
-                    console.log("AWOS TEXT DATA:", rawText);
+                    // 2. PARSE XML
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data.contents, "text/xml");
             
-                    // 2. SCRAPER UTILITY
-                    // Searches for "Label" ... then grabs the next chunk of text/numbers
-                    const extract = (pattern) => {
-                        // Case-insensitive, looks for label, skips junk chars, captures the value
-                        const regex = new RegExp(pattern + "[^0-9a-zA-Z\\-]*([0-9a-zA-Z\\.\\/\\-]+)", "i");
-                        const match = rawText.match(regex);
-                        return match ? match[1] : "N/A";
+                    // Helper to safely get attributes from the XML tags
+                    const getVal = (tagName) => {
+                        const el = xmlDoc.getElementsByTagName(tagName)[0];
+                        // The value is inside the 'value' attribute, e.g. <windSpeed value="10" />
+                        return el ? el.getAttribute("value") : null;
                     };
             
-                    // 3. EXTRACT DATA
-                    // Note: Labels in text.php might be slightly different. 
-                    // We try a few common variations.
-                    let wDir = extract("Wind Direction");
-                    if (wDir === "N/A") wDir = extract("Average Wind"); // Fallback label
+                    // 3. EXTRACT SENSOR DATA
+                    // These tag names come directly from the JS file you shared
+                    let wDir = getVal("twoMinutewindDirection");
+                    let wSpd = getVal("twoMinutewindSpeed");
+                    let vis = getVal("tenMinutevisibility");
+                    let sky = getVal("ceilometer"); 
+                    let temp = getVal("airTemperature");
+                    let time = getVal("time");
             
-                    let wSpd = extract("Wind Speed");
-                    if (wSpd === "N/A") wSpd = extract("Average Wind.*@"); // Try to grab speed after '@'
+                    // 4. FORMATTING & FALLBACKS
+                    // Round wind if it exists
+                    wDir = wDir ? Math.round(wDir).toString().padStart(3, '0') : "---";
+                    wSpd = wSpd ? Math.round(wSpd) : "0";
+                    
+                    // Clean up Visibility (sometimes it's decimal like 10.0)
+                    if(vis) vis = parseFloat(vis).toFixed(1); // e.g. "10.0"
+                    
+                    // Clean up Sky (The sensor sends \\\\\\ for no data)
+                    if (!sky || sky.includes("\\")) sky = "CLR"; 
             
-                    let vis = extract("Visibility");
-                    let sky = extract("Sky Cond"); 
-                    if (sky === "N/A") sky = extract("Sky");
-            
-                    let temp = extract("Temp"); 
-                    let updated = extract("Updated"); // Usually at the top or bottom
-            
-                    // 4. UPDATE UI
+                    // 5. UPDATE UI
                     document.getElementById('liveWind').innerText = `${wDir}° @ ${wSpd}kt`;
-                    document.getElementById('liveVis').innerText  = `${vis} | ${sky}`;
-                    document.getElementById('liveAwosTime').innerText = `UPDATED: ${updated}`;
+                    document.getElementById('liveVis').innerText  = `${vis}sm | ${sky}`;
+                    document.getElementById('liveAwosTime').innerText = `SENSOR TIME: ${time}`;
                     
                     panel.classList.remove('hidden');
                     btn.innerHTML = "📡 Refresh Sensor Data";
                     
-                    // Wind Alert
+                    // Red Text Warning for high wind
                     if(parseInt(wSpd) > 15) {
                         document.getElementById('liveWind').style.color = "#ff453a"; 
                     } else {
@@ -1745,8 +1743,8 @@
                     }
             
                 } catch (e) {
-                    console.error("AWOS Error:", e);
-                    alert("Could not load the text version (text.php).");
+                    console.error("XML Error:", e);
+                    alert("Could not parse sensor data.");
                     btn.innerHTML = "⚠️ Connection Failed";
                 } finally {
                     btn.disabled = false;
