@@ -1682,77 +1682,90 @@
                 const btn = document.getElementById('btnFetchLive');
                 const panel = document.getElementById('liveAwosPanel');
                 
-                btn.innerHTML = "⏳ Connecting to Sensor...";
+                // UI Loading State
+                btn.innerHTML = "⏳ Scanning Signal...";
+                btn.style.opacity = "0.7";
                 btn.disabled = true;
             
-                // Use AllOrigins proxy to bypass CORS
+                // We use a proxy to get the raw HTML text
                 const proxyUrl = 'https://api.allorigins.win/get?url=';
-                const targetUrl = encodeURIComponent('http://kmhr.awosnet.com/index.html');
+                // CAUTION: Sometimes data is in 'default.htm' or 'index.html'
+                const targetUrl = encodeURIComponent('http://kmhr.awosnet.com/');
                 const cb = Date.now();
             
                 try {
                     const response = await fetch(`${proxyUrl}${targetUrl}&t=${cb}`);
                     const data = await response.json();
             
-                    if (!data.contents) throw new Error("No content received");
+                    if (!data.contents) throw new Error("No signal received");
             
-                    // Parse HTML
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(data.contents, 'text/html');
+                    const rawHtml = data.contents;
             
-                    // Helper to find data in the table cells
-                    const findVal = (txt) => {
-                        // Find all table cells
-                        const cells = Array.from(doc.querySelectorAll('td, th, font'));
-                        // Find the one containing our text label
-                        const label = cells.find(el => el.textContent && el.textContent.includes(txt));
-                        if (label) {
-                            // Try to find the value in the next few elements (structure varies)
-                            // Usually it's in the next sibling or parent's next sibling
-                            let val = label.nextElementSibling ? label.nextElementSibling.textContent : null;
-                            
-                            // If not found, try traversing up to the TR and finding the next TD
-                            if(!val && label.closest('tr')) {
-                                 const row = label.closest('tr');
-                                 const tds = Array.from(row.querySelectorAll('td'));
-                                 const idx = tds.indexOf(label.closest('td'));
-                                 if(tds[idx+1]) val = tds[idx+1].textContent;
-                            }
-                            return val ? val.trim() : "N/A";
-                        }
-                        return "N/A";
+                    // --- DEBUG: Uncomment this to see the raw HTML in your browser console ---
+                    // console.log("RAW AWOS DATA:", rawHtml);
+            
+                    // 1. Check for FRAMESET (Old websites often hide data inside a frame)
+                    if (rawHtml.toLowerCase().includes('<frameset')) {
+                        alert("⚠️ KMHR uses Frames. Trying to fetch sub-frame...");
+                        // If it uses frames, we recursively try to fetch the likely data frame
+                        // Common names: 'awos.html', 'data.htm', 'current.htm'
+                        // For now, let's just warn.
+                        throw new Error("Site uses Frameset - Cannot scrape main index.");
+                    }
+            
+                    // 2. FUZZY REGEX SCRAPER (Robust)
+                    // This looks for the Label + any characters + the Value
+                    // It ignores HTML tags like <td> or <font> in between
+                    
+                    const extract = (pattern) => {
+                        // Regex explanation: 
+                        // label found, followed by non-digit chars (tags/spaces), capturing the value
+                        const regex = new RegExp(pattern + "[^0-9a-zA-Z\\-]*([0-9a-zA-Z\\.\\/\\-]+)", "i");
+                        const match = rawHtml.match(regex);
+                        return match ? match[1] : "N/A";
                     };
             
-                    // Scrape specific fields based on KMHR AWOS layout
-                    const windDir = findVal("Wind Direction");
-                    const windSpd = findVal("Wind Speed");
-                    const vis = findVal("Visibility");
-                    const sky = findVal("Sky Condition");
-                    const temp = findVal("Temperature");
-                    const updated = findVal("Updated");
+                    // Define patterns specific to AWOSNet layouts
+                    // They often look like: "Wind Speed ... 5" or "Vis ... 10"
+                    let wDir = extract("Wind Direction");
+                    let wSpd = extract("Wind Speed");
+                    let vis  = extract("Visibility");
+                    let sky  = extract("Sky Cond"); 
+                    let temp = extract("Temp"); 
+                    let updated = extract("Updated");
             
-                    // Update UI
-                    document.getElementById('liveWind').innerText = `${windDir}° @ ${windSpd}`;
-                    document.getElementById('liveVis').innerText = `${vis} | ${sky}`;
+                    // Fallbacks if "Wind Direction" failed (sometimes just "Wind")
+                    if (wDir === "N/A") wDir = extract("Wind");
+                    
+                    // 3. Update the UI
+                    document.getElementById('liveWind').innerText = `${wDir}° @ ${wSpd}kt`;
+                    document.getElementById('liveVis').innerText  = `${vis} | ${sky}`;
                     document.getElementById('liveAwosTime').innerText = `UPDATED: ${updated}`;
                     
-                    // Show the panel
+                    // Show Panel
                     panel.classList.remove('hidden');
                     btn.innerHTML = "📡 Refresh Sensor Data";
                     
-                    // Optional: Highlight if wind is strong
-                    if(parseInt(windSpd) > 15) {
-                        document.getElementById('liveWind').style.color = "var(--danger)";
+                    // Critical Wind Warning (Red Text if > 15kt)
+                    const spdInt = parseInt(wSpd);
+                    if (!isNaN(spdInt) && spdInt >= 15) {
+                        document.getElementById('liveWind').style.color = "#ff453a"; // Red
                     } else {
-                        document.getElementById('liveWind').style.color = "var(--text)";
+                        document.getElementById('liveWind').style.color = "#ffffff"; // White
                     }
             
                 } catch (e) {
-                    console.error(e);
-                    alert("Could not connect to Mather AWOS directly.\nThe site might be down or changing layout.");
-                    btn.innerHTML = "⚠️ Connection Failed";
+                    console.error("AWOS Error:", e);
+                    // Show a helpful error in the UI
+                    document.getElementById('liveWind').innerText = "ERR";
+                    document.getElementById('liveVis').innerText  = "Check Console";
+                    btn.innerHTML = "⚠️ Scrape Failed";
+                    
+                    // If it really fails, it might be because KMHR specifically uses a weird URL
+                    // Try manually visiting http://kmhr.awosnet.com/ in a new tab to check.
                 } finally {
                     btn.disabled = false;
+                    btn.style.opacity = "1";
                 }
             }
         
