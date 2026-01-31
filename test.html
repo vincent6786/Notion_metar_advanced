@@ -1721,11 +1721,10 @@
                 const modal = document.getElementById('awosModal');
                 const iframe = document.getElementById('awosFrame');
                 
-                // 1. CHANGE TARGET: Point to the main graphical site
+                // CHANGE THIS LINE: Remove "text.php"
                 const target = "http://kmhr.awosnet.com/";
                 
-                // 2. PROXY: We still MUST use the proxy because your app is HTTPS and the weather is HTTP.
-                // Without this proxy, the browser will block the site entirely (Mixed Content error).
+                // This proxy wrapper is still required for the HTTP site to load in your HTTPS app
                 iframe.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
                 
                 modal.classList.add('active');
