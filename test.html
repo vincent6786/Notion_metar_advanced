@@ -369,9 +369,9 @@
             </div>
         </div>
         
-        <button id="btnFetchLive" class="tool-btn hidden" style="margin-top:0; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;" onclick="fetchRealTimeAwos()">
-            📡 Fetch Real-Time Sensor Data (KMHR)
-        </button>
+        <a id="btnLiveLink" href="#" target="_blank" class="tool-btn hidden" style="margin-top:0; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a; text-decoration:none; text-align:center; display:block;">
+            📡 Open Live Sensor (KMHR) ↗
+        </a>
         
         <div class="metar-grid">
             
@@ -800,18 +800,21 @@
                         renderMetar(m); 
                         renderSkyVisuals(m);
 
-                        const liveBtn = document.getElementById('btnFetchLive');
-                        const livePanel = document.getElementById('liveAwosPanel');
+                        const liveBtn = document.getElementById('btnLiveLink');
+                        const livePanel = document.getElementById('liveAwosPanel'); // Keep this if you want to use it later, or hide it
                         
-                        // Hide them by default every time we load new data
+                        // Reset state
                         liveBtn.classList.add('hidden');
-                        livePanel.classList.add('hidden');
+                        if(livePanel) livePanel.classList.add('hidden');
                         
-                        // Only show button if it's Mather (KMHR)
+                        // Mather Airport (KMHR) Logic
                         if (icao === 'KMHR') {
                             liveBtn.classList.remove('hidden');
+                            // We point specifically to the "Text" version because it loads faster on mobile
+                            // and is easier to read while flying than the full graphical page.
+                            liveBtn.href = "http://kmhr.awosnet.com/text.php"; 
                         }
-                        
+
                         renderFlightRuleBar(m); 
                         setupRunwaySelect();
                         findNearbyStations(stationData.latitude, stationData.longitude); 
