@@ -33,6 +33,31 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
+        /* --- MODAL (IN-APP BROWSER) --- */
+        .modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            flex-direction: column;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; color: #fff;
+        }
+        .modal-close {
+            background: #333; border: 1px solid #555; color: #fff;
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 700;
+        }
+        
+        .browser-frame {
+            width: 100%; flex-grow: 1; border: none; 
+            background: #fff; border-radius: 8px;
+        }
+        
         /* --- 2. ANIMATIONS --- */
         @keyframes slideUpFade {
             0% { opacity: 0; transform: translateY(20px) scale(0.98); }
@@ -428,6 +453,10 @@
 
         <div class="raw-text" id="rawMetar">Select an airport above.</div>
         <div class="metar-footer"><span id="mAge">--</span><span id="mSpread">Spread: --</span></div>
+     
+        <button id="btnFetchLive" class="tool-btn hidden" style="margin-top:20px; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;" onclick="openAwosModal()">
+            📡 Open Live Sensor View
+        </button>
         
         <div id="nearbyContainer" class="nearby-container">
             <div class="nearby-header">NEARBY STATIONS</div>
@@ -574,6 +603,15 @@
         </div>
     </div>
 
+    <div id="awosModal" class="modal-overlay">
+        <div class="modal-header">
+            <div style="font-weight:700;">📡 LIVE SENSOR (KMHR)</div>
+            <button class="modal-close" onclick="closeAwosModal()">DONE</button>
+        </div>
+        <iframe id="awosFrame" class="browser-frame" src=""></iframe>
+    </div>
+    
+    
     <script>
             // --- 1. CONFIGURATION & STATE ---
     
@@ -1679,7 +1717,25 @@
             }
             function clearSearch() { document.getElementById('icao').value = ''; document.getElementById('icao').focus(); toggleClearBtn(); }
 
-
+            function openAwosModal() {
+                const modal = document.getElementById('awosModal');
+                const iframe = document.getElementById('awosFrame');
+                
+                // TRICK: We use 'api.allorigins.win' to proxy the HTTP site so it works in your HTTPS app.
+                // We point to 'text.php' because it's cleaner, but you can change it to 'index.html' if you prefer the graphics.
+                const target = "http://kmhr.awosnet.com/text.php";
+                
+                iframe.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
+                modal.classList.add('active');
+            }
+            
+            function closeAwosModal() {
+                const modal = document.getElementById('awosModal');
+                const iframe = document.getElementById('awosFrame');
+                
+                modal.classList.remove('active');
+                iframe.src = ""; // Clear source to stop background loading
+            }
         
             // Start
             initApp();
