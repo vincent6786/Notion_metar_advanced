@@ -27,12 +27,37 @@
             background-color: var(--bg); color: var(--text);
             margin: 0; padding: 12px; font-size: 14px; line-height: 1.4;
             display: flex; flex-direction: column; gap: 12px;
-            padding-bottom: max(20px, env(safe-area-inset-bottom)); 
+            padding-bottom: max(40px, env(safe-area-inset-bottom)); 
             padding-top: max(12px, env(safe-area-inset-top));
             overscroll-behavior-y: none;
             transition: background-color 0.3s, color 0.3s;
         }
 
+        /* --- MODAL (IN-APP BROWSER) --- */
+        .modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            flex-direction: column;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; color: #fff;
+        }
+        .modal-close {
+            background: #333; border: 1px solid #555; color: #fff;
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 700;
+        }
+        
+        .browser-frame {
+            width: 100%; flex-grow: 1; border: none; 
+            background: #fff; border-radius: 8px;
+        }
+        
         /* --- 2. ANIMATIONS --- */
         @keyframes slideUpFade {
             0% { opacity: 0; transform: translateY(20px) scale(0.98); }
@@ -46,7 +71,7 @@
                 background: linear-gradient(160deg, #1a1a2e 0%, #000000 100%);
                 background-attachment: fixed;
             }
-            .metar-card, .info-card, .freq-card, .search-box, .wind-vis-container, .taf-detail-card, .fr-bar-container, .atc-btn, .nearby-btn, .tabs, .sky-section, .meteogram-container, .quick-chip {
+            .metar-card, .info-card, .freq-card, .search-box, .wind-vis-container, .taf-detail-card, .fr-bar-container, .atc-btn, .nearby-btn, .tabs, .sky-section, .meteogram-container, .quick-chip, .craft-pad {
                 background: rgba(35, 35, 40, 0.65) !important;
                 backdrop-filter: blur(25px);
                 -webkit-backdrop-filter: blur(25px);
@@ -81,12 +106,12 @@
         body.cockpit-dark .sky-section, body.cockpit-dark canvas, 
         body.cockpit-dark .icon-btn, body.cockpit-dark .fr-track-modern, 
         body.cockpit-dark .taf-sky-strip, body.cockpit-dark .meteogram-container, 
-        body.cockpit-dark .quick-chip {
+        body.cockpit-dark .quick-chip, body.cockpit-dark .craft-pad {
             filter: grayscale(100%) sepia(100%) saturate(1000%) hue-rotate(-50deg) contrast(1.5);
         }
         body.cockpit-dark .badge-cat { color: #000 !important; background: #ff0000 !important; font-weight: 900; }
         body.cockpit-dark .tab.active { border-bottom-color: #ff0000; color: #ff0000; }
-        body.cockpit-dark input, body.cockpit-dark select { background: #110000 !important; color: #ff3333 !important; }
+        body.cockpit-dark input, body.cockpit-dark select, body.cockpit-dark textarea { background: #110000 !important; color: #ff3333 !important; }
         
         /* NOTAM HIGHLIGHTER STYLES */
         .n-crit { color: #ff453a; font-weight: 800; background: rgba(255, 69, 58, 0.15); padding: 0 4px; border-radius: 3px; }
@@ -288,6 +313,29 @@
         .conv-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .conv-lbl { font-size: 10px; color: var(--sub-text); margin-bottom: 4px; text-transform: uppercase; }
         .conv-inp { width: 100%; background: #333; border: 1px solid #555; color: #fff; padding: 8px; border-radius: 6px; font-size: 16px; font-weight: 600; }
+        
+        /* CRAFT Pad */
+        .craft-pad {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            font-family: 'SF Mono', monospace;
+            font-size: 14px;
+            color: #fff;
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            outline: none;
+        }
+        .safety-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 10px;
+            color: #555;
+            padding: 10px;
+            border-top: 1px solid #222;
+        }
     </style>
 </head>
 <body>
@@ -308,7 +356,7 @@
                 <button class="icon-btn" onclick="locateUser()" title="Near Me (GPS)" style="border:none; background:transparent; width:30px; font-size:16px;">📍</button>
             </div>
         </div>
-        <button class="icon-btn" onclick="loadData()" title="Force Refresh">↻</button>
+        <button class="icon-btn" onclick="loadData(true)" title="Force Refresh">↻</button>
         
         <div id="headerCat" class="badge badge-cat">--</div>
         <div id="zuluTime" class="badge badge-time">--:--Z</div>
@@ -348,6 +396,10 @@
             </div>
         </div>
 
+        <button id="btnFetchLive" class="tool-btn hidden" style="margin-top:10px; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;" onclick="openAwosModal()">
+            📡 Open Live Sensor View (KMHR)
+        </button>
+        
         <div class="metar-grid">
             
             <div id="skyVisuals" class="sky-section">
@@ -403,7 +455,7 @@
 
         <div class="raw-text" id="rawMetar">Select an airport above.</div>
         <div class="metar-footer"><span id="mAge">--</span><span id="mSpread">Spread: --</span></div>
-        
+     
         <div id="nearbyContainer" class="nearby-container">
             <div class="nearby-header">NEARBY STATIONS</div>
             <div id="nearList" class="nearby-list">
@@ -467,7 +519,10 @@
     </div>
     
     <div id="tab-atc" class="view-section">
-        <div class="info-card" style="margin-bottom: 20px;">
+        <div class="section-title" style="margin-top:0;">CRAFT Clearance Recorder</div>
+        <textarea id="craftPad" class="craft-pad" placeholder="C - Clearance Limit&#10;R - Route&#10;A - Altitude&#10;F - Frequency&#10;T - Transponder"></textarea>
+        
+        <div class="info-card" style="margin-bottom: 20px; margin-top:20px;">
              <div class="ic-lbl" style="margin-bottom:8px;" id="audioLabel">AUDIO STREAMS</div>
              <div id="audioPlayerTarget">
                  <div style="color:var(--sub-text); font-style:italic; padding:10px; text-align:center;">
@@ -549,19 +604,22 @@
         </div>
     </div>
 
+    <div class="safety-footer">
+        NOT FOR NAVIGATION. REFERENCE ONLY. ALWAYS CROSS-CHECK OFFICIAL SOURCES.
+    </div>
+
+    <div id="awosModal" class="modal-overlay">
+        <div class="modal-header">
+            <div style="font-weight:700;">📡 LIVE SENSOR (KMHR)</div>
+            <button class="modal-close" onclick="closeAwosModal()">DONE</button>
+        </div>
+        <iframe id="awosFrame" class="browser-frame" src=""></iframe>
+    </div>
+    
+    
     <script>
             // --- 1. CONFIGURATION & STATE ---
     
-            // SECURITY NOTE: We use 4 keys in a rotation pool. 
-            // If one hits the 429 limit, the next one is used automatically.
-            const API_KEYS = [
-                'L1rylGsq_pzzgadZkxQGIp3V_VJmLhDIy7UZe_XjhL4',
-                '2mT6ZhJh6GZygRttPVdMTt_XgGNnCZCg9ulp_wlnSDI',
-                'MfB7DS2UFeFiE95bbEzMhdHXWLJdFGOkMwqNaQieGEw',
-                '7BVPOe0lM6CvvLCOGwmcmCxTp1n6PgCdcBJ9Lnt3WpI'
-            ];
-            
-            let currentKeyIndex = 0;
             let currentWind = { dir:0, spd:0 }; 
             let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
             let stationData = null;
@@ -570,8 +628,6 @@
             let tafDataCache = null;
             let lastMetarObj = null; 
             let meteoDataCache = null;
-    
-            // Default cities for world clock (fallback)
             let cityList = [];
             
             const CLOUD_ICON_PATH = "M25 15C25 10.58 21.42 7 17 7C16.5 7 16 7.05 15.54 7.15C14.73 4.19 12.06 2 9 2C5.13 2 2 5.13 2 9C2 9.17 2 9.35 2.03 9.5C0.84 10.19 0 11.5 0 13C0 15.21 1.79 17 4 17H25C27.76 17 30 14.76 30 12C30 9.24 27.76 7 25 7V15Z";
@@ -582,6 +638,13 @@
                 initWorldClock();
                 checkNightModeSaved();
                 renderHistory(); 
+                
+                // Load CRAFT scratchpad
+                const savedCraft = localStorage.getItem('efb_craft');
+                if(savedCraft) document.getElementById('craftPad').value = savedCraft;
+                document.getElementById('craftPad').addEventListener('input', (e) => {
+                    localStorage.setItem('efb_craft', e.target.value);
+                });
     
                 // Load Default Station Preference
                 const savedDefault = localStorage.getItem('efb_default_station');
@@ -604,28 +667,30 @@
                 setInterval(updateClock, 1000);
             }
     
-            // --- 3. FAILOVER NETWORK LAYER (SMART FETCH) ---
+            // --- 3. BACKEND FETCH LAYER (SECURE) ---
     
-            function getHeaders() {
-                return { 'Authorization': `Bearer ${API_KEYS[currentKeyIndex]}` };
-            }
-    
-            async function smartFetch(url) {
-                for (let i = 0; i < API_KEYS.length; i++) {
-                    try {
-                        const res = await fetch(url, { headers: getHeaders() });
-                        if (res.ok) return res;
-                        if (res.status === 429 || res.status === 401) {
-                            console.warn(`Key ${currentKeyIndex} exhausted. Switching...`);
-                            currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-                            continue; 
-                        }
-                        return res;
-                    } catch (err) {
-                        console.error("Network error, retrying...", err);
-                    }
+            async function secureFetch(endpoint) {
+                // Check cache first for METAR/TAF/Station data
+                const cacheKey = `cache_${endpoint}`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    const c = JSON.parse(cached);
+                    // Cache valid for 10 minutes
+                    if (Date.now() - c.ts < 600000) return c.data;
                 }
-                throw new Error("All API keys exhausted or network down.");
+
+                try {
+                    const res = await fetch(endpoint);
+                    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+                    const data = await res.json();
+                    
+                    // Save to cache
+                    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: data }));
+                    return data;
+                } catch (err) {
+                    console.error("Fetch error", err);
+                    throw err;
+                }
             }
     
             // --- 4. CORE DATA LOGIC ---
@@ -691,7 +756,7 @@
                 renderHistory();
             }
     
-            // GPS Locate with smartFetch
+            // GPS Locate
             function locateUser() {
                 const btn = document.querySelector('.search-box button');
                 const originalIcon = '📍';
@@ -708,9 +773,7 @@
                     const lon = pos.coords.longitude;
                     
                     try {
-                        const res = await smartFetch(`https://avwx.rest/api/station/near/${lat},${lon}?n=1`);
-                        const data = await res.json();
-                        
+                        const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}`);
                         if (data.length > 0) {
                             const nearest = data[0].station.icao;
                             document.getElementById('icao').value = nearest;
@@ -719,22 +782,22 @@
                             alert("No aviation stations found nearby.");
                         }
                     } catch(e) {
-                        console.error(e);
                         alert("Error finding station via GPS.");
                     } finally {
                          btn.innerHTML = originalIcon;
                     }
                 }, (err) => {
-                    console.error(err);
                     alert("GPS permission denied or unavailable.");
                     btn.innerHTML = originalIcon;
                 });
             }
     
             // Main Data Loader
-            async function loadData() {
+            async function loadData(force = false) {
                 const icaoVal = document.getElementById('icao').value;
                 if(!icaoVal) return;
+                
+                if(force) localStorage.clear(); // Clear cache if force refresh
                 
                 const icao = icaoVal.toUpperCase();
                 addToHistory(icao); 
@@ -746,21 +809,19 @@
                 const rawContainer = document.getElementById('rawMetar');
                 rawContainer.innerHTML = 'Loading...';
                 document.getElementById('nearList').innerHTML = '<span style="color:#555;">Scanning...</span>';
-    
-                const cb = Date.now();
                 
                 try {
-                    const stationResp = await smartFetch(`https://avwx.rest/api/station/${icao}?t=${cb}`);
-                    if(!stationResp.ok) throw new Error("Station Not Found");
-                    stationData = await stationResp.json();
+                    // Fetch Station Info
+                    stationData = await secureFetch(`/api/weather?type=station&station=${icao}`);
                     renderInfo(stationData); 
                     
                     fetchMeteogram(stationData.latitude, stationData.longitude);
     
+                    // Parallel Fetch
                     const [metarRes, tafRes, notamRes] = await Promise.allSettled([
-                        smartFetch(`https://avwx.rest/api/metar/${icao}?t=${cb}`).then(r=>r.json()),
-                        smartFetch(`https://avwx.rest/api/taf/${icao}?t=${cb}`).then(r=>r.json()),
-                        smartFetch(`https://avwx.rest/api/notam/${icao}?t=${cb}`).then(r=>r.json())
+                        secureFetch(`/api/weather?type=metar&station=${icao}`),
+                        secureFetch(`/api/weather?type=taf&station=${icao}`),
+                        secureFetch(`/api/weather?type=notam&station=${icao}`)
                     ]);
     
                     if(metarRes.status === 'fulfilled' && !metarRes.value.error) {
@@ -774,6 +835,12 @@
                         
                         renderMetar(m); 
                         renderSkyVisuals(m);
+
+                        // AWOS button logic
+                        const liveBtn = document.getElementById('btnFetchLive');
+                        if (icao === 'KMHR') liveBtn.classList.remove('hidden');
+                        else liveBtn.classList.add('hidden');
+
                         renderFlightRuleBar(m); 
                         setupRunwaySelect();
                         findNearbyStations(stationData.latitude, stationData.longitude); 
@@ -784,48 +851,7 @@
     
                     if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
                     
-                    if(notamRes.status === 'fulfilled') {
-                        const n = notamRes.value;
-                        const notamContainer = document.getElementById('notamList');
-                        
-                        if (Array.isArray(n) && n.length > 0) {
-                            const critical = [];
-                            const warning = [];
-                            const info = [];
-    
-                            n.forEach(x => {
-                                const raw = x.raw;
-                                if (/(CLSD|CLOSED|U\/S|UNSERVICEABLE|FAIL)/.test(raw)) {
-                                    critical.push(x);
-                                } else if (/(OBST|WORK|WIP|TRIGGER|SNOW|ICE|DANGER)/.test(raw)) {
-                                    warning.push(x);
-                                } else {
-                                    info.push(x);
-                                }
-                            });
-    
-                            const renderGroup = (list, title, color) => {
-                                if(list.length === 0) return '';
-                                return `
-                                    <div style="color:${color}; font-weight:800; margin:14px 0 4px 0; font-size:11px; text-transform:uppercase;">${title} (${list.length})</div>
-                                    ${list.map(x => `
-                                        <div style="margin-bottom:6px; border-left:3px solid ${color}; background:rgba(255,255,255,0.03); padding:6px; font-size:11px; font-family:'SF Mono', monospace;">
-                                            <div style="color:#666; font-size:9px; margin-bottom:2px;">${x.start_time?.dt ? new Date(x.start_time.dt).toLocaleDateString() : ''}</div>
-                                            ${formatNotamText(x.raw)}
-                                        </div>
-                                    `).join('')}
-                                `;
-                            };
-    
-                            notamContainer.innerHTML = 
-                                renderGroup(critical, '⛔ CRITICAL', '#ff453a') +
-                                renderGroup(warning, '⚠️ CAUTION', '#ff9f0a') +
-                                renderGroup(info, 'ℹ️ INFO', '#8e8e93');
-    
-                        } else {
-                            notamContainer.innerHTML = "No NOTAMs Found";
-                        }
-                    }
+                    if(notamRes.status === 'fulfilled') renderNotams(notamRes.value);
     
                 } catch(e) {
                     console.error(e);
@@ -838,6 +864,41 @@
                                 <span>View on Metar-Taf.com ↗</span>
                             </a>
                         </div>`;
+                }
+            }
+
+            function renderNotams(n) {
+                const notamContainer = document.getElementById('notamList');
+                if (Array.isArray(n) && n.length > 0) {
+                    const critical = []; const warning = []; const info = [];
+
+                    n.forEach(x => {
+                        const raw = x.raw;
+                        if (/(CLSD|CLOSED|U\/S|UNSERVICEABLE|FAIL)/.test(raw)) critical.push(x);
+                        else if (/(OBST|WORK|WIP|TRIGGER|SNOW|ICE|DANGER)/.test(raw)) warning.push(x);
+                        else info.push(x);
+                    });
+
+                    const renderGroup = (list, title, color) => {
+                        if(list.length === 0) return '';
+                        return `
+                            <div style="color:${color}; font-weight:800; margin:14px 0 4px 0; font-size:11px; text-transform:uppercase;">${title} (${list.length})</div>
+                            ${list.map(x => `
+                                <div style="margin-bottom:6px; border-left:3px solid ${color}; background:rgba(255,255,255,0.03); padding:6px; font-size:11px; font-family:'SF Mono', monospace;">
+                                    <div style="color:#666; font-size:9px; margin-bottom:2px;">${x.start_time?.dt ? new Date(x.start_time.dt).toLocaleDateString() : ''}</div>
+                                    ${formatNotamText(x.raw)}
+                                </div>
+                            `).join('')}
+                        `;
+                    };
+
+                    notamContainer.innerHTML = 
+                        renderGroup(critical, '⛔ CRITICAL', '#ff453a') +
+                        renderGroup(warning, '⚠️ CAUTION', '#ff9f0a') +
+                        renderGroup(info, 'ℹ️ INFO', '#8e8e93');
+
+                } else {
+                    notamContainer.innerHTML = "No NOTAMs Found";
                 }
             }
     
@@ -859,25 +920,22 @@
                             <div class="m-label" style="color:var(--accent);">ATIS (127.6)</div>
                             <audio controls style="width: 100%; height: 32px; border-radius:16px;">
                                 <source src="https://stream.twatc.net/RCTP_ATIS" type="audio/mpeg">
-                                Your browser does not support the audio element.
                             </audio>
                         </div>
                         <div>
                             <div class="m-label" style="color:var(--success);">ATC SCANNER (GND/TWR/APP)</div>
                             <audio controls style="width: 100%; height: 32px; border-radius:16px;">
                                 <source src="https://stream.twatc.net/RCTP_Scan2" type="audio/mpeg">
-                                Your browser does not support the audio element.
                             </audio>
                         </div>
                         <div style="font-size:10px; color:#555; margin-top:8px; text-align:right;">Source: TWATC.net</div>
                     `;
-                } 
-                else {
+                } else {
                     label.innerText = "AUDIO STREAMS";
                     container.innerHTML = `
                         <div style="color:var(--sub-text); font-size:13px; text-align:center; padding:10px 0;">
                             No direct in-app stream available for ${icao}.<br>
-                            <span style="font-size:11px; color:#555;">Use the LiveATC button below to search external feeds.</span>
+                            <span style="font-size:11px; color:#555;">Use the LiveATC button below.</span>
                         </div>
                     `;
                 }
@@ -891,6 +949,7 @@
                 meteoDataCache = null; 
             
                 try {
+                    // Open-Meteo is free and doesn't require a key, so we can fetch directly
                     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn&forecast_days=1`;
                     const res = await fetch(url);
                     const data = await res.json();
@@ -1153,11 +1212,7 @@
     
             async function findNearbyStations(lat, lon) {
                 try {
-                    // Use smartFetch
-                    const url = `https://avwx.rest/api/station/near/${lat},${lon}?n=5`; 
-                    const res = await smartFetch(url); 
-                    const data = await res.json();
-                    
+                    const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}`);
                     const list = document.getElementById('nearList');
                     list.innerHTML = "";
                     const currentIcao = document.getElementById('icao').value.toUpperCase();
@@ -1194,6 +1249,8 @@
                 
                 document.getElementById('calcPA').innerText = `${pa} ft`;
                 document.getElementById('calcDA').innerText = `${da} ft`;
+                checkDAWarning(da, elev);
+
                 document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
                 
                 const fContainer = document.getElementById('freqContainer');
@@ -1213,6 +1270,16 @@
                         stationSunTimes = { sunrise: new Date(s.results.sunrise), sunset: new Date(s.results.sunset) };
                         if(tafDataCache) updateTafSkyGradient(new Date(tafDataCache[0].start_time.dt), new Date(tafDataCache[tafDataCache.length-1].end_time.dt));
                     }).catch(e=>{});
+            }
+
+            function checkDAWarning(da, elev) {
+                const daEl = document.getElementById('calcDA');
+                if (da > elev + 2000) {
+                    daEl.style.color = "var(--warn)";
+                    daEl.innerHTML = `${da} ft ⚠️`;
+                } else {
+                    daEl.style.color = "var(--text)";
+                }
             }
     
             // --- 8. RUNWAY & WIND ROSE ---
@@ -1373,7 +1440,6 @@
                 if(stored) {
                     cityList = JSON.parse(stored);
                 } else {
-                    // Fallback default list
                     cityList = [
                         {n:"Taipei", icao:"RCTP", z:"Asia/Taipei"},
                         {n:"New York", icao:"KJFK", z:"America/New_York"},
@@ -1387,33 +1453,21 @@
                 const now = new Date();
                 document.getElementById('zuluTime').innerText = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
                 
-                // Only update DOM if tab is active to save resources
                 if(document.getElementById('tab-world').classList.contains('active')) {
                     const container = document.getElementById('worldContainer');
                     container.innerHTML = '';
                     
                     cityList.forEach((c, index) => {
-                        // Create Date object for this city's timezone
-                        // We use toLocaleString to get the time in that zone
                         const timeStr = now.toLocaleTimeString('en-GB', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
+                        const cityDate = new Date(now.toLocaleString('en-US', { timeZone: c.z }));
+                        const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
                         
-                        // --- NEW: Calculate Offset from UTC (Zulu) ---
-                        // 1. Get string time for city
-                        const cityDateStr = now.toLocaleString('en-US', { timeZone: c.z });
-                        const cityDate = new Date(cityDateStr);
-                        // 2. Get UTC time (Zulu)
-                        const utcDateStr = now.toLocaleString('en-US', { timeZone: 'UTC' });
-                        const utcDate = new Date(utcDateStr);
-                        
-                        // 3. Difference in minutes
-                        // We need to compare "wall clock" times, so we treat them as local dates
-                        // (e.g. 10:00 vs 02:00)
                         const diffMins = (cityDate - utcDate) / 60000;
                         const diffHrs = Math.round(diffMins / 60);
                         
                         let offsetLabel = "UTC";
                         if (diffHrs > 0) offsetLabel = `UTC +${diffHrs}`;
-                        else if (diffHrs < 0) offsetLabel = `UTC ${diffHrs}`; // already has negative sign
+                        else if (diffHrs < 0) offsetLabel = `UTC ${diffHrs}`; 
                         
                         const card = document.createElement('div'); 
                         card.className = 'clock-card';
@@ -1432,7 +1486,6 @@
                 }
             }
     
-            // UPDATED: Async Add City with API Search
             async function addCustomCity() {
                 const input = document.getElementById('newCityInput');
                 const val = input.value.trim();
@@ -1443,33 +1496,20 @@
                 btn.innerText = "⏳";
                 
                 try {
-                    // 1. Search for Station using AVWX (Uses your Failover System)
-                    // If it's 4 chars, assume ICAO. If longer, search text.
-                    let searchUrl = `https://avwx.rest/api/search/station?text=${val}`;
-                    if (val.length === 4) {
-                        searchUrl = `https://avwx.rest/api/station/${val}`;
-                    }
-    
-                    const res = await smartFetch(searchUrl);
-                    let data = await res.json();
-                    
-                    // AVWX returns array for search, object for direct station
+                    const res = await secureFetch(`/api/weather?type=search&station=${val}`);
                     let station = null;
-                    if (Array.isArray(data)) {
-                        if (data.length === 0) throw new Error("No city found");
-                        station = data[0]; // Take first result
+                    if (Array.isArray(res)) {
+                        if (res.length === 0) throw new Error("No city found");
+                        station = res[0]; 
                     } else {
-                        station = data; // Direct station result
+                        station = res; 
                     }
     
-                    // 2. Resolve Timezone using Open-Meteo (Free, No Key)
-                    // We need the Lat/Lon from the station
                     const tzRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${station.latitude}&longitude=${station.longitude}&current_weather=true&timezone=auto`);
                     const tzData = await tzRes.json();
                     
                     if (!tzData.timezone) throw new Error("Timezone lookup failed");
     
-                    // 3. Save to List
                     const newCity = {
                         n: station.city || station.name,
                         icao: station.icao,
@@ -1638,8 +1678,26 @@
             }
             function clearSearch() { document.getElementById('icao').value = ''; document.getElementById('icao').focus(); toggleClearBtn(); }
     
+            function openAwosModal() {
+                const modal = document.getElementById('awosModal');
+                const iframe = document.getElementById('awosFrame');
+                
+                // --- NEW SECURE PROXY CALL ---
+                iframe.src = `/api/awos`; 
+                
+                modal.classList.add('active');
+            }
+            
+            function closeAwosModal() {
+                const modal = document.getElementById('awosModal');
+                const iframe = document.getElementById('awosFrame');
+                
+                modal.classList.remove('active');
+                iframe.src = "";
+            }
+        
             // Start
             initApp();
         </script>
-    </body>
-    </html>
+</body>
+</html>
