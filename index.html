@@ -1354,7 +1354,7 @@
                 drawWindRose(); renderRunwaysComplex();
             }
     
-            // --- IMPROVED WIND ROSE V3 (Calm/VRB Logic) ---
+            // --- IMPROVED WIND ROSE V4 (Centered Vector) ---
             function drawWindRose() {
                 const canvas = document.getElementById('windRose');
                 const ctx = canvas.getContext('2d');
@@ -1366,12 +1366,12 @@
                 const northRed = '#ff3333'; 
                 const rwyBg = '#000000';    
                 const rwyDash = '#ffffff';  
-                const textCalm = '#32d74b'; // Green for Calm
-                const textVrb = '#ff9f0a';  // Amber for Variable
+                const textCalm = '#32d74b'; 
+                const textVrb = '#ff9f0a';  
     
                 ctx.clearRect(0, 0, w, h);
     
-                // 1. Compass Ring (Always Draw)
+                // 1. Compass Ring
                 ctx.beginPath();
                 ctx.arc(cx, cy, r, 0, 2 * Math.PI);
                 ctx.strokeStyle = cyanBlue;
@@ -1388,7 +1388,6 @@
                 ctx.fillStyle = cyanBlue; ctx.fillText('W', cx - r + 14, cy);
     
                 const mv = stationData?.magnetic_variation || 0;
-                // Handle VRB for calculation (treat as 0 for runway math but don't draw arrow)
                 const safeDir = (currentWind.dir === 'VRB') ? 0 : currentWind.dir;
                 const windMag = safeDir - mv;
     
@@ -1425,8 +1424,6 @@
                     ctx.restore();
     
                     // Stats calculation
-                    // Note: If wind is VRB, these numbers are meaningless, but we leave them calculated
-                    // or you could set them to "VRB" in the text below.
                     const diff = (windMag - rwyHdg) * (Math.PI / 180);
                     const hw = Math.round(Math.cos(diff) * currentWind.spd);
                     const xw = Math.round(Math.sin(diff) * currentWind.spd);
@@ -1454,28 +1451,31 @@
                 ctx.shadowBlur = 4;
     
                 if (currentWind.spd === 0) {
-                    // CALM Condition
                     ctx.fillStyle = textCalm;
                     ctx.fillText("CALM", cx, cy);
                 } 
                 else if (currentWind.dir === 'VRB') {
-                    // VARIABLE Condition
                     ctx.fillStyle = textVrb;
                     ctx.fillText("VRB", cx, cy);
-                    // Optional: Draw a small circle to indicate confusion/variable?
+                    // Dotted circle for VRB
                     ctx.beginPath(); ctx.arc(cx, cy, 25, 0, 2*Math.PI); 
                     ctx.strokeStyle = textVrb; ctx.lineWidth = 1; 
                     ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
                 } 
                 else {
-                    // NORMAL WIND -> Draw Vector Arrow
+                    // NORMAL WIND -> Draw Centered Vector
                     const windRad = (windMag - 90) * (Math.PI / 180);
                     
                     ctx.save();
                     ctx.translate(cx, cy);
                     ctx.rotate(windRad);
                     
-                    // Outer Indicator (Source)
+                    // We define a total length for the arrow (e.g., 80px)
+                    // It starts at -40 (Left/Upwind) and ends at +40 (Right/Downwind)
+                    const arrowTotalLen = 80;
+                    const halfLen = arrowTotalLen / 2;
+    
+                    // Outer Indicator (Source Triangle on the Ring)
                     ctx.beginPath();
                     ctx.moveTo(-r - 4, 0);  
                     ctx.lineTo(-r - 14, -5); 
@@ -1484,19 +1484,19 @@
                     ctx.fillStyle = cyanBlue;
                     ctx.fill();
     
-                    // Vector Arrow (Downwind)
+                    // Centered Vector Arrow Shaft
                     ctx.beginPath();
-                    ctx.moveTo(0, 0);       
-                    ctx.lineTo(r - 10, 0);  
+                    ctx.moveTo(-halfLen, 0); // Start Upwind
+                    ctx.lineTo(halfLen, 0);  // End Downwind
                     ctx.strokeStyle = cyanBlue;
                     ctx.lineWidth = 3;
                     ctx.stroke();
                     
-                    // Arrow Head
+                    // Arrow Head (At the Downwind tip)
                     ctx.beginPath();
-                    ctx.moveTo(r - 10, 0); 
-                    ctx.lineTo(r - 20, -6);
-                    ctx.lineTo(r - 20, 6);
+                    ctx.moveTo(halfLen, 0); 
+                    ctx.lineTo(halfLen - 12, -6);
+                    ctx.lineTo(halfLen - 12, 6);
                     ctx.closePath();
                     ctx.fillStyle = cyanBlue;
                     ctx.fill();
