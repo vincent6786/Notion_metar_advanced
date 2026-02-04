@@ -1765,47 +1765,57 @@
             }
     
             function calcE6B() {
-                // 1. Get Raw Values
+                // --- 1. DYNAMIC PLACEHOLDERS (UX Fix) ---
+                const uQnh = document.getElementById('unitQnh').value;
+                const uTemp = document.getElementById('unitTemp').value;
+
+                // Update QNH placeholder (Standard Pressure)
+                document.getElementById('e6bQnh').placeholder = (uQnh === 'inhg') ? "29.92" : "1013";
+                
+                // Update Temp/Dew placeholders (Standard Day approx)
+                // 15°C / 10°C  vs  59°F / 50°F
+                document.getElementById('e6bTemp').placeholder = (uTemp === 'f') ? "59" : "15";
+                document.getElementById('e6bDew').placeholder = (uTemp === 'f') ? "50" : "10";
+
+
+                // --- 2. GET RAW VALUES ---
                 let alt = parseFloat(document.getElementById('e6bAlt').value) || 0;
                 let ias = parseFloat(document.getElementById('e6bIas').value) || 0;
                 let rawQnh = parseFloat(document.getElementById('e6bQnh').value);
                 let rawTemp = parseFloat(document.getElementById('e6bTemp').value);
                 let rawDew = parseFloat(document.getElementById('e6bDew').value);
 
-                // Handle empty inputs gracefully
-                if (isNaN(rawQnh)) rawQnh = (document.getElementById('unitQnh').value === 'inhg') ? 29.92 : 1013;
-                if (isNaN(rawTemp)) rawTemp = 15;
+                // Handle empty inputs by using the Standard Atmosphere for the selected unit
+                if (isNaN(rawQnh)) rawQnh = (uQnh === 'inhg') ? 29.92 : 1013;
+                if (isNaN(rawTemp)) rawTemp = (uTemp === 'f') ? 59 : 15;
                 
-                // 2. Normalize Units to Standard (hPa & Celsius)
+                // --- 3. NORMALIZE TO METRIC (hPa & Celsius) ---
+                // We convert everything to Metric for the math formulas
                 let qnhHpa = rawQnh;
-                if (document.getElementById('unitQnh').value === 'inhg') {
+                if (uQnh === 'inhg') {
                     qnhHpa = rawQnh * 33.8639;
                 }
 
                 let tempC = rawTemp;
                 let dewC = isNaN(rawDew) ? null : rawDew;
                 
-                if (document.getElementById('unitTemp').value === 'f') {
+                if (uTemp === 'f') {
                     tempC = (rawTemp - 32) * 5/9;
                     if (dewC !== null) dewC = (rawDew - 32) * 5/9;
                 }
 
-                // 3. Calculations
-                // Pressure Altitude: Standard Pressure (1013) - Current Pressure * 30ft per hPa
+                // --- 4. CALCULATIONS ---
+                // Pressure Altitude
                 const pa = alt + (1013.25 - qnhHpa) * 30;
 
-                // Density Altitude: PA + 120 * (OAT - ISA_Temp)
-                // ISA Temp at altitude = 15 - 2 degrees per 1000ft
+                // Density Altitude
                 const isaTemp = 15 - (2 * (pa / 1000));
                 const da = pa + 120 * (tempC - isaTemp);
 
-                // True Airspeed (Approximate Rule of Thumb: TAS increases ~2% per 1000ft)
-                // A more accurate E6B formula: TAS = IAS * sqrt(T0 / T) * sqrt(P0 / P) ... simplified here for JS speed
-                // Using the 2% rule adjusted for non-standard temp is generally "close enough" for EFB awareness
+                // True Airspeed (Rule of thumb adjusted for non-std temp)
                 const tas = ias * (1 + ((alt / 1000) * 0.02));
 
-                // Cloud Base (Temperature - Dewpoint spread) / 2.5 * 1000
-                // Spread determines how high air must rise to cool to dewpoint
+                // Cloud Base (Temperature - Dewpoint spread)
                 let cloudBase = "--";
                 if (dewC !== null) {
                     const spread = tempC - dewC;
@@ -1813,10 +1823,7 @@
                     cloudBase = Math.round(base) + " ft";
                 }
 
-                // Freezing Level
-                // Standard lapse rate is 2°C per 1000ft. 
-                // How many degrees above 0 is the current temp? 
-                // If temp is 10C, freezing level is 10/2 * 1000 = 5000ft above current altitude.
+                // Freezing Level (Lapse Rate 2C/1000ft)
                 let freezingLvl = "--";
                 if (tempC > 0) {
                     const frzAbove = (tempC / 2) * 1000;
@@ -1826,13 +1833,13 @@
                     freezingLvl = "Surface";
                 }
 
-                // 4. Output Results
+                // --- 5. OUTPUT ---
                 document.getElementById('resDA').innerText = Math.round(da) + " ft";
                 document.getElementById('resTAS').innerText = Math.round(tas) + " kt";
                 document.getElementById('resCloud').innerText = cloudBase;
                 document.getElementById('resFrz').innerText = freezingLvl;
                 
-                // Visual Warning for High Density Altitude
+                // Visual Warning
                 const daEl = document.getElementById('resDA');
                 if (da > alt + 2000) daEl.style.color = "var(--warn)";
                 else daEl.style.color = "var(--accent)";
