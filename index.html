@@ -874,7 +874,15 @@
                     if(metarRes.status === 'fulfilled' && !metarRes.value.error) {
                         const m = metarRes.value;
                         lastMetarObj = m;
-                        currentWind = { dir: m.wind_direction?.value||0, spd: m.wind_speed?.value||0 };
+                        let dirVal = m.wind_direction?.value;
+                            // Check if the raw text says VRB (AVWX sometimes returns value: null for VRB)
+                            if (m.wind_direction?.repr === 'VRB' || (dirVal === null && m.wind_speed?.value > 0)) {
+                                dirVal = 'VRB';
+                            }
+                            currentWind = { 
+                                dir: dirVal === null ? 0 : dirVal, // Default to 0 only if really missing
+                                spd: m.wind_speed?.value || 0 
+                            };
                         
                         let altVal = m.altimeter?.value || 1013;
                         let altUnit = altVal < 200 ? 'inHg' : 'hPa';
@@ -1346,7 +1354,7 @@
                 drawWindRose(); renderRunwaysComplex();
             }
     
-            // --- IMPROVED WIND ROSE V2 ---
+            // --- IMPROVED WIND ROSE V3 (Calm/VRB Logic) ---
             function drawWindRose() {
                 const canvas = document.getElementById('windRose');
                 const ctx = canvas.getContext('2d');
@@ -1358,10 +1366,12 @@
                 const northRed = '#ff3333'; 
                 const rwyBg = '#000000';    
                 const rwyDash = '#ffffff';  
+                const textCalm = '#32d74b'; // Green for Calm
+                const textVrb = '#ff9f0a';  // Amber for Variable
     
                 ctx.clearRect(0, 0, w, h);
     
-                // 1. Compass Ring
+                // 1. Compass Ring (Always Draw)
                 ctx.beginPath();
                 ctx.arc(cx, cy, r, 0, 2 * Math.PI);
                 ctx.strokeStyle = cyanBlue;
@@ -1378,7 +1388,9 @@
                 ctx.fillStyle = cyanBlue; ctx.fillText('W', cx - r + 14, cy);
     
                 const mv = stationData?.magnetic_variation || 0;
-                const windMag = currentWind.dir - mv;
+                // Handle VRB for calculation (treat as 0 for runway math but don't draw arrow)
+                const safeDir = (currentWind.dir === 'VRB') ? 0 : currentWind.dir;
+                const windMag = safeDir - mv;
     
                 // 2. Runway with Fixed Dashes
                 if (rwyIdent) {
@@ -1398,66 +1410,91 @@
                     ctx.fillRect(-rwyLen / 2, -rwyW / 2, rwyLen, rwyW);
                     ctx.strokeRect(-rwyLen / 2, -rwyW / 2, rwyLen, rwyW);
     
-                    // FIXED DASHES (Manual Drawing for Stability)
+                    // FIXED DASHES
                     ctx.fillStyle = rwyDash;
                     const dashCount = 5;
-                    const dashW = 12;  // Length of one dash
-                    const dashH = 2;   // Thickness
-                    const totalDashSpan = rwyLen * 0.7; // Dashes cover 70% of runway
+                    const dashW = 12; const dashH = 2;
+                    const totalDashSpan = rwyLen * 0.7;
                     const gap = (totalDashSpan - (dashCount * dashW)) / (dashCount - 1);
-                    
-                    // Start drawing from left side
                     let currentX = -totalDashSpan / 2;
                     
                     for(let i=0; i<dashCount; i++) {
                         ctx.fillRect(currentX, -dashH/2, dashW, dashH);
                         currentX += dashW + gap;
                     }
-    
                     ctx.restore();
     
-                    // Stats calculation (No changes here)
+                    // Stats calculation
+                    // Note: If wind is VRB, these numbers are meaningless, but we leave them calculated
+                    // or you could set them to "VRB" in the text below.
                     const diff = (windMag - rwyHdg) * (Math.PI / 180);
                     const hw = Math.round(Math.cos(diff) * currentWind.spd);
                     const xw = Math.round(Math.sin(diff) * currentWind.spd);
+                    
                     const vHW = document.getElementById('valHW');
-                    vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`;
-                    vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
-                    document.getElementById('valXW').innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
+                    const vXW = document.getElementById('valXW');
+    
+                    if (currentWind.spd === 0) {
+                        vHW.innerText = "Calm"; vHW.style.color = textCalm;
+                        vXW.innerText = "Calm";
+                    } else if (currentWind.dir === 'VRB') {
+                        vHW.innerText = "VRB"; vHW.style.color = textVrb;
+                        vXW.innerText = "VRB";
+                    } else {
+                        vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`;
+                        vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
+                        vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
+                    }
                     checkMins();
                 }
     
-                // 3. Vector Wind Arrow (From Center -> Outward)
-                if (currentWind.spd > 0) {
-                    // We rotate to the wind direction
+                // 3. Status Text OR Wind Arrow
+                ctx.font = '800 16px "SF Mono", monospace';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 4;
+    
+                if (currentWind.spd === 0) {
+                    // CALM Condition
+                    ctx.fillStyle = textCalm;
+                    ctx.fillText("CALM", cx, cy);
+                } 
+                else if (currentWind.dir === 'VRB') {
+                    // VARIABLE Condition
+                    ctx.fillStyle = textVrb;
+                    ctx.fillText("VRB", cx, cy);
+                    // Optional: Draw a small circle to indicate confusion/variable?
+                    ctx.beginPath(); ctx.arc(cx, cy, 25, 0, 2*Math.PI); 
+                    ctx.strokeStyle = textVrb; ctx.lineWidth = 1; 
+                    ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+                } 
+                else {
+                    // NORMAL WIND -> Draw Vector Arrow
                     const windRad = (windMag - 90) * (Math.PI / 180);
                     
                     ctx.save();
                     ctx.translate(cx, cy);
                     ctx.rotate(windRad);
                     
-                    // OUTER TRIANGLE (Origin Indicator)
-                    // Remains on the "Upwind" side (where wind comes FROM)
+                    // Outer Indicator (Source)
                     ctx.beginPath();
-                    ctx.moveTo(-r - 4, 0);  // Tip touching outer ring
+                    ctx.moveTo(-r - 4, 0);  
                     ctx.lineTo(-r - 14, -5); 
                     ctx.lineTo(-r - 14, 5);  
                     ctx.closePath();
                     ctx.fillStyle = cyanBlue;
                     ctx.fill();
     
-                    // VECTOR ARROW
-                    // Starts at center (0,0), flows DOWNWIND (Right side of our rotation)
+                    // Vector Arrow (Downwind)
                     ctx.beginPath();
-                    ctx.moveTo(0, 0);       // Start at center
-                    ctx.lineTo(r - 10, 0);  // Go out towards edge
+                    ctx.moveTo(0, 0);       
+                    ctx.lineTo(r - 10, 0);  
                     ctx.strokeStyle = cyanBlue;
                     ctx.lineWidth = 3;
                     ctx.stroke();
                     
-                    // Arrow Head (At the end of the line)
+                    // Arrow Head
                     ctx.beginPath();
-                    ctx.moveTo(r - 10, 0); // Tip
+                    ctx.moveTo(r - 10, 0); 
                     ctx.lineTo(r - 20, -6);
                     ctx.lineTo(r - 20, 6);
                     ctx.closePath();
