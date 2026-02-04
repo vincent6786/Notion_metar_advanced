@@ -564,16 +564,63 @@
         <div class="section-title">E6B Flight Computer</div>
         <div class="info-card">
             <div class="conv-row">
-                <div style="flex:1"><div class="conv-lbl">Alt (ft)</div><input type="number" id="e6bAlt" class="conv-inp" oninput="calcE6B()"></div>
-                <div style="flex:1"><div class="conv-lbl">QNH (hPa)</div><input type="number" id="e6bQnh" class="conv-inp" value="1013" oninput="calcE6B()"></div>
-                <div style="flex:1"><div class="conv-lbl">Temp (°C)</div><input type="number" id="e6bTemp" class="conv-inp" oninput="calcE6B()"></div>
+                <div style="flex:1">
+                    <div class="conv-lbl">Indicated Alt (ft)</div>
+                    <input type="number" id="e6bAlt" class="conv-inp" placeholder="0" oninput="calcE6B()">
+                </div>
+                <div style="flex:1">
+                    <div class="conv-lbl">CAS / IAS (kts)</div>
+                    <input type="number" id="e6bIas" class="conv-inp" placeholder="0" oninput="calcE6B()">
+                </div>
             </div>
-            <div class="conv-row">
-                <div style="flex:1"><div class="conv-lbl">IAS (kts)</div><input type="number" id="e6bIas" class="conv-inp" oninput="calcE6B()"></div>
+
+            <div class="conv-row" style="align-items: flex-end;">
+                <div style="flex:1">
+                    <div class="conv-lbl">Altimeter (QNH)</div>
+                    <input type="number" id="e6bQnh" class="conv-inp" placeholder="1013" oninput="calcE6B()">
+                </div>
+                <div style="width: 80px;">
+                    <select id="unitQnh" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
+                        <option value="hpa">hPa</option>
+                        <option value="inhg">inHg</option>
+                    </select>
+                </div>
             </div>
-            <div class="info-grid" style="margin-top:10px;">
-                <div><div class="ic-lbl">Density Alt</div><div class="ic-val" id="resDA" style="color:var(--accent);">--</div></div>
-                <div><div class="ic-lbl">TAS</div><div class="ic-val" id="resTAS" style="color:var(--success);">--</div></div>
+
+            <div class="conv-row" style="align-items: flex-end;">
+                <div style="flex:1">
+                    <div class="conv-lbl">OAT (Temp)</div>
+                    <input type="number" id="e6bTemp" class="conv-inp" placeholder="15" oninput="calcE6B()">
+                </div>
+                <div style="flex:1">
+                    <div class="conv-lbl">Dewpoint</div>
+                    <input type="number" id="e6bDew" class="conv-inp" placeholder="10" oninput="calcE6B()">
+                </div>
+                <div style="width: 80px;">
+                    <select id="unitTemp" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
+                        <option value="c">°C</option>
+                        <option value="f">°F</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px; padding-top:15px; border-top:1px solid #333;">
+                <div>
+                    <div class="ic-lbl">Density Alt</div>
+                    <div class="ic-val" id="resDA" style="color:var(--accent);">--</div>
+                </div>
+                <div>
+                    <div class="ic-lbl">True Airspeed</div>
+                    <div class="ic-val" id="resTAS" style="color:var(--success);">--</div>
+                </div>
+                <div>
+                    <div class="ic-lbl">Cloud Base (AGL)</div>
+                    <div class="ic-val" id="resCloud">--</div>
+                </div>
+                <div>
+                    <div class="ic-lbl">Freezing Lvl</div>
+                    <div class="ic-val" id="resFrz">--</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1681,15 +1728,77 @@
             }
     
             function calcE6B() {
-                const alt = parseFloat(document.getElementById('e6bAlt').value) || 0;
-                const qnh = parseFloat(document.getElementById('e6bQnh').value) || 1013;
-                const temp = parseFloat(document.getElementById('e6bTemp').value) || 15;
-                const ias = parseFloat(document.getElementById('e6bIas').value) || 0;
-                const pa = alt + (1013 - qnh) * 30;
-                const da = pa + 120 * (temp - (15 - (2*pa/1000)));
+                // 1. Get Raw Values
+                let alt = parseFloat(document.getElementById('e6bAlt').value) || 0;
+                let ias = parseFloat(document.getElementById('e6bIas').value) || 0;
+                let rawQnh = parseFloat(document.getElementById('e6bQnh').value);
+                let rawTemp = parseFloat(document.getElementById('e6bTemp').value);
+                let rawDew = parseFloat(document.getElementById('e6bDew').value);
+
+                // Handle empty inputs gracefully
+                if (isNaN(rawQnh)) rawQnh = (document.getElementById('unitQnh').value === 'inhg') ? 29.92 : 1013;
+                if (isNaN(rawTemp)) rawTemp = 15;
+                
+                // 2. Normalize Units to Standard (hPa & Celsius)
+                let qnhHpa = rawQnh;
+                if (document.getElementById('unitQnh').value === 'inhg') {
+                    qnhHpa = rawQnh * 33.8639;
+                }
+
+                let tempC = rawTemp;
+                let dewC = isNaN(rawDew) ? null : rawDew;
+                
+                if (document.getElementById('unitTemp').value === 'f') {
+                    tempC = (rawTemp - 32) * 5/9;
+                    if (dewC !== null) dewC = (rawDew - 32) * 5/9;
+                }
+
+                // 3. Calculations
+                // Pressure Altitude: Standard Pressure (1013) - Current Pressure * 30ft per hPa
+                const pa = alt + (1013.25 - qnhHpa) * 30;
+
+                // Density Altitude: PA + 120 * (OAT - ISA_Temp)
+                // ISA Temp at altitude = 15 - 2 degrees per 1000ft
+                const isaTemp = 15 - (2 * (pa / 1000));
+                const da = pa + 120 * (tempC - isaTemp);
+
+                // True Airspeed (Approximate Rule of Thumb: TAS increases ~2% per 1000ft)
+                // A more accurate E6B formula: TAS = IAS * sqrt(T0 / T) * sqrt(P0 / P) ... simplified here for JS speed
+                // Using the 2% rule adjusted for non-standard temp is generally "close enough" for EFB awareness
+                const tas = ias * (1 + ((alt / 1000) * 0.02));
+
+                // Cloud Base (Temperature - Dewpoint spread) / 2.5 * 1000
+                // Spread determines how high air must rise to cool to dewpoint
+                let cloudBase = "--";
+                if (dewC !== null) {
+                    const spread = tempC - dewC;
+                    const base = (spread / 2.5) * 1000;
+                    cloudBase = Math.round(base) + " ft";
+                }
+
+                // Freezing Level
+                // Standard lapse rate is 2°C per 1000ft. 
+                // How many degrees above 0 is the current temp? 
+                // If temp is 10C, freezing level is 10/2 * 1000 = 5000ft above current altitude.
+                let freezingLvl = "--";
+                if (tempC > 0) {
+                    const frzAbove = (tempC / 2) * 1000;
+                    const frzAbs = alt + frzAbove;
+                    freezingLvl = Math.round(frzAbs) + " ft";
+                } else {
+                    freezingLvl = "Surface";
+                }
+
+                // 4. Output Results
                 document.getElementById('resDA').innerText = Math.round(da) + " ft";
-                const tas = ias * (1 + (alt/1000 * 0.02)); 
-                document.getElementById('resTAS').innerText = Math.round(tas) + " kts";
+                document.getElementById('resTAS').innerText = Math.round(tas) + " kt";
+                document.getElementById('resCloud').innerText = cloudBase;
+                document.getElementById('resFrz').innerText = freezingLvl;
+                
+                // Visual Warning for High Density Altitude
+                const daEl = document.getElementById('resDA');
+                if (da > alt + 2000) daEl.style.color = "var(--warn)";
+                else daEl.style.color = "var(--accent)";
             }
     
             function formatRawMetar(rawText) {
