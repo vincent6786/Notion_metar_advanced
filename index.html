@@ -1300,40 +1300,120 @@
             }
     
             function drawWindRose() {
-                const canvas = document.getElementById('windRose'); const ctx = canvas.getContext('2d'); const w=140, h=140, cx=70, cy=70, r=60;
-                const rwyIdent = document.getElementById('rwySelect').value; 
-                
-                ctx.clearRect(0,0,w,h);
-                ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.fillStyle = '#8e8e93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText('N', cx, cy - r + 10); ctx.fillText('E', cx + r - 10, cy); ctx.fillText('S', cx, cy + r - 10); ctx.fillText('W', cx - r + 10, cy);
-                
-                const mv = stationData?.magnetic_variation || 0; 
+                const canvas = document.getElementById('windRose');
+                const ctx = canvas.getContext('2d');
+                // Slightly reduced radius to fit outer indicator
+                const w = 140, h = 140, cx = 70, cy = 70, r = 54; 
+                const rwyIdent = document.getElementById('rwySelect').value;
+    
+                // AESTHETIC COLORS
+                const cyanBlue = '#00d2ff'; // Bright Tron-like Cyan
+                const northRed = '#ff3333'; // Bright Red
+                const rwyBg = '#000000';    // Pure Black Runway
+                const rwyDash = '#ffffff';  // White centerline
+    
+                ctx.clearRect(0, 0, w, h);
+    
+                // 1. Draw Compass Ring & Labels
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                ctx.strokeStyle = cyanBlue;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+    
+                ctx.font = '800 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // North is Red, others are Cyan
+                ctx.fillStyle = northRed; ctx.fillText('N', cx, cy - r + 14);
+                ctx.fillStyle = cyanBlue; ctx.fillText('E', cx + r - 14, cy);
+                ctx.fillStyle = cyanBlue; ctx.fillText('S', cx, cy + r - 14);
+                ctx.fillStyle = cyanBlue; ctx.fillText('W', cx - r + 14, cy);
+    
+                const mv = stationData?.magnetic_variation || 0;
                 const windMag = currentWind.dir - mv;
-                
-                if(rwyIdent) {
-                    const rwyHdg = parseInt(rwyIdent.replace(/\D/g,'')) * 10; const rwyRad = (rwyHdg - 90) * (Math.PI/180);
-                    ctx.save(); ctx.translate(cx, cy); ctx.rotate(rwyRad); 
-                    ctx.fillStyle = '#333'; ctx.fillRect(-r+15, -6, (r*2)-30, 12); 
-                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-r+15, -6, (r*2)-30, 12); 
+    
+                // 2. Draw Runway with Dashes
+                if (rwyIdent) {
+                    const rwyHdg = parseInt(rwyIdent.replace(/\D/g, '')) * 10;
+                    const rwyRad = (rwyHdg - 90) * (Math.PI / 180);
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate(rwyRad);
+    
+                    const rwyLen = r * 1.7; // Length of runway strip
+                    const rwyW = 22;        // Width of runway strip
+    
+                    // Black Runway Body
+                    ctx.fillStyle = rwyBg;
+                    // Add a subtle cyan border to the runway for style
+                    ctx.strokeStyle = 'rgba(0, 210, 255, 0.3)'; 
+                    ctx.lineWidth = 1;
+                    ctx.fillRect(-rwyLen / 2, -rwyW / 2, rwyLen, rwyW);
+                    ctx.strokeRect(-rwyLen / 2, -rwyW / 2, rwyLen, rwyW);
+    
+                    // Dashed Centerline
+                    ctx.beginPath();
+                    ctx.strokeStyle = rwyDash;
+                    ctx.lineWidth = 2;
+                    // Create 5-6 dashes depending on length. 
+                    // Pattern: [dashLength, gapLength]
+                    const dashSegment = rwyLen / 11; 
+                    ctx.setLineDash([dashSegment, dashSegment]); 
+                    ctx.moveTo(-rwyLen / 2 + 4, 0); 
+                    ctx.lineTo(rwyLen / 2 - 4, 0);
+                    ctx.stroke();
+                    ctx.setLineDash([]); // IMPORTANT: Reset dashes so other elements aren't dashed
+    
                     ctx.restore();
-                    
-                    const diff = (windMag - rwyHdg) * (Math.PI/180); 
-                    const hw = Math.round(Math.cos(diff) * currentWind.spd); 
+    
+                    // (Calculations kept from previous version)
+                    const diff = (windMag - rwyHdg) * (Math.PI / 180);
+                    const hw = Math.round(Math.cos(diff) * currentWind.spd);
                     const xw = Math.round(Math.sin(diff) * currentWind.spd);
-                    
-                    const vHW = document.getElementById('valHW'); 
-                    vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`; 
+                    const vHW = document.getElementById('valHW');
+                    vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`;
                     vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
                     document.getElementById('valXW').innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
-                    
                     checkMins();
                 }
-                if(currentWind.spd > 0) {
-                    const windRad = (windMag - 90) * (Math.PI/180); 
-                    ctx.save(); ctx.translate(cx, cy); ctx.rotate(windRad);
-                    ctx.beginPath(); ctx.moveTo(r-5, 0); ctx.lineTo(10, 0); ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(5, 0); ctx.lineTo(15, 5); ctx.fillStyle = '#0a84ff'; ctx.fill(); ctx.restore();
+    
+                // 3. Draw Wind Arrow & Outer Indicator
+                if (currentWind.spd > 0) {
+                     const windRad = (windMag - 90) * (Math.PI / 180);
+                    
+                    // Main Arrow (Cyan)
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate(windRad);
+                    
+                    // Arrow Shaft
+                    ctx.beginPath();
+                    ctx.moveTo(r - 20, 0); 
+                    ctx.lineTo(15, 0);
+                    ctx.strokeStyle = cyanBlue;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    // Arrow Head (Larger and sharper)
+                    ctx.beginPath();
+                    ctx.moveTo(25, 0);
+                    ctx.lineTo(8, -8);
+                    ctx.lineTo(8, 8);
+                    ctx.closePath();
+                    ctx.fillStyle = cyanBlue;
+                    ctx.fill();
+                    
+                    // Outer Origin Indicator (A small triangle on the outside ring)
+                    ctx.beginPath();
+                    ctx.moveTo(r + 4, 0); // Point touches outer ring
+                    ctx.lineTo(r + 14, -5); // Back corner
+                    ctx.lineTo(r + 14, 5);  // Back corner
+                    ctx.closePath();
+                    ctx.fillStyle = cyanBlue;
+                    ctx.fill();
+    
+                    ctx.restore();
                 }
             }
     
