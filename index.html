@@ -358,7 +358,7 @@
         </div>
         <button class="icon-btn" onclick="loadData(true)" title="Force Refresh">↻</button>
         
-        <div id="headerCat" class="badge badge-cat">--</div>
+        <div id="headerCat" class="badge badge-cat" onclick="toggleLegend(true)" style="cursor:pointer;" title="Tap for Legend">--</div>
         <div id="zuluTime" class="badge badge-time">--:--Z</div>
         <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
     </div>
@@ -411,7 +411,10 @@
 
             <div class="fr-bar-container">
                 <div class="fr-header-row">
-                    <div class="fr-title">Flight Category Breakdown</div>
+                    <div class="fr-header-row">
+                        <div class="fr-title">Flight Category Breakdown</div>
+                        <div onclick="toggleLegend(true)" style="cursor:pointer; background:rgba(255,255,255,0.1); border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--sub-text);">?</div>
+                    </div>
                 </div>
                 
                 <div class="fr-gauge-group">
@@ -473,8 +476,12 @@
             <canvas id="meteoCanvas" height="150"></canvas>
             <div id="meteoLoading" class="sky-no-data" style="position:absolute; top:50%; left:0; right:0; text-align:center;">Select Airport</div>
         </div>
-        <div style="display:flex; justify-content:space-between; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
-            <span>Official Forecast Visualization</span><span id="tafIssued">--</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <span>Official Forecast Visualization</span>
+                <span onclick="toggleLegend(true)" style="cursor:pointer; opacity:0.6;">ⓘ</span>
+            </div>
+            <span id="tafIssued">--</span>
         </div>
         <div class="taf-viz-container">
             <div id="tafNeedle"></div>
@@ -662,6 +669,47 @@
         </div>
         <iframe id="awosFrame" class="browser-frame" src=""></iframe>
     </div>
+
+    <div id="legendModal" class="modal-overlay" onclick="toggleLegend(false)">
+            <div class="info-card" style="margin: auto; width: 90%; max-width: 320px; border: 1px solid var(--border);" onclick="event.stopPropagation()">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px;">
+                    <span style="font-weight: 700;">FLIGHT RULES LEGEND</span>
+                    <button class="modal-close" onclick="toggleLegend(false)">✕</button>
+                </div>
+                
+                <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center;">
+                    <div style="width:40px; height:25px; background:var(--success); border-radius:4px;"></div>
+                    <div>
+                        <div style="font-weight:800; color:var(--success);">VFR</div>
+                        <div style="font-size:11px; color:var(--sub-text);">Ceiling > 3000' & Vis > 5sm</div>
+                    </div>
+                </div>
+    
+                <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center;">
+                    <div style="width:40px; height:25px; background:var(--mvfr); border-radius:4px;"></div>
+                    <div>
+                        <div style="font-weight:800; color:var(--mvfr);">MVFR (Marginal)</div>
+                        <div style="font-size:11px; color:var(--sub-text);">Ceiling 1000-3000' or Vis 3-5sm</div>
+                    </div>
+                </div>
+    
+                <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center;">
+                    <div style="width:40px; height:25px; background:var(--danger); border-radius:4px;"></div>
+                    <div>
+                        <div style="font-weight:800; color:var(--danger);">IFR</div>
+                        <div style="font-size:11px; color:var(--sub-text);">Ceiling < 1000' or Vis < 3sm</div>
+                    </div>
+                </div>
+    
+                <div style="display:flex; gap:10px; margin-bottom:5px; align-items:center;">
+                    <div style="width:40px; height:25px; background:var(--lifr); border-radius:4px;"></div>
+                    <div>
+                        <div style="font-weight:800; color:var(--lifr);">LIFR (Low IFR)</div>
+                        <div style="font-size:11px; color:var(--sub-text);">Ceiling < 500' or Vis < 1sm</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     
     
     <script>
@@ -680,7 +728,12 @@
             const CLOUD_ICON_PATH = "M25 15C25 10.58 21.42 7 17 7C16.5 7 16 7.05 15.54 7.15C14.73 4.19 12.06 2 9 2C5.13 2 2 5.13 2 9C2 9.17 2 9.35 2.03 9.5C0.84 10.19 0 11.5 0 13C0 15.21 1.79 17 4 17H25C27.76 17 30 14.76 30 12C30 9.24 27.76 7 25 7V15Z";
     
             // --- 2. INITIALIZATION ---
-    
+
+            function toggleLegend(show) {
+                        const el = document.getElementById('legendModal');
+                        if (show) el.classList.add('active');
+                        else el.classList.remove('active');
+                    }        
             function initApp() {
                 initWorldClock();
                 checkNightModeSaved();
