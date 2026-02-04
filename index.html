@@ -1354,7 +1354,7 @@
                 drawWindRose(); renderRunwaysComplex();
             }
     
-            // --- IMPROVED WIND ROSE V4 (Centered Vector) ---
+            // --- IMPROVED WIND ROSE V5 (Refined Spacing) ---
             function drawWindRose() {
                 const canvas = document.getElementById('windRose');
                 const ctx = canvas.getContext('2d');
@@ -1378,7 +1378,7 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
     
-                // Compass Labels
+                // Compass Labels (Drawn at approx 40px radius from center)
                 ctx.font = '800 12px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -1391,7 +1391,7 @@
                 const safeDir = (currentWind.dir === 'VRB') ? 0 : currentWind.dir;
                 const windMag = safeDir - mv;
     
-                // 2. Runway with Fixed Dashes
+                // 2. Runway with Spread Out Dashes
                 if (rwyIdent) {
                     const rwyHdg = parseInt(rwyIdent.replace(/\D/g, '')) * 10;
                     const rwyRad = (rwyHdg - 90) * (Math.PI / 180);
@@ -1409,11 +1409,14 @@
                     ctx.fillRect(-rwyLen / 2, -rwyW / 2, rwyLen, rwyW);
                     ctx.strokeRect(-rwyLen / 2, -rwyW / 2, rwyLen, rwyW);
     
-                    // FIXED DASHES
+                    // FIXED DASHES (Spread evenly to ends)
                     ctx.fillStyle = rwyDash;
                     const dashCount = 5;
                     const dashW = 12; const dashH = 2;
-                    const totalDashSpan = rwyLen * 0.7;
+                    
+                    // CHANGE: Increased span to 85% so dashes reach closer to the ends
+                    const totalDashSpan = rwyLen * 0.85; 
+                    
                     const gap = (totalDashSpan - (dashCount * dashW)) / (dashCount - 1);
                     let currentX = -totalDashSpan / 2;
                     
@@ -1470,12 +1473,12 @@
                     ctx.translate(cx, cy);
                     ctx.rotate(windRad);
                     
-                    // We define a total length for the arrow (e.g., 80px)
-                    // It starts at -40 (Left/Upwind) and ends at +40 (Right/Downwind)
-                    const arrowTotalLen = 80;
+                    // CHANGE: Reduced total length to 60 (was 80) so it doesn't overlap text
+                    const arrowTotalLen = 60; 
                     const halfLen = arrowTotalLen / 2;
     
                     // Outer Indicator (Source Triangle on the Ring)
+                    // Stays on the ring (radius 54)
                     ctx.beginPath();
                     ctx.moveTo(-r - 4, 0);  
                     ctx.lineTo(-r - 14, -5); 
@@ -1492,11 +1495,11 @@
                     ctx.lineWidth = 3;
                     ctx.stroke();
                     
-                    // Arrow Head (At the Downwind tip)
+                    // Arrow Head
                     ctx.beginPath();
                     ctx.moveTo(halfLen, 0); 
-                    ctx.lineTo(halfLen - 12, -6);
-                    ctx.lineTo(halfLen - 12, 6);
+                    ctx.lineTo(halfLen - 10, -6); // Slightly smaller head
+                    ctx.lineTo(halfLen - 10, 6);
                     ctx.closePath();
                     ctx.fillStyle = cyanBlue;
                     ctx.fill();
