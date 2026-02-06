@@ -620,12 +620,19 @@
 
     <div id="tab-tools" class="view-section">
 
-        <div class="section-title" style="margin-top:0;">Fuel Tank Reminder</div>
+        <div class="section-title" style="margin-top:0;">Cockpit Timer / Fuel</div>
         <div class="info-card" id="fuelCard" style="text-align:center; transition: background 0.3s;">
-            <div style="font-size:11px; color:var(--sub-text); margin-bottom:4px; text-transform:uppercase;">SWITCH TANKS IN</div>
+            <div style="font-size:11px; color:var(--sub-text); margin-bottom:4px; text-transform:uppercase;">COUNTDOWN TIMER</div>
             
-            <div id="fuelDisplay" style="font-size:48px; font-weight:800; font-family:'SF Mono', monospace; letter-spacing:-2px; margin:10px 0;">30:00</div>
+            <div id="fuelDisplay" style="font-size:48px; font-weight:800; font-family:'SF Mono', monospace; letter-spacing:-2px; margin:5px 0; font-variant-numeric: tabular-nums;">30:00</div>
             
+            <div class="quick-select-row" style="justify-content:center; margin-bottom:15px; gap:8px;">
+                <div class="quick-chip" onclick="setFuelTime(15)">15m</div>
+                <div class="quick-chip" style="background:rgba(255,255,255,0.1); border-color:#fff;" onclick="setFuelTime(30)">30m</div>
+                <div class="quick-chip" onclick="setFuelTime(45)">45m</div>
+                <div class="quick-chip" onclick="setFuelTime(60)">60m</div>
+            </div>
+
             <div style="display:flex; gap:10px;">
                 <button id="btnFuelStart" class="tool-btn" style="background:var(--success); border:none; color:#000;" onclick="toggleFuelTimer()">START</button>
                 <button class="tool-btn" style="background:#333; border:1px solid #555;" onclick="resetFuelTimer()">RESET</button>
@@ -2343,13 +2350,63 @@
                 }
             }
 
+            // --- FLEXIBLE FUEL TIMER LOGIC ---
+            let fuelInterval = null;
+            let fuelSeconds = 1800;      // Current countdown value
+            let fuelStartValue = 1800;   // The "Reset" value (default 30m)
+            let isFuelRunning = false;
+
+            // NEW: Function to set the time
+            function setFuelTime(minutes) {
+                if(isFuelRunning) toggleFuelTimer(); // Pause if running
+                fuelStartValue = minutes * 60;
+                fuelSeconds = fuelStartValue;
+                updateFuelDisplay();
+                
+                // Visual feedback for selected preset could be added here if desired
+                resetFuelVisuals(); 
+            }
+
+            function toggleFuelTimer() {
+                const btn = document.getElementById('btnFuelStart');
+                
+                if (isFuelRunning) {
+                    // Pause
+                    clearInterval(fuelInterval);
+                    isFuelRunning = false;
+                    btn.innerText = "RESUME";
+                    btn.style.background = "var(--warn)";
+                } else {
+                    // Start
+                    isFuelRunning = true;
+                    btn.innerText = "PAUSE";
+                    btn.style.background = "var(--mvfr)"; 
+                    
+                    fuelInterval = setInterval(() => {
+                        if (fuelSeconds > 0) {
+                            fuelSeconds--;
+                            updateFuelDisplay();
+                        } else {
+                            // TIME UP!
+                            clearInterval(fuelInterval);
+                            isFuelRunning = false;
+                            fuelAlert();
+                        }
+                    }, 1000);
+                }
+            }
+
             function resetFuelTimer() {
                 clearInterval(fuelInterval);
                 isFuelRunning = false;
-                fuelSeconds = 1800; // Reset to 30 mins
+                fuelSeconds = fuelStartValue; // Reset to the last selected preset
                 
-                // Reset Visuals
+                resetFuelVisuals();
                 updateFuelDisplay();
+            }
+            
+            function resetFuelVisuals() {
+                // Reset Buttons & Colors
                 document.getElementById('btnFuelStart').innerText = "START";
                 document.getElementById('btnFuelStart').style.background = "var(--success)";
                 
@@ -2370,11 +2427,92 @@
                 const disp = document.getElementById('fuelDisplay');
                 
                 // Visual Alarm State
-                card.style.background = "var(--danger)"; // Turn card red
-                disp.innerText = "SWITCH";
+                card.style.background = "var(--danger)"; 
+                disp.innerText = "CHECK"; // Changed from "SWITCH" to be more generic
                 disp.style.color = "#fff";
                 
-                // Optional: Vibrator (Mobile Only)
+                if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+            }// --- FLEXIBLE FUEL TIMER LOGIC ---
+            let fuelInterval = null;
+            let fuelSeconds = 1800;      // Current countdown value
+            let fuelStartValue = 1800;   // The "Reset" value (default 30m)
+            let isFuelRunning = false;
+
+            // NEW: Function to set the time
+            function setFuelTime(minutes) {
+                if(isFuelRunning) toggleFuelTimer(); // Pause if running
+                fuelStartValue = minutes * 60;
+                fuelSeconds = fuelStartValue;
+                updateFuelDisplay();
+                
+                // Visual feedback for selected preset could be added here if desired
+                resetFuelVisuals(); 
+            }
+
+            function toggleFuelTimer() {
+                const btn = document.getElementById('btnFuelStart');
+                
+                if (isFuelRunning) {
+                    // Pause
+                    clearInterval(fuelInterval);
+                    isFuelRunning = false;
+                    btn.innerText = "RESUME";
+                    btn.style.background = "var(--warn)";
+                } else {
+                    // Start
+                    isFuelRunning = true;
+                    btn.innerText = "PAUSE";
+                    btn.style.background = "var(--mvfr)"; 
+                    
+                    fuelInterval = setInterval(() => {
+                        if (fuelSeconds > 0) {
+                            fuelSeconds--;
+                            updateFuelDisplay();
+                        } else {
+                            // TIME UP!
+                            clearInterval(fuelInterval);
+                            isFuelRunning = false;
+                            fuelAlert();
+                        }
+                    }, 1000);
+                }
+            }
+
+            function resetFuelTimer() {
+                clearInterval(fuelInterval);
+                isFuelRunning = false;
+                fuelSeconds = fuelStartValue; // Reset to the last selected preset
+                
+                resetFuelVisuals();
+                updateFuelDisplay();
+            }
+            
+            function resetFuelVisuals() {
+                // Reset Buttons & Colors
+                document.getElementById('btnFuelStart').innerText = "START";
+                document.getElementById('btnFuelStart').style.background = "var(--success)";
+                
+                // Clear Alert State
+                const card = document.getElementById('fuelCard');
+                card.style.background = "var(--card-bg)";
+                document.getElementById('fuelDisplay').style.color = "var(--text)";
+            }
+
+            function updateFuelDisplay() {
+                const m = Math.floor(fuelSeconds / 60).toString().padStart(2, '0');
+                const s = (fuelSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('fuelDisplay').innerText = `${m}:${s}`;
+            }
+
+            function fuelAlert() {
+                const card = document.getElementById('fuelCard');
+                const disp = document.getElementById('fuelDisplay');
+                
+                // Visual Alarm State
+                card.style.background = "var(--danger)"; 
+                disp.innerText = "CHECK"; // Changed from "SWITCH" to be more generic
+                disp.style.color = "#fff";
+                
                 if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
             }
         
