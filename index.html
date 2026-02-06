@@ -1164,24 +1164,112 @@
                     liveAtcBtn.innerHTML = `<span>📡 LiveATC (${icao})</span><span>↗</span>`;
                 }
     
+                // --- CUSTOM STREAMS CONFIGURATION ---
+                
+                // 1. TAOYUAN (RCTP)
                 if (icao === 'RCTP') {
                     label.innerText = "RCTP LIVE STREAMS (TWATC)";
                     container.innerHTML = `
                         <div style="margin-bottom:12px;">
-                            <div class="m-label" style="color:var(--accent);">ATIS (127.6)</div>
+                            <div class="m-label" style="color:var(--accent);">ATIS</div>
                             <audio controls style="width: 100%; height: 32px; border-radius:16px;">
                                 <source src="https://stream.twatc.net/RCTP_ATIS" type="audio/mpeg">
                             </audio>
                         </div>
                         <div>
-                            <div class="m-label" style="color:var(--success);">ATC SCANNER (GND/TWR/APP)</div>
+                            <div class="m-label" style="color:var(--success);">ATC SCANNER</div>
                             <audio controls style="width: 100%; height: 32px; border-radius:16px;">
                                 <source src="https://stream.twatc.net/RCTP_Scan2" type="audio/mpeg">
                             </audio>
                         </div>
                         <div style="font-size:10px; color:#555; margin-top:8px; text-align:right;">Source: TWATC.net</div>
                     `;
-                } else {
+                }
+                
+                // 2. SONGSHAN (RCSS)
+                else if (icao === 'RCSS') {
+                    label.innerText = "RCSS LIVE STREAMS";
+                    container.innerHTML = `
+                        <div style="margin-bottom:12px;">
+                            <div class="m-label" style="color:var(--accent);">ATIS</div>
+                            <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                                <source src="https://stream.twatc.net/RCSS_ATIS" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <div>
+                            <div class="m-label" style="color:var(--success);">ATC SCANNER</div>
+                            <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                                <source src="https://stream.twatc.net/RCSS_Scan2" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <div style="font-size:10px; color:#555; margin-top:8px; text-align:right;">Source: TWATC.net</div>
+                    `;
+                }
+
+                // 3. KAOHSIUNG (RCKH)
+                else if (icao === 'RCKH') {
+                    label.innerText = "RCKH LIVE STREAMS";
+                    container.innerHTML = `
+                        <div style="margin-bottom:12px;">
+                            <div class="m-label" style="color:var(--accent);">ATIS</div>
+                            <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                                <source src="https://stream.twatc.net/RCKH_ATIS" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <div>
+                            <div class="m-label" style="color:var(--success);">ATC SCANNER</div>
+                            <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                                <source src="https://stream.twatc.net/RCKH_Scan2" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <div style="font-size:10px; color:#555; margin-top:8px; text-align:right;">Source: TWATC.net</div>
+                    `;
+                }
+
+                // 4. TAICHUNG (RCMQ)
+                else if (icao === 'RCMQ') {
+                    label.innerText = "RCMQ LIVE STREAMS";
+                    container.innerHTML = `
+                        <div>
+                            <div class="m-label" style="color:var(--accent);">ATIS</div>
+                            <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                                <source src="https://stream.twatc.net/RCMQ_ATIS" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <div style="font-size:10px; color:#555; margin-top:8px; text-align:right;">Source: TWATC.net</div>
+                    `;
+                }
+
+                // 5. KINMEN (RCBS)
+                else if (icao === 'RCBS') {
+                    label.innerText = "RCBS LIVE STREAMS";
+                    container.innerHTML = `
+                        <div>
+                            <div class="m-label" style="color:var(--accent);">ATIS</div>
+                            <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                                <source src="https://stream.twatc.net/RCBS_ATIS" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <div style="font-size:10px; color:#555; margin-top:8px; text-align:right;">Source: TWATC.net</div>
+                    `;
+                }
+
+                // 6. TAITUNG (RCFN)
+                else if (icao === 'RCFN') {
+                    label.innerText = "RCFN LIVE STREAMS";
+                    container.innerHTML = `
+                        <div>
+                            <div class="m-label" style="color:var(--accent);">ATIS</div>
+                            <audio controls style="width: 100%; height: 32px; border-radius:16px;">
+                                <source src="https://stream.twatc.net/RCFN_ATIS" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <div style="font-size:10px; color:#555; margin-top:8px; text-align:right;">Source: TWATC.net</div>
+                    `;
+                }
+
+                // 7. NO STREAM AVAILABLE (Fallback)
+                else {
                     label.innerText = "AUDIO STREAMS";
                     container.innerHTML = `
                         <div style="color:var(--sub-text); font-size:13px; text-align:center; padding:10px 0;">
