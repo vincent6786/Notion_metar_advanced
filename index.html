@@ -387,6 +387,13 @@
             padding: 10px;
             border-top: 1px solid #222;
         }
+        /* Fuel Timer Active State */
+        .active-fuel {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-color: #ffffff !important;
+            color: #ffffff !important;
+        }
+        
     </style>
 </head>
 <body>
@@ -622,10 +629,10 @@
             <div id="fuelDisplay" style="font-size:48px; font-weight:800; font-family:'SF Mono', monospace; letter-spacing:-2px; margin:5px 0; font-variant-numeric: tabular-nums;">30:00</div>
             
             <div class="quick-select-row" style="justify-content:center; margin-bottom:15px; gap:8px;">
-                <div class="quick-chip" onclick="setFuelTime(15)">15m</div>
-                <div class="quick-chip" style="background:rgba(255,255,255,0.1); border-color:#fff;" onclick="setFuelTime(30)">30m</div>
-                <div class="quick-chip" onclick="setFuelTime(45)">45m</div>
-                <div class="quick-chip" onclick="setFuelTime(60)">60m</div>
+                <div id="btnFuel15" class="quick-chip" onclick="setFuelTime(15)">15m</div>
+                <div id="btnFuel30" class="quick-chip active-fuel" onclick="setFuelTime(30)">30m</div>
+                <div id="btnFuel45" class="quick-chip" onclick="setFuelTime(45)">45m</div>
+                <div id="btnFuel60" class="quick-chip" onclick="setFuelTime(60)">60m</div>
             </div>
 
             <div style="display:flex; gap:10px;">
@@ -2409,11 +2416,23 @@
             // NEW: Function to set the time
             function setFuelTime(minutes) {
                 if(isFuelRunning) toggleFuelTimer(); // Pause if running
+                
+                // 1. Update Data
                 fuelStartValue = minutes * 60;
                 fuelSeconds = fuelStartValue;
                 updateFuelDisplay();
                 
-                // Visual feedback for selected preset could be added here if desired
+                // 2. Update Visual Selection
+                // Remove active class from all buttons
+                document.querySelectorAll('#btnFuel15, #btnFuel30, #btnFuel45, #btnFuel60').forEach(btn => {
+                    btn.classList.remove('active-fuel');
+                });
+
+                // Add active class to the selected one
+                const targetId = `btnFuel${minutes}`;
+                const targetBtn = document.getElementById(targetId);
+                if(targetBtn) targetBtn.classList.add('active-fuel');
+                
                 resetFuelVisuals(); 
             }
 
