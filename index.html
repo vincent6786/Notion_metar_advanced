@@ -1182,16 +1182,39 @@
                 meteoDataCache = null; 
             
                 try {
-                    // Open-Meteo is free and doesn't require a key, so we can fetch directly
-                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn&forecast_days=1`;
+                    // We request the offset and pressure level data here
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,temperature_925hPa,windspeed_925hPa,winddirection_925hPa,temperature_850hPa,windspeed_850hPa,winddirection_850hPa,temperature_700hPa,windspeed_700hPa,winddirection_700hPa&wind_speed_unit=kn&forecast_days=1`;
+                    
                     const res = await fetch(url);
                     const data = await res.json();
-                    stationOffsetSec = data.utc_offset_seconds || 0;
-                    updateSunDisplay();
                     
+                    // --- CRITICAL FIX: CAPTURE THE OFFSET ---
+                    // This was likely missing or 0 before
+                    stationOffsetSec = data.utc_offset_seconds || 0;
+                    
+                    // Immediately refresh the Sunrise text now that we have the real offset
+                    updateSunDisplay(); 
+                    // ----------------------------------------
+
                     if(data.hourly) {
                         meteoDataCache = data.hourly; 
                         drawMeteogram(meteoDataCache);
+                        
+                        // Update Winds Aloft Tab
+                        const now = new Date();
+                        const currentHourIndex = now.getUTCHours(); 
+                        
+                        const fmtWind = (dir, spd) => `${dir}° / ${Math.round(spd)}kt`;
+                        const fmtTemp = (t) => `${Math.round(t)}°C`;
+
+                        document.getElementById('wind3k').innerText = fmtWind(data.hourly.winddirection_925hPa[currentHourIndex], data.hourly.windspeed_925hPa[currentHourIndex]);
+                        document.getElementById('temp3k').innerText = fmtTemp(data.hourly.temperature_925hPa[currentHourIndex]);
+
+                        document.getElementById('wind5k').innerText = fmtWind(data.hourly.winddirection_850hPa[currentHourIndex], data.hourly.windspeed_850hPa[currentHourIndex]);
+                        document.getElementById('temp5k').innerText = fmtTemp(data.hourly.temperature_850hPa[currentHourIndex]);
+
+                        document.getElementById('wind10k').innerText = fmtWind(data.hourly.winddirection_700hPa[currentHourIndex], data.hourly.windspeed_700hPa[currentHourIndex]);
+                        document.getElementById('temp10k').innerText = fmtTemp(data.hourly.temperature_700hPa[currentHourIndex]);
                     }
                     loader.style.display = 'none';
                 } catch(e) {
