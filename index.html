@@ -2164,50 +2164,69 @@
                 iframe.src = "";
             }
 
-            // --- LOCAL SUNRISE/SUNSET CALCULATOR ---
-            // Source: Simplified NOAA Solar Calculation
+            // --- HIGH-ACCURACY SUNRISE/SUNSET (NOAA Algorithm) ---
             function getSunTimes(lat, lon) {
                 const date = new Date();
-                const times = { sunrise: "--:--", sunset: "--:--" };
                 
-                // 1. Calculate Day of Year (1-365)
-                const start = new Date(date.getFullYear(), 0, 0);
-                const diff = date - start;
-                const oneDay = 1000 * 60 * 60 * 24;
-                const dayOfYear = Math.floor(diff / oneDay);
-                
-                // 2. Convert Lat/Lon to Radians
-                const rad = Math.PI / 180;
-                
-                // 3. Calculate Sun's Declination
-                // The angle of the sun relative to the equator
-                const declination = 0.409 * Math.sin(2 * Math.PI * (dayOfYear - 140) / 365);
-                
-                // 4. Calculate Hour Angle
-                // The angle of the sun relative to the horizon at sunrise/sunset
-                const hourAngle = Math.acos(-Math.tan(lat * rad) * Math.tan(declination));
-                
-                // 5. Calculate Times (Results are in Decimal UTC Hours)
-                // Equation of Time approximation included
-                const sunNoon = 12 - (lon / 15) - (0.123 * Math.sin(2 * Math.PI * (dayOfYear - 81) / 365));
-                const riseUTC = sunNoon - (hourAngle / rad / 15);
-                const setUTC = sunNoon + (hourAngle / rad / 15);
+                // 1. Julian Date (J2000)
+                // Get number of days since Jan 1, 2000 12:00 UTC
+                const lw = -lon * Math.PI / 180;
+                const phi = lat * Math.PI / 180;
+                const d = Math.floor(date.getTime() / 86400000) - 10957.5; 
     
-                // 6. Formatting Helper (Decimal Hours -> HH:MM String)
-                function fmt(decUTC) {
-                    if (isNaN(decUTC)) return "--:--"; // Polar day/night handling
+                // 2. Solar Coordinates
+                // Mean anomaly
+                const M = (357.5291 + 0.98560028 * d) * Math.PI / 180;
+                
+                // Equation of Center
+                const C = (1.9148 * Math.sin(M) + 0.0200 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) * Math.PI / 180;
+                
+                // Ecliptic Longitude (True Longitude)
+                const L = (M + C + 102.9372 * Math.PI / 180 + Math.PI) % (2 * Math.PI);
+                
+                // Solar Declination (Tilt of earth)
+                const sinDec = 0.39779 * Math.sin(L);
+                const cosDec = Math.sqrt(1 - sinDec * sinDec);
+                const dec = Math.asin(sinDec);
+    
+                // 3. Equation of Time (J)
+                // Time difference between Sundial time and Clock time
+                const y = Math.tan(23.4397 * Math.PI / 180 / 2);
+                const yy = y * y;
+                const J_time = (yy * Math.sin(2 * L) - 2 * 0.01671 * Math.sin(M) + 4 * 0.01671 * yy * Math.sin(M) * Math.cos(2 * L) - 0.5 * yy * yy * Math.sin(4 * L) - 1.25 * 0.01671 * 0.01671 * Math.sin(2 * M)) * 180 / Math.PI * 4; // in minutes
+    
+                // 4. Hour Angle (H)
+                // The critical correction: -0.833 degrees (0.0145 rad) for refraction/solar disc
+                const h = -0.833 * Math.PI / 180; 
+                const cosH = (Math.sin(h) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * cosDec);
+    
+                // Polar Day/Night check
+                if (cosH > 1 || cosH < -1) return { sunrise: "--:--", sunset: "--:--", rawRise: 0, rawSet: 0 };
+    
+                const H = Math.acos(cosH) * 180 / Math.PI; // degrees
+    
+                // 5. Calculate UTC Times (in minutes from midnight)
+                // Noon UTC approx
+                const noonUTC = 720 - 4 * lon - J_time;
+                
+                // Rise and Set UTC
+                const riseMinutes = noonUTC - H * 4;
+                const setMinutes = noonUTC + H * 4;
+    
+                // 6. Format to Local Time
+                function fmt(minutesUTC) {
                     const d = new Date();
-                    d.setUTCHours(Math.floor(decUTC));
-                    d.setUTCMinutes(Math.floor((decUTC % 1) * 60));
-                    // Returns time in your local device timezone
-                    return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+                    // Adjust for local timezone offset automatically
+                    d.setUTCHours(0);
+                    d.setUTCMinutes(Math.round(minutesUTC));
+                    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
                 }
     
                 return { 
-                    sunrise: fmt(riseUTC), 
-                    sunset: fmt(setUTC),
-                    rawRise: riseUTC, // We keep these for the TAF gradient chart
-                    rawSet: setUTC 
+                    sunrise: fmt(riseMinutes), 
+                    sunset: fmt(setMinutes),
+                    rawRise: riseMinutes / 60, // Keep decimal hours for TAF chart
+                    rawSet: setMinutes / 60
                 };
             }
 
