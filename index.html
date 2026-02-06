@@ -1482,13 +1482,25 @@
                      });
                 }
     
-                fetch(`https://api.sunrise-sunset.org/json?lat=${d.latitude}&lng=${d.longitude}&formatted=0`)
-                    .then(r=>r.json()).then(s => {
-                        const t = (iso) => new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-                        document.getElementById('infoSun').innerText = `🌅 ${t(s.results.sunrise)}  🌇 ${t(s.results.sunset)}`;
-                        stationSunTimes = { sunrise: new Date(s.results.sunrise), sunset: new Date(s.results.sunset) };
-                        if(tafDataCache) updateTafSkyGradient(new Date(tafDataCache[0].start_time.dt), new Date(tafDataCache[tafDataCache.length-1].end_time.dt));
-                    }).catch(e=>{});
+                // --- NEW: Local Calculation (Instant) ---
+                const sunData = getSunTimes(d.latitude, d.longitude);
+                document.getElementById('infoSun').innerText = `🌅 ${sunData.sunrise}  🌇 ${sunData.sunset}`;
+                
+                // Update global state for the TAF chart gradients
+                const today = new Date();
+                const riseDate = new Date(today); riseDate.setUTCHours(sunData.rawRise);
+                const setDate = new Date(today); setDate.setUTCHours(sunData.rawSet);
+                
+                stationSunTimes = { sunrise: riseDate, sunset: setDate };
+                
+                // Refresh TAF background if data exists
+                if(tafDataCache && tafDataCache.length > 0) {
+                    updateTafSkyGradient(
+                        new Date(tafDataCache[0].start_time.dt), 
+                        new Date(tafDataCache[tafDataCache.length-1].end_time.dt)
+                    );
+                }
+                
             }
 
             function checkDAWarning(da, elev) {
@@ -1672,30 +1684,70 @@
                 }
             }
     
+            // --- UPDATED RUNWAY LIST (With Safety Warnings) ---
             function renderRunwaysComplex() {
-                const container = document.getElementById('runwayListComplex'); container.innerHTML = '';
+                const container = document.getElementById('runwayListComplex'); 
+                container.innerHTML = '';
+                
                 const d = stationData; if(!d || !d.runways) return;
                 const magVar = d.magnetic_variation || 0;
                 const windMagDir = currentWind.dir - magVar;
                 
+                // 1. GET USER LIMITS
+                // Default to 999 (unlimited) if not set
+                const userLimitXW = parseFloat(localStorage.getItem('efb_min_xw')) || 999; 
+    
                 d.runways.forEach((r, idx) => {
                     let dimStr = useMetric ? `${Math.round(r.length_ft * 0.3048)}m` : `${r.length_ft}'`;
+                    
+                    // Calculate components for End 1
                     const rwy1Hdg = parseInt(r.ident1.replace(/\D/g,'')) * 10;
                     const diffRad = (windMagDir - rwy1Hdg) * (Math.PI/180);
                     const hw = Math.round(Math.cos(diffRad) * currentWind.spd); 
                     const xw = Math.round(Math.sin(diffRad) * currentWind.spd);
+                    const absXW = Math.abs(xw);
+    
+                    // 2. CHECK SAFETY LIMITS
+                    const isLimitExceeded = absXW > userLimitXW;
+                    
+                    // Define visuals based on limits
+                    // If unsafe, we dim the text slightly and show a warning
+                    const rowOpacity = isLimitExceeded ? '0.7' : '1';
+                    const warningBadge = isLimitExceeded 
+                        ? `<span style="background:var(--danger); color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:8px; font-weight:800;">⚠️ LIMIT (${userLimitXW}kt)</span>` 
+                        : '';
+    
+                    // Colors for Headwind vs Tailwind
                     const color1 = hw >= 0 ? 'var(--success)' : 'var(--danger)';
-                    const color2 = hw < 0 ? 'var(--success)' : 'var(--danger)';
+                    const color2 = hw < 0 ? 'var(--success)' : 'var(--danger)'; // Opposite end has opposite wind
                     
                     const div = document.createElement('div');
                     div.className = 'rwy-complex';
+                    
+                    // Add a red border if limits exceeded
+                    if(isLimitExceeded) {
+                        div.style.border = '1px solid var(--danger)';
+                    }
+    
                     div.innerHTML = `
-                        <div class="rc-header"><div class="rc-idents"><span style="color:${color1}">${r.ident1}</span> / <span style="color:${color2}">${r.ident2}</span></div><div class="rc-dims">${dimStr}</div></div>
-                        <div class="rc-strip">
+                        <div class="rc-header" style="opacity:${rowOpacity}">
+                            <div class="rc-idents">
+                                <span style="color:${color1}">${r.ident1}</span> / <span style="color:${color2}">${r.ident2}</span>
+                                ${warningBadge}
+                            </div>
+                            <div class="rc-dims">${dimStr}</div>
+                        </div>
+                        <div class="rc-strip" style="opacity:${rowOpacity}">
                             <div class="rc-id-v">${r.ident1}</div>
                             <div class="rc-data">
-                                <div class="wind-comp"><span>${Math.abs(hw)}kt</span><span style="color:${color1}">${hw>=0?'⬆':'⬇'}</span></div>
-                                <div class="wind-comp"><span>${Math.abs(xw)}kt</span><span style="color:#0a84ff">${xw>=0?'⬅':'➡'}</span></div>
+                                <div class="wind-comp">
+                                    <span>${Math.abs(hw)}kt</span>
+                                    <span style="color:${color1}">${hw>=0?'⬆':'⬇'}</span>
+                                </div>
+                                <div class="wind-comp" style="margin-left:12px;">
+                                    <span style="${isLimitExceeded ? 'color:var(--danger); font-weight:900;' : ''}">${absXW}kt</span>
+                                    <span style="color:#0a84ff">${xw>=0?'⬅':'➡'}</span>
+                                </div>
                             </div>
                             <div class="rc-id-v" style="transform:rotate(0deg);">${r.ident2}</div>
                         </div>`;
@@ -2098,6 +2150,53 @@
                 
                 modal.classList.remove('active');
                 iframe.src = "";
+            }
+
+            // --- LOCAL SUNRISE/SUNSET CALCULATOR ---
+            // Source: Simplified NOAA Solar Calculation
+            function getSunTimes(lat, lon) {
+                const date = new Date();
+                const times = { sunrise: "--:--", sunset: "--:--" };
+                
+                // 1. Calculate Day of Year (1-365)
+                const start = new Date(date.getFullYear(), 0, 0);
+                const diff = date - start;
+                const oneDay = 1000 * 60 * 60 * 24;
+                const dayOfYear = Math.floor(diff / oneDay);
+                
+                // 2. Convert Lat/Lon to Radians
+                const rad = Math.PI / 180;
+                
+                // 3. Calculate Sun's Declination
+                // The angle of the sun relative to the equator
+                const declination = 0.409 * Math.sin(2 * Math.PI * (dayOfYear - 140) / 365);
+                
+                // 4. Calculate Hour Angle
+                // The angle of the sun relative to the horizon at sunrise/sunset
+                const hourAngle = Math.acos(-Math.tan(lat * rad) * Math.tan(declination));
+                
+                // 5. Calculate Times (Results are in Decimal UTC Hours)
+                // Equation of Time approximation included
+                const sunNoon = 12 - (lon / 15) - (0.123 * Math.sin(2 * Math.PI * (dayOfYear - 81) / 365));
+                const riseUTC = sunNoon - (hourAngle / rad / 15);
+                const setUTC = sunNoon + (hourAngle / rad / 15);
+    
+                // 6. Formatting Helper (Decimal Hours -> HH:MM String)
+                function fmt(decUTC) {
+                    if (isNaN(decUTC)) return "--:--"; // Polar day/night handling
+                    const d = new Date();
+                    d.setUTCHours(Math.floor(decUTC));
+                    d.setUTCMinutes(Math.floor((decUTC % 1) * 60));
+                    // Returns time in your local device timezone
+                    return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+                }
+    
+                return { 
+                    sunrise: fmt(riseUTC), 
+                    sunset: fmt(setUTC),
+                    rawRise: riseUTC, // We keep these for the TAF gradient chart
+                    rawSet: setUTC 
+                };
             }
         
             // Start
