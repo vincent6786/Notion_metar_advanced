@@ -573,6 +573,22 @@
         <div class="section-title">RUNWAYS & FREQ</div>
         <div id="freqContainer" class="freq-grid"></div>
         <div class="section-title">RUNWAY WIND COMPONENTS</div>
+        
+        <div style="display:flex; gap:12px; margin-bottom:8px; font-size:10px; color:var(--sub-text); padding:0 4px;">
+            <div style="display:flex; align-items:center; gap:4px;">
+                <div style="width:8px; height:8px; background:var(--success); border-radius:2px;"></div>
+                <span>HEADWIND</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:4px;">
+                <div style="width:8px; height:8px; background:var(--danger); border-radius:2px;"></div>
+                <span>TAILWIND</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:4px;">
+                <div style="width:8px; height:8px; border:1px solid #0a84ff; border-radius:2px;"></div>
+                <span style="color:#0a84ff">CROSSWIND</span>
+            </div>
+        </div>
+        
         <div id="runwayListComplex"></div>
     </div>
     
@@ -1531,7 +1547,20 @@
                 sunEl.style.textDecorationColor = "#555";
                 sunEl.title = "Tap to switch UTC / Local";
                 sunEl.onclick = toggleSunFormat; // Attach the toggle handler
-                
+
+                // NEW: Add a small helper note underneath if it doesn't exist yet
+                const sunParent = sunEl.parentElement;
+                let helper = document.getElementById('sunHelper');
+                if (!helper) {
+                    helper = document.createElement('div');
+                    helper.id = 'sunHelper';
+                    helper.style.fontSize = '10px';
+                    helper.style.color = 'var(--sub-text)';
+                    helper.style.marginTop = '4px';
+                    helper.style.fontStyle = 'italic';
+                    sunParent.appendChild(helper);
+                }
+                helper.innerText = "(Tap time to toggle UTC / Local)";
                 // 3. Update global state for TAF background gradients
                 const sData = getSunTimes(d.latitude, d.longitude);
                 const today = new Date();
