@@ -2213,13 +2213,22 @@
                 const riseMinutes = noonUTC - H * 4;
                 const setMinutes = noonUTC + H * 4;
     
-                // 6. Format to Local Time
+                // 6. Format to UTC (Zulu)
                 function fmt(minutesUTC) {
+                    if (isNaN(minutesUTC)) return "--:--";
+                    
+                    // Create a date object relative to UTC
                     const d = new Date();
-                    // Adjust for local timezone offset automatically
-                    d.setUTCHours(0);
-                    d.setUTCMinutes(Math.round(minutesUTC));
-                    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                    d.setUTCHours(Math.floor(minutesUTC / 60));
+                    d.setUTCMinutes(Math.round(minutesUTC % 60));
+                    
+                    // Force formatting to UTC timezone
+                    return d.toLocaleTimeString('en-GB', { 
+                        timeZone: 'UTC', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: false 
+                    }) + 'Z'; // Append 'Z' to indicate Zulu
                 }
     
                 return { 
