@@ -798,7 +798,9 @@
             let lastMetarObj = null; 
             let meteoDataCache = null;
             let cityList = [];
-            
+            let stationOffsetSec = 0; // The airport's offset from UTC (in seconds)
+            let showLocalSun = false; // Toggle state (false = Zulu, true = Local)
+        
             const CLOUD_ICON_PATH = "M25 15C25 10.58 21.42 7 17 7C16.5 7 16 7.05 15.54 7.15C14.73 4.19 12.06 2 9 2C5.13 2 2 5.13 2 9C2 9.17 2 9.35 2.03 9.5C0.84 10.19 0 11.5 0 13C0 15.21 1.79 17 4 17H25C27.76 17 30 14.76 30 12C30 9.24 27.76 7 25 7V15Z";
     
             // --- 2. INITIALIZATION ---
@@ -1184,6 +1186,8 @@
                     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn&forecast_days=1`;
                     const res = await fetch(url);
                     const data = await res.json();
+                    stationOffsetSec = data.utc_offset_seconds || 0;
+                    updateSunDisplay();
                     
                     if(data.hourly) {
                         meteoDataCache = data.hourly; 
@@ -1494,15 +1498,23 @@
                      });
                 }
     
-                // --- NEW: Local Calculation (Instant) ---
-                const sunData = getSunTimes(d.latitude, d.longitude);
-                document.getElementById('infoSun').innerText = `🌅 ${sunData.sunrise}  🌇 ${sunData.sunset}`;
+                // --- NEW: Clickable Sunrise/Sunset (Toggle Local/UTC) ---
+                // 1. Calculate times initially using our toggle-aware helper
+                updateSunDisplay();
                 
-                // Update global state for the TAF chart gradients
+                // 2. Make the text element interactive
+                const sunEl = document.getElementById('infoSun');
+                sunEl.style.cursor = "pointer";
+                sunEl.style.textDecoration = "underline";
+                sunEl.style.textDecorationColor = "#555";
+                sunEl.title = "Tap to switch UTC / Local";
+                sunEl.onclick = toggleSunFormat; // Attach the toggle handler
+                
+                // 3. Update global state for TAF background gradients
+                const sData = getSunTimes(d.latitude, d.longitude);
                 const today = new Date();
-                const riseDate = new Date(today); riseDate.setUTCHours(sunData.rawRise);
-                const setDate = new Date(today); setDate.setUTCHours(sunData.rawSet);
-                
+                const riseDate = new Date(today); riseDate.setUTCHours(sData.rawRise);
+                const setDate = new Date(today); setDate.setUTCHours(sData.rawSet);
                 stationSunTimes = { sunrise: riseDate, sunset: setDate };
                 
                 // Refresh TAF background if data exists
@@ -1512,7 +1524,6 @@
                         new Date(tafDataCache[tafDataCache.length-1].end_time.dt)
                     );
                 }
-                
             }
 
             function checkDAWarning(da, elev) {
@@ -2165,80 +2176,88 @@
             }
 
             // --- HIGH-ACCURACY SUNRISE/SUNSET (NOAA Algorithm) ---
+            // --- UPDATED SUN CALCULATOR (With Local/Zulu Toggle) ---
             function getSunTimes(lat, lon) {
                 const date = new Date();
                 
-                // 1. Julian Date (J2000)
-                // Get number of days since Jan 1, 2000 12:00 UTC
+                // 1. Julian Date & Elements
                 const lw = -lon * Math.PI / 180;
                 const phi = lat * Math.PI / 180;
                 const d = Math.floor(date.getTime() / 86400000) - 10957.5; 
-    
-                // 2. Solar Coordinates
-                // Mean anomaly
                 const M = (357.5291 + 0.98560028 * d) * Math.PI / 180;
-                
-                // Equation of Center
                 const C = (1.9148 * Math.sin(M) + 0.0200 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) * Math.PI / 180;
-                
-                // Ecliptic Longitude (True Longitude)
                 const L = (M + C + 102.9372 * Math.PI / 180 + Math.PI) % (2 * Math.PI);
-                
-                // Solar Declination (Tilt of earth)
                 const sinDec = 0.39779 * Math.sin(L);
                 const cosDec = Math.sqrt(1 - sinDec * sinDec);
                 const dec = Math.asin(sinDec);
-    
-                // 3. Equation of Time (J)
-                // Time difference between Sundial time and Clock time
                 const y = Math.tan(23.4397 * Math.PI / 180 / 2);
                 const yy = y * y;
-                const J_time = (yy * Math.sin(2 * L) - 2 * 0.01671 * Math.sin(M) + 4 * 0.01671 * yy * Math.sin(M) * Math.cos(2 * L) - 0.5 * yy * yy * Math.sin(4 * L) - 1.25 * 0.01671 * 0.01671 * Math.sin(2 * M)) * 180 / Math.PI * 4; // in minutes
+                const J_time = (yy * Math.sin(2 * L) - 2 * 0.01671 * Math.sin(M) + 4 * 0.01671 * yy * Math.sin(M) * Math.cos(2 * L) - 0.5 * yy * yy * Math.sin(4 * L) - 1.25 * 0.01671 * 0.01671 * Math.sin(2 * M)) * 180 / Math.PI * 4;
     
-                // 4. Hour Angle (H)
-                // The critical correction: -0.833 degrees (0.0145 rad) for refraction/solar disc
+                // 4. Hour Angle (H) with Refraction Correction
                 const h = -0.833 * Math.PI / 180; 
                 const cosH = (Math.sin(h) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * cosDec);
     
-                // Polar Day/Night check
                 if (cosH > 1 || cosH < -1) return { sunrise: "--:--", sunset: "--:--", rawRise: 0, rawSet: 0 };
     
-                const H = Math.acos(cosH) * 180 / Math.PI; // degrees
-    
-                // 5. Calculate UTC Times (in minutes from midnight)
-                // Noon UTC approx
+                const H = Math.acos(cosH) * 180 / Math.PI;
                 const noonUTC = 720 - 4 * lon - J_time;
-                
-                // Rise and Set UTC
                 const riseMinutes = noonUTC - H * 4;
                 const setMinutes = noonUTC + H * 4;
     
-                // 6. Format to UTC (Zulu)
+                // --- 6. FLEXIBLE FORMATTER ---
                 function fmt(minutesUTC) {
                     if (isNaN(minutesUTC)) return "--:--";
                     
-                    // Create a date object relative to UTC
+                    // Base UTC Date
                     const d = new Date();
-                    d.setUTCHours(Math.floor(minutesUTC / 60));
-                    d.setUTCMinutes(Math.round(minutesUTC % 60));
+                    d.setUTCHours(0);
+                    d.setUTCMinutes(0);
+                    d.setUTCSeconds(0);
                     
-                    // Force formatting to UTC timezone
-                    return d.toLocaleTimeString('en-GB', { 
+                    // Add the calculated minutes
+                    // minutesUTC is minutes from midnight UTC
+                    let timeStamp = d.getTime() + (minutesUTC * 60 * 1000);
+    
+                    // If user wants LOCAL (L), we add the station offset
+                    if (showLocalSun) {
+                        timeStamp += (stationOffsetSec * 1000);
+                    }
+    
+                    const finalDate = new Date(timeStamp);
+                    
+                    // We always format as UTC, because we manually adjusted the timestamp above
+                    // This tricks the formatter into showing "Local" time without needing timezone strings
+                    const timeStr = finalDate.toLocaleTimeString('en-GB', { 
                         timeZone: 'UTC', 
                         hour: '2-digit', 
                         minute: '2-digit', 
                         hour12: false 
-                    }) + 'Z'; // Append 'Z' to indicate Zulu
+                    });
+    
+                    return timeStr + (showLocalSun ? 'L' : 'Z');
                 }
     
                 return { 
                     sunrise: fmt(riseMinutes), 
                     sunset: fmt(setMinutes),
-                    rawRise: riseMinutes / 60, // Keep decimal hours for TAF chart
+                    rawRise: riseMinutes / 60,
                     rawSet: setMinutes / 60
                 };
             }
 
+            // --- SUNRISE UI UPDATER ---
+            function toggleSunFormat() {
+                showLocalSun = !showLocalSun; // Flip state
+                updateSunDisplay();
+            }
+    
+            function updateSunDisplay() {
+                if(!stationData) return;
+                const sunData = getSunTimes(stationData.latitude, stationData.longitude);
+                document.getElementById('infoSun').innerText = `🌅 ${sunData.sunrise}  🌇 ${sunData.sunset}`;
+            }
+        
             // --- FUEL TIMER LOGIC ---
             let fuelInterval = null;
             let fuelSeconds = 1800; // 30 Minutes default
