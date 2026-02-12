@@ -903,17 +903,29 @@
             }
     
             function saveDefaultStation() {
-                const val = document.getElementById('defaultIcaoInput').value.trim().toUpperCase();
+                const input = document.getElementById('defaultIcaoInput');
+                const val = input.value.trim().toUpperCase();
                 const msg = document.getElementById('saveMsg');
                 
                 if(val.length >= 3) {
                     localStorage.setItem('efb_default_station', val);
-                    msg.innerText = "Default station saved! Will load on startup.";
-                    setTimeout(() => { msg.innerText = ""; }, 3000);
+                    
+                    // Visual Feedback
+                    msg.innerText = "✅ Saved! Will load on restart.";
+                    msg.style.color = "var(--success)";
+                    
+                    // Optional: Immediately load it if the main box is empty
+                    if(document.getElementById('icao').value === "") {
+                        document.getElementById('icao').value = val;
+                        loadData();
+                    }
                 } else {
+                    msg.innerText = "⚠️ Invalid ICAO";
                     msg.style.color = "var(--warn)";
-                    msg.innerText = "Invalid ICAO code.";
                 }
+                
+                // Clear message after 3 seconds
+                setTimeout(() => { msg.innerText = ""; }, 3000);
             }
     
             function resetApp() {
@@ -1911,14 +1923,17 @@
                         <div class="rc-strip" style="opacity:${rowOpacity}">
                             <div class="rc-id-v">${r.ident1}</div>
                             <div class="rc-data">
-                                <div class="wind-comp">
-                                    <span>${Math.abs(hw)}kt</span>
-                                    <span style="color:${color1}">${hw>=0?'⬆':'⬇'}</span>
+                                
+                                <div class="wind-comp" style="color:${color1}">
+                                    <span style="font-weight:700;">${Math.abs(hw)}kt</span>
+                                    <span>${hw>=0?'⬆':'⬇'}</span>
                                 </div>
-                                <div class="wind-comp" style="margin-left:12px;">
-                                    <span style="${isLimitExceeded ? 'color:var(--danger); font-weight:900;' : ''}">${absXW}kt</span>
-                                    <span style="color:#0a84ff">${xw>=0?'⬅':'➡'}</span>
+    
+                                <div class="wind-comp" style="margin-left:12px; color:#0a84ff;">
+                                    <span style="font-weight:700; ${isLimitExceeded ? 'color:var(--danger);' : ''}">${absXW}kt</span>
+                                    <span>${xw>=0?'⬅':'➡'}</span>
                                 </div>
+    
                             </div>
                             <div class="rc-id-v" style="transform:rotate(0deg);">${r.ident2}</div>
                         </div>`;
@@ -2504,7 +2519,10 @@
             }
         
             // Start
-            initApp();
+            document.addEventListener('DOMContentLoaded', () => {
+                initApp();
+            });
+        
         </script>
 </body>
 </html>
