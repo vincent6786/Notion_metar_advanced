@@ -1304,46 +1304,52 @@
             async function fetchMeteogram(lat, lon) {
                 const loader = document.getElementById('meteoLoading');
                 loader.style.display = 'block';
-                meteoDataCache = null; 
+                loader.innerText = 'Loading...'; // Reset text in case of previous error
+                meteoDataCache = null;
             
                 try {
-                    // We request the offset and pressure level data here
-                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,temperature_925hPa,windspeed_925hPa,winddirection_925hPa,temperature_850hPa,windspeed_850hPa,winddirection_850hPa,temperature_700hPa,windspeed_700hPa,winddirection_700hPa&wind_speed_unit=kn&forecast_days=1&timezone=auto`;                    
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,temperature_925hPa,windspeed_925hPa,winddirection_925hPa,temperature_850hPa,windspeed_850hPa,winddirection_850hPa,temperature_700hPa,windspeed_700hPa,winddirection_700hPa&wind_speed_unit=kn&forecast_days=1&timezone=auto`;
                     const res = await fetch(url);
                     const data = await res.json();
-                    
-                    // --- CRITICAL FIX: CAPTURE THE OFFSET ---
-                    // This was likely missing or 0 before
+            
                     stationOffsetSec = data.utc_offset_seconds || 0;
-                    
-                    // Immediately refresh the Sunrise text now that we have the real offset
-                    updateSunDisplay(); 
-                    // ----------------------------------------
-
-                    if(data.hourly) {
-                        meteoDataCache = data.hourly; 
-                        drawMeteogram(meteoDataCache);
-                        
-                        // Update Winds Aloft Tab
+                    updateSunDisplay();
+            
+                    if (data.hourly) {
+                        meteoDataCache = data.hourly;
+            
+                        // ✅ FIX: Hide loader BEFORE drawing, so canvas has room to render
+                        loader.style.display = 'none';
+            
+                        // ✅ FIX: Small delay ensures the canvas has a real layout size
+                        // This matters especially if the TAF tab isn't active yet
+                        setTimeout(() => drawMeteogram(meteoDataCache), 50);
+            
+                        // Winds Aloft
                         const now = new Date();
-                        const currentHourIndex = now.getUTCHours(); 
-                        
+                        const currentHourIndex = now.getUTCHours();
                         const fmtWind = (dir, spd) => `${dir}° / ${Math.round(spd)}kt`;
                         const fmtTemp = (t) => `${Math.round(t)}°C`;
-
-                        document.getElementById('wind3k').innerText = fmtWind(data.hourly.winddirection_925hPa[currentHourIndex], data.hourly.windspeed_925hPa[currentHourIndex]);
-                        document.getElementById('temp3k').innerText = fmtTemp(data.hourly.temperature_925hPa[currentHourIndex]);
-
-                        document.getElementById('wind5k').innerText = fmtWind(data.hourly.winddirection_850hPa[currentHourIndex], data.hourly.windspeed_850hPa[currentHourIndex]);
-                        document.getElementById('temp5k').innerText = fmtTemp(data.hourly.temperature_850hPa[currentHourIndex]);
-
-                        document.getElementById('wind10k').innerText = fmtWind(data.hourly.winddirection_700hPa[currentHourIndex], data.hourly.windspeed_700hPa[currentHourIndex]);
-                        document.getElementById('temp10k').innerText = fmtTemp(data.hourly.temperature_700hPa[currentHourIndex]);
+            
+                        // ✅ FIX: Guard against missing DOM elements instead of crashing silently
+                        const setEl = (id, val) => {
+                            const el = document.getElementById(id);
+                            if (el) el.innerText = val;
+                        };
+            
+                        setEl('wind3k',  fmtWind(data.hourly.winddirection_925hPa[currentHourIndex], data.hourly.windspeed_925hPa[currentHourIndex]));
+                        setEl('temp3k',  fmtTemp(data.hourly.temperature_925hPa[currentHourIndex]));
+                        setEl('wind5k',  fmtWind(data.hourly.winddirection_850hPa[currentHourIndex], data.hourly.windspeed_850hPa[currentHourIndex]));
+                        setEl('temp5k',  fmtTemp(data.hourly.temperature_850hPa[currentHourIndex]));
+                        setEl('wind10k', fmtWind(data.hourly.winddirection_700hPa[currentHourIndex], data.hourly.windspeed_700hPa[currentHourIndex]));
+                        setEl('temp10k', fmtTemp(data.hourly.temperature_700hPa[currentHourIndex]));
                     }
-                    loader.style.display = 'none';
+            
                 } catch(e) {
                     console.error("Meteo Error:", e);
-                    loader.innerText = "Model Data Unavailable";
+                    // ✅ FIX: Show error text but keep the loader visible as the error message
+                    loader.style.display = 'block';
+                    loader.innerText = "⚠️ Model Data Unavailable";
                 }
             }
     
