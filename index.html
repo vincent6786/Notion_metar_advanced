@@ -1808,7 +1808,7 @@
                     } else {
                         vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`;
                         vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
-                        vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'L' : 'R'}`;
+                        vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'R' : 'L'}`;
                     }
                     checkMins();
                 }
@@ -1937,7 +1937,7 @@
     
                                 <div class="wind-comp" style="margin-left:12px; color:#0a84ff;">
                                     <span style="font-weight:700; ${isLimitExceeded ? 'color:var(--danger);' : ''}">${absXW}kt</span>
-                                    <span>${xw>=0?'⬅':'➡'}</span>
+                                    <span>${xw>=0?'➡':'⬅'}</span>
                                 </div>
     
                             </div>
