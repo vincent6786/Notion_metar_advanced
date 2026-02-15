@@ -1832,7 +1832,7 @@
                 } 
                 else {
                     // NORMAL WIND -> Draw Centered Vector
-                    const windRad = (windMag - 90) * (Math.PI / 180);
+                    const windRad = (windMag + 90) * (Math.PI / 180);
                     
                     ctx.save();
                     ctx.translate(cx, cy);
