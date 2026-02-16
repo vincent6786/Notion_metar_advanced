@@ -835,45 +835,79 @@
             <span>🔴 Cockpit Night Mode</span>
         </button>
 
-        <div class="section-title">Storage Mode</div>
+        <div class="section-title">Cloud Backup</div>
         <div class="info-card" id="storageModeCard">
             <div style="display:flex; justify-content:space-between; 
                         align-items:center; margin-bottom:8px;">
                 <div>
-                    <div class="ic-lbl">Current Mode</div>
+                    <div class="ic-lbl">Backup Status</div>
                     <div class="ic-val" id="storageModeLabel">
                         Loading...
                     </div>
                 </div>
                 <button class="tool-btn" style="width:auto;" 
                         onclick="showStorageSetup()">
-                    Switch
+                    Change
                 </button>
             </div>
+        
+            <!-- Cloud details (only shown in cloud mode) -->
             <div id="cloudPinRow" style="display:none; 
                  font-size:12px; color:var(--sub-text); 
                  padding-top:8px; border-top:1px solid #333;">
+        
                 <div style="display:flex; justify-content:space-between; 
-                            align-items:center;">
-                    <span>Your PIN</span>
-                    <span id="cloudPinDisplay" 
-                          style="font-family:monospace; 
-                                 letter-spacing:4px;">
-                        ••••
-                    </span>
+                            align-items:center; margin-bottom:6px;">
+                    <span>Backup Code</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span id="cloudPinDisplay" 
+                              style="font-family:monospace; 
+                                     letter-spacing:4px; color:#fff;">
+                            ••••
+                        </span>
+                        <button onclick="toggleShowCode()" 
+                                id="showCodeBtn"
+                                style="background:transparent; 
+                                       border:1px solid #555;
+                                       color:#8e8e93; border-radius:6px;
+                                       padding:2px 8px; font-size:10px;
+                                       cursor:pointer;">
+                            Show
+                        </button>
+                    </div>
                 </div>
+        
                 <div style="display:flex; justify-content:space-between; 
-                            align-items:center; margin-top:6px;">
+                            align-items:center; margin-bottom:6px;">
                     <span>Sync Status</span>
                     <span id="syncStatus" style="color:var(--success);">
                         ✅ Synced
                     </span>
                 </div>
+        
+                <div style="display:flex; justify-content:space-between; 
+                            align-items:center; margin-bottom:10px;">
+                    <span>Last Saved</span>
+                    <span id="lastSyncTime" style="color:var(--sub-text);">
+                        --
+                    </span>
+                </div>
+        
+                <!-- Privacy note -->
+                <div style="background:rgba(255,255,255,0.03); 
+                            border-radius:8px; padding:8px 10px; 
+                            margin-bottom:10px; font-size:11px; 
+                            color:#555; line-height:1.5;">
+                    ℹ️ Only your airport preferences are stored.<br>
+                    No personal information is collected.
+                </div>
+        
                 <button class="tool-btn" style="
-                    margin-top:10px; background:transparent; 
-                    border:1px solid var(--danger); color:var(--danger);"
+                    background:transparent; 
+                    border:1px solid var(--danger); 
+                    color:var(--danger);"
                         onclick="deleteCloudProfile()">
-                    Delete Cloud Profile
+                    🗑️ Delete Cloud Backup Data
                 </button>
             </div>
         </div>
@@ -893,90 +927,116 @@
 
     <!-- STORAGE MODE SETUP SCREEN -->
     <div id="storageSetup" class="setup-overlay" style="display:none;">
-        <div style="font-size:32px; margin-bottom:8px;">✈️</div>
+        <div style="font-size:40px; margin-bottom:12px;">✈️</div>
         <div style="font-size:22px; font-weight:800; 
                     color:#fff; margin-bottom:6px; text-align:center;">
-            METAR GO
+            METAR PLUS
         </div>
         <div style="font-size:13px; color:#8e8e93; 
                     margin-bottom:32px; text-align:center; 
                     max-width:280px; line-height:1.6;">
-            How would you like to save your preferences?
+            Choose how to save your airport preferences.
         </div>
     
+        <!-- LOCAL OPTION -->
         <div class="setup-card" onclick="chooseStorageMode('local')">
             <div style="font-size:24px; margin-bottom:8px;">📱</div>
             <div style="font-weight:800; font-size:16px; 
                         margin-bottom:6px; color:#fff;">
-                Local Only
+                This Device Only
             </div>
-            <div style="font-size:12px; color:#8e8e93; line-height:1.5;">
-                Saves on this device only.<br>
-                No account needed. Works fully offline.<br>
+            <div style="font-size:12px; color:#8e8e93; line-height:1.6;">
+                Your airports and settings stay on this device.<br>
+                No account or code needed.<br>
                 <span style="color:#ff9f0a;">
-                    ⚠️ May clear if iOS removes app data.
+                    ⚠️ May reset if iOS clears app data.
                 </span>
             </div>
         </div>
     
+        <!-- CLOUD OPTION -->
         <div class="setup-card highlighted" 
              onclick="chooseStorageMode('cloud')">
             <div style="font-size:24px; margin-bottom:8px;">☁️</div>
             <div style="font-weight:800; font-size:16px; 
                         margin-bottom:6px; color:#fff;">
-                Cloud Sync
+                Cloud Backup
             </div>
-            <div style="font-size:12px; color:#8e8e93; line-height:1.5;">
-                Syncs across all your devices.<br>
-                Survives app resets and iOS wipes.<br>
+            <div style="font-size:12px; color:#8e8e93; line-height:1.6;">
+                Backs up your airports and settings online.<br>
+                Restore anytime on any device.<br>
+                No account or personal info needed —<br>
+                just a simple 4-6 digit Backup Code.<br>
                 <span style="color:#32d74b;">
-                    ✅ Recommended for regular use.
+                    ✅ Recommended — survives app resets.
                 </span>
             </div>
         </div>
     
         <div style="font-size:11px; color:#555; 
-                    text-align:center; margin-top:8px;">
-            You can change this later in Settings.
+                    text-align:center; margin-top:12px;">
+            You can change this anytime in Settings.
         </div>
     </div>
     
-    <!-- PIN PAD SCREEN -->
+    <!-- BACKUP CODE SETUP SCREEN -->
     <div id="pinSetup" class="setup-overlay" style="display:none;">
         <div style="font-size:32px; margin-bottom:8px;" 
-             id="pinIcon">🔑</div>
+             id="pinIcon">☁️</div>
         <div style="font-size:20px; font-weight:800; 
                     color:#fff; margin-bottom:6px; text-align:center;"
              id="pinTitle">
-            Create Your PIN
+            Set Up Cloud Backup
         </div>
         <div style="font-size:13px; color:#8e8e93; 
-                    margin-bottom:24px; text-align:center; 
+                    margin-bottom:6px; text-align:center; 
                     max-width:280px; line-height:1.6;"
              id="pinSubtitle">
-            Your PIN is your personal key.<br>
-            Nobody else can see your data without it.
+            Create a 4-6 digit Backup Code to save your 
+            airports and settings to the cloud.
         </div>
     
-        <!-- Dots -->
-        <div style="display:flex; gap:16px; 
-                    justify-content:center; margin-bottom:16px;">
+        <!-- Privacy reassurance -->
+        <div id="privacyNote" style="
+            background: rgba(50,215,75,0.08);
+            border: 1px solid rgba(50,215,75,0.2);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+            max-width: 280px;
+            text-align: center;">
+            <div style="font-size:11px; color:#32d74b; 
+                        line-height:1.6;">
+                🔒 Not linked to any account or personal info.<br>
+                We only store your airport preferences.
+            </div>
+        </div>
+    
+        <!-- Dots (6 max) -->
+        <div style="display:flex; gap:12px; 
+                    justify-content:center; margin-bottom:16px;"
+             id="pinDotsRow">
             <div class="pin-dot" id="dot_0"></div>
             <div class="pin-dot" id="dot_1"></div>
             <div class="pin-dot" id="dot_2"></div>
             <div class="pin-dot" id="dot_3"></div>
+            <div class="pin-dot" id="dot_4" 
+                 style="opacity:0.3;"></div>
+            <div class="pin-dot" id="dot_5" 
+                 style="opacity:0.3;"></div>
         </div>
     
         <!-- Status message -->
         <div id="pinMsg" style="font-size:12px; color:#8e8e93; 
                                  margin-bottom:20px; height:18px; 
                                  text-align:center; font-weight:600;">
-            Enter a 4-digit PIN
+            Enter 4-6 digits
         </div>
     
         <!-- Number pad -->
-        <div style="display:grid; grid-template-columns:repeat(3, 72px); 
-                    gap:12px; margin-bottom:24px;">
+        <div style="display:grid; 
+                    grid-template-columns:repeat(3, 72px); 
+                    gap:12px; margin-bottom:20px;">
             <button class="pin-btn" onclick="pinPadPress('1')">1</button>
             <button class="pin-btn" onclick="pinPadPress('2')">2</button>
             <button class="pin-btn" onclick="pinPadPress('3')">3</button>
@@ -992,35 +1052,46 @@
                     onclick="pinPadPress('⌫')">⌫</button>
         </div>
     
-        <!-- Restore existing PIN option -->
-        <div style="border-top:1px solid #222; padding-top:20px; 
+        <!-- Confirm button (appears after 4+ digits) -->
+        <button id="pinConfirmBtn" onclick="submitPinEntry()" style="
+            display:none;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 14px 40px;
+            border-radius: 12px;
+            font-size:16px;
+            font-weight:800;
+            cursor:pointer;
+            margin-bottom:16px;
+            width:100%;
+            max-width:250px;">
+            Continue →
+        </button>
+    
+        <!-- Restore existing code option -->
+        <div style="border-top:1px solid #222; padding-top:16px; 
                     width:100%; max-width:280px; text-align:center;"
              id="restoreSection">
             <div style="font-size:12px; color:#555; margin-bottom:10px;">
-                Already have a PIN from another device?
+                Already set up Cloud Backup on another device?
             </div>
             <button onclick="switchToRestoreMode()" style="
-                background:transparent; border:1px solid #38383a;
-                color:#8e8e93; padding:10px 20px; border-radius:8px;
-                font-size:13px; cursor:pointer; width:100%;">
-                Restore Existing Profile
+                background:transparent; 
+                border:1px solid #38383a;
+                color:#8e8e93; padding:10px 20px; 
+                border-radius:8px; font-size:13px; 
+                cursor:pointer; width:100%;">
+                Restore Using Existing Code
             </button>
         </div>
     
         <button onclick="backToStorageSetup()" style="
             background:transparent; border:none;
-            color:#555; font-size:13px; cursor:pointer; 
-            margin-top:16px;">
+            color:#555; font-size:13px; 
+            cursor:pointer; margin-top:16px;">
             ← Back
         </button>
-    </div>
-    
-    <div id="awosModal" class="modal-overlay">
-        <div class="modal-header">
-            <div style="font-weight:700;">📡 LIVE SENSOR (KMHR)</div>
-            <button class="modal-close" onclick="closeAwosModal()">DONE</button>
-        </div>
-        <iframe id="awosFrame" class="browser-frame" src=""></iframe>
     </div>
 
     <div id="legendModal" class="modal-overlay" onclick="toggleLegend(false)">
@@ -1213,23 +1284,33 @@
             }
             
             async function deleteCloudProfile() {
-                const pin = getPin();
+                const pin = localStorage.getItem('efb_cloud_pin');
                 if (!pin) return;
             
                 if (!confirm(
-                    'Delete your cloud profile?\n' +
-                    'Your data will be removed from the server.\n' +
-                    'Local data on this device is kept.'
+                    '⚠️ Delete Cloud Backup?\n\n' +
+                    'This removes all your saved airports and\n' +
+                    'settings from the cloud permanently.\n\n' +
+                    'Your data on this device is kept.\n' +
+                    'You cannot undo this.'
                 )) return;
             
                 try {
-                    await fetch(`/api/settings?pin=${pin}`, { 
-                        method: 'DELETE' 
-                    });
-                    showToast('☁️ Cloud profile deleted');
-                    updateSyncStatus('--', '#555');
+                    const res = await fetch(
+                        `/api/settings?pin=${pin}`, 
+                        { method: 'DELETE' }
+                    );
+            
+                    if (res.ok) {
+                        showToast('🗑️ Cloud backup deleted');
+                        updateSyncStatus('--', '#555');
+                        const el = document.getElementById('lastSyncTime');
+                        if (el) el.innerText = '--';
+                    } else {
+                        showToast('⚠️ Delete failed. Try again.');
+                    }
                 } catch(e) {
-                    showToast('⚠️ Delete failed');
+                    showToast('⚠️ No connection. Try again.');
                 }
             }
 
@@ -1273,7 +1354,7 @@
             
             function renderStorageModeUI() {
                 const mode = localStorage.getItem('efb_storage_mode');
-                const pin = getPin();
+                const pin = localStorage.getItem('efb_cloud_pin');
                 const label = document.getElementById('storageModeLabel');
                 const pinRow = document.getElementById('cloudPinRow');
                 const pinDisplay = document.getElementById('cloudPinDisplay');
@@ -1281,20 +1362,50 @@
                 if (!label) return;
             
                 if (mode === 'cloud') {
-                    label.innerText = '☁️ Cloud Sync';
+                    label.innerText = '☁️ Cloud Backup — Active';
                     label.style.color = 'var(--accent)';
                     if (pinRow) pinRow.style.display = 'block';
                     if (pinDisplay && pin) {
                         pinDisplay.innerText = '•'.repeat(pin.length);
                     }
+                    // Update last sync time
+                    updateLastSyncTime();
                 } else {
-                    label.innerText = '📱 Local Only';
+                    label.innerText = '📱 This Device Only';
                     label.style.color = 'var(--success)';
                     if (pinRow) pinRow.style.display = 'none';
                 }
             }
+            
+            async function updateLastSyncTime() {
+                const pin = localStorage.getItem('efb_cloud_pin');
+                if (!pin) return;
+            
+                try {
+                    const res = await fetch(
+                        `/api/settings?pin=${pin}&key=_lastUpdated`
+                    );
+                    const data = await res.json();
+            
+                    const el = document.getElementById('lastSyncTime');
+                    if (!el) return;
+            
+                    if (data.value) {
+                        const d = new Date(data.value);
+                        el.innerText = d.toLocaleString('en-GB', {
+                            day: '2-digit', month: 'short',
+                            hour: '2-digit', minute: '2-digit'
+                        });
+                    } else {
+                        el.innerText = 'Not yet synced';
+                    }
+                } catch(e) {
+                    const el = document.getElementById('lastSyncTime');
+                    if (el) el.innerText = 'Unknown';
+                }
+            }
 
-            // ── PIN PAD LOGIC ─────────────────────────────────────────────
+            // ── BACKUP CODE LOGIC ─────────────────────────────────────────
             
             window._pinEntry = '';
             window._pinStep = 'create'; // 'create' | 'confirm' | 'restore'
@@ -1315,136 +1426,185 @@
                     await Storage.setMode('local');
                     document.getElementById('storageSetup').style.display = 'none';
                     renderStorageModeUI();
-                    showToast('📱 Local storage enabled');
+                    showToast('📱 Saved to this device only');
                     initApp();
                     return;
                 }
             
-                // Cloud mode — show PIN setup
+                // Cloud mode — show backup code setup
                 document.getElementById('storageSetup').style.display = 'none';
                 document.getElementById('pinSetup').style.display = 'flex';
+                resetPinUI('create');
+            }
             
-                // Reset state
+            function resetPinUI(step) {
                 window._pinEntry = '';
-                window._pinStep = 'create';
+                window._pinStep = step;
                 window._pinFirst = '';
             
-                document.getElementById('pinIcon').innerText = '🔑';
-                document.getElementById('pinTitle').innerText = 'Set Your Backup Pin';
-                document.getElementById('pinSubtitle').innerHTML =
-                    'Your PIN is your personal key.<br>' +
-                    'Find Your Saved data with it.';
-                document.getElementById('pinMsg').innerText = 'Enter a 4-digit PIN';
+                const isRestore = step === 'restore';
+            
+                document.getElementById('pinIcon').innerText = 
+                    isRestore ? '🔄' : '☁️';
+                document.getElementById('pinTitle').innerText = 
+                    isRestore ? 'Restore Cloud Backup' : 'Set Up Cloud Backup';
+                document.getElementById('pinSubtitle').innerHTML = isRestore
+                    ? 'Enter the Backup Code you created on your other device.'
+                    : 'Create a 4-6 digit Backup Code to save your airports and settings to the cloud.';
+                document.getElementById('privacyNote').style.display = 
+                    isRestore ? 'none' : 'block';
+                document.getElementById('restoreSection').style.display = 
+                    isRestore ? 'none' : 'block';
+                document.getElementById('pinMsg').innerText = 
+                    isRestore ? 'Enter your Backup Code' : 'Enter 4-6 digits';
                 document.getElementById('pinMsg').style.color = '#8e8e93';
-                document.getElementById('restoreSection').style.display = 'block';
+                document.getElementById('pinConfirmBtn').style.display = 'none';
+            
                 updatePinDots(0);
             }
             
             function switchToRestoreMode() {
-                window._pinEntry = '';
-                window._pinStep = 'restore';
-            
-                document.getElementById('pinIcon').innerText = '🔄';
-                document.getElementById('pinTitle').innerText = 'Restore Profile';
-                document.getElementById('pinSubtitle').innerHTML =
-                    'Enter your existing PIN to restore<br>' +
-                    'your favorites and settings.';
-                document.getElementById('pinMsg').innerText = 'Enter your existing PIN';
-                document.getElementById('pinMsg').style.color = '#8e8e93';
-                document.getElementById('restoreSection').style.display = 'none';
-                updatePinDots(0);
+                resetPinUI('restore');
             }
             
             function updatePinDots(count) {
-                [0, 1, 2, 3].forEach(i => {
+                [0, 1, 2, 3, 4, 5].forEach(i => {
                     const dot = document.getElementById(`dot_${i}`);
                     if (!dot) return;
-                    if (i < count) dot.classList.add('filled');
-                    else dot.classList.remove('filled');
+            
+                    if (i < count) {
+                        dot.classList.add('filled');
+                        dot.style.opacity = '1';
+                    } else if (i < 4) {
+                        // First 4 always visible
+                        dot.classList.remove('filled');
+                        dot.style.opacity = '1';
+                    } else {
+                        // Dots 5-6 only visible when code is long enough
+                        dot.classList.remove('filled');
+                        dot.style.opacity = count >= i ? '1' : '0.3';
+                    }
                 });
+            
+                // Show confirm button once 4+ digits entered
+                const confirmBtn = document.getElementById('pinConfirmBtn');
+                if (count >= 4) {
+                    confirmBtn.style.display = 'block';
+                    confirmBtn.innerText = window._pinStep === 'confirm'
+                        ? 'Confirm Code →'
+                        : window._pinStep === 'restore'
+                        ? 'Restore →'
+                        : 'Continue →';
+                } else {
+                    confirmBtn.style.display = 'none';
+                }
             }
             
-            async function pinPadPress(val) {
-                const msg = document.getElementById('pinMsg');
-            
+            function pinPadPress(val) {
                 if (val === '⌫') {
                     window._pinEntry = window._pinEntry.slice(0, -1);
                     updatePinDots(window._pinEntry.length);
                     return;
                 }
             
-                if (window._pinEntry.length >= 4) return;
+                // Max 6 digits
+                if (window._pinEntry.length >= 6) return;
                 window._pinEntry += val;
                 updatePinDots(window._pinEntry.length);
+            }
             
-                if (window._pinEntry.length < 4) return;
-            
-                // 4 digits entered — handle each step
+            // Called when user taps Continue button
+            async function submitPinEntry() {
                 const entered = window._pinEntry;
+                const msg = document.getElementById('pinMsg');
+            
+                if (entered.length < 4) {
+                    msg.innerText = '⚠️ Enter at least 4 digits';
+                    msg.style.color = 'var(--warn)';
+                    return;
+                }
             
                 if (window._pinStep === 'create') {
+                    // First entry — ask to confirm
                     window._pinFirst = entered;
                     window._pinEntry = '';
                     window._pinStep = 'confirm';
             
+                    document.getElementById('pinTitle').innerText = 
+                        'Confirm Backup Code';
+                    document.getElementById('pinSubtitle').innerHTML =
+                        'Enter your Backup Code again to confirm.';
+            
                     setTimeout(() => {
                         updatePinDots(0);
-                        msg.innerText = 'Confirm your PIN';
+                        msg.innerText = 'Re-enter your Backup Code';
                         msg.style.color = '#8e8e93';
-                    }, 300);
+                    }, 200);
             
                 } else if (window._pinStep === 'confirm') {
                     if (entered === window._pinFirst) {
-                        msg.innerText = '✅ PIN confirmed!';
+                        msg.innerText = '✅ Backup Code confirmed!';
                         msg.style.color = 'var(--success)';
                         setTimeout(() => finalizePinSetup(entered), 600);
                     } else {
-                        msg.innerText = '❌ PINs did not match. Try again.';
+                        msg.innerText = '❌ Codes did not match. Try again.';
                         msg.style.color = 'var(--danger)';
                         window._pinEntry = '';
                         window._pinFirst = '';
                         window._pinStep = 'create';
             
+                        document.getElementById('pinTitle').innerText = 
+                            'Set Up Cloud Backup';
+                        document.getElementById('pinSubtitle').innerHTML =
+                            'Create a 4-6 digit Backup Code to save your airports and settings to the cloud.';
+            
                         setTimeout(() => {
                             updatePinDots(0);
-                            msg.innerText = 'Enter a 4-digit PIN';
+                            msg.innerText = 'Enter 4-6 digits';
                             msg.style.color = '#8e8e93';
                         }, 1500);
                     }
             
                 } else if (window._pinStep === 'restore') {
-                    msg.innerText = '🔍 Looking up profile...';
+                    msg.innerText = '🔍 Looking up your backup...';
                     msg.style.color = '#8e8e93';
             
+                    const confirmBtn = document.getElementById('pinConfirmBtn');
+                    confirmBtn.disabled = true;
+                    confirmBtn.innerText = 'Checking...';
+            
                     try {
-                        const res = await fetch(
-                            `/api/settings?pin=${entered}`
-                        );
+                        const res = await fetch(`/api/settings?pin=${entered}`);
                         const data = await res.json();
             
                         if (data.found) {
-                            msg.innerText = '✅ Profile found!';
+                            msg.innerText = '✅ Backup found!';
                             msg.style.color = 'var(--success)';
                             setTimeout(() => finalizePinSetup(entered), 600);
                         } else {
-                            msg.innerText = '❌ No profile found. Check your PIN.';
+                            msg.innerText = 
+                                '❌ No backup found for this code.';
                             msg.style.color = 'var(--danger)';
                             window._pinEntry = '';
+                            confirmBtn.disabled = false;
             
                             setTimeout(() => {
                                 updatePinDots(0);
-                                msg.innerText = 'Enter your existing PIN';
+                                msg.innerText = 'Enter your Backup Code';
                                 msg.style.color = '#8e8e93';
+                                confirmBtn.innerText = 'Restore →';
                             }, 2000);
                         }
                     } catch(e) {
                         msg.innerText = '⚠️ No connection. Check internet.';
                         msg.style.color = 'var(--warn)';
                         window._pinEntry = '';
+                        confirmBtn.disabled = false;
+                        confirmBtn.innerText = 'Restore →';
             
                         setTimeout(() => {
                             updatePinDots(0);
-                            msg.innerText = 'Enter your existing PIN';
+                            msg.innerText = 'Enter your Backup Code';
                             msg.style.color = '#8e8e93';
                         }, 2000);
                     }
@@ -1461,8 +1621,30 @@
                 document.getElementById('storageSetup').style.display = 'none';
             
                 renderStorageModeUI();
-                showToast(restored ? '☁️ Profile restored!' : '✅ Cloud profile created!');
+                showToast(restored 
+                    ? '☁️ Backup restored successfully!' 
+                    : '✅ Cloud Backup activated!');
                 initApp();
+            }
+            
+            // Show/hide the actual backup code in settings
+            function toggleShowCode() {
+                const display = document.getElementById('cloudPinDisplay');
+                const btn = document.getElementById('showCodeBtn');
+                const pin = localStorage.getItem('efb_cloud_pin') || '';
+            
+                if (btn.innerText === 'Show') {
+                    display.innerText = pin;
+                    btn.innerText = 'Hide';
+                    // Auto hide after 5 seconds
+                    setTimeout(() => {
+                        display.innerText = '•'.repeat(pin.length);
+                        btn.innerText = 'Show';
+                    }, 5000);
+                } else {
+                    display.innerText = '•'.repeat(pin.length);
+                    btn.innerText = 'Show';
+                }
             }
         
             let currentWind = { dir:0, spd:0 }; 
@@ -1587,11 +1769,35 @@
                 setTimeout(() => { msg.innerText = ""; }, 3000);
             }
     
-            function resetApp() {
-                if(confirm("Reset all settings and clear local data?")) {
-                    localStorage.clear();
-                    location.reload();
+            async function resetApp() {
+                const mode = localStorage.getItem('efb_storage_mode');
+            
+                let message = "Reset all local settings?\n\n";
+            
+                if (mode === 'cloud') {
+                    message +=
+                        "✅ Your Cloud Backup is NOT affected.\n" +
+                        "You can restore it anytime with your Backup Code.\n\n" +
+                        "To also delete cloud data, go to\n" +
+                        "Settings → Delete Cloud Backup Data first.";
+                } else {
+                    message += "⚠️ This cannot be undone.";
                 }
+            
+                if (!confirm(message)) return;
+            
+                // 1. Clear localStorage
+                localStorage.clear();
+            
+                // 2. Clear IndexedDB
+                await new Promise((resolve) => {
+                    const req = indexedDB.deleteDatabase('efb_storage_v1');
+                    req.onsuccess = resolve;
+                    req.onerror = resolve;
+                });
+            
+                showToast('🗑️ App reset complete');
+                setTimeout(() => location.reload(), 1000);
             }
     
             function renderHistory() {
