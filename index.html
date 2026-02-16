@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <title>METAR PLUS Pro</title>
+    <title>METAR GO</title>
     <meta name="apple-mobile-web-app-title" content="METAR GO">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png">
@@ -307,12 +307,7 @@
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: radial-gradient(
-                ellipse at 50% 60%, 
-                #0a1628 0%, 
-                #000510 60%, 
-                #000 100%
-            );
+            background: #000;
             z-index: 99999;
             display: flex;
             flex-direction: column;
@@ -321,294 +316,157 @@
             overflow: hidden;
         }
         #launchScreen.fade-out {
-            animation: launchFadeOut 0.9s ease-in forwards;
+            animation: launchFadeOut 0.8s ease-in forwards;
         }
         @keyframes launchFadeOut {
             0%   { opacity: 1; }
             100% { opacity: 0; pointer-events: none; }
         }
         
-        /* Radar Ring */
-        .radar-container {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 320px; height: 320px;
-        }
-        .radar-ring {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            border: 1px solid rgba(10, 132, 255, 0.15);
-            animation: radarExpand 3s ease-out infinite;
-        }
-        .radar-ring:nth-child(1) { width: 80px;  height: 80px;  animation-delay: 0s; }
-        .radar-ring:nth-child(2) { width: 140px; height: 140px; animation-delay: 0.3s; }
-        .radar-ring:nth-child(3) { width: 200px; height: 200px; animation-delay: 0.6s; }
-        .radar-ring:nth-child(4) { width: 260px; height: 260px; animation-delay: 0.9s; }
-        .radar-ring:nth-child(5) { width: 320px; height: 320px; animation-delay: 1.2s; }
-        
-        @keyframes radarExpand {
-            0%   { opacity: 0.6; transform: translate(-50%,-50%) scale(0.95); }
-            50%  { opacity: 0.3; }
-            100% { opacity: 0;   transform: translate(-50%,-50%) scale(1.05); }
-        }
-        
-        /* Radar Sweep */
-        .radar-sweep {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 150px; height: 2px;
-            transform-origin: left center;
-            animation: radarSweep 3s linear infinite;
-            background: linear-gradient(
-                to right, 
-                transparent, 
-                rgba(10, 132, 255, 0.8)
-            );
-            border-radius: 0 2px 2px 0;
-        }
-        .radar-sweep::after {
-            content: '';
-            position: absolute;
-            right: 0; top: -3px;
-            width: 6px; height: 6px;
-            background: #0a84ff;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #0a84ff;
-        }
-        @keyframes radarSweep {
-            0%   { transform: rotate(0deg);   }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Runway scene */
-        .rwy-scene {
+        /* Aircraft */
+        .launch-aircraft-wrap {
             position: relative;
-            width: 300px;
+            width: 100%;
             height: 180px;
-            margin-bottom: 24px;
-            z-index: 2;
-        }
-        .rwy-ground {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 50px;
-            background: linear-gradient(to bottom, #141414, #0a0a0a);
-            border-top: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
             overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .launch-aircraft-img {
+            position: absolute;
+            width: 200px;
+            height: auto;
+            left: -220px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: aircraftSlide 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+            filter: drop-shadow(0 8px 24px rgba(100, 200, 255, 0.25));
+        }
+        @keyframes aircraftSlide {
+            0%   { left: -220px; opacity: 0.8; }
+            30%  { opacity: 1; }
+            70%  { left: 50%;   opacity: 1; transform: translateY(-50%) translateX(-50%); }
+            85%  { left: 55%;   opacity: 1; transform: translateY(-52%) translateX(-50%) scale(0.98); }
+            100% { left: 115%;  opacity: 0; transform: translateY(-54%) translateX(-50%) scale(0.95); }
         }
         
-        /* Runway surface texture */
-        .rwy-surface {
+        /* Ground shadow / surface under aircraft */
+        .launch-ground {
             position: absolute;
-            inset: 0;
-            background: repeating-linear-gradient(
-                90deg,
-                transparent 0px,
-                transparent 48px,
-                rgba(255,255,255,0.02) 48px,
-                rgba(255,255,255,0.02) 50px
+            bottom: 16px;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(
+                to right,
+                transparent,
+                rgba(255,255,255,0.08) 20%,
+                rgba(255,255,255,0.15) 50%,
+                rgba(255,255,255,0.08) 80%,
+                transparent
             );
         }
-        .rwy-centerline {
+        
+        /* Runway dashes */
+        .launch-dashes {
             position: absolute;
-            top: 14px; left: 50%;
+            bottom: 8px;
+            left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 14px;
+            opacity: 0;
+            animation: fadeIn 0.4s ease 0.2s forwards;
         }
-        .rwy-dash {
-            width: 26px; height: 3px;
-            background: rgba(255,255,255,0.8);
+        .launch-dash {
+            width: 22px;
+            height: 2px;
+            background: rgba(255,255,255,0.5);
             border-radius: 2px;
-            opacity: 0;
-            animation: dashAppear 0.2s ease forwards;
-            box-shadow: 0 0 4px rgba(255,255,255,0.3);
-        }
-        .rwy-edge-left, .rwy-edge-right {
-            position: absolute;
-            top: 0; bottom: 0;
-            width: 2px;
-            background: rgba(255,255,255,0.15);
-        }
-        .rwy-edge-left  { left: 20px; }
-        .rwy-edge-right { right: 20px; }
-        
-        /* Runway threshold lights */
-        .rwy-threshold {
-            position: absolute;
-            top: 2px; left: 22px; right: 22px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .rwy-thr-light {
-            width: 3px; height: 8px;
-            background: #32d74b;
-            border-radius: 1px;
-            box-shadow: 0 0 6px #32d74b;
-            opacity: 0;
-            animation: thrLightOn 0.1s ease 0.3s forwards;
         }
         
-        /* Edge lights */
-        .rwy-lights {
+        /* Amber edge lights */
+        .launch-lights {
             position: absolute;
-            bottom: 8px;
-            width: 100%;
+            bottom: 5px;
+            left: 8%;
+            right: 8%;
             display: flex;
             justify-content: space-between;
-            padding: 0 22px;
-            box-sizing: border-box;
+            opacity: 0;
+            animation: fadeIn 0.4s ease 0.2s forwards;
         }
-        .rwy-light {
-            width: 4px; height: 4px;
+        .launch-light {
+            width: 4px;
+            height: 4px;
             background: #ff9f0a;
             border-radius: 50%;
-            opacity: 0;
+            box-shadow: 0 0 6px #ff9f0a, 0 0 12px rgba(255,159,10,0.4);
             animation: lightPulse 1.5s ease-in-out infinite;
-            box-shadow: 0 0 6px #ff9f0a, 0 0 12px rgba(255,159,10,0.3);
         }
+        .launch-light:nth-child(2) { animation-delay: 0.2s; }
+        .launch-light:nth-child(3) { animation-delay: 0.4s; }
+        .launch-light:nth-child(4) { animation-delay: 0.6s; }
+        .launch-light:nth-child(5) { animation-delay: 0.8s; }
+        .launch-light:nth-child(6) { animation-delay: 1.0s; }
+        .launch-light:nth-child(7) { animation-delay: 1.2s; }
         
-        /* Aircraft SVG */
-        .launch-aircraft {
+        /* Soft glow under aircraft path */
+        .launch-glow {
             position: absolute;
-            bottom: 42px;
-            left: -120px;
-            width: 120px;
-            animation: aircraftTakeoff 2.6s cubic-bezier(0.25, 0.1, 0.2, 1) forwards;
-            z-index: 3;
-        }
-        
-        /* Engine glow */
-        .engine-glow {
-            position: absolute;
-            bottom: 54px;
-            left: -128px;
-            width: 18px;
-            height: 8px;
+            bottom: 0;
+            left: 0; right: 0;
+            height: 60px;
             background: radial-gradient(
-                ellipse, 
-                rgba(255,150,50,0.9) 0%, 
-                rgba(255,80,0,0.5) 40%, 
+                ellipse at 50% 100%,
+                rgba(100, 200, 255, 0.04) 0%,
                 transparent 70%
             );
-            border-radius: 50%;
-            animation: engineGlowMove 2.6s cubic-bezier(0.25, 0.1, 0.2, 1) forwards,
-                       engineFlicker 0.1s ease infinite;
-            z-index: 2;
-            filter: blur(2px);
+            pointer-events: none;
         }
         
-        /* Exhaust trail */
-        .exhaust-trail {
-            position: absolute;
-            bottom: 57px;
-            left: -130px;
-            height: 3px;
-            width: 0;
-            background: linear-gradient(
-                to left,
-                transparent,
-                rgba(200,200,220,0.15)
-            );
-            animation: exhaustGrow 2.6s cubic-bezier(0.25, 0.1, 0.2, 1) forwards;
-            z-index: 1;
-        }
-        
-        @keyframes aircraftTakeoff {
-            0%   { left: -120px; bottom: 42px; transform: rotate(0deg);   opacity: 1; }
-            45%  { left: 40%;    bottom: 44px; transform: rotate(0deg);   opacity: 1; }
-            62%  { left: 55%;    bottom: 65px; transform: rotate(-6deg);  opacity: 1; }
-            78%  { left: 72%;    bottom: 110px; transform: rotate(-11deg); opacity: 1; }
-            90%  { left: 90%;    bottom: 155px; transform: rotate(-14deg); opacity: 0.6; }
-            100% { left: 120%;   bottom: 200px; transform: rotate(-16deg); opacity: 0; }
-        }
-        @keyframes engineGlowMove {
-            0%   { left: -128px; bottom: 54px; transform: rotate(0deg);   opacity: 1; }
-            45%  { left: 37%;    bottom: 56px; transform: rotate(0deg);   opacity: 1; }
-            62%  { left: 52%;    bottom: 77px; transform: rotate(-6deg);  opacity: 0.8; }
-            78%  { left: 69%;    bottom: 122px; transform: rotate(-11deg); opacity: 0.6; }
-            100% { left: 117%;   bottom: 212px; transform: rotate(-16deg); opacity: 0; }
-        }
-        @keyframes exhaustGrow {
-            0%   { left: -130px; width: 0;    bottom: 57px; }
-            45%  { left: -130px; width: 160px; bottom: 57px; }
-            60%  { left: -130px; width: 220px; bottom: 70px; opacity: 0.8; }
-            100% { left: -130px; width: 280px; bottom: 120px; opacity: 0; }
-        }
-        @keyframes engineFlicker {
-            0%, 100% { opacity: 0.9; transform: scaleX(1); }
-            50%       { opacity: 1;   transform: scaleX(1.1); }
-        }
-        @keyframes dashAppear {
-            to { opacity: 1; }
-        }
-        @keyframes lightPulse {
-            0%, 100% { opacity: 0.2; }
-            50%       { opacity: 0.9; }
-        }
-        @keyframes thrLightOn {
-            to { opacity: 1; }
-        }
-        
-        /* Launch text */
+        /* App name */
         .launch-title {
-            font-size: 26px;
+            font-size: 30px;
             font-weight: 800;
             color: #fff;
             letter-spacing: 5px;
             text-transform: uppercase;
             opacity: 0;
-            animation: titleReveal 0.7s ease 1.0s forwards;
-            z-index: 2;
+            animation: titleReveal 0.6s ease 1.8s forwards;
+            text-align: center;
         }
         .launch-sub {
-            font-size: 10px;
+            font-size: 11px;
             color: #0a84ff;
             letter-spacing: 3px;
             text-transform: uppercase;
-            margin-top: 6px;
+            margin-top: 8px;
             opacity: 0;
-            animation: titleReveal 0.7s ease 1.3s forwards;
-            z-index: 2;
+            animation: titleReveal 0.6s ease 2.1s forwards;
+            text-align: center;
         }
         .launch-version {
             font-size: 10px;
             color: #2a2a2a;
-            margin-top: 24px;
+            margin-top: 20px;
             opacity: 0;
-            animation: titleReveal 0.5s ease 1.6s forwards;
+            animation: titleReveal 0.4s ease 2.3s forwards;
             font-family: 'SF Mono', monospace;
             letter-spacing: 2px;
-            z-index: 2;
+            text-align: center;
         }
         @keyframes titleReveal {
-            0%   { opacity: 0; transform: translateY(8px); }
+            0%   { opacity: 0; transform: translateY(6px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Speed lines during takeoff */
-        .speed-lines {
-            position: absolute;
-            bottom: 36px;
-            left: 0; right: 0;
-            height: 3px;
-            overflow: hidden;
-            opacity: 0;
-            animation: speedLinesAppear 0.3s ease 0.5s forwards;
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
-        .speed-line {
-            position: absolute;
-            height: 1px;
-            background: linear-gradient(to right, transparent, rgba(10,132,255,0.4), transparent);
-            animation: speedLine 0.4s linear infinite;
-        }
-        @keyframes speedLinesAppear { to { opacity: 1; } }
-        @keyframes speedLine {
-            0%   { left: -100%; width: 60%; }
-            100% { left: 100%;  width: 40%; }
+        @keyframes lightPulse {
+            0%, 100% { opacity: 0.3; }
+            50%       { opacity: 1; }
         }
         
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
@@ -903,149 +761,49 @@
     <!-- LAUNCH SCREEN -->
     <div id="launchScreen">
     
-        <!-- Radar background -->
-        <div class="radar-container">
-            <div class="radar-ring"></div>
-            <div class="radar-ring"></div>
-            <div class="radar-ring"></div>
-            <div class="radar-ring"></div>
-            <div class="radar-ring"></div>
-            <div class="radar-sweep"></div>
-        </div>
+        <!-- Aircraft + runway scene -->
+        <div class="launch-aircraft-wrap">
     
-        <!-- Runway scene -->
-        <div class="rwy-scene">
+            <!-- Soft glow -->
+            <div class="launch-glow"></div>
     
-            <!-- Engine glow (behind aircraft) -->
-            <div class="engine-glow"></div>
+            <!-- Ground line -->
+            <div class="launch-ground"></div>
     
-            <!-- Exhaust trail -->
-            <div class="exhaust-trail"></div>
-    
-            <!-- Aircraft SVG -->
-            <div class="launch-aircraft">
-                <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Fuselage -->
-                    <path d="M10 30 Q40 28 160 26 Q180 26 192 28 Q198 30 192 32 Q180 34 160 34 Q40 32 10 30 Z"
-                          fill="#d0d8e8" stroke="#a0aabf" stroke-width="0.5"/>
-    
-                    <!-- Nose -->
-                    <path d="M160 26 Q185 26 195 29 Q198 30 195 31 Q185 34 160 34 Z"
-                          fill="#b8c4d4"/>
-    
-                    <!-- Cockpit windows -->
-                    <ellipse cx="168" cy="28" rx="8" ry="3.5"
-                             fill="#1a3a5c" stroke="#2a5a8c" stroke-width="0.5"/>
-                    <ellipse cx="175" cy="27.5" rx="4" ry="3"
-                             fill="#1a3a5c" opacity="0.7"/>
-    
-                    <!-- Main wing -->
-                    <path d="M80 30 L60 55 L50 55 L70 30 Z"
-                          fill="#b8c4d4" stroke="#a0aabf" stroke-width="0.5"/>
-                    <path d="M80 30 L100 5 L108 5 L88 30 Z"
-                          fill="#c8d4e4" stroke="#a0aabf" stroke-width="0.5"/>
-    
-                    <!-- Wing detail -->
-                    <path d="M75 30 L68 44" stroke="#90a0b8" 
-                          stroke-width="0.5" opacity="0.5"/>
-    
-                    <!-- Tail fin -->
-                    <path d="M18 29 L14 12 L22 12 L24 29 Z"
-                          fill="#c8d4e4" stroke="#a0aabf" stroke-width="0.5"/>
-    
-                    <!-- Horizontal stabilizer -->
-                    <path d="M20 31 L8 40 L5 40 L16 31 Z"
-                          fill="#b8c4d4" stroke="#a0aabf" stroke-width="0.5"/>
-                    <path d="M20 29 L8 20 L5 20 L16 29 Z"
-                          fill="#b8c4d4" stroke="#a0aabf" stroke-width="0.5"/>
-    
-                    <!-- Engine under wing -->
-                    <ellipse cx="72" cy="37" rx="12" ry="5"
-                             fill="#8090a8" stroke="#6070900" stroke-width="0.5"/>
-                    <ellipse cx="62" cy="37" rx="4" ry="5"
-                             fill="#606878"/>
-                    <!-- Engine intake -->
-                    <ellipse cx="61" cy="37" rx="3.5" ry="4.5"
-                             fill="#1a1a2a"/>
-    
-                    <!-- Engine glow from intake -->
-                    <ellipse cx="60" cy="37" rx="2.5" ry="3.5"
-                             fill="#ff8c3a" opacity="0.7"/>
-    
-                    <!-- Windows row -->
-                    <g fill="#d4e8ff" stroke="#90b0d0" stroke-width="0.3">
-                        <rect x="90"  y="27.5" width="5" height="3.5" rx="1"/>
-                        <rect x="100" y="27"   width="5" height="3.5" rx="1"/>
-                        <rect x="110" y="27"   width="5" height="3.5" rx="1"/>
-                        <rect x="120" y="27"   width="5" height="3.5" rx="1"/>
-                        <rect x="130" y="27"   width="5" height="3.5" rx="1"/>
-                        <rect x="140" y="27"   width="5" height="3.5" rx="1"/>
-                        <rect x="150" y="27"   width="5" height="3.5" rx="1"/>
-                    </g>
-    
-                    <!-- Airline stripe -->
-                    <path d="M40 34 Q100 34 160 33 Q170 33 185 33.5"
-                          stroke="#0a84ff" stroke-width="1.5"
-                          fill="none" opacity="0.6"/>
-    
-                    <!-- Landing gear -->
-                    <line x1="85"  y1="35" x2="85"  y2="42"
-                          stroke="#707888" stroke-width="1.5"/>
-                    <line x1="82"  y1="42" x2="88"  y2="42"
-                          stroke="#707888" stroke-width="1.5"/>
-                    <line x1="170" y1="33" x2="170" y2="40"
-                          stroke="#707888" stroke-width="1.5"/>
-                    <line x1="167" y1="40" x2="173" y2="40"
-                          stroke="#707888" stroke-width="1.5"/>
-                </svg>
+            <!-- Runway dashes -->
+            <div class="launch-dashes">
+                <div class="launch-dash"></div>
+                <div class="launch-dash"></div>
+                <div class="launch-dash"></div>
+                <div class="launch-dash"></div>
+                <div class="launch-dash"></div>
+                <div class="launch-dash"></div>
             </div>
     
-            <!-- Runway -->
-            <div class="rwy-ground">
-                <div class="rwy-surface"></div>
-                <div class="rwy-edge-left"></div>
-                <div class="rwy-edge-right"></div>
-    
-                <!-- Threshold lights -->
-                <div class="rwy-threshold">
-                    <div class="rwy-thr-light"></div>
-                    <div class="rwy-thr-light"></div>
-                    <div class="rwy-thr-light"></div>
-                    <div class="rwy-thr-light"></div>
-                    <div class="rwy-thr-light"></div>
-                    <div class="rwy-thr-light"></div>
-                    <div class="rwy-thr-light"></div>
-                    <div class="rwy-thr-light"></div>
-                </div>
-    
-                <!-- Centerline dashes -->
-                <div class="rwy-centerline">
-                    <div class="rwy-dash" style="animation-delay:0.0s"></div>
-                    <div class="rwy-dash" style="animation-delay:0.08s"></div>
-                    <div class="rwy-dash" style="animation-delay:0.16s"></div>
-                    <div class="rwy-dash" style="animation-delay:0.24s"></div>
-                    <div class="rwy-dash" style="animation-delay:0.32s"></div>
-                    <div class="rwy-dash" style="animation-delay:0.40s"></div>
-                </div>
-    
-                <!-- Edge lights -->
-                <div class="rwy-lights">
-                    <div class="rwy-light" style="animation-delay:0.0s"></div>
-                    <div class="rwy-light" style="animation-delay:0.15s"></div>
-                    <div class="rwy-light" style="animation-delay:0.3s"></div>
-                    <div class="rwy-light" style="animation-delay:0.45s"></div>
-                    <div class="rwy-light" style="animation-delay:0.6s"></div>
-                    <div class="rwy-light" style="animation-delay:0.75s"></div>
-                    <div class="rwy-light" style="animation-delay:0.9s"></div>
-                    <div class="rwy-light" style="animation-delay:1.0s"></div>
-                </div>
+            <!-- Amber edge lights -->
+            <div class="launch-lights">
+                <div class="launch-light"></div>
+                <div class="launch-light"></div>
+                <div class="launch-light"></div>
+                <div class="launch-light"></div>
+                <div class="launch-light"></div>
+                <div class="launch-light"></div>
+                <div class="launch-light"></div>
             </div>
+    
+            <!-- Your aircraft image -->
+            <img 
+                class="launch-aircraft-img"
+                src="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/plane.png"
+                alt="Aircraft"
+            >
         </div>
     
         <!-- App branding -->
         <div class="launch-title">METAR GO</div>
-        <div class="launch-sub">Weather & EFB</div>
+        <div class="launch-sub">Weather &amp; EFB</div>
         <div class="launch-version">CLOUD EDITION · v2.0</div>
+    
     </div>
     
     <div class="top-bar">
@@ -4339,7 +4097,7 @@
                             screen.style.display = 'none';
                             resolve();
                         }, 800); // Match fade-out duration
-                    }, 2400);
+                    }, 2900);
                 });
             }
             
