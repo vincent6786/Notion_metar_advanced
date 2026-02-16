@@ -379,6 +379,93 @@
             resize: vertical;
             outline: none;
         }
+        /* --- STORAGE SETUP & PIN PAD --- */
+        .setup-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .setup-card {
+            width: 100%;
+            max-width: 320px;
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .setup-card:hover { border-color: var(--accent); }
+        .setup-card.highlighted { border-color: var(--accent); }
+        .pin-dot {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            border: 2px solid #555;
+            background: transparent;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .pin-dot.filled {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .pin-btn {
+            width: 72px; height: 72px;
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pin-btn:active { background: #333; }
+        .pin-btn.empty {
+            background: transparent;
+            border: none;
+            pointer-events: none;
+        }
+        .pin-btn.delete { font-size: 20px; }
+        .toast-msg {
+            position: fixed;
+            bottom: max(30px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 9999;
+            white-space: nowrap;
+            animation: slideUpFade 0.3s ease-out;
+        }
+        .offline-banner {
+            background: var(--warn);
+            color: #000;
+            text-align: center;
+            padding: 8px;
+            font-weight: 800;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
         .safety-footer {
             margin-top: 20px;
             text-align: center;
@@ -747,6 +834,49 @@
         <button id="btnNightMode" class="atc-btn" onclick="toggleNightMode()" style="justify-content:center; margin-bottom:20px; border:1px solid var(--danger);">
             <span>🔴 Cockpit Night Mode</span>
         </button>
+
+        <div class="section-title">Storage Mode</div>
+        <div class="info-card" id="storageModeCard">
+            <div style="display:flex; justify-content:space-between; 
+                        align-items:center; margin-bottom:8px;">
+                <div>
+                    <div class="ic-lbl">Current Mode</div>
+                    <div class="ic-val" id="storageModeLabel">
+                        Loading...
+                    </div>
+                </div>
+                <button class="tool-btn" style="width:auto;" 
+                        onclick="showStorageSetup()">
+                    Switch
+                </button>
+            </div>
+            <div id="cloudPinRow" style="display:none; 
+                 font-size:12px; color:var(--sub-text); 
+                 padding-top:8px; border-top:1px solid #333;">
+                <div style="display:flex; justify-content:space-between; 
+                            align-items:center;">
+                    <span>Your PIN</span>
+                    <span id="cloudPinDisplay" 
+                          style="font-family:monospace; 
+                                 letter-spacing:4px;">
+                        ••••
+                    </span>
+                </div>
+                <div style="display:flex; justify-content:space-between; 
+                            align-items:center; margin-top:6px;">
+                    <span>Sync Status</span>
+                    <span id="syncStatus" style="color:var(--success);">
+                        ✅ Synced
+                    </span>
+                </div>
+                <button class="tool-btn" style="
+                    margin-top:10px; background:transparent; 
+                    border:1px solid var(--danger); color:var(--danger);"
+                        onclick="deleteCloudProfile()">
+                    Delete Cloud Profile
+                </button>
+            </div>
+        </div>
         
         <div class="section-title">Data & Storage</div>
         <div class="info-card">
@@ -761,6 +891,130 @@
         NOT FOR NAVIGATION. REFERENCE ONLY. ALWAYS CROSS-CHECK OFFICIAL SOURCES.
     </div>
 
+    <!-- STORAGE MODE SETUP SCREEN -->
+    <div id="storageSetup" class="setup-overlay" style="display:none;">
+        <div style="font-size:32px; margin-bottom:8px;">✈️</div>
+        <div style="font-size:22px; font-weight:800; 
+                    color:#fff; margin-bottom:6px; text-align:center;">
+            METAR PLUS
+        </div>
+        <div style="font-size:13px; color:#8e8e93; 
+                    margin-bottom:32px; text-align:center; 
+                    max-width:280px; line-height:1.6;">
+            How would you like to save your preferences?
+        </div>
+    
+        <div class="setup-card" onclick="chooseStorageMode('local')">
+            <div style="font-size:24px; margin-bottom:8px;">📱</div>
+            <div style="font-weight:800; font-size:16px; 
+                        margin-bottom:6px; color:#fff;">
+                Local Only
+            </div>
+            <div style="font-size:12px; color:#8e8e93; line-height:1.5;">
+                Saves on this device only.<br>
+                No account needed. Works fully offline.<br>
+                <span style="color:#ff9f0a;">
+                    ⚠️ May clear if iOS removes app data.
+                </span>
+            </div>
+        </div>
+    
+        <div class="setup-card highlighted" 
+             onclick="chooseStorageMode('cloud')">
+            <div style="font-size:24px; margin-bottom:8px;">☁️</div>
+            <div style="font-weight:800; font-size:16px; 
+                        margin-bottom:6px; color:#fff;">
+                Cloud Sync
+            </div>
+            <div style="font-size:12px; color:#8e8e93; line-height:1.5;">
+                Syncs across all your devices.<br>
+                Survives app resets and iOS wipes.<br>
+                <span style="color:#32d74b;">
+                    ✅ Recommended for regular use.
+                </span>
+            </div>
+        </div>
+    
+        <div style="font-size:11px; color:#555; 
+                    text-align:center; margin-top:8px;">
+            You can change this later in Settings.
+        </div>
+    </div>
+    
+    <!-- PIN PAD SCREEN -->
+    <div id="pinSetup" class="setup-overlay" style="display:none;">
+        <div style="font-size:32px; margin-bottom:8px;" 
+             id="pinIcon">🔑</div>
+        <div style="font-size:20px; font-weight:800; 
+                    color:#fff; margin-bottom:6px; text-align:center;"
+             id="pinTitle">
+            Create Your PIN
+        </div>
+        <div style="font-size:13px; color:#8e8e93; 
+                    margin-bottom:24px; text-align:center; 
+                    max-width:280px; line-height:1.6;"
+             id="pinSubtitle">
+            Your PIN is your personal key.<br>
+            Nobody else can see your data without it.
+        </div>
+    
+        <!-- Dots -->
+        <div style="display:flex; gap:16px; 
+                    justify-content:center; margin-bottom:16px;">
+            <div class="pin-dot" id="dot_0"></div>
+            <div class="pin-dot" id="dot_1"></div>
+            <div class="pin-dot" id="dot_2"></div>
+            <div class="pin-dot" id="dot_3"></div>
+        </div>
+    
+        <!-- Status message -->
+        <div id="pinMsg" style="font-size:12px; color:#8e8e93; 
+                                 margin-bottom:20px; height:18px; 
+                                 text-align:center; font-weight:600;">
+            Enter a 4-digit PIN
+        </div>
+    
+        <!-- Number pad -->
+        <div style="display:grid; grid-template-columns:repeat(3, 72px); 
+                    gap:12px; margin-bottom:24px;">
+            <button class="pin-btn" onclick="pinPadPress('1')">1</button>
+            <button class="pin-btn" onclick="pinPadPress('2')">2</button>
+            <button class="pin-btn" onclick="pinPadPress('3')">3</button>
+            <button class="pin-btn" onclick="pinPadPress('4')">4</button>
+            <button class="pin-btn" onclick="pinPadPress('5')">5</button>
+            <button class="pin-btn" onclick="pinPadPress('6')">6</button>
+            <button class="pin-btn" onclick="pinPadPress('7')">7</button>
+            <button class="pin-btn" onclick="pinPadPress('8')">8</button>
+            <button class="pin-btn" onclick="pinPadPress('9')">9</button>
+            <button class="pin-btn empty"></button>
+            <button class="pin-btn" onclick="pinPadPress('0')">0</button>
+            <button class="pin-btn delete" 
+                    onclick="pinPadPress('⌫')">⌫</button>
+        </div>
+    
+        <!-- Restore existing PIN option -->
+        <div style="border-top:1px solid #222; padding-top:20px; 
+                    width:100%; max-width:280px; text-align:center;"
+             id="restoreSection">
+            <div style="font-size:12px; color:#555; margin-bottom:10px;">
+                Already have a PIN from another device?
+            </div>
+            <button onclick="switchToRestoreMode()" style="
+                background:transparent; border:1px solid #38383a;
+                color:#8e8e93; padding:10px 20px; border-radius:8px;
+                font-size:13px; cursor:pointer; width:100%;">
+                Restore Existing Profile
+            </button>
+        </div>
+    
+        <button onclick="backToStorageSetup()" style="
+            background:transparent; border:none;
+            color:#555; font-size:13px; cursor:pointer; 
+            margin-top:16px;">
+            ← Back
+        </button>
+    </div>
+    
     <div id="awosModal" class="modal-overlay">
         <div class="modal-header">
             <div style="font-weight:700;">📡 LIVE SENSOR (KMHR)</div>
@@ -813,7 +1067,404 @@
     
     <script>
             // --- 1. CONFIGURATION & STATE ---
-    
+            // ── INDEX DB LAYER ────────────────────────────────────────────
+            const EFB_DB = {
+                db: null,
+            
+                async init() {
+                    return new Promise((resolve, reject) => {
+                        const req = indexedDB.open('efb_storage_v1', 1);
+            
+                        req.onupgradeneeded = (e) => {
+                            e.target.result.createObjectStore('settings', 
+                                { keyPath: 'key' });
+                        };
+            
+                        req.onsuccess = (e) => {
+                            this.db = e.target.result;
+                            resolve();
+                        };
+            
+                        req.onerror = () => {
+                            console.warn('IndexedDB failed, using localStorage');
+                            resolve(); // Don't block app if IDB fails
+                        };
+                    });
+                },
+            
+                async set(key, value) {
+                    // Always mirror to localStorage as backup
+                    try { localStorage.setItem(key, JSON.stringify(value)); } 
+                    catch(e) {}
+            
+                    if (!this.db) return;
+                    return new Promise((resolve, reject) => {
+                        const tx = this.db.transaction('settings', 'readwrite');
+                        tx.objectStore('settings').put({ 
+                            key, 
+                            value: JSON.stringify(value) 
+                        });
+                        tx.oncomplete = resolve;
+                        tx.onerror = () => reject(tx.error);
+                    });
+                },
+            
+                async get(key, fallback = null) {
+                    // Try IndexedDB first
+                    if (this.db) {
+                        try {
+                            const result = await new Promise((resolve, reject) => {
+                                const tx = this.db.transaction('settings', 
+                                    'readonly');
+                                const req = tx.objectStore('settings').get(key);
+                                req.onsuccess = () => resolve(req.result);
+                                req.onerror = () => reject(req.error);
+                            });
+                            if (result) return JSON.parse(result.value);
+                        } catch(e) {}
+                    }
+            
+                    // Fall back to localStorage
+                    const local = localStorage.getItem(key);
+                    if (local !== null) {
+                        try { return JSON.parse(local); } catch(e) {}
+                    }
+            
+                    return fallback;
+                },
+            
+                async delete(key) {
+                    try { localStorage.removeItem(key); } catch(e) {}
+                    if (!this.db) return;
+                    return new Promise((resolve, reject) => {
+                        const tx = this.db.transaction('settings', 'readwrite');
+                        tx.objectStore('settings').delete(key);
+                        tx.oncomplete = resolve;
+                        tx.onerror = () => reject(tx.error);
+                    });
+                }
+            };
+
+            // ── CLOUD FUNCTIONS ───────────────────────────────────────────
+            
+            function getPin() {
+                return localStorage.getItem('efb_cloud_pin') || null;
+            }
+            
+            function updateSyncStatus(text, color) {
+                const el = document.getElementById('syncStatus');
+                if (el) { el.innerText = text; el.style.color = color; }
+            }
+            
+            async function cloudSave(key, value) {
+                const pin = getPin();
+                if (!pin || !navigator.onLine) return;
+            
+                try {
+                    const res = await fetch('/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pin, key, value })
+                    });
+                    if (!res.ok) throw new Error('Save failed');
+                    updateSyncStatus('✅ Synced', 'var(--success)');
+                } catch(e) {
+                    console.warn('Cloud save failed:', e);
+                    updateSyncStatus('⚠️ Sync failed', 'var(--warn)');
+                }
+            }
+            
+            async function cloudLoad(key, fallback = null) {
+                const pin = getPin();
+                if (!pin || !navigator.onLine) return fallback;
+            
+                try {
+                    const res = await fetch(
+                        `/api/settings?pin=${pin}&key=${key}`
+                    );
+                    const data = await res.json();
+                    return data.value ?? fallback;
+                } catch(e) {
+                    return fallback;
+                }
+            }
+            
+            async function cloudRestoreAll() {
+                const pin = getPin();
+                if (!pin || !navigator.onLine) return false;
+            
+                try {
+                    const res = await fetch(`/api/settings?pin=${pin}`);
+                    const data = await res.json();
+            
+                    if (!data.found) return false;
+            
+                    // Write everything back to IndexedDB + localStorage
+                    for (const [key, value] of Object.entries(data.settings)) {
+                        await EFB_DB.set(key, value);
+                    }
+            
+                    console.log('✅ Cloud restore complete');
+                    return true;
+                } catch(e) {
+                    console.warn('Cloud restore failed:', e);
+                    return false;
+                }
+            }
+            
+            async function deleteCloudProfile() {
+                const pin = getPin();
+                if (!pin) return;
+            
+                if (!confirm(
+                    'Delete your cloud profile?\n' +
+                    'Your data will be removed from the server.\n' +
+                    'Local data on this device is kept.'
+                )) return;
+            
+                try {
+                    await fetch(`/api/settings?pin=${pin}`, { 
+                        method: 'DELETE' 
+                    });
+                    showToast('☁️ Cloud profile deleted');
+                    updateSyncStatus('--', '#555');
+                } catch(e) {
+                    showToast('⚠️ Delete failed');
+                }
+            }
+
+            // ── UNIFIED STORAGE ROUTER ────────────────────────────────────
+            
+            const Storage = {
+                mode: null,
+            
+                async init() {
+                    await EFB_DB.init();
+                    this.mode = localStorage.getItem('efb_storage_mode');
+            
+                    if (!this.mode) {
+                        // First launch — show mode selector
+                        showStorageSetup();
+                        return false; // Signal that initApp should wait
+                    }
+            
+                    return true; // Ready to proceed
+                },
+            
+                async set(key, value) {
+                    // Always save locally
+                    await EFB_DB.set(key, value);
+            
+                    // If cloud mode, also sync to server
+                    if (this.mode === 'cloud' && navigator.onLine) {
+                        cloudSave(key, value); // Fire and forget
+                    }
+                },
+            
+                async get(key, fallback = null) {
+                    return await EFB_DB.get(key, fallback);
+                },
+            
+                async setMode(mode) {
+                    this.mode = mode;
+                    localStorage.setItem('efb_storage_mode', mode);
+                }
+            };
+            
+            function renderStorageModeUI() {
+                const mode = localStorage.getItem('efb_storage_mode');
+                const pin = getPin();
+                const label = document.getElementById('storageModeLabel');
+                const pinRow = document.getElementById('cloudPinRow');
+                const pinDisplay = document.getElementById('cloudPinDisplay');
+            
+                if (!label) return;
+            
+                if (mode === 'cloud') {
+                    label.innerText = '☁️ Cloud Sync';
+                    label.style.color = 'var(--accent)';
+                    if (pinRow) pinRow.style.display = 'block';
+                    if (pinDisplay && pin) {
+                        pinDisplay.innerText = '•'.repeat(pin.length);
+                    }
+                } else {
+                    label.innerText = '📱 Local Only';
+                    label.style.color = 'var(--success)';
+                    if (pinRow) pinRow.style.display = 'none';
+                }
+            }
+
+            // ── PIN PAD LOGIC ─────────────────────────────────────────────
+            
+            window._pinEntry = '';
+            window._pinStep = 'create'; // 'create' | 'confirm' | 'restore'
+            window._pinFirst = '';
+            
+            function showStorageSetup() {
+                document.getElementById('storageSetup').style.display = 'flex';
+                document.getElementById('pinSetup').style.display = 'none';
+            }
+            
+            function backToStorageSetup() {
+                document.getElementById('pinSetup').style.display = 'none';
+                document.getElementById('storageSetup').style.display = 'flex';
+            }
+            
+            async function chooseStorageMode(mode) {
+                if (mode === 'local') {
+                    await Storage.setMode('local');
+                    document.getElementById('storageSetup').style.display = 'none';
+                    renderStorageModeUI();
+                    showToast('📱 Local storage enabled');
+                    initApp();
+                    return;
+                }
+            
+                // Cloud mode — show PIN setup
+                document.getElementById('storageSetup').style.display = 'none';
+                document.getElementById('pinSetup').style.display = 'flex';
+            
+                // Reset state
+                window._pinEntry = '';
+                window._pinStep = 'create';
+                window._pinFirst = '';
+            
+                document.getElementById('pinIcon').innerText = '🔑';
+                document.getElementById('pinTitle').innerText = 'Create Your PIN';
+                document.getElementById('pinSubtitle').innerHTML =
+                    'Your PIN is your personal key.<br>' +
+                    'Nobody else can see your data without it.';
+                document.getElementById('pinMsg').innerText = 'Enter a 4-digit PIN';
+                document.getElementById('pinMsg').style.color = '#8e8e93';
+                document.getElementById('restoreSection').style.display = 'block';
+                updatePinDots(0);
+            }
+            
+            function switchToRestoreMode() {
+                window._pinEntry = '';
+                window._pinStep = 'restore';
+            
+                document.getElementById('pinIcon').innerText = '🔄';
+                document.getElementById('pinTitle').innerText = 'Restore Profile';
+                document.getElementById('pinSubtitle').innerHTML =
+                    'Enter your existing PIN to restore<br>' +
+                    'your favorites and settings.';
+                document.getElementById('pinMsg').innerText = 'Enter your existing PIN';
+                document.getElementById('pinMsg').style.color = '#8e8e93';
+                document.getElementById('restoreSection').style.display = 'none';
+                updatePinDots(0);
+            }
+            
+            function updatePinDots(count) {
+                [0, 1, 2, 3].forEach(i => {
+                    const dot = document.getElementById(`dot_${i}`);
+                    if (!dot) return;
+                    if (i < count) dot.classList.add('filled');
+                    else dot.classList.remove('filled');
+                });
+            }
+            
+            async function pinPadPress(val) {
+                const msg = document.getElementById('pinMsg');
+            
+                if (val === '⌫') {
+                    window._pinEntry = window._pinEntry.slice(0, -1);
+                    updatePinDots(window._pinEntry.length);
+                    return;
+                }
+            
+                if (window._pinEntry.length >= 4) return;
+                window._pinEntry += val;
+                updatePinDots(window._pinEntry.length);
+            
+                if (window._pinEntry.length < 4) return;
+            
+                // 4 digits entered — handle each step
+                const entered = window._pinEntry;
+            
+                if (window._pinStep === 'create') {
+                    window._pinFirst = entered;
+                    window._pinEntry = '';
+                    window._pinStep = 'confirm';
+            
+                    setTimeout(() => {
+                        updatePinDots(0);
+                        msg.innerText = 'Confirm your PIN';
+                        msg.style.color = '#8e8e93';
+                    }, 300);
+            
+                } else if (window._pinStep === 'confirm') {
+                    if (entered === window._pinFirst) {
+                        msg.innerText = '✅ PIN confirmed!';
+                        msg.style.color = 'var(--success)';
+                        setTimeout(() => finalizePinSetup(entered), 600);
+                    } else {
+                        msg.innerText = '❌ PINs did not match. Try again.';
+                        msg.style.color = 'var(--danger)';
+                        window._pinEntry = '';
+                        window._pinFirst = '';
+                        window._pinStep = 'create';
+            
+                        setTimeout(() => {
+                            updatePinDots(0);
+                            msg.innerText = 'Enter a 4-digit PIN';
+                            msg.style.color = '#8e8e93';
+                        }, 1500);
+                    }
+            
+                } else if (window._pinStep === 'restore') {
+                    msg.innerText = '🔍 Looking up profile...';
+                    msg.style.color = '#8e8e93';
+            
+                    try {
+                        const res = await fetch(
+                            `/api/settings?pin=${entered}`
+                        );
+                        const data = await res.json();
+            
+                        if (data.found) {
+                            msg.innerText = '✅ Profile found!';
+                            msg.style.color = 'var(--success)';
+                            setTimeout(() => finalizePinSetup(entered), 600);
+                        } else {
+                            msg.innerText = '❌ No profile found. Check your PIN.';
+                            msg.style.color = 'var(--danger)';
+                            window._pinEntry = '';
+            
+                            setTimeout(() => {
+                                updatePinDots(0);
+                                msg.innerText = 'Enter your existing PIN';
+                                msg.style.color = '#8e8e93';
+                            }, 2000);
+                        }
+                    } catch(e) {
+                        msg.innerText = '⚠️ No connection. Check internet.';
+                        msg.style.color = 'var(--warn)';
+                        window._pinEntry = '';
+            
+                        setTimeout(() => {
+                            updatePinDots(0);
+                            msg.innerText = 'Enter your existing PIN';
+                            msg.style.color = '#8e8e93';
+                        }, 2000);
+                    }
+                }
+            }
+            
+            async function finalizePinSetup(pin) {
+                localStorage.setItem('efb_cloud_pin', pin);
+                await Storage.setMode('cloud');
+            
+                const restored = await cloudRestoreAll();
+            
+                document.getElementById('pinSetup').style.display = 'none';
+                document.getElementById('storageSetup').style.display = 'none';
+            
+                renderStorageModeUI();
+                showToast(restored ? '☁️ Profile restored!' : '✅ Cloud profile created!');
+                initApp();
+            }
+        
             let currentWind = { dir:0, spd:0 }; 
             let currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
             let stationData = null;
@@ -847,7 +1498,7 @@
                 document.getElementById('craftPad').addEventListener('input', (e) => {
                     localStorage.setItem('efb_craft', e.target.value);
                 });
-    
+            
                 // Load Default Station Preference
                 const savedDefault = localStorage.getItem('efb_default_station');
                 const inputField = document.getElementById('defaultIcaoInput');
@@ -865,7 +1516,7 @@
                 const savedCeil = localStorage.getItem('efb_min_ceil');
                 if(savedXW) document.getElementById('minXW').value = savedXW;
                 if(savedCeil) document.getElementById('minCeil').value = savedCeil;
-    
+            
                 setInterval(updateClock, 1000);
             }
     
@@ -2523,6 +3174,55 @@
                 
                 if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
             }
+
+            // ── TOAST NOTIFICATION ────────────────────────────────────────
+            function showToast(message, duration = 3000) {
+                // Remove existing toast if any
+                document.querySelector('.toast-msg')?.remove();
+            
+                const toast = document.createElement('div');
+                toast.className = 'toast-msg';
+                toast.innerText = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), duration);
+            }
+            
+            // ── OFFLINE BANNER ────────────────────────────────────────────
+            function showOfflineBanner(ts) {
+                let banner = document.getElementById('offlineBanner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'offlineBanner';
+                    banner.className = 'offline-banner';
+                    banner.onclick = () => loadData(true);
+                    // Insert at top of body content
+                    const firstChild = document.body.firstElementChild;
+                    document.body.insertBefore(banner, firstChild);
+                }
+                const age = Math.round((Date.now() - ts) / 60000);
+                banner.innerText = 
+                    `⚠️ OFFLINE — Cached data from ${age}m ago. Tap to retry.`;
+            }
+            
+            function hideOfflineBanner() {
+                document.getElementById('offlineBanner')?.remove();
+            }
+            
+            // Listen for connectivity changes
+            window.addEventListener('online', () => {
+                hideOfflineBanner();
+                showToast('✅ Back online');
+            
+                // Re-sync if cloud mode
+                if (localStorage.getItem('efb_storage_mode') === 'cloud') {
+                    cloudRestoreAll();
+                }
+            });
+            
+            window.addEventListener('offline', () => {
+                showOfflineBanner(Date.now());
+            });
+
         
             // Start
             document.addEventListener('DOMContentLoaded', () => {
