@@ -1564,20 +1564,19 @@
                 loadData();
             }
     
-            function saveDefaultStation() {
+            async function saveDefaultStation() {
                 const input = document.getElementById('defaultIcaoInput');
                 const val = input.value.trim().toUpperCase();
                 const msg = document.getElementById('saveMsg');
                 
-                if(val.length >= 3) {
-                    localStorage.setItem('efb_default_station', val);
-                    
-                    // Visual Feedback
-                    msg.innerText = "✅ Saved! Will load on restart.";
+                if (val.length >= 3) {
+                    // ✅ Now syncs to cloud
+                    await Storage.set('efb_default_station', val);
+                    msg.innerText = "✅ Saved!";
                     msg.style.color = "var(--success)";
-                    
-                    // Optional: Immediately load it if the main box is empty
-                    if(document.getElementById('icao').value === "") {
+                    showToast(`✅ Default airport set to ${val}`);
+            
+                    if (document.getElementById('icao').value === "") {
                         document.getElementById('icao').value = val;
                         loadData();
                     }
@@ -1585,8 +1584,6 @@
                     msg.innerText = "⚠️ Invalid ICAO";
                     msg.style.color = "var(--warn)";
                 }
-                
-                // Clear message after 3 seconds
                 setTimeout(() => { msg.innerText = ""; }, 3000);
             }
     
@@ -1636,30 +1633,37 @@
             // --- FAVORITES LOGIC ---
 
             function getFavorites() {
-                return JSON.parse(localStorage.getItem('efb_favorites')) || [];
+                // Still reads from localStorage synchronously
+                // because IndexedDB mirrors it there automatically
+                const local = localStorage.getItem('efb_favorites');
+                try { return local ? JSON.parse(local) : []; } 
+                catch(e) { return []; }
             }
 
-            function addFavorite() {
+            async function addFavorite() {
                 const input = document.getElementById('favInput');
                 const code = input.value.trim().toUpperCase();
-                if (code.length < 3) return; // Simple validation
-
+                if (code.length < 3) return;
+            
                 let favs = getFavorites();
                 if (!favs.includes(code)) {
                     favs.push(code);
-                    localStorage.setItem('efb_favorites', JSON.stringify(favs));
-                    renderFavoritesSettings(); // Update the settings list
-                    renderHistory();           // Update the top bar
+                    // ✅ Now uses Storage.set() instead of localStorage directly
+                    await Storage.set('efb_favorites', favs);
+                    renderFavoritesSettings();
+                    renderHistory();
+                    showToast(`✅ ${code} added to favorites`);
                 }
-                input.value = ''; // Clear input
+                input.value = '';
             }
 
-            function removeFavorite(code) {
+            async function removeFavorite(code) {
                 let favs = getFavorites();
                 favs = favs.filter(f => f !== code);
-                localStorage.setItem('efb_favorites', JSON.stringify(favs));
+                await Storage.set('efb_favorites', favs);
                 renderFavoritesSettings();
                 renderHistory();
+                showToast(`🗑️ ${code} removed`);
             }
 
             function renderFavoritesSettings() {
@@ -2799,8 +2803,8 @@
     
                 const limitXW = parseFloat(xwVal);
                 const limitCeil = parseFloat(ceilVal);
-                localStorage.setItem('efb_min_xw', limitXW);
-                localStorage.setItem('efb_min_ceil', limitCeil);
+                Storage.set('efb_min_xw', limitXW);
+                Storage.set('efb_min_ceil', limitCeil);
     
                 if (!currentMetar || !stationData) { 
                     resDiv.innerText = "LOAD DATA"; 
