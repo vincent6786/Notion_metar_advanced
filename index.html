@@ -229,6 +229,229 @@
         
         /* --- METAR GRID & VISUALS --- */
         .metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        /* === GLASSMORPHISM CARDS === */
+        .metar-card, .info-card, .freq-card, 
+        .taf-detail-card, .fr-bar-container,
+        .wind-vis-container, .meteogram-container {
+            background: rgba(28, 28, 30, 0.75) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            box-shadow: 
+                0 4px 24px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: box-shadow 0.3s ease, transform 0.2s ease;
+        }
+        .metar-card:active, .info-card:active {
+            transform: scale(0.99);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* === AMBIENT BACKGROUND === */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: 
+                radial-gradient(
+                    ellipse at 20% 20%, 
+                    rgba(10, 132, 255, 0.04) 0%, 
+                    transparent 60%
+                ),
+                radial-gradient(
+                    ellipse at 80% 80%, 
+                    rgba(50, 215, 75, 0.03) 0%, 
+                    transparent 60%
+                );
+            pointer-events: none;
+            z-index: 0;
+        }
+        body > * { position: relative; z-index: 1; }
+        
+        /* === SMOOTH TAB SWITCHING === */
+        .view-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        .view-section.active {
+            display: block;
+            animation: tabReveal 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+        @keyframes tabReveal {
+            0%   { opacity: 0; transform: translateY(10px) scale(0.99); }
+            100% { opacity: 1; transform: translateY(0px) scale(1); }
+        }
+        
+        /* Tab indicator animation */
+        .tab {
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; left: 50%;
+            width: 0; height: 2px;
+            background: var(--accent);
+            transform: translateX(-50%);
+            transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border-radius: 2px;
+        }
+        .tab.active::after { width: 100%; }
+        .tab.active { border-bottom-color: transparent !important; }
+        
+        /* === LAUNCH ANIMATION SCREEN === */
+        #launchScreen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #launchScreen.fade-out {
+            animation: launchFadeOut 0.8s ease-in forwards;
+        }
+        @keyframes launchFadeOut {
+            0%   { opacity: 1; }
+            100% { opacity: 0; pointer-events: none; }
+        }
+        
+        /* Runway */
+        .rwy-scene {
+            position: relative;
+            width: 260px;
+            height: 160px;
+            margin-bottom: 32px;
+        }
+        .rwy-ground {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 40px;
+            background: linear-gradient(
+                to bottom, 
+                #1a1a1a, 
+                #111
+            );
+            border-top: 2px solid #333;
+            overflow: hidden;
+        }
+        .rwy-centerline {
+            position: absolute;
+            top: 12px; left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+        }
+        .rwy-dash {
+            width: 24px; height: 3px;
+            background: #fff;
+            border-radius: 2px;
+            opacity: 0;
+            animation: dashAppear 0.3s ease forwards;
+        }
+        .rwy-lights {
+            position: absolute;
+            bottom: 6px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+        .rwy-light {
+            width: 4px; height: 4px;
+            background: #ff9f0a;
+            border-radius: 50%;
+            opacity: 0;
+            animation: lightPulse 1s ease infinite;
+            box-shadow: 0 0 6px #ff9f0a;
+        }
+        
+        /* Plane */
+        .launch-plane {
+            position: absolute;
+            font-size: 28px;
+            bottom: 32px;
+            left: -40px;
+            animation: planeRoll 2.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            filter: drop-shadow(0 0 8px rgba(10, 132, 255, 0.5));
+        }
+        @keyframes planeRoll {
+            0%   { left: -40px; bottom: 32px; transform: rotate(0deg); }
+            55%  { left: 55%;   bottom: 34px; transform: rotate(0deg); }
+            70%  { left: 65%;   bottom: 50px; transform: rotate(-8deg); }
+            85%  { left: 80%;   bottom: 90px; transform: rotate(-14deg); }
+            100% { left: 120%;  bottom: 150px; transform: rotate(-16deg); opacity: 0; }
+        }
+        @keyframes dashAppear {
+            to { opacity: 1; }
+        }
+        @keyframes lightPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        /* Launch text */
+        .launch-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: titleReveal 0.6s ease 0.8s forwards;
+        }
+        .launch-sub {
+            font-size: 10px;
+            color: #555;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 6px;
+            opacity: 0;
+            animation: titleReveal 0.6s ease 1.1s forwards;
+        }
+        .launch-version {
+            font-size: 11px;
+            color: #333;
+            margin-top: 20px;
+            opacity: 0;
+            animation: titleReveal 0.4s ease 1.4s forwards;
+            font-family: 'SF Mono', monospace;
+        }
+        @keyframes titleReveal {
+            0%   { opacity: 0; transform: translateY(6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Speed lines during takeoff */
+        .speed-lines {
+            position: absolute;
+            bottom: 36px;
+            left: 0; right: 0;
+            height: 3px;
+            overflow: hidden;
+            opacity: 0;
+            animation: speedLinesAppear 0.3s ease 0.5s forwards;
+        }
+        .speed-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(10,132,255,0.4), transparent);
+            animation: speedLine 0.4s linear infinite;
+        }
+        @keyframes speedLinesAppear { to { opacity: 1; } }
+        @keyframes speedLine {
+            0%   { left: -100%; width: 60%; }
+            100% { left: 100%;  width: 40%; }
+        }
+        
         .metar-card { background: var(--card-bg); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
         .metar-card.full-width { grid-column: span 2; }
         .m-label { font-size: 11px; color: var(--sub-text); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
@@ -485,6 +708,50 @@
 </head>
 <body>
 
+    <!-- LAUNCH SCREEN -->
+    <div id="launchScreen">
+        <div class="rwy-scene">
+            <!-- Plane -->
+            <div class="launch-plane">✈</div>
+    
+            <!-- Speed lines -->
+            <div class="speed-lines">
+                <div class="speed-line" 
+                     style="top:0px; animation-delay:0s; width:80%"></div>
+                <div class="speed-line" 
+                     style="top:2px; animation-delay:0.1s; width:50%"></div>
+                <div class="speed-line" 
+                     style="top:4px; animation-delay:0.2s; width:65%"></div>
+            </div>
+    
+            <!-- Runway -->
+            <div class="rwy-ground">
+                <div class="rwy-centerline">
+                    <div class="rwy-dash" style="animation-delay:0.0s"></div>
+                    <div class="rwy-dash" style="animation-delay:0.1s"></div>
+                    <div class="rwy-dash" style="animation-delay:0.2s"></div>
+                    <div class="rwy-dash" style="animation-delay:0.3s"></div>
+                    <div class="rwy-dash" style="animation-delay:0.4s"></div>
+                </div>
+                <div class="rwy-lights">
+                    <div class="rwy-light" style="animation-delay:0.0s"></div>
+                    <div class="rwy-light" style="animation-delay:0.1s"></div>
+                    <div class="rwy-light" style="animation-delay:0.2s"></div>
+                    <div class="rwy-light" style="animation-delay:0.3s"></div>
+                    <div class="rwy-light" style="animation-delay:0.4s"></div>
+                    <div class="rwy-light" style="animation-delay:0.5s"></div>
+                    <div class="rwy-light" style="animation-delay:0.6s"></div>
+                    <div class="rwy-light" style="animation-delay:0.7s"></div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- App name -->
+        <div class="launch-title">METAR PLUS</div>
+        <div class="launch-sub">Electronic Flight Bag</div>
+        <div class="launch-version">v2.0 — Cloud Edition</div>
+    </div>
+    
     <div class="top-bar">
         <div class="search-wrapper">
             <div class="search-box">
@@ -1543,9 +1810,73 @@
             
                 } else if (window._pinStep === 'confirm') {
                     if (entered === window._pinFirst) {
-                        msg.innerText = '✅ Backup Code confirmed!';
-                        msg.style.color = 'var(--success)';
-                        setTimeout(() => finalizePinSetup(entered), 600);
+                
+                        // ✅ Check if code is already in use
+                        msg.innerText = '🔍 Checking availability...';
+                        msg.style.color = '#8e8e93';
+                
+                        const inUse = await checkCodeAvailability(entered);
+                
+                        if (inUse) {
+                            // Code already has data — warn the user
+                            msg.innerText = '';
+                
+                            // Show warning with two options
+                            const warningDiv = document.createElement('div');
+                            warningDiv.style.cssText = `
+                                background: rgba(255,159,10,0.12);
+                                border: 1px solid rgba(255,159,10,0.4);
+                                border-radius: 10px;
+                                padding: 14px;
+                                margin: 0 0 16px 0;
+                                text-align: center;
+                                max-width: 260px;
+                            `;
+                            warningDiv.innerHTML = `
+                                <div style="color:#ff9f0a; font-weight:800; 
+                                            margin-bottom:6px; font-size:13px;">
+                                    ⚠️ Code Already In Use
+                                </div>
+                                <div style="color:#8e8e93; font-size:11px; 
+                                            line-height:1.6; margin-bottom:12px;">
+                                    This Backup Code already has saved data.<br>
+                                    Choose a different code or restore<br>
+                                    the existing backup instead.
+                                </div>
+                                <div style="display:flex; gap:8px; 
+                                            justify-content:center;">
+                                    <button onclick="dismissCodeWarning()" style="
+                                        background:#333; border:1px solid #555;
+                                        color:#fff; padding:8px 14px;
+                                        border-radius:8px; font-size:12px;
+                                        font-weight:700; cursor:pointer;">
+                                        Choose Different
+                                    </button>
+                                    <button onclick="restoreExistingInstead('${entered}')" 
+                                            style="
+                                        background:var(--accent); border:none;
+                                        color:#fff; padding:8px 14px;
+                                        border-radius:8px; font-size:12px;
+                                        font-weight:700; cursor:pointer;">
+                                        Restore Instead
+                                    </button>
+                                </div>
+                            `;
+                
+                            // Insert warning above the numpad
+                            const numpad = document.querySelector(
+                                '#pinSetup > div[style*="grid-template-columns"]'
+                            );
+                            if (numpad) numpad.before(warningDiv);
+                            warningDiv.id = 'codeWarning';
+                
+                        } else {
+                            // Code is free — proceed
+                            msg.innerText = '✅ Backup Code confirmed!';
+                            msg.style.color = 'var(--success)';
+                            setTimeout(() => finalizePinSetup(entered), 600);
+                        }
+                
                     } else {
                         msg.innerText = '❌ Codes did not match. Try again.';
                         msg.style.color = 'var(--danger)';
@@ -1610,7 +1941,29 @@
                     }
                 }
             }
+
+            function dismissCodeWarning() {
+                // Remove warning and go back to start
+                document.getElementById('codeWarning')?.remove();
+                resetPinUI('create');
+                const msg = document.getElementById('pinMsg');
+                msg.innerText = '⚠️ Choose a different code';
+                msg.style.color = 'var(--warn)';
+                setTimeout(() => {
+                    msg.innerText = 'Enter 4-6 digits';
+                    msg.style.color = '#8e8e93';
+                }, 2500);
+            }
             
+            async function restoreExistingInstead(code) {
+                // User decided to restore the existing profile
+                document.getElementById('codeWarning')?.remove();
+                const msg = document.getElementById('pinMsg');
+                msg.innerText = '☁️ Restoring your backup...';
+                msg.style.color = 'var(--accent)';
+                setTimeout(() => finalizePinSetup(code), 600);
+            }
+        
             async function finalizePinSetup(pin) {
                 localStorage.setItem('efb_cloud_pin', pin);
                 await Storage.setMode('cloud');
@@ -3445,8 +3798,44 @@
             });
 
         
-            // Start
-            document.addEventListener('DOMContentLoaded', () => {
+            // === LAUNCH SCREEN ==========================================
+            function runLaunchAnimation() {
+                return new Promise((resolve) => {
+                    const screen = document.getElementById('launchScreen');
+                    if (!screen) { resolve(); return; }
+            
+                    // Dismiss after animation completes (2.8s total)
+                    setTimeout(() => {
+                        screen.classList.add('fade-out');
+                        setTimeout(() => {
+                            screen.style.display = 'none';
+                            resolve();
+                        }, 800); // Match fade-out duration
+                    }, 2400);
+                });
+            }
+            
+            // === BACKUP CODE IN USE CHECK ================================
+            async function checkCodeAvailability(code) {
+                try {
+                    const res = await fetch(`/api/settings?pin=${code}`);
+                    const data = await res.json();
+                    return data.found; // true = already in use
+                } catch(e) {
+                    return false; // Assume available if can't check
+                }
+            }
+            
+            // === START ==================================================
+            document.addEventListener('DOMContentLoaded', async () => {
+                // 1. Run launch animation in parallel with app init
+                const [_] = await Promise.all([
+                    runLaunchAnimation(),
+                    // Small delay so animation is visible
+                    new Promise(r => setTimeout(r, 100))
+                ]);
+            
+                // 2. Now start the app
                 initApp();
             });
         
