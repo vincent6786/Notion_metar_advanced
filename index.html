@@ -1486,36 +1486,47 @@
                         if (show) el.classList.add('active');
                         else el.classList.remove('active');
                     }        
-            function initApp() {
+            async function initApp() {
+                // Check if storage mode has been chosen
+                const ready = await Storage.init();
+                if (!ready) return; // Waiting for user to choose mode
+            
+                // If cloud mode, silently restore any wiped local data
+                const mode = localStorage.getItem('efb_storage_mode');
+                if (mode === 'cloud' && navigator.onLine) {
+                    await cloudRestoreAll();
+                }
+            
+                // Render storage mode in settings
+                renderStorageModeUI();
+            
+                // Existing init logic (unchanged below)
                 initWorldClock();
                 checkNightModeSaved();
                 renderFavoritesSettings();
-                renderHistory(); 
-                
-                // Load CRAFT scratchpad
+                renderHistory();
+            
                 const savedCraft = localStorage.getItem('efb_craft');
-                if(savedCraft) document.getElementById('craftPad').value = savedCraft;
+                if (savedCraft) document.getElementById('craftPad').value = savedCraft;
                 document.getElementById('craftPad').addEventListener('input', (e) => {
                     localStorage.setItem('efb_craft', e.target.value);
                 });
             
-                // Load Default Station Preference
-                const savedDefault = localStorage.getItem('efb_default_station');
+                const savedDefault = await Storage.get('efb_default_station');
                 const inputField = document.getElementById('defaultIcaoInput');
-                
+            
                 if (savedDefault) {
                     inputField.value = savedDefault;
                     document.getElementById('icao').value = savedDefault;
-                    loadData(); 
+                    loadData();
                 } else {
-                    document.getElementById('icao').value = "";
+                    document.getElementById('icao').value = '';
                 }
-                
-                // Load Personal Minimums
-                const savedXW = localStorage.getItem('efb_min_xw');
-                const savedCeil = localStorage.getItem('efb_min_ceil');
-                if(savedXW) document.getElementById('minXW').value = savedXW;
-                if(savedCeil) document.getElementById('minCeil').value = savedCeil;
+            
+                const savedXW = await Storage.get('efb_min_xw');
+                const savedCeil = await Storage.get('efb_min_ceil');
+                if (savedXW) document.getElementById('minXW').value = savedXW;
+                if (savedCeil) document.getElementById('minCeil').value = savedCeil;
             
                 setInterval(updateClock, 1000);
             }
