@@ -1,0 +1,37 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/weather",
+      "destination": "/api/weather.js"
+    },
+    {
+      "source": "/api/settings",
+      "destination": "/api/settings.js"
+    },
+    {
+      "source": "/api/awos",
+      "destination": "/api/awos.js"
+    }
+  ]
+}
+```
+
+---
+
+**Step 5 — The Frontend Changes to `index.html`**
+
+This is the big one. Rather than patching individual sections, I want to write you a clean complete updated file. Before I do, let me confirm all the changes that go in:
+```
+✅ 1. IndexedDB storage layer (EFB_DB object)
+✅ 2. Unified Storage router (local vs cloud)
+✅ 3. First launch storage mode selector screen
+✅ 4. PIN pad UI (create, confirm, restore flows)
+✅ 5. Cloud save / load / restore functions
+✅ 6. Offline banner with stale data warning
+✅ 7. Wind rose direction fix (+ 90 instead of - 90)
+✅ 8. Crosswind L/R sign fix
+✅ 9. Meteogram time labels fix (actual UTC hours)
+✅ 10. Meteogram NOW line (dynamic, updates every second)
+✅ 11. fetchMeteogram loader hide fix
+✅ 12. Settings tab — storage mode section added
+✅ 13. Toast notification helper
