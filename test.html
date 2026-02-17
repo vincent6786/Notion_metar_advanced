@@ -1048,38 +1048,128 @@
         }
 
         @keyframes aircraftSlide {
-            /* PHASE 1: FADE IN (0-8%) */
-            0%  { transform: translateX(-240px) translateY(-50%) scale(0.96) translateZ(0); opacity: 0; }
-            2%  { transform: translateX(-235px) translateY(-50%) scale(0.96) translateZ(0); opacity: 0.2; }
-            4%  { transform: translateX(-228px) translateY(-50%) scale(0.97) translateZ(0); opacity: 0.5; }
-            6%  { transform: translateX(-218px) translateY(-50%) scale(0.97) translateZ(0); opacity: 0.75; }
-            8%  { transform: translateX(-205px) translateY(-50%) scale(0.98) translateZ(0); opacity: 1; }
-            /* PHASE 2: ACCELERATION (8-45%) */
-            10% { transform: translateX(-188px) translateY(-50%) scale(0.98) translateZ(0); }
-            16% { transform: translateX(-120px) translateY(-50%) scale(1)    translateZ(0); }
-            24% { transform: translateX(0px)    translateY(-50%) scale(1)    translateZ(0); }
-            32% { transform: translateX(150px)  translateY(-50%) scale(1)    translateZ(0); }
-            40% { transform: translateX(278px)  translateY(-50%) scale(1)    translateZ(0); }
-            45% { transform: translateX(330px)  translateY(-50%) scale(1)    translateZ(0); }
-            /* PHASE 3: COAST (45-54%) */
-            53% { transform: translateX(358px)  translateY(-50%) scale(1)    translateZ(0); }
-            /* PHASE 4: ROTATION (54-62%) */
-            56% { transform: translateX(370px)  translateY(-50.5%) scale(1)   rotate(-1deg)   translateZ(0); }
-            60% { transform: translateX(398px)  translateY(-51.8%) scale(0.99) rotate(-2deg)  translateZ(0); }
-            62% { transform: translateX(418px)  translateY(-52.8%) scale(0.985) rotate(-2.5deg) translateZ(0); }
-            /* PHASE 5: LIFTOFF (62-78%) */
-            66% { transform: translateX(470px)  translateY(-55.5%) scale(0.975) rotate(-3.5deg) translateZ(0); opacity: 0.98; }
-            70% { transform: translateX(538px)  translateY(-59.2%) scale(0.965) rotate(-4.5deg) translateZ(0); opacity: 0.93; }
-            74% { transform: translateX(622px)  translateY(-64%)   scale(0.95)  rotate(-5.3deg) translateZ(0); opacity: 0.85; }
-            78% { transform: translateX(722px)  translateY(-70.5%) scale(0.93)  rotate(-6deg)   translateZ(0); opacity: 0.7; }
-            /* PHASE 6: CLIMB INTO DISTANCE (78-100%) */
-            82% { transform: translateX(838px)  translateY(-78.8%) scale(0.90)  rotate(-6.4deg) translateZ(0); opacity: 0.5; }
-            86% { transform: translateX(970px)  translateY(-88.5%) scale(0.87)  rotate(-6.7deg) translateZ(0); opacity: 0.3; }
-            90% { transform: translateX(1118px) translateY(-100%)  scale(0.84)  rotate(-6.9deg) translateZ(0); opacity: 0.15; }
-            94% { transform: translateX(1282px) translateY(-113.5%) scale(0.81) rotate(-7deg)   translateZ(0); opacity: 0.06; }
-            100%{ transform: translateX(1558px) translateY(-138%)  scale(0.765) rotate(-7deg)   translateZ(0); opacity: 0; }
-        }
 
+            /* ── PHASE 1: FADE IN & FIRST ROLL (0–8%) ── */
+            0%   { transform: translateX(-240px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0;     }
+            1%   { transform: translateX(-238px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0.10;  }
+            2%   { transform: translateX(-235px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0.20;  }
+            3%   { transform: translateX(-232px) translateY(-50%) scale(0.965) rotate(0deg) translateZ(0); opacity: 0.35;  }
+            4%   { transform: translateX(-228px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.50;  }
+            5%   { transform: translateX(-223px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.625; }
+            6%   { transform: translateX(-218px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.75;  }
+            7%   { transform: translateX(-212px) translateY(-50%) scale(0.975) rotate(0deg) translateZ(0); opacity: 0.875; }
+            8%   { transform: translateX(-205px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1;     }
+
+            /* ── PHASE 2: TAXI ACCELERATION (9–16%) ── */
+            9%   { transform: translateX(-197px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1; }
+            10%  { transform: translateX(-188px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1; }
+            11%  { transform: translateX(-177px) translateY(-50%) scale(0.983) rotate(0deg) translateZ(0); opacity: 1; }
+            12%  { transform: translateX(-165px) translateY(-50%) scale(0.987) rotate(0deg) translateZ(0); opacity: 1; }
+            13%  { transform: translateX(-154px) translateY(-50%) scale(0.990) rotate(0deg) translateZ(0); opacity: 1; }
+            14%  { transform: translateX(-143px) translateY(-50%) scale(0.993) rotate(0deg) translateZ(0); opacity: 1; }
+            15%  { transform: translateX(-131px) translateY(-50%) scale(0.997) rotate(0deg) translateZ(0); opacity: 1; }
+            16%  { transform: translateX(-120px) translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 3: FULL SPEED TAXI (17–32%) ── */
+            17%  { transform: translateX(-105px) translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            18%  { transform: translateX(-90px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            19%  { transform: translateX(-75px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            20%  { transform: translateX(-60px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            21%  { transform: translateX(-45px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            22%  { transform: translateX(-30px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            23%  { transform: translateX(-15px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            24%  { transform: translateX(0px)    translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            25%  { transform: translateX(19px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            26%  { transform: translateX(38px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            27%  { transform: translateX(56px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            28%  { transform: translateX(75px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            29%  { transform: translateX(94px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            30%  { transform: translateX(113px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            31%  { transform: translateX(131px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            32%  { transform: translateX(150px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 4: APPROACH TO V1 (33–44%) ── */
+            33%  { transform: translateX(166px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            34%  { transform: translateX(182px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            35%  { transform: translateX(198px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            36%  { transform: translateX(214px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            37%  { transform: translateX(230px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            38%  { transform: translateX(246px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            39%  { transform: translateX(262px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            40%  { transform: translateX(278px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            41%  { transform: translateX(288px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            42%  { transform: translateX(299px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            43%  { transform: translateX(309px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            44%  { transform: translateX(320px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 5: V1 HOLD & COAST (45–53%) ── */
+            45%  { transform: translateX(330px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            46%  { transform: translateX(334px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            47%  { transform: translateX(337px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            48%  { transform: translateX(341px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            49%  { transform: translateX(344px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            50%  { transform: translateX(348px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            51%  { transform: translateX(351px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            52%  { transform: translateX(354px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            53%  { transform: translateX(358px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 6: VR — NOSE ROTATION BEGINS (54–62%) ── */
+            54%  { transform: translateX(362px)  translateY(-50.17%) scale(1.000)  rotate(-0.33deg) translateZ(0); opacity: 1; }
+            55%  { transform: translateX(366px)  translateY(-50.33%) scale(1.000)  rotate(-0.67deg) translateZ(0); opacity: 1; }
+            56%  { transform: translateX(370px)  translateY(-50.50%) scale(1.000)  rotate(-1.00deg) translateZ(0); opacity: 1; }
+            57%  { transform: translateX(377px)  translateY(-50.83%) scale(0.9975) rotate(-1.25deg) translateZ(0); opacity: 1; }
+            58%  { transform: translateX(384px)  translateY(-51.15%) scale(0.9950) rotate(-1.50deg) translateZ(0); opacity: 1; }
+            59%  { transform: translateX(391px)  translateY(-51.48%) scale(0.9925) rotate(-1.75deg) translateZ(0); opacity: 1; }
+            60%  { transform: translateX(398px)  translateY(-51.80%) scale(0.9900) rotate(-2.00deg) translateZ(0); opacity: 1; }
+            61%  { transform: translateX(408px)  translateY(-52.30%) scale(0.9875) rotate(-2.25deg) translateZ(0); opacity: 1; }
+            62%  { transform: translateX(418px)  translateY(-52.80%) scale(0.9850) rotate(-2.50deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 7: LIFTOFF — INITIAL CLIMB (63–70%) ── */
+            63%  { transform: translateX(431px)  translateY(-53.48%) scale(0.9825) rotate(-2.75deg) translateZ(0); opacity: 0.995; }
+            64%  { transform: translateX(444px)  translateY(-54.15%) scale(0.9800) rotate(-3.00deg) translateZ(0); opacity: 0.990; }
+            65%  { transform: translateX(457px)  translateY(-54.83%) scale(0.9775) rotate(-3.25deg) translateZ(0); opacity: 0.985; }
+            66%  { transform: translateX(470px)  translateY(-55.50%) scale(0.9750) rotate(-3.50deg) translateZ(0); opacity: 0.980; }
+            67%  { transform: translateX(487px)  translateY(-56.43%) scale(0.9725) rotate(-3.75deg) translateZ(0); opacity: 0.968; }
+            68%  { transform: translateX(504px)  translateY(-57.35%) scale(0.9700) rotate(-4.00deg) translateZ(0); opacity: 0.955; }
+            69%  { transform: translateX(521px)  translateY(-58.28%) scale(0.9675) rotate(-4.25deg) translateZ(0); opacity: 0.943; }
+            70%  { transform: translateX(538px)  translateY(-59.20%) scale(0.9650) rotate(-4.50deg) translateZ(0); opacity: 0.930; }
+
+            /* ── PHASE 8: CLIMB & RECEDE (71–78%) ── */
+            71%  { transform: translateX(559px)  translateY(-60.40%) scale(0.9613) rotate(-4.70deg) translateZ(0); opacity: 0.910; }
+            72%  { transform: translateX(580px)  translateY(-61.60%) scale(0.9575) rotate(-4.90deg) translateZ(0); opacity: 0.890; }
+            73%  { transform: translateX(601px)  translateY(-62.80%) scale(0.9538) rotate(-5.10deg) translateZ(0); opacity: 0.870; }
+            74%  { transform: translateX(622px)  translateY(-64.00%) scale(0.9500) rotate(-5.30deg) translateZ(0); opacity: 0.850; }
+            75%  { transform: translateX(647px)  translateY(-65.63%) scale(0.9450) rotate(-5.48deg) translateZ(0); opacity: 0.813; }
+            76%  { transform: translateX(672px)  translateY(-67.25%) scale(0.9400) rotate(-5.65deg) translateZ(0); opacity: 0.775; }
+            77%  { transform: translateX(697px)  translateY(-68.88%) scale(0.9350) rotate(-5.83deg) translateZ(0); opacity: 0.738; }
+            78%  { transform: translateX(722px)  translateY(-70.50%) scale(0.9300) rotate(-6.00deg) translateZ(0); opacity: 0.700; }
+
+            /* ── PHASE 9: HIGH CLIMB & FADE (79–86%) ── */
+            79%  { transform: translateX(751px)  translateY(-72.58%) scale(0.9225) rotate(-6.10deg) translateZ(0); opacity: 0.650; }
+            80%  { transform: translateX(780px)  translateY(-74.65%) scale(0.9150) rotate(-6.20deg) translateZ(0); opacity: 0.600; }
+            81%  { transform: translateX(809px)  translateY(-76.73%) scale(0.9075) rotate(-6.30deg) translateZ(0); opacity: 0.550; }
+            82%  { transform: translateX(838px)  translateY(-78.80%) scale(0.9000) rotate(-6.40deg) translateZ(0); opacity: 0.500; }
+            83%  { transform: translateX(871px)  translateY(-81.23%) scale(0.8925) rotate(-6.48deg) translateZ(0); opacity: 0.450; }
+            84%  { transform: translateX(904px)  translateY(-83.65%) scale(0.8850) rotate(-6.55deg) translateZ(0); opacity: 0.400; }
+            85%  { transform: translateX(937px)  translateY(-86.08%) scale(0.8775) rotate(-6.63deg) translateZ(0); opacity: 0.350; }
+            86%  { transform: translateX(970px)  translateY(-88.50%) scale(0.8700) rotate(-6.70deg) translateZ(0); opacity: 0.300; }
+
+            /* ── PHASE 10: VANISH INTO DISTANCE (87–100%) ── */
+            87%  { transform: translateX(1007px) translateY(-91.38%) scale(0.8625) rotate(-6.75deg) translateZ(0); opacity: 0.263; }
+            88%  { transform: translateX(1044px) translateY(-94.25%) scale(0.8550) rotate(-6.80deg) translateZ(0); opacity: 0.225; }
+            89%  { transform: translateX(1081px) translateY(-97.13%) scale(0.8475) rotate(-6.85deg) translateZ(0); opacity: 0.188; }
+            90%  { transform: translateX(1118px) translateY(-100.0%) scale(0.8400) rotate(-6.90deg) translateZ(0); opacity: 0.150; }
+            91%  { transform: translateX(1159px) translateY(-103.4%) scale(0.8325) rotate(-6.93deg) translateZ(0); opacity: 0.128; }
+            92%  { transform: translateX(1200px) translateY(-106.8%) scale(0.8250) rotate(-6.95deg) translateZ(0); opacity: 0.105; }
+            93%  { transform: translateX(1241px) translateY(-110.1%) scale(0.8175) rotate(-6.98deg) translateZ(0); opacity: 0.083; }
+            94%  { transform: translateX(1282px) translateY(-113.5%) scale(0.8100) rotate(-7.00deg) translateZ(0); opacity: 0.060; }
+            95%  { transform: translateX(1328px) translateY(-117.6%) scale(0.8025) rotate(-7.00deg) translateZ(0); opacity: 0.050; }
+            96%  { transform: translateX(1374px) translateY(-121.7%) scale(0.7950) rotate(-7.00deg) translateZ(0); opacity: 0.040; }
+            97%  { transform: translateX(1420px) translateY(-125.8%) scale(0.7875) rotate(-7.00deg) translateZ(0); opacity: 0.030; }
+            98%  { transform: translateX(1466px) translateY(-129.8%) scale(0.7800) rotate(-7.00deg) translateZ(0); opacity: 0.020; }
+            99%  { transform: translateX(1512px) translateY(-133.9%) scale(0.7725) rotate(-7.00deg) translateZ(0); opacity: 0.010; }
+            100% { transform: translateX(1558px) translateY(-138.0%) scale(0.7650) rotate(-7.00deg) translateZ(0); opacity: 0;     }
+        }
         /* Runway / Ground elements */
         .launch-ground {
             position: absolute;
@@ -1094,19 +1184,29 @@
                 transparent
             );
         }
+        /* Runway centerline — auto-fills full screen width with repeating dashes */
         .launch-dashes {
             position: absolute;
-            bottom: 32px; left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 14px;
+            bottom: 32px;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: repeating-linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0.55) 0px,
+                rgba(255, 255, 255, 0.55) 28px,   /* dash length */
+                transparent 28px,
+                transparent 46px                   /* gap length */
+            );
+            border-radius: 2px;
             opacity: 0;
             animation: fadeIn 0.4s ease 0.2s forwards;
         }
-        .launch-dash { width: 22px; height: 2px; background: rgba(255,255,255,0.5); border-radius: 2px; }
+        /* .launch-dash divs are no longer needed — kept for backwards compat */
+        .launch-dash { display: none; }
         .launch-lights {
             position: absolute;
-            bottom: 27px; left: 8%; right: 8%;
+            bottom: 27px; left: 5%; right: 5%;
             display: flex;
             justify-content: space-between;
             opacity: 0;
@@ -1169,6 +1269,45 @@
             50%       { opacity: 1;   }
         }
 
+        /* ============================================================
+           HELP / USER MANUAL STYLES
+        ============================================================ */
+        .help-section {
+            background: rgba(28, 28, 30, 0.75);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .help-section-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .help-item {
+            margin-bottom: 12px;
+        }
+        .help-item:last-child { margin-bottom: 0; }
+        .help-q {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+        .help-a {
+            font-size: 12px;
+            color: var(--sub-text);
+            line-height: 1.6;
+        }
+        .help-a b { color: var(--text); }
+        
     </style>
 </head>
 
@@ -1182,14 +1321,8 @@
         <div class="launch-aircraft-wrap">
             <div class="launch-glow"></div>
             <div class="launch-ground"></div>
-            <div class="launch-dashes">
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-            </div>
+            <div class="launch-dashes"></div>
+
             <div class="launch-lights">
                 <div class="launch-light"></div>
                 <div class="launch-light"></div>
@@ -1256,6 +1389,7 @@
         <div class="tab"          onclick="setTab('world')">WORLD</div>
         <div class="tab"          onclick="setTab('tools')">TOOLS</div>
         <div class="tab"          onclick="setTab('settings')">SETTINGS</div>
+        <div class="tab"          onclick="setTab('help')">HELP</div>
     </div>
 
     <!-- ================================================================
@@ -1463,7 +1597,7 @@
             </div>
         </div>
         <div class="section-title">EXTERNAL RESOURCES</div>
-        <a href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
+        <a id="btnMetarTaf" href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
         <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span></a>
         <a id="btnLiveAtc" href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
     </div>
@@ -1698,6 +1832,46 @@
          MODALS
     ================================================================ -->
 
+    <!-- NEARBY AIRPORT PREVIEW MODAL -->
+    <div id="nearbyModal" class="modal-overlay" onclick="closeNearbyModal()">
+        <div class="info-card" style="margin:auto; width:92%; max-width:360px; border:1px solid var(--border); border-radius:16px; padding:0; overflow:hidden;"
+             onclick="event.stopPropagation()">
+
+            <!-- Header bar -->
+            <div style="background:linear-gradient(135deg,#1c3a5e,#0a2040); padding:16px 16px 12px 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                    <div>
+                        <div id="nearModalIcao" style="font-size:26px; font-weight:900; font-family:'SF Mono',monospace; color:#fff; letter-spacing:2px;">----</div>
+                        <div id="nearModalName" style="font-size:13px; color:rgba(255,255,255,0.6); margin-top:2px;">Loading...</div>
+                    </div>
+                    <div id="nearModalCat" class="badge badge-cat" style="font-size:14px; padding:6px 14px; border-radius:8px;">--</div>
+                </div>
+                <div style="display:flex; gap:16px; margin-top:8px; font-size:11px; color:rgba(255,255,255,0.5);">
+                    <span>📍 <span id="nearModalDist">-- nm</span> away</span>
+                    <span>⛰ <span id="nearModalElev">-- ft</span> elev</span>
+                    <span>🌐 <span id="nearModalCoords">--</span></span>
+                </div>
+            </div>
+
+            <!-- Weather preview -->
+            <div style="padding:14px 16px;">
+                <div id="nearModalWeather" style="font-size:12px; color:var(--sub-text); font-style:italic; text-align:center; padding:8px 0;">
+                    Fetching weather...
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex; gap:8px; padding:0 16px 16px 16px;">
+                <button onclick="closeNearbyModal()" style="flex:1; background:#333; border:1px solid #555; color:#8e8e93; padding:12px; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;">
+                    Cancel
+                </button>
+                <button id="nearModalLoadBtn" onclick="loadNearbyFromModal()" style="flex:2; background:var(--accent); border:none; color:#fff; padding:12px; border-radius:10px; font-size:14px; font-weight:800; cursor:pointer;">
+                    ✈️ Load Full Data
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- AWOS Modal -->
     <div id="awosModal" class="modal-overlay">
         <div class="modal-header">
@@ -1855,6 +2029,173 @@
         </button>
     </div>
 
+    <!-- ================================================================
+         TAB: HELP / USER MANUAL
+    ================================================================ -->
+    <div id="tab-help" class="view-section">
+
+        <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
+        <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">Quick reference for all app features</div>
+
+        <!-- SECTION: METAR -->
+        <div class="help-section">
+            <div class="help-section-title">🌤 METAR Tab</div>
+            <div class="help-item">
+                <div class="help-q">What is METAR?</div>
+                <div class="help-a">METAR is the standard aviation weather observation. It reports current conditions at the airport: wind, visibility, sky cover, temperature, dewpoint, and altimeter setting.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Wind Rose</div>
+                <div class="help-a">Shows wind direction relative to the selected runway. The arrow points <b>from</b> where the wind is coming. Use the runway selector to check headwind/crosswind for any runway. <b style="color:var(--success);">Green = headwind (good)</b>, <b style="color:var(--danger);">Red = tailwind (caution)</b>.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Flight Category Badge (top right)</div>
+                <div class="help-a">
+                    <span style="background:var(--success);color:#000;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">VFR</span> Ceiling &gt;3000ft &amp; Vis &gt;5sm &nbsp;
+                    <span style="background:var(--mvfr);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">MVFR</span> Marginal &nbsp;
+                    <span style="background:var(--danger);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">IFR</span> Inst. rules &nbsp;
+                    <span style="background:var(--lifr);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">LIFR</span> Low IFR
+                </div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Nearby Stations</div>
+                <div class="help-a">Tap any nearby airport button to instantly load its weather. The distance shown is in nautical miles from the current station. Tap the button and a preview card will appear with key airport info before loading.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Raw METAR colour highlights</div>
+                <div class="help-a"><span style="color:var(--danger);font-weight:800;">Red</span> = gusts / low ceilings / dangerous wx &nbsp; <span style="color:var(--lifr);font-weight:800;">Purple</span> = low visibility &nbsp; <span style="color:var(--warn);font-weight:800;">Orange</span> = thunderstorm / heavy precip</div>
+            </div>
+        </div>
+
+        <!-- SECTION: TAF -->
+        <div class="help-section">
+            <div class="help-section-title">📅 TAF Tab</div>
+            <div class="help-item">
+                <div class="help-q">Meteogram (24h trend)</div>
+                <div class="help-a">Shows temperature (red), dewpoint (blue), wind arrows, and weather icons over 24 hours from Open-Meteo. The <span style="color:#0a84ff;font-weight:700;">blue NOW line</span> shows your current position in time. <b>Advisory only</b> — not official aviation data.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">TAF Timeline Bar</div>
+                <div class="help-a">Each coloured block is a TAF forecast period. Tap a block to see full details (wind, vis, wx, clouds). The <span style="color:#ff453a;font-weight:700;">red needle</span> marks the current time — tap it to see UTC and local time.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Sky Gradient Strip</div>
+                <div class="help-a">The thin strip below the TAF bar shows day/night cycle. <span style="color:#0ea5e9;font-weight:700;">Blue = day</span>, <span style="color:#f97316;font-weight:700;">Orange = dawn/dusk</span>, <span style="color:#8e8e93;font-weight:700;">Dark = night</span>.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">NOTAMs</div>
+                <div class="help-a">Notices to Airmen are colour-coded: <span style="color:#ff453a;font-weight:800;">⛔ Critical</span> (closures, unserviceable), <span style="color:#ff9f0a;font-weight:800;">⚠️ Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">ℹ️ Info</span> (general).</div>
+            </div>
+        </div>
+
+        <!-- SECTION: INFO -->
+        <div class="help-section">
+            <div class="help-section-title">ℹ️ INFO Tab</div>
+            <div class="help-item">
+                <div class="help-q">Pressure &amp; Density Altitude</div>
+                <div class="help-a">Calculated from current QNH and temperature. <b>Pressure Alt</b> = ISA-corrected altitude. <b>Density Alt</b> = performance altitude — the higher it is above field elevation, the more your aircraft performs like it's at a higher airport. A <span style="color:var(--warn);">⚠️ warning</span> appears if DA is &gt;2000ft above field elevation.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">ISA Deviation</div>
+                <div class="help-a">How far the current temperature is from the International Standard Atmosphere. Positive = warmer than standard (worse performance), Negative = cooler (better performance).</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Sunrise / Sunset</div>
+                <div class="help-a">Times are shown in Zulu (UTC) by default. <b>Tap the time</b> to toggle between UTC and local airport time.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Runway Wind Components</div>
+                <div class="help-a">Shows headwind ↑ / tailwind ↓ and crosswind ➡ / ⬅ for every runway. If a runway exceeds your personal crosswind limit (set in Tools), it shows a red ⚠️ badge.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: ATC -->
+        <div class="help-section">
+            <div class="help-section-title">📡 ATC Tab</div>
+            <div class="help-item">
+                <div class="help-q">CRAFT Clearance Recorder</div>
+                <div class="help-a">A scratchpad for copying your IFR clearance using the CRAFT format:<br><b>C</b>learance limit · <b>R</b>oute · <b>A</b>ltitude · <b>F</b>requency · <b>T</b>ransponder. Your notes are saved automatically and persist between sessions.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Live Audio Streams</div>
+                <div class="help-a">ATIS and ATC scanner streams are available for Taiwanese airports (RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN) powered by TWATC.net. For all other airports, use the LiveATC button.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: TOOLS -->
+        <div class="help-section">
+            <div class="help-section-title">🛠 TOOLS Tab</div>
+            <div class="help-item">
+                <div class="help-q">Cockpit Timer</div>
+                <div class="help-a">A countdown timer for fuel burn monitoring or holding pattern timing. Choose 15/30/45/60m presets or use START/PAUSE/RESET. The card flashes red and vibrates when time expires.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Personal Minimums</div>
+                <div class="help-a">Enter your personal limits for crosswind and ceiling. The app checks live METAR data against your limits and shows a <span style="color:var(--success);font-weight:800;">GO ✅</span> or <span style="color:var(--danger);font-weight:800;">NO-GO ⛔</span> result. A red banner also appears at the top of the screen.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">E6B Flight Computer</div>
+                <div class="help-a">Enter Indicated Altitude, IAS, QNH, temperature, and dewpoint to calculate: <b>Density Altitude</b>, <b>True Airspeed</b>, <b>Estimated Cloud Base</b>, and <b>Freezing Level</b>. Supports both hPa/inHg and °C/°F.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: WORLD -->
+        <div class="help-section">
+            <div class="help-section-title">🌍 WORLD Tab</div>
+            <div class="help-item">
+                <div class="help-q">World Clock</div>
+                <div class="help-a">Shows live local time for cities around the world with their UTC offset. Type a city name or ICAO code and tap <b>Add</b> to add it. Tap <b>✕</b> to remove a city.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Cloud Backup of Cities</div>
+                <div class="help-a">If you have Cloud Backup enabled, you'll be asked to also back up your city list. This lets you restore your world clock on any device using your Backup Code.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: SETTINGS -->
+        <div class="help-section">
+            <div class="help-section-title">⚙️ SETTINGS Tab</div>
+            <div class="help-item">
+                <div class="help-q">Favorite Airports ★</div>
+                <div class="help-a">Favorited airports appear as gold chips at the top of the search bar for quick access. They are pinned above your recent history.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Default Airport</div>
+                <div class="help-a">The app loads this airport's weather automatically every time you open it.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Cockpit Night Mode 🔴</div>
+                <div class="help-a">Switches all colours to red-on-black for dark cockpit environments. Preserves your night vision. Tap again (shows "Day Mode") to return to normal.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Cloud Backup ☁️</div>
+                <div class="help-a">Your airport favorites, default airport, and settings are saved to the cloud with a 4-6 digit Backup Code. No account needed. Restore on any device by entering your code. <b>Only airport preferences are stored — no personal data.</b></div>
+            </div>
+        </div>
+
+        <!-- SECTION: SEARCH & GPS -->
+        <div class="help-section">
+            <div class="help-section-title">🔍 Search &amp; GPS</div>
+            <div class="help-item">
+                <div class="help-q">Search Bar</div>
+                <div class="help-a">Type any ICAO code (4 letters, e.g. RCTP, KJFK, EGLL) and press Enter or the ↻ button. The field auto-capitalises.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">📍 GPS Button</div>
+                <div class="help-a">Tapping the pin icon uses your device's GPS to find the nearest aviation weather station and loads it automatically. You must allow location permission when prompted.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">↻ Force Refresh</div>
+                <div class="help-a">Clears the 10-minute data cache and fetches the very latest METAR, TAF, and NOTAM data from the server.</div>
+            </div>
+        </div>
+
+        <div class="safety-footer" style="margin-top:24px;">
+            ⚠️ METAR GO is for situational awareness only.<br>
+            NOT FOR NAVIGATION. Always cross-check official sources (AIS, official ATIS, ATC) before flight.
+        </div>
+    </div>
+    
 </body>
 
 <script>
@@ -1993,9 +2334,42 @@
 
             async init() {
                 await EFB_DB.init();
+
+                // 1. Try localStorage first (fast path)
                 this.mode = localStorage.getItem('efb_storage_mode');
+
+                // 2. If localStorage was purged by iOS, recover from IndexedDB
+                if (!this.mode) {
+                    const recovered = await EFB_DB.get('_efb_storage_mode');
+                    if (recovered) {
+                        this.mode = recovered;
+                        // Restore critical keys to localStorage
+                        localStorage.setItem('efb_storage_mode', recovered);
+                        const pin = await EFB_DB.get('_efb_cloud_pin');
+                        if (pin) localStorage.setItem('efb_cloud_pin', pin);
+                        console.log('✅ Session recovered from IndexedDB');
+                        return true;
+                    }
+                }
+
+                // 3. Truly first launch — show setup
                 if (!this.mode) { showStorageSetup(); return false; }
+
+                // 4. Start keep-alive to prevent future purges
+                this._startKeepAlive();
                 return true;
+            },
+
+            _startKeepAlive() {
+                // Re-write critical keys every 23h so iOS never marks them stale
+                setInterval(async () => {
+                    if (this.mode) {
+                        localStorage.setItem('efb_storage_mode', this.mode);
+                        await EFB_DB.set('_efb_storage_mode', this.mode);
+                        const pin = localStorage.getItem('efb_cloud_pin');
+                        if (pin) await EFB_DB.set('_efb_cloud_pin', pin);
+                    }
+                }, 23 * 60 * 60 * 1000); // 23 hours
             },
 
             async set(key, value) {
@@ -2005,7 +2379,13 @@
 
             async get(key, fallback = null) { return await EFB_DB.get(key, fallback); },
 
-            async setMode(mode) { this.mode = mode; localStorage.setItem('efb_storage_mode', mode); }
+            async setMode(mode) {
+                this.mode = mode;
+                localStorage.setItem('efb_storage_mode', mode);
+                // Also persist in IndexedDB for iOS resilience
+                await EFB_DB.set('_efb_storage_mode', mode);
+                this._startKeepAlive();
+            }
         };
 
         function renderStorageModeUI() {
@@ -2200,6 +2580,7 @@
 
         async function finalizePinSetup(pin) {
             localStorage.setItem('efb_cloud_pin', pin);
+            await EFB_DB.set('_efb_cloud_pin', pin);   // ← ADD THIS LINE
             await Storage.setMode('cloud');
             const restored = await cloudRestoreAll();
             document.getElementById('pinSetup').style.display    = 'none';
@@ -2499,18 +2880,68 @@
         // 11. GPS LOCATE
         // ================================================================
         function locateUser() {
-            const btn = document.querySelector('.search-box button');
+            const btn = document.querySelector('.search-box button[onclick="locateUser()"]')
+                     || document.querySelector('.search-box button');
             btn.innerHTML = '⏳';
-            if (!navigator.geolocation) { alert("Geolocation not supported"); btn.innerHTML = '📍'; return; }
+
+            if (!navigator.geolocation) {
+                showToast('⚠️ Geolocation not supported on this device');
+                btn.innerHTML = '📍';
+                return;
+            }
+
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const { latitude: lat, longitude: lon } = pos.coords;
                 try {
-                    const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}`);
-                    if (data.length > 0) { document.getElementById('icao').value = data[0].station.icao; loadData(); }
-                    else { alert("No aviation stations found nearby."); }
-                } catch(e) { alert("Error finding station via GPS."); }
-                finally    { btn.innerHTML = '📍'; }
-            }, () => { alert("GPS permission denied or unavailable."); btn.innerHTML = '📍'; });
+                    // Search up to 150nm radius
+                    const data = await secureFetch(
+                        `/api/weather?type=near&station=${lat},${lon}&distance=150`
+                    );
+
+                    if (!data || data.length === 0) {
+                        showToast('⚠️ No aviation weather stations found within 150nm');
+                        return;
+                    }
+
+                    const nearest = data[0];
+                    const icao    = nearest.station.icao;
+                    const nm      = Math.round(nearest.nautical_miles);
+                    const name    = nearest.station.name || nearest.station.city || icao;
+
+                    document.getElementById('icao').value = icao;
+                    loadData();
+
+                    // Friendly toast with airport info and distance
+                    showToast(`📍 Nearest: ${icao} — ${name} · ${nm}nm away`);
+
+                    // If there are more results, log them quietly for debugging
+                    if (data.length > 1) {
+                        console.log(
+                            `[GPS Locate] Found ${data.length} stations within 150nm:`,
+                            data.slice(0, 5).map(d =>
+                                `${d.station.icao} (${Math.round(d.nautical_miles)}nm)`
+                            ).join(', ')
+                        );
+                    }
+
+                } catch(e) {
+                    console.error('GPS locate error:', e);
+                    showToast('❌ Error searching for nearby stations — check connection');
+                } finally {
+                    btn.innerHTML = '📍';
+                }
+
+            }, (err) => {
+                const msg = err.code === 1
+                    ? '🔒 Location permission denied — enable in browser settings'
+                    : '❌ GPS unavailable or timed out';
+                showToast(msg);
+                btn.innerHTML = '📍';
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000   // accept a cached position up to 60s old
+            });
         }
 
         // ================================================================
@@ -2540,6 +2971,15 @@
                     secureFetch(`/api/weather?type=notam&station=${icao}`)
                 ]);
 
+                // Nearby stations runs immediately from station coords — not gated by METAR
+                if (stationData.latitude && stationData.longitude) {
+                    findNearbyStations(stationData.latitude, stationData.longitude);
+                } else {
+                    document.getElementById('nearList').innerHTML =
+                        '<span style="color:#555;">No coordinates for this station.</span>';
+                }
+                updateAudioSection(icao);
+                
                 if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
                     if (m._meta) console.log(`%c[AVWX] METAR - Key #${m._meta.key_used} (${m._meta.key_usage}/${m._meta.key_limit})`, 'color:#0a84ff;font-weight:bold;');
@@ -2556,8 +2996,6 @@
                     if (icao === 'KMHR') liveBtn.classList.remove('hidden'); else liveBtn.classList.add('hidden');
                     renderFlightRuleBar(m);
                     setupRunwaySelect();
-                    findNearbyStations(stationData.latitude, stationData.longitude);
-                    updateAudioSection(icao);
                 } else { throw new Error("No Weather Data"); }
 
                 if (tafRes.status === 'fulfilled') {
@@ -2621,6 +3059,13 @@
             if (liveAtcBtn) {
                 liveAtcBtn.href = `https://www.liveatc.net/search/?icao=${icao}`;
                 liveAtcBtn.innerHTML = `<span>📡 LiveATC (${icao})</span><span>↗</span>`;
+            }
+
+            // Update Metar-Taf link with current airport
+            const metarTafBtn = document.getElementById('btnMetarTaf');
+            if (metarTafBtn) {
+                metarTafBtn.href = `https://metar-taf.com/?hl=${icao}`;
+                metarTafBtn.innerHTML = `<span>☁️ Metar-Taf.com (${icao})</span><span>↗</span>`;
             }
 
             // Stream configs: [ICAO, labelText, streams[]]
@@ -2870,21 +3315,122 @@
             if (msgs[rule]) { msgEl.innerText = msgs[rule][0]; msgEl.style.color = msgs[rule][1]; }
         }
 
+        // Stores data for the currently-previewed nearby airport
+        let _nearbyModalData = null;
+
         async function findNearbyStations(lat, lon) {
             try {
-                const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}`);
+                const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}&distance=150`);
                 const list = document.getElementById('nearList');
                 list.innerHTML = "";
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
-                const others = data.filter(item => item.station.icao !== currentIcao).slice(0, 4);
-                if (others.length === 0) { list.innerHTML = "<span style='color:#555;'>No stations found nearby.</span>"; return; }
+                const others = data.filter(item => item.station.icao !== currentIcao).slice(0, 5);
+                if (others.length === 0) {
+                    list.innerHTML = "<span style='color:#555;'>No stations found nearby.</span>";
+                    return;
+                }
                 others.forEach(item => {
-                    const btn = document.createElement('div'); btn.className = "nearby-btn";
-                    btn.innerHTML = `<span>✈</span><span>${item.station.icao}</span><span style="color:var(--sub-text);font-size:10px;">${Math.round(item.nautical_miles)}nm</span>`;
-                    btn.onclick = () => { document.getElementById('icao').value = item.station.icao; loadData(); };
+                    const btn = document.createElement('div');
+                    btn.className = "nearby-btn";
+                    btn.innerHTML = `
+                        <span>✈</span>
+                        <span>${item.station.icao}</span>
+                        <span style="color:var(--sub-text);font-size:10px;">${Math.round(item.nautical_miles)}nm</span>`;
+                    // Open preview modal instead of loading directly
+                    btn.onclick = () => openNearbyModal(item);
                     list.appendChild(btn);
                 });
             } catch(e) { console.error(e); }
+        }
+
+        async function openNearbyModal(item) {
+            const stn = item.station;
+            _nearbyModalData = item;
+
+            // Populate static info immediately
+            document.getElementById('nearModalIcao').innerText  = stn.icao;
+            document.getElementById('nearModalName').innerText  = stn.name || stn.city || '--';
+            document.getElementById('nearModalDist').innerText  = `${Math.round(item.nautical_miles)} nm`;
+            document.getElementById('nearModalElev').innerText  = stn.elevation_ft ? `${stn.elevation_ft} ft` : '--';
+            document.getElementById('nearModalCoords').innerText = stn.latitude && stn.longitude
+                ? `${stn.latitude.toFixed(2)}, ${stn.longitude.toFixed(2)}` : '--';
+
+            // Reset weather section and category
+            const catEl = document.getElementById('nearModalCat');
+            catEl.innerText = '--'; catEl.className = 'badge badge-cat';
+            document.getElementById('nearModalWeather').innerHTML =
+                '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;"><span style="color:var(--accent);">⏳</span><span>Fetching current weather...</span></div>';
+
+            // Show modal
+            document.getElementById('nearbyModal').classList.add('active');
+
+            // Fetch METAR in background
+            try {
+                const m = await secureFetch(`/api/weather?type=metar&station=${stn.icao}`);
+                if (m && !m.error) {
+                    // Update flight category badge
+                    const rules = m.flight_rules || '--';
+                    const cssMap = { VFR: 'cat-vfr', MVFR: 'cat-mvfr', IFR: 'cat-ifr', LIFR: 'cat-lifr' };
+                    catEl.innerText = rules;
+                    catEl.className = 'badge badge-cat ' + (cssMap[rules] || '');
+
+                    // Build weather preview
+                    const wind = m.wind_direction?.repr === 'VRB'
+                        ? `VRB / ${m.wind_speed?.value || 0}kt`
+                        : `${(m.wind_direction?.value || 0).toString().padStart(3,'0')}° / ${m.wind_speed?.value || 0}kt`;
+                    const vis   = m.visibility ? `${m.visibility.value} sm` : '--';
+                    const ceil  = m.clouds?.[0] ? `${m.clouds[0].type} ${m.clouds[0].altitude * 100}'` : 'CLR';
+                    const temp  = m.temperature?.value != null ? `${m.temperature.value}°C` : '--';
+                    const alt   = m.altimeter?.value
+                        ? (m.altimeter.value < 200 ? `A${m.altimeter.value.toFixed(2)}` : `Q${m.altimeter.value}`)
+                        : '--';
+                    const now   = new Date();
+                    const mins  = Math.floor((now - new Date(m.time.dt)) / 60000);
+                    const ageColor = mins > 60 ? 'var(--danger)' : 'var(--sub-text)';
+
+                    document.getElementById('nearModalWeather').innerHTML = `
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Wind</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${wind}</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Visibility</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${vis}</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Ceiling</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${ceil}</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Temp / Alt</div>
+                                <div style="font-size:13px; font-weight:700; color:var(--text);">${temp} · ${alt}</div>
+                            </div>
+                        </div>
+                        <div style="font-size:10px; color:${ageColor}; text-align:right; padding-top:4px; border-top:1px solid var(--border);">
+                            ${mins > 60 ? '⚠️ ' : ''}Updated ${mins}m ago
+                        </div>`;
+                } else {
+                    document.getElementById('nearModalWeather').innerHTML =
+                        '<div style="color:var(--sub-text);text-align:center;padding:8px;">No weather data available for this station.</div>';
+                }
+            } catch(e) {
+                document.getElementById('nearModalWeather').innerHTML =
+                    '<div style="color:var(--sub-text);text-align:center;padding:8px;">Could not load weather. Check connection.</div>';
+            }
+        }
+
+        function closeNearbyModal() {
+            document.getElementById('nearbyModal').classList.remove('active');
+            _nearbyModalData = null;
+        }
+
+        function loadNearbyFromModal() {
+            if (!_nearbyModalData) return;
+            const icao = _nearbyModalData.station.icao;
+            closeNearbyModal();
+            document.getElementById('icao').value = icao;
+            loadData();
         }
 
         function renderInfo(d) {
