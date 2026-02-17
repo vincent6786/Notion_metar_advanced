@@ -1597,7 +1597,7 @@
             </div>
         </div>
         <div class="section-title">EXTERNAL RESOURCES</div>
-        <a href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
+        <a id="btnMetarTaf" href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
         <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span></a>
         <a id="btnLiveAtc" href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
     </div>
@@ -2880,18 +2880,68 @@
         // 11. GPS LOCATE
         // ================================================================
         function locateUser() {
-            const btn = document.querySelector('.search-box button');
+            const btn = document.querySelector('.search-box button[onclick="locateUser()"]')
+                     || document.querySelector('.search-box button');
             btn.innerHTML = '⏳';
-            if (!navigator.geolocation) { alert("Geolocation not supported"); btn.innerHTML = '📍'; return; }
+
+            if (!navigator.geolocation) {
+                showToast('⚠️ Geolocation not supported on this device');
+                btn.innerHTML = '📍';
+                return;
+            }
+
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const { latitude: lat, longitude: lon } = pos.coords;
                 try {
-                    const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}`);
-                    if (data.length > 0) { document.getElementById('icao').value = data[0].station.icao; loadData(); }
-                    else { alert("No aviation stations found nearby."); }
-                } catch(e) { alert("Error finding station via GPS."); }
-                finally    { btn.innerHTML = '📍'; }
-            }, () => { alert("GPS permission denied or unavailable."); btn.innerHTML = '📍'; });
+                    // Search up to 150nm radius
+                    const data = await secureFetch(
+                        `/api/weather?type=near&station=${lat},${lon}&distance=150`
+                    );
+
+                    if (!data || data.length === 0) {
+                        showToast('⚠️ No aviation weather stations found within 150nm');
+                        return;
+                    }
+
+                    const nearest = data[0];
+                    const icao    = nearest.station.icao;
+                    const nm      = Math.round(nearest.nautical_miles);
+                    const name    = nearest.station.name || nearest.station.city || icao;
+
+                    document.getElementById('icao').value = icao;
+                    loadData();
+
+                    // Friendly toast with airport info and distance
+                    showToast(`📍 Nearest: ${icao} — ${name} · ${nm}nm away`);
+
+                    // If there are more results, log them quietly for debugging
+                    if (data.length > 1) {
+                        console.log(
+                            `[GPS Locate] Found ${data.length} stations within 150nm:`,
+                            data.slice(0, 5).map(d =>
+                                `${d.station.icao} (${Math.round(d.nautical_miles)}nm)`
+                            ).join(', ')
+                        );
+                    }
+
+                } catch(e) {
+                    console.error('GPS locate error:', e);
+                    showToast('❌ Error searching for nearby stations — check connection');
+                } finally {
+                    btn.innerHTML = '📍';
+                }
+
+            }, (err) => {
+                const msg = err.code === 1
+                    ? '🔒 Location permission denied — enable in browser settings'
+                    : '❌ GPS unavailable or timed out';
+                showToast(msg);
+                btn.innerHTML = '📍';
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000   // accept a cached position up to 60s old
+            });
         }
 
         // ================================================================
@@ -2921,6 +2971,15 @@
                     secureFetch(`/api/weather?type=notam&station=${icao}`)
                 ]);
 
+                // Nearby stations runs immediately from station coords — not gated by METAR
+                if (stationData.latitude && stationData.longitude) {
+                    findNearbyStations(stationData.latitude, stationData.longitude);
+                } else {
+                    document.getElementById('nearList').innerHTML =
+                        '<span style="color:#555;">No coordinates for this station.</span>';
+                }
+                updateAudioSection(icao);
+                
                 if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
                     if (m._meta) console.log(`%c[AVWX] METAR - Key #${m._meta.key_used} (${m._meta.key_usage}/${m._meta.key_limit})`, 'color:#0a84ff;font-weight:bold;');
@@ -2937,8 +2996,6 @@
                     if (icao === 'KMHR') liveBtn.classList.remove('hidden'); else liveBtn.classList.add('hidden');
                     renderFlightRuleBar(m);
                     setupRunwaySelect();
-                    findNearbyStations(stationData.latitude, stationData.longitude);
-                    updateAudioSection(icao);
                 } else { throw new Error("No Weather Data"); }
 
                 if (tafRes.status === 'fulfilled') {
@@ -3002,6 +3059,13 @@
             if (liveAtcBtn) {
                 liveAtcBtn.href = `https://www.liveatc.net/search/?icao=${icao}`;
                 liveAtcBtn.innerHTML = `<span>📡 LiveATC (${icao})</span><span>↗</span>`;
+            }
+
+            // Update Metar-Taf link with current airport
+            const metarTafBtn = document.getElementById('btnMetarTaf');
+            if (metarTafBtn) {
+                metarTafBtn.href = `https://metar-taf.com/?hl=${icao}`;
+                metarTafBtn.innerHTML = `<span>☁️ Metar-Taf.com (${icao})</span><span>↗</span>`;
             }
 
             // Stream configs: [ICAO, labelText, streams[]]
@@ -3256,7 +3320,7 @@
 
         async function findNearbyStations(lat, lon) {
             try {
-                const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}`);
+                const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}&distance=150`);
                 const list = document.getElementById('nearList');
                 list.innerHTML = "";
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
