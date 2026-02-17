@@ -1048,38 +1048,128 @@
         }
 
         @keyframes aircraftSlide {
-            /* PHASE 1: FADE IN (0-8%) */
-            0%  { transform: translateX(-240px) translateY(-50%) scale(0.96) translateZ(0); opacity: 0; }
-            2%  { transform: translateX(-235px) translateY(-50%) scale(0.96) translateZ(0); opacity: 0.2; }
-            4%  { transform: translateX(-228px) translateY(-50%) scale(0.97) translateZ(0); opacity: 0.5; }
-            6%  { transform: translateX(-218px) translateY(-50%) scale(0.97) translateZ(0); opacity: 0.75; }
-            8%  { transform: translateX(-205px) translateY(-50%) scale(0.98) translateZ(0); opacity: 1; }
-            /* PHASE 2: ACCELERATION (8-45%) */
-            10% { transform: translateX(-188px) translateY(-50%) scale(0.98) translateZ(0); }
-            16% { transform: translateX(-120px) translateY(-50%) scale(1)    translateZ(0); }
-            24% { transform: translateX(0px)    translateY(-50%) scale(1)    translateZ(0); }
-            32% { transform: translateX(150px)  translateY(-50%) scale(1)    translateZ(0); }
-            40% { transform: translateX(278px)  translateY(-50%) scale(1)    translateZ(0); }
-            45% { transform: translateX(330px)  translateY(-50%) scale(1)    translateZ(0); }
-            /* PHASE 3: COAST (45-54%) */
-            53% { transform: translateX(358px)  translateY(-50%) scale(1)    translateZ(0); }
-            /* PHASE 4: ROTATION (54-62%) */
-            56% { transform: translateX(370px)  translateY(-50.5%) scale(1)   rotate(-1deg)   translateZ(0); }
-            60% { transform: translateX(398px)  translateY(-51.8%) scale(0.99) rotate(-2deg)  translateZ(0); }
-            62% { transform: translateX(418px)  translateY(-52.8%) scale(0.985) rotate(-2.5deg) translateZ(0); }
-            /* PHASE 5: LIFTOFF (62-78%) */
-            66% { transform: translateX(470px)  translateY(-55.5%) scale(0.975) rotate(-3.5deg) translateZ(0); opacity: 0.98; }
-            70% { transform: translateX(538px)  translateY(-59.2%) scale(0.965) rotate(-4.5deg) translateZ(0); opacity: 0.93; }
-            74% { transform: translateX(622px)  translateY(-64%)   scale(0.95)  rotate(-5.3deg) translateZ(0); opacity: 0.85; }
-            78% { transform: translateX(722px)  translateY(-70.5%) scale(0.93)  rotate(-6deg)   translateZ(0); opacity: 0.7; }
-            /* PHASE 6: CLIMB INTO DISTANCE (78-100%) */
-            82% { transform: translateX(838px)  translateY(-78.8%) scale(0.90)  rotate(-6.4deg) translateZ(0); opacity: 0.5; }
-            86% { transform: translateX(970px)  translateY(-88.5%) scale(0.87)  rotate(-6.7deg) translateZ(0); opacity: 0.3; }
-            90% { transform: translateX(1118px) translateY(-100%)  scale(0.84)  rotate(-6.9deg) translateZ(0); opacity: 0.15; }
-            94% { transform: translateX(1282px) translateY(-113.5%) scale(0.81) rotate(-7deg)   translateZ(0); opacity: 0.06; }
-            100%{ transform: translateX(1558px) translateY(-138%)  scale(0.765) rotate(-7deg)   translateZ(0); opacity: 0; }
-        }
 
+            /* ── PHASE 1: FADE IN & FIRST ROLL (0–8%) ── */
+            0%   { transform: translateX(-240px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0;     }
+            1%   { transform: translateX(-238px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0.10;  }
+            2%   { transform: translateX(-235px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0.20;  }
+            3%   { transform: translateX(-232px) translateY(-50%) scale(0.965) rotate(0deg) translateZ(0); opacity: 0.35;  }
+            4%   { transform: translateX(-228px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.50;  }
+            5%   { transform: translateX(-223px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.625; }
+            6%   { transform: translateX(-218px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.75;  }
+            7%   { transform: translateX(-212px) translateY(-50%) scale(0.975) rotate(0deg) translateZ(0); opacity: 0.875; }
+            8%   { transform: translateX(-205px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1;     }
+
+            /* ── PHASE 2: TAXI ACCELERATION (9–16%) ── */
+            9%   { transform: translateX(-197px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1; }
+            10%  { transform: translateX(-188px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1; }
+            11%  { transform: translateX(-177px) translateY(-50%) scale(0.983) rotate(0deg) translateZ(0); opacity: 1; }
+            12%  { transform: translateX(-165px) translateY(-50%) scale(0.987) rotate(0deg) translateZ(0); opacity: 1; }
+            13%  { transform: translateX(-154px) translateY(-50%) scale(0.990) rotate(0deg) translateZ(0); opacity: 1; }
+            14%  { transform: translateX(-143px) translateY(-50%) scale(0.993) rotate(0deg) translateZ(0); opacity: 1; }
+            15%  { transform: translateX(-131px) translateY(-50%) scale(0.997) rotate(0deg) translateZ(0); opacity: 1; }
+            16%  { transform: translateX(-120px) translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 3: FULL SPEED TAXI (17–32%) ── */
+            17%  { transform: translateX(-105px) translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            18%  { transform: translateX(-90px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            19%  { transform: translateX(-75px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            20%  { transform: translateX(-60px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            21%  { transform: translateX(-45px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            22%  { transform: translateX(-30px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            23%  { transform: translateX(-15px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            24%  { transform: translateX(0px)    translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            25%  { transform: translateX(19px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            26%  { transform: translateX(38px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            27%  { transform: translateX(56px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            28%  { transform: translateX(75px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            29%  { transform: translateX(94px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            30%  { transform: translateX(113px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            31%  { transform: translateX(131px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            32%  { transform: translateX(150px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 4: APPROACH TO V1 (33–44%) ── */
+            33%  { transform: translateX(166px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            34%  { transform: translateX(182px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            35%  { transform: translateX(198px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            36%  { transform: translateX(214px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            37%  { transform: translateX(230px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            38%  { transform: translateX(246px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            39%  { transform: translateX(262px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            40%  { transform: translateX(278px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            41%  { transform: translateX(288px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            42%  { transform: translateX(299px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            43%  { transform: translateX(309px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            44%  { transform: translateX(320px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 5: V1 HOLD & COAST (45–53%) ── */
+            45%  { transform: translateX(330px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            46%  { transform: translateX(334px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            47%  { transform: translateX(337px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            48%  { transform: translateX(341px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            49%  { transform: translateX(344px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            50%  { transform: translateX(348px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            51%  { transform: translateX(351px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            52%  { transform: translateX(354px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            53%  { transform: translateX(358px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 6: VR — NOSE ROTATION BEGINS (54–62%) ── */
+            54%  { transform: translateX(362px)  translateY(-50.17%) scale(1.000)  rotate(-0.33deg) translateZ(0); opacity: 1; }
+            55%  { transform: translateX(366px)  translateY(-50.33%) scale(1.000)  rotate(-0.67deg) translateZ(0); opacity: 1; }
+            56%  { transform: translateX(370px)  translateY(-50.50%) scale(1.000)  rotate(-1.00deg) translateZ(0); opacity: 1; }
+            57%  { transform: translateX(377px)  translateY(-50.83%) scale(0.9975) rotate(-1.25deg) translateZ(0); opacity: 1; }
+            58%  { transform: translateX(384px)  translateY(-51.15%) scale(0.9950) rotate(-1.50deg) translateZ(0); opacity: 1; }
+            59%  { transform: translateX(391px)  translateY(-51.48%) scale(0.9925) rotate(-1.75deg) translateZ(0); opacity: 1; }
+            60%  { transform: translateX(398px)  translateY(-51.80%) scale(0.9900) rotate(-2.00deg) translateZ(0); opacity: 1; }
+            61%  { transform: translateX(408px)  translateY(-52.30%) scale(0.9875) rotate(-2.25deg) translateZ(0); opacity: 1; }
+            62%  { transform: translateX(418px)  translateY(-52.80%) scale(0.9850) rotate(-2.50deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 7: LIFTOFF — INITIAL CLIMB (63–70%) ── */
+            63%  { transform: translateX(431px)  translateY(-53.48%) scale(0.9825) rotate(-2.75deg) translateZ(0); opacity: 0.995; }
+            64%  { transform: translateX(444px)  translateY(-54.15%) scale(0.9800) rotate(-3.00deg) translateZ(0); opacity: 0.990; }
+            65%  { transform: translateX(457px)  translateY(-54.83%) scale(0.9775) rotate(-3.25deg) translateZ(0); opacity: 0.985; }
+            66%  { transform: translateX(470px)  translateY(-55.50%) scale(0.9750) rotate(-3.50deg) translateZ(0); opacity: 0.980; }
+            67%  { transform: translateX(487px)  translateY(-56.43%) scale(0.9725) rotate(-3.75deg) translateZ(0); opacity: 0.968; }
+            68%  { transform: translateX(504px)  translateY(-57.35%) scale(0.9700) rotate(-4.00deg) translateZ(0); opacity: 0.955; }
+            69%  { transform: translateX(521px)  translateY(-58.28%) scale(0.9675) rotate(-4.25deg) translateZ(0); opacity: 0.943; }
+            70%  { transform: translateX(538px)  translateY(-59.20%) scale(0.9650) rotate(-4.50deg) translateZ(0); opacity: 0.930; }
+
+            /* ── PHASE 8: CLIMB & RECEDE (71–78%) ── */
+            71%  { transform: translateX(559px)  translateY(-60.40%) scale(0.9613) rotate(-4.70deg) translateZ(0); opacity: 0.910; }
+            72%  { transform: translateX(580px)  translateY(-61.60%) scale(0.9575) rotate(-4.90deg) translateZ(0); opacity: 0.890; }
+            73%  { transform: translateX(601px)  translateY(-62.80%) scale(0.9538) rotate(-5.10deg) translateZ(0); opacity: 0.870; }
+            74%  { transform: translateX(622px)  translateY(-64.00%) scale(0.9500) rotate(-5.30deg) translateZ(0); opacity: 0.850; }
+            75%  { transform: translateX(647px)  translateY(-65.63%) scale(0.9450) rotate(-5.48deg) translateZ(0); opacity: 0.813; }
+            76%  { transform: translateX(672px)  translateY(-67.25%) scale(0.9400) rotate(-5.65deg) translateZ(0); opacity: 0.775; }
+            77%  { transform: translateX(697px)  translateY(-68.88%) scale(0.9350) rotate(-5.83deg) translateZ(0); opacity: 0.738; }
+            78%  { transform: translateX(722px)  translateY(-70.50%) scale(0.9300) rotate(-6.00deg) translateZ(0); opacity: 0.700; }
+
+            /* ── PHASE 9: HIGH CLIMB & FADE (79–86%) ── */
+            79%  { transform: translateX(751px)  translateY(-72.58%) scale(0.9225) rotate(-6.10deg) translateZ(0); opacity: 0.650; }
+            80%  { transform: translateX(780px)  translateY(-74.65%) scale(0.9150) rotate(-6.20deg) translateZ(0); opacity: 0.600; }
+            81%  { transform: translateX(809px)  translateY(-76.73%) scale(0.9075) rotate(-6.30deg) translateZ(0); opacity: 0.550; }
+            82%  { transform: translateX(838px)  translateY(-78.80%) scale(0.9000) rotate(-6.40deg) translateZ(0); opacity: 0.500; }
+            83%  { transform: translateX(871px)  translateY(-81.23%) scale(0.8925) rotate(-6.48deg) translateZ(0); opacity: 0.450; }
+            84%  { transform: translateX(904px)  translateY(-83.65%) scale(0.8850) rotate(-6.55deg) translateZ(0); opacity: 0.400; }
+            85%  { transform: translateX(937px)  translateY(-86.08%) scale(0.8775) rotate(-6.63deg) translateZ(0); opacity: 0.350; }
+            86%  { transform: translateX(970px)  translateY(-88.50%) scale(0.8700) rotate(-6.70deg) translateZ(0); opacity: 0.300; }
+
+            /* ── PHASE 10: VANISH INTO DISTANCE (87–100%) ── */
+            87%  { transform: translateX(1007px) translateY(-91.38%) scale(0.8625) rotate(-6.75deg) translateZ(0); opacity: 0.263; }
+            88%  { transform: translateX(1044px) translateY(-94.25%) scale(0.8550) rotate(-6.80deg) translateZ(0); opacity: 0.225; }
+            89%  { transform: translateX(1081px) translateY(-97.13%) scale(0.8475) rotate(-6.85deg) translateZ(0); opacity: 0.188; }
+            90%  { transform: translateX(1118px) translateY(-100.0%) scale(0.8400) rotate(-6.90deg) translateZ(0); opacity: 0.150; }
+            91%  { transform: translateX(1159px) translateY(-103.4%) scale(0.8325) rotate(-6.93deg) translateZ(0); opacity: 0.128; }
+            92%  { transform: translateX(1200px) translateY(-106.8%) scale(0.8250) rotate(-6.95deg) translateZ(0); opacity: 0.105; }
+            93%  { transform: translateX(1241px) translateY(-110.1%) scale(0.8175) rotate(-6.98deg) translateZ(0); opacity: 0.083; }
+            94%  { transform: translateX(1282px) translateY(-113.5%) scale(0.8100) rotate(-7.00deg) translateZ(0); opacity: 0.060; }
+            95%  { transform: translateX(1328px) translateY(-117.6%) scale(0.8025) rotate(-7.00deg) translateZ(0); opacity: 0.050; }
+            96%  { transform: translateX(1374px) translateY(-121.7%) scale(0.7950) rotate(-7.00deg) translateZ(0); opacity: 0.040; }
+            97%  { transform: translateX(1420px) translateY(-125.8%) scale(0.7875) rotate(-7.00deg) translateZ(0); opacity: 0.030; }
+            98%  { transform: translateX(1466px) translateY(-129.8%) scale(0.7800) rotate(-7.00deg) translateZ(0); opacity: 0.020; }
+            99%  { transform: translateX(1512px) translateY(-133.9%) scale(0.7725) rotate(-7.00deg) translateZ(0); opacity: 0.010; }
+            100% { transform: translateX(1558px) translateY(-138.0%) scale(0.7650) rotate(-7.00deg) translateZ(0); opacity: 0;     }
+        }
         /* Runway / Ground elements */
         .launch-ground {
             position: absolute;
@@ -1094,19 +1184,29 @@
                 transparent
             );
         }
+        /* Runway centerline — auto-fills full screen width with repeating dashes */
         .launch-dashes {
             position: absolute;
-            bottom: 32px; left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 14px;
+            bottom: 32px;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: repeating-linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0.55) 0px,
+                rgba(255, 255, 255, 0.55) 28px,   /* dash length */
+                transparent 28px,
+                transparent 46px                   /* gap length */
+            );
+            border-radius: 2px;
             opacity: 0;
             animation: fadeIn 0.4s ease 0.2s forwards;
         }
-        .launch-dash { width: 22px; height: 2px; background: rgba(255,255,255,0.5); border-radius: 2px; }
+        /* .launch-dash divs are no longer needed — kept for backwards compat */
+        .launch-dash { display: none; }
         .launch-lights {
             position: absolute;
-            bottom: 27px; left: 8%; right: 8%;
+            bottom: 27px; left: 5%; right: 5%;
             display: flex;
             justify-content: space-between;
             opacity: 0;
@@ -1221,14 +1321,8 @@
         <div class="launch-aircraft-wrap">
             <div class="launch-glow"></div>
             <div class="launch-ground"></div>
-            <div class="launch-dashes">
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-                <div class="launch-dash"></div>
-            </div>
+            <div class="launch-dashes"></div>
+
             <div class="launch-lights">
                 <div class="launch-light"></div>
                 <div class="launch-light"></div>
