@@ -1316,6 +1316,188 @@
             line-height: 1.6;
         }
         .help-a b { color: var(--text); }
+
+        /* ============================================================
+           28. RESPONSIVE LAYOUT — TABLET & DESKTOP
+           820px  = iPad landscape / large phone horizontal
+           1100px = Desktop / external monitor
+           1400px = Wide desktop (optional 2-panel METAR view)
+        ============================================================ */
+
+        @media (min-width: 820px) {
+
+            body {
+                max-width: 1280px;
+                margin-left:  auto;
+                margin-right: auto;
+                padding: 16px 28px;
+
+                /* Replace flex-column with named CSS Grid */
+                display: grid;
+                grid-template-areas:
+                    "topbar   topbar"
+                    "chips    chips"
+                    "banner   banner"
+                    "sidenav  content"
+                    "sidenav  sfooter";
+                grid-template-columns: 134px 1fr;
+                grid-template-rows: auto auto auto 1fr auto;
+                column-gap: 20px;
+                row-gap:    10px;
+                align-items: start;
+            }
+
+            /* Named area assignments for every direct body child */
+            .top-bar          { grid-area: topbar;  }
+            .quick-select-row { grid-area: chips;   }
+            #minBanner        { grid-area: banner;  }
+            #offlineBanner    { grid-area: banner;  }
+            .tabs             { grid-area: sidenav; }
+            .view-section     { grid-area: content; }
+            .safety-footer    { grid-area: sfooter; }
+
+            /* Modals are position:fixed — unaffected by grid */
+
+            /* SIDEBAR: vertical tab rail */
+            .tabs {
+                flex-direction: column;
+                gap: 2px;
+                padding: 4px;
+                border-bottom: none;
+                overflow: visible;
+                position: sticky;
+                top: 16px;
+                align-self: start;
+                background: rgba(28,28,30,0.75);
+                border-radius: 10px;
+                border: 1px solid var(--border);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+            }
+
+            .tab {
+                padding: 10px 12px;
+                text-align: left;
+                font-size: 11px;
+                letter-spacing: 0.3px;
+                border-radius: 7px;
+                border-bottom: none;
+                border-right: 3px solid transparent;
+                white-space: nowrap;
+                width: 100%;
+            }
+
+            .tab:hover:not(.active) {
+                background: rgba(255,255,255,0.06);
+                color: var(--text);
+            }
+
+            .tab.active {
+                background: rgba(10, 132, 255, 0.14);
+                border-right-color: var(--accent);
+                color: var(--accent);
+            }
+
+            /* Hide horizontal underline — replaced by right border */
+            .tab::after { display: none; }
+
+            /* Wider data grids (3 cols) */
+            .metar-grid { grid-template-columns: 1fr 1fr 1fr; }
+            .info-grid  { grid-template-columns: 1fr 1fr 1fr; }
+            .freq-grid  { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+
+            /* Full-width cards: span 3 (was span 2) */
+            .metar-card.full-width { grid-column: span 3; }
+            .sky-section           { grid-column: span 3; }
+            .fr-bar-container      { grid-column: span 3; }
+            .nearby-container      { grid-column: span 3; }
+
+            /* Taller meteogram */
+            #meteoCanvas { height: 175px; }
+
+            /* Wind rose panel: a bit more breathing room */
+            .wind-vis-container { padding: 14px 18px; gap: 20px; }
+        }
+
+
+        @media (min-width: 1100px) {
+
+            body {
+                padding: 20px 40px;
+                grid-template-columns: 150px 1fr;
+                column-gap: 28px;
+            }
+
+            .tab { font-size: 12px; padding: 12px 16px; }
+
+            /* 4-column data grids */
+            .metar-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            .info-grid  { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+            /* Span 4 for full-width items */
+            .metar-card.full-width { grid-column: span 4; }
+            .sky-section           { grid-column: span 4; }
+            .fr-bar-container      { grid-column: span 4; }
+            .nearby-container      { grid-column: span 4; }
+
+            /* Bigger wind rose on desktop */
+            #windRose { width: 160px !important; height: 160px !important; }
+
+            /* Taller meteogram */
+            #meteoCanvas { height: 200px; }
+
+            .wind-vis-container { padding: 16px 22px; gap: 24px; }
+
+            /* Nearby buttons larger */
+            .nearby-btn { padding: 8px 14px; font-size: 13px; }
+        }
+
+
+        @media (min-width: 1400px) {
+
+            body {
+                grid-template-columns: 160px 1fr;
+                max-width: 1440px;
+                padding: 24px 48px;
+            }
+
+            /* METAR tab: 2-panel (wind rose left | data grid right) */
+            #tab-metar {
+                display: grid;
+                grid-template-columns: 230px 1fr;
+                column-gap: 20px;
+                align-items: start;
+            }
+
+            #tab-metar .wind-vis-container {
+                grid-column: 1;
+                grid-row: 1 / 4;
+                flex-direction: column;
+                align-items: center;
+                margin-top: 0;
+                padding: 20px 16px;
+                min-height: 280px;
+            }
+
+            #tab-metar .metar-grid {
+                grid-column: 2;
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+
+            #tab-metar .metar-card.full-width,
+            #tab-metar .sky-section,
+            #tab-metar .fr-bar-container,
+            #tab-metar .nearby-container {
+                grid-column: span 3;
+            }
+
+            /* Raw METAR text + footer spans both columns */
+            #tab-metar #btnFetchLive,
+            #tab-metar > .raw-text,
+            #tab-metar > div:not(.wind-vis-container):not(.metar-grid):not(#btnFetchLive) {
+                grid-column: 1 / -1;
+            }
+        }
         
     </style>
 </head>
@@ -1387,6 +1569,9 @@
         ⚠️ NO-GO CHECK TOOLS
     </div>
 
+    <!-- Offline mode banner: pre-created for CSS Grid placement -->
+    <div id="offlineBanner" class="offline-banner hidden" onclick="retryOnline()"></div>
+    
     <!-- ================================================================
          TABS
     ================================================================ -->
@@ -4253,47 +4438,38 @@
             setTimeout(() => toast.remove(), duration);
         }
 
+        function retryOnline() {
+            if (navigator.onLine) { loadData(true); hideOfflineBanner(); }
+        }
+
         function showOfflineBanner(ts) {
             const ageMin = Math.round((Date.now() - ts) / 60000);
-            const ageStr = ageMin < 1 ? 'just now'
+            const ageStr = ageMin < 1  ? 'just now'
                          : ageMin < 60 ? `${ageMin}m ago`
                          : `${Math.round(ageMin / 60)}h ago`;
 
-            // Persistent top banner
-            let banner = document.getElementById('offlineBanner');
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'offlineBanner';
-                banner.className = 'offline-banner';
-                banner.onclick = () => { if (navigator.onLine) { loadData(true); hideOfflineBanner(); } };
-                // Insert inside .app-wrapper or at top of body
-                const wrapper = document.querySelector('.app-wrapper') || document.body;
-                wrapper.insertBefore(banner, wrapper.firstElementChild);
-            }
+            const banner = document.getElementById('offlineBanner');
+            if (!banner) return;
+
             banner.innerHTML = `
                 <span>⚡ OFFLINE MODE</span>
-                <span style="margin:0 8px;opacity:0.4;">|</span>
+                <span style="margin:0 8px;opacity:0.3;">|</span>
                 <span>Showing cached data · ${ageStr}</span>
-                <span style="margin-left:8px;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:10px;font-size:10px;">
+                <span style="margin-left:8px;background:rgba(0,0,0,0.25);padding:2px 10px;border-radius:10px;font-size:10px;">
                     ${navigator.onLine ? 'Tap to refresh ↻' : 'No connection'}
                 </span>`;
 
-            // Also update the Zulu time badge with offline dot
+            banner.classList.remove('hidden');
+
             const zuluEl = document.getElementById('zuluTime');
-            if (zuluEl && !zuluEl.dataset.offlineOrig) {
-                zuluEl.dataset.offlineOrig = '1';
-                zuluEl.style.borderLeft = '3px solid #ff9f0a';
-            }
+            if (zuluEl) zuluEl.style.borderLeft = '3px solid #ff9f0a';
         }
 
         function hideOfflineBanner() {
-            document.getElementById('offlineBanner')?.remove();
-            // Remove offline indicator from time badge
+            const banner = document.getElementById('offlineBanner');
+            if (banner) banner.classList.add('hidden');
             const zuluEl = document.getElementById('zuluTime');
-            if (zuluEl) {
-                delete zuluEl.dataset.offlineOrig;
-                zuluEl.style.borderLeft = '';
-            }
+            if (zuluEl) zuluEl.style.borderLeft = '';
         }
 
         window.addEventListener('online', () => {
