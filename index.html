@@ -966,25 +966,16 @@
             animation: slideUpFade 0.3s ease-out;
         }
         .offline-banner {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 4px;
-            background: linear-gradient(135deg, #7c3300, #4a2000);
-            border: 1px solid #ff9f0a;
-            border-radius: 8px;
-            color: #ff9f0a;
+            background: var(--warn);
+            color: #000;
             text-align: center;
-            padding: 8px 12px;
-            font-weight: 700;
+            padding: 8px;
+            font-weight: 800;
             font-size: 12px;
+            border-radius: 6px;
             cursor: pointer;
             margin-bottom: 8px;
-            letter-spacing: 0.3px;
-            animation: slideUpFade 0.3s ease-out;
         }
-        .offline-banner:hover { background: linear-gradient(135deg, #9a4000, #622b00); }
 
         /* ============================================================
            26. SAFETY FOOTER & MISC
@@ -2763,31 +2754,17 @@
         async function secureFetch(endpoint) {
             const cacheKey = `cache_${endpoint}`;
             const cached   = localStorage.getItem(cacheKey);
-            const cachedObj = cached ? (() => { try { return JSON.parse(cached); } catch(e) { return null; } })() : null;
-
-            // Fresh cache (< 10 min) → return immediately
-            if (cachedObj && Date.now() - cachedObj.ts < 600000) {
-                return cachedObj.data;
+            if (cached) {
+                const c = JSON.parse(cached);
+                if (Date.now() - c.ts < 600000) return c.data;
             }
-
             try {
                 const res = await fetch(endpoint);
                 if (!res.ok) throw new Error(`API Error: ${res.status}`);
                 const data = await res.json();
                 localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
-                hideOfflineBanner();
                 return data;
-            } catch (err) {
-                // Network failure — fall back to stale cache if available
-                if (cachedObj) {
-                    const ageMin = Math.round((Date.now() - cachedObj.ts) / 60000);
-                    console.warn(`[Offline] Serving stale cache for ${endpoint} (${ageMin}m old)`);
-                    showOfflineBanner(cachedObj.ts);
-                    return cachedObj.data;
-                }
-                // No cache at all — throw so the caller can show an error
-                throw err;
-            }
+            } catch (err) { console.error("Fetch error", err); throw err; }
         }
 
         // ================================================================
@@ -2991,7 +2968,7 @@
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
                     secureFetch(`/api/weather?type=metar&station=${icao}`),
                     secureFetch(`/api/weather?type=taf&station=${icao}`),
-                    fetchNotamsFAA(icao)
+                    secureFetch(`/api/weather?type=notam&station=${icao}`)
                 ]);
 
                 // Nearby stations runs immediately from station coords — not gated by METAR
@@ -3047,106 +3024,31 @@
         // ================================================================
         // 13. NOTAMs
         // ================================================================
-        function renderNotams(rawData) {
-            const container = document.getElementById('notamList');
-
-            // Handle both FAA format (array of objects) and legacy format
-            let notams = [];
-            if (Array.isArray(rawData)) {
-                if (rawData.length === 0) { container.innerHTML = "No NOTAMs Found"; return; }
-
-                // Detect FAA format: objects have a "text" or "traditional" string field
-                if (rawData[0]?.text || rawData[0]?.traditional) {
-                    // FAA aviationweather.gov format
-                    notams = rawData.map(n => ({
-                        raw:        n.traditional || n.text || '',
-                        number:     n.notamNumber || '',
-                        start:      n.startDate   || '',
-                        end:        n.endDate      || '',
-                        location:   n.icaoLocation || ''
-                    }));
-                } else {
-                    // Legacy AVWX format: array of { raw, start_time, ... }
-                    notams = rawData.map(n => ({
-                        raw:   n.raw || '',
-                        number:'',
-                        start: n.start_time?.dt || '',
-                        end:   '',
-                        location: ''
-                    }));
-                }
-            } else {
-                container.innerHTML = "No NOTAMs Found";
-                return;
-            }
-
-            // Classify
-            const critical = [], warning = [], info = [];
-            notams.forEach(n => {
-                const raw = n.raw.toUpperCase();
-                if (/(CLSD|CLOSED|U\/S|UNSERVICEABLE|FAIL|OTS|OUT OF SERVICE)/.test(raw))
-                    critical.push(n);
-                else if (/(OBST|OBSTACLE|WORK|WIP|TRIGGER|SNOW|ICE|DANGER|HAZARD|RESTRICTED|CRANE|LASER)/.test(raw))
-                    warning.push(n);
-                else
-                    info.push(n);
-            });
-
-            const formatDate = (iso) => {
-                if (!iso) return '';
-                try {
-                    const d = new Date(iso);
-                    return `${d.getUTCDate().toString().padStart(2,'0')}/${(d.getUTCMonth()+1).toString().padStart(2,'0')} ${d.getUTCHours().toString().padStart(2,'0')}:${d.getUTCMinutes().toString().padStart(2,'0')}Z`;
-                } catch(e) { return iso; }
-            };
-
-            const renderGroup = (list, title, color) => {
-                if (list.length === 0) return '';
-                return `
-                    <div style="color:${color};font-weight:800;margin:14px 0 4px 0;font-size:11px;text-transform:uppercase;">
-                        ${title} (${list.length})
-                    </div>
-                    ${list.map(n => `
-                        <div style="margin-bottom:8px;border-left:3px solid ${color};background:rgba(255,255,255,0.03);border-radius:4px;padding:7px 8px;">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                                <span style="color:${color};font-size:10px;font-weight:800;">${n.number || ''}</span>
-                                <span style="color:#555;font-size:9px;">${formatDate(n.start)}${n.end ? ' → ' + formatDate(n.end) : ''}</span>
-                            </div>
-                            <div style="font-size:11px;font-family:'SF Mono',monospace;line-height:1.5;color:#ccc;white-space:pre-wrap;word-break:break-word;">
-                                ${formatNotamText(n.raw)}
-                            </div>
+        function renderNotams(n) {
+            const notamContainer = document.getElementById('notamList');
+            if (Array.isArray(n) && n.length > 0) {
+                const critical = [], warning = [], info = [];
+                n.forEach(x => {
+                    const raw = x.raw;
+                    if (/(CLSD|CLOSED|U\/S|UNSERVICEABLE|FAIL)/.test(raw)) critical.push(x);
+                    else if (/(OBST|WORK|WIP|TRIGGER|SNOW|ICE|DANGER)/.test(raw)) warning.push(x);
+                    else info.push(x);
+                });
+                const renderGroup = (list, title, color) => {
+                    if (list.length === 0) return '';
+                    return `<div style="color:${color};font-weight:800;margin:14px 0 4px 0;font-size:11px;text-transform:uppercase;">${title} (${list.length})</div>
+                        ${list.map(x => `<div style="margin-bottom:6px;border-left:3px solid ${color};background:rgba(255,255,255,0.03);padding:6px;font-size:11px;font-family:'SF Mono',monospace;">
+                            <div style="color:#666;font-size:9px;margin-bottom:2px;">${x.start_time?.dt ? new Date(x.start_time.dt).toLocaleDateString() : ''}</div>
+                            ${formatNotamText(x.raw)}
                         </div>`).join('')}`;
-            };
-
-            const html = renderGroup(critical, '⛔ CRITICAL', '#ff453a')
-                       + renderGroup(warning,  '⚠️ CAUTION',  '#ff9f0a')
-                       + renderGroup(info,     'ℹ️ INFO',      '#8e8e93');
-
-            container.innerHTML = html ||
-                '<div style="color:#555;font-style:italic;padding:8px;">No active NOTAMs.</div>';
+                };
+                notamContainer.innerHTML =
+                    renderGroup(critical, '⛔ CRITICAL', '#ff453a') +
+                    renderGroup(warning,  '⚠️ CAUTION',  '#ff9f0a') +
+                    renderGroup(info,     'ℹ️ INFO',      '#8e8e93');
+            } else { notamContainer.innerHTML = "No NOTAMs Found"; }
         }
 
-        // ================================================================
-        // 13b. FAA NOTAM FETCH (aviationweather.gov — free, no key)
-        // ================================================================
-        async function fetchNotamsFAA(icao) {
-            const url = `https://aviationweather.gov/api/data/notam?icaos=${icao}&format=json`;
-            const cacheKey = `cache_faa_notam_${icao}`;
-
-            // Check cache first (10 min)
-            const cached = localStorage.getItem(cacheKey);
-            if (cached) {
-                const c = JSON.parse(cached);
-                if (Date.now() - c.ts < 600000) return c.data;
-            }
-
-            const res  = await fetch(url);
-            if (!res.ok) throw new Error(`FAA NOTAM API: ${res.status}`);
-            const data = await res.json();
-            localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
-            return data;
-        }
-    
         // ================================================================
         // 14. AUDIO SECTION
         // ================================================================
@@ -3416,126 +3318,101 @@
         // Stores data for the currently-previewed nearby airport
         let _nearbyModalData = null;
 
-        // Safe distance extractor — handles both AVWX and cached shapes
-        function getNm(item) {
-            if (item.nautical_miles != null) return item.nautical_miles;      // cached old shape
-            if (item.distance?.value != null) return item.distance.value;     // AVWX live shape
-            return 0;
-        }
-
-        // Stores data for the currently-previewed nearby airport
-        let _nearbyModalData = null;
-
         async function findNearbyStations(lat, lon) {
             try {
-                const data = await secureFetch(
-                    `/api/weather?type=near&station=${lat},${lon}&distance=150`
-                );
+                const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}&distance=150`);
                 const list = document.getElementById('nearList');
-                list.innerHTML = '';
-
-                // Normalize: the API may return an array or an object with a results key
-                const items = Array.isArray(data) ? data : (data.results || data.stations || []);
-
+                list.innerHTML = "";
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
-                const others = items
-                    .filter(item => (item.station?.icao || item.icao) !== currentIcao)
-                    .slice(0, 5);
-
+                const others = data.filter(item => item.station.icao !== currentIcao).slice(0, 5);
                 if (others.length === 0) {
-                    list.innerHTML = "<span style='color:#555;font-size:12px;'>No stations found within 150nm.</span>";
+                    list.innerHTML = "<span style='color:#555;'>No stations found nearby.</span>";
                     return;
                 }
-
                 others.forEach(item => {
-                    const icao = item.station?.icao || item.icao || '????';
-                    const nm   = Math.round(getNm(item));
-                    const btn  = document.createElement('div');
-                    btn.className = 'nearby-btn';
+                    const btn = document.createElement('div');
+                    btn.className = "nearby-btn";
                     btn.innerHTML = `
                         <span>✈</span>
-                        <span>${icao}</span>
-                        <span style="color:var(--sub-text);font-size:10px;">${nm}nm</span>`;
+                        <span>${item.station.icao}</span>
+                        <span style="color:var(--sub-text);font-size:10px;">${Math.round(item.nautical_miles)}nm</span>`;
+                    // Open preview modal instead of loading directly
                     btn.onclick = () => openNearbyModal(item);
                     list.appendChild(btn);
                 });
-            } catch(e) {
-                console.error('findNearbyStations error:', e);
-                document.getElementById('nearList').innerHTML =
-                    "<span style='color:#555;font-size:12px;'>Could not load nearby stations.</span>";
-            }
+            } catch(e) { console.error(e); }
         }
 
         async function openNearbyModal(item) {
-            const stn  = item.station || item;
-            const icao = stn.icao || '????';
-            const nm   = Math.round(getNm(item));
-            _nearbyModalData = { station: stn, nm };
+            const stn = item.station;
+            _nearbyModalData = item;
 
-            // Populate static fields immediately
-            document.getElementById('nearModalIcao').innerText  = icao;
+            // Populate static info immediately
+            document.getElementById('nearModalIcao').innerText  = stn.icao;
             document.getElementById('nearModalName').innerText  = stn.name || stn.city || '--';
-            document.getElementById('nearModalDist').innerText  = `${nm} nm`;
+            document.getElementById('nearModalDist').innerText  = `${Math.round(item.nautical_miles)} nm`;
             document.getElementById('nearModalElev').innerText  = stn.elevation_ft ? `${stn.elevation_ft} ft` : '--';
-            document.getElementById('nearModalCoords').innerText =
-                (stn.latitude != null && stn.longitude != null)
-                    ? `${stn.latitude.toFixed(2)}, ${stn.longitude.toFixed(2)}`
-                    : '--';
+            document.getElementById('nearModalCoords').innerText = stn.latitude && stn.longitude
+                ? `${stn.latitude.toFixed(2)}, ${stn.longitude.toFixed(2)}` : '--';
 
+            // Reset weather section and category
             const catEl = document.getElementById('nearModalCat');
             catEl.innerText = '--'; catEl.className = 'badge badge-cat';
             document.getElementById('nearModalWeather').innerHTML =
-                '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;">' +
-                '<span style="color:var(--accent);">⏳</span><span>Fetching current weather...</span></div>';
+                '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;"><span style="color:var(--accent);">⏳</span><span>Fetching current weather...</span></div>';
 
+            // Show modal
             document.getElementById('nearbyModal').classList.add('active');
 
-            // Fetch METAR for preview
+            // Fetch METAR in background
             try {
-                const m = await secureFetch(`/api/weather?type=metar&station=${icao}`);
+                const m = await secureFetch(`/api/weather?type=metar&station=${stn.icao}`);
                 if (m && !m.error) {
-                    const rules  = m.flight_rules || '--';
-                    const cssMap = { VFR:'cat-vfr', MVFR:'cat-mvfr', IFR:'cat-ifr', LIFR:'cat-lifr' };
+                    // Update flight category badge
+                    const rules = m.flight_rules || '--';
+                    const cssMap = { VFR: 'cat-vfr', MVFR: 'cat-mvfr', IFR: 'cat-ifr', LIFR: 'cat-lifr' };
                     catEl.innerText = rules;
                     catEl.className = 'badge badge-cat ' + (cssMap[rules] || '');
 
+                    // Build weather preview
                     const wind = m.wind_direction?.repr === 'VRB'
                         ? `VRB / ${m.wind_speed?.value || 0}kt`
-                        : `${String(m.wind_direction?.value ?? 0).padStart(3,'0')}° / ${m.wind_speed?.value || 0}kt`;
+                        : `${(m.wind_direction?.value || 0).toString().padStart(3,'0')}° / ${m.wind_speed?.value || 0}kt`;
                     const vis   = m.visibility ? `${m.visibility.value} sm` : '--';
                     const ceil  = m.clouds?.[0] ? `${m.clouds[0].type} ${m.clouds[0].altitude * 100}'` : 'CLR';
                     const temp  = m.temperature?.value != null ? `${m.temperature.value}°C` : '--';
                     const alt   = m.altimeter?.value
                         ? (m.altimeter.value < 200 ? `A${m.altimeter.value.toFixed(2)}` : `Q${m.altimeter.value}`)
                         : '--';
-                    const mins  = Math.floor((Date.now() - new Date(m.time?.dt)) / 60000);
+                    const now   = new Date();
+                    const mins  = Math.floor((now - new Date(m.time.dt)) / 60000);
                     const ageColor = mins > 60 ? 'var(--danger)' : 'var(--sub-text)';
 
                     document.getElementById('nearModalWeather').innerHTML = `
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                            <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;">
-                                <div style="font-size:10px;color:var(--sub-text);margin-bottom:2px;text-transform:uppercase;">Wind</div>
-                                <div style="font-size:14px;font-weight:700;color:var(--text);">${wind}</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Wind</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${wind}</div>
                             </div>
-                            <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;">
-                                <div style="font-size:10px;color:var(--sub-text);margin-bottom:2px;text-transform:uppercase;">Visibility</div>
-                                <div style="font-size:14px;font-weight:700;color:var(--text);">${vis}</div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Visibility</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${vis}</div>
                             </div>
-                            <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;">
-                                <div style="font-size:10px;color:var(--sub-text);margin-bottom:2px;text-transform:uppercase;">Ceiling</div>
-                                <div style="font-size:14px;font-weight:700;color:var(--text);">${ceil}</div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Ceiling</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${ceil}</div>
                             </div>
-                            <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;">
-                                <div style="font-size:10px;color:var(--sub-text);margin-bottom:2px;text-transform:uppercase;">Temp · Alt</div>
-                                <div style="font-size:13px;font-weight:700;color:var(--text);">${temp} · ${alt}</div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Temp / Alt</div>
+                                <div style="font-size:13px; font-weight:700; color:var(--text);">${temp} · ${alt}</div>
                             </div>
                         </div>
-                        <div style="font-size:10px;color:${ageColor};text-align:right;padding-top:4px;border-top:1px solid var(--border);">
+                        <div style="font-size:10px; color:${ageColor}; text-align:right; padding-top:4px; border-top:1px solid var(--border);">
                             ${mins > 60 ? '⚠️ ' : ''}Updated ${mins}m ago
                         </div>`;
                 } else {
                     document.getElementById('nearModalWeather').innerHTML =
-                        '<div style="color:var(--sub-text);text-align:center;padding:8px;">No weather data for this station.</div>';
+                        '<div style="color:var(--sub-text);text-align:center;padding:8px;">No weather data available for this station.</div>';
                 }
             } catch(e) {
                 document.getElementById('nearModalWeather').innerHTML =
@@ -3555,6 +3432,7 @@
             document.getElementById('icao').value = icao;
             loadData();
         }
+
         function renderInfo(d) {
             document.getElementById('infoName').innerText   = d.name;
             document.getElementById('infoLoc').innerText    = `${d.city || ''}, ${d.country || ''} (${d.icao})`;
@@ -4256,47 +4134,17 @@
         }
 
         function showOfflineBanner(ts) {
-            const ageMin = Math.round((Date.now() - ts) / 60000);
-            const ageStr = ageMin < 1 ? 'just now'
-                         : ageMin < 60 ? `${ageMin}m ago`
-                         : `${Math.round(ageMin / 60)}h ago`;
-
-            // Persistent top banner
             let banner = document.getElementById('offlineBanner');
             if (!banner) {
                 banner = document.createElement('div');
-                banner.id = 'offlineBanner';
-                banner.className = 'offline-banner';
-                banner.onclick = () => { if (navigator.onLine) { loadData(true); hideOfflineBanner(); } };
-                // Insert inside .app-wrapper or at top of body
-                const wrapper = document.querySelector('.app-wrapper') || document.body;
-                wrapper.insertBefore(banner, wrapper.firstElementChild);
+                banner.id = 'offlineBanner'; banner.className = 'offline-banner';
+                banner.onclick = () => loadData(true);
+                document.body.insertBefore(banner, document.body.firstElementChild);
             }
-            banner.innerHTML = `
-                <span>⚡ OFFLINE MODE</span>
-                <span style="margin:0 8px;opacity:0.4;">|</span>
-                <span>Showing cached data · ${ageStr}</span>
-                <span style="margin-left:8px;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:10px;font-size:10px;">
-                    ${navigator.onLine ? 'Tap to refresh ↻' : 'No connection'}
-                </span>`;
-
-            // Also update the Zulu time badge with offline dot
-            const zuluEl = document.getElementById('zuluTime');
-            if (zuluEl && !zuluEl.dataset.offlineOrig) {
-                zuluEl.dataset.offlineOrig = '1';
-                zuluEl.style.borderLeft = '3px solid #ff9f0a';
-            }
+            banner.innerText = `⚠️ OFFLINE — Cached data from ${Math.round((Date.now() - ts) / 60000)}m ago. Tap to retry.`;
         }
 
-        function hideOfflineBanner() {
-            document.getElementById('offlineBanner')?.remove();
-            // Remove offline indicator from time badge
-            const zuluEl = document.getElementById('zuluTime');
-            if (zuluEl) {
-                delete zuluEl.dataset.offlineOrig;
-                zuluEl.style.borderLeft = '';
-            }
-        }
+        function hideOfflineBanner() { document.getElementById('offlineBanner')?.remove(); }
 
         window.addEventListener('online', () => {
             hideOfflineBanner(); showToast('✅ Back online');
