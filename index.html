@@ -1227,6 +1227,27 @@
             <span>🔴 Cockpit Night Mode</span>
         </button>
 
+        <div class="section-title">API Usage Monitor</div>
+        <div class="info-card" onclick="openApiStatsModal()" 
+             style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; 
+                        align-items:center;">
+                <div>
+                    <div class="ic-lbl">AVWX API Status</div>
+                    <div class="ic-val" id="apiStatusLabel">
+                        Loading...
+                    </div>
+                </div>
+                <div style="font-size:24px;">📊</div>
+            </div>
+            <div id="apiQuickStats" style="
+                margin-top:8px; padding-top:8px;
+                border-top:1px solid #333;
+                font-size:11px; color:#8e8e93;">
+                Tap to view detailed breakdown
+            </div>
+        </div>
+        
         <div class="section-title">Cloud Backup</div>
         <div class="info-card" id="storageModeCard">
             <div style="display:flex; justify-content:space-between; 
@@ -1326,6 +1347,21 @@
         <iframe id="awosFrame" class="browser-frame" 
                 sandbox="allow-same-origin allow-scripts"
                 style="border:none; width:100%; height:100%;"></iframe>
+    </div>
+
+    <!-- API STATS MODAL -->
+    <div id="apiStatsModal" class="modal-overlay">
+        <div class="modal-header">
+            <div style="font-weight:700;">📊 API Usage Statistics</div>
+            <button class="modal-close" onclick="closeApiStatsModal()">
+                CLOSE
+            </button>
+        </div>
+        <div style="padding:20px; overflow-y:auto; height:100%;">
+            <div id="apiStatsContent">
+                <!-- Stats will be injected here -->
+            </div>
+        </div>
     </div>
     
     <!-- STORAGE MODE SETUP SCREEN -->
@@ -1811,6 +1847,8 @@
             // ── BACKUP CODE LOGIC ─────────────────────────────────────────
             
             window._pinEntry = '';
+
+        
             window._pinStep = 'create'; // 'create' | 'confirm' | 'restore'
             window._pinFirst = '';
             
@@ -2115,7 +2153,208 @@
                     : '✅ Cloud Backup activated!');
                 initApp();
             }
+
+            // ── API USAGE MONITORING ──────────────────────────────────────
             
+            let apiStatsCache = null;
+            
+            async function openApiStatsModal() {
+                const modal = document.getElementById('apiStatsModal');
+                const content = document.getElementById('apiStatsContent');
+                
+                modal.classList.add('active');
+                
+                // Show password prompt
+                content.innerHTML = `
+                    <div style="text-align:center; padding:40px; color:#8e8e93;">
+                        <div style="font-size:32px; margin-bottom:12px;">🔐</div>
+                        <div style="font-weight:700; margin-bottom:8px; color:#fff;">
+                            Admin Access Required
+                        </div>
+                        <div style="font-size:12px; margin-bottom:20px;">
+                            Enter admin password to view usage statistics
+                        </div>
+                        <input type="password" id="apiAdminPassword" 
+                               placeholder="Password"
+                               onkeypress="if(event.key==='Enter') fetchApiStats()"
+                               style="
+                                   background:#1c1c1e; border:1px solid #555;
+                                   color:#fff; padding:12px; border-radius:8px;
+                                   width:200px; font-size:14px; text-align:center;
+                                   margin-bottom:12px;">
+                        <br>
+                        <button onclick="fetchApiStats()" style="
+                            background:var(--accent); border:none;
+                            color:#fff; padding:10px 24px; border-radius:8px;
+                            font-weight:700; cursor:pointer; font-size:14px;">
+                            View Stats
+                        </button>
+                    </div>
+                `;
+            }
+            
+            function closeApiStatsModal() {
+                document.getElementById('apiStatsModal').classList.remove('active');
+            }
+            
+            async function fetchApiStats() {
+                const content = document.getElementById('apiStatsContent');
+                const passwordInput = document.getElementById('apiAdminPassword');
+                const password = passwordInput?.value;
+                
+                if (!password) {
+                    alert('Please enter password');
+                    return;
+                }
+                
+                // Show loading
+                content.innerHTML = `
+                    <div style="text-align:center; padding:40px; color:#8e8e93;">
+                        <div style="font-size:32px; margin-bottom:12px;">⏳</div>
+                        <div>Loading statistics...</div>
+                    </div>
+                `;
+                
+                try {
+                    const res = await fetch(`/api/api-stats?password=${encodeURIComponent(password)}`);
+                    
+                    if (res.status === 401) {
+                        content.innerHTML = `
+                            <div style="text-align:center; padding:40px;">
+                                <div style="font-size:32px; margin-bottom:12px;">❌</div>
+                                <div style="color:var(--danger); font-weight:700; margin-bottom:16px;">
+                                    Incorrect Password
+                                </div>
+                                <button onclick="openApiStatsModal()" style="
+                                    background:#333; border:1px solid #555;
+                                    color:#fff; padding:10px 20px; border-radius:8px;
+                                    cursor:pointer; font-size:13px;">
+                                    Try Again
+                                </button>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    const data = await res.json();
+                    apiStatsCache = data;
+                    renderApiStats(data);
+                    
+                } catch (err) {
+                    content.innerHTML = `
+                        <div style="text-align:center; padding:40px; color:var(--danger);">
+                            <div style="font-size:32px; margin-bottom:12px;">⚠️</div>
+                            <div>Error loading stats: ${err.message}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            function renderApiStats(data) {
+                const content = document.getElementById('apiStatsContent');
+                
+                const { date, keys, aggregate } = data;
+                
+                let html = `
+                    <!-- Aggregate Stats -->
+                    <div style="margin-bottom:24px;">
+                        <div style="font-size:11px; color:#8e8e93; 
+                                    text-transform:uppercase; 
+                                    letter-spacing:1px; margin-bottom:8px;">
+                            Date: ${date} UTC
+                        </div>
+                        <div style="background:rgba(10,132,255,0.1); 
+                                    border:1px solid rgba(10,132,255,0.3);
+                                    border-radius:12px; padding:16px;">
+                            <div style="font-size:13px; color:#8e8e93; 
+                                        margin-bottom:6px;">
+                                Total Usage Across All Keys
+                            </div>
+                            <div style="font-size:28px; font-weight:800; 
+                                        color:#fff; margin-bottom:8px;">
+                                ${aggregate.total_usage.toLocaleString()} 
+                                <span style="font-size:16px; color:#8e8e93;">
+                                    / ${aggregate.total_limit.toLocaleString()}
+                                </span>
+                            </div>
+                            <div style="font-size:12px; color:#0a84ff;">
+                                ${aggregate.total_remaining.toLocaleString()} requests remaining (${aggregate.percentage}% used)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Individual Keys -->
+                    <div style="font-size:11px; color:#8e8e93; 
+                                text-transform:uppercase; letter-spacing:1px;
+                                margin-bottom:12px;">
+                        Individual Key Breakdown
+                    </div>
+                `;
+                
+                keys.forEach(key => {
+                    const isWarning = key.percentage >= 80;
+                    const isDanger = key.percentage >= 95;
+                    const barColor = isDanger ? 'var(--danger)' : 
+                                    isWarning ? 'var(--warn)' : 
+                                    'var(--success)';
+                    
+                    html += `
+                        <div style="
+                            background:#1c1c1e; border:1px solid #333;
+                            border-radius:10px; padding:14px; margin-bottom:10px;">
+                            
+                            <div style="display:flex; justify-content:space-between;
+                                        align-items:center; margin-bottom:8px;">
+                                <div style="font-weight:700; color:#fff;">
+                                    Key #${key.id}
+                                </div>
+                                <div style="font-size:13px; color:${barColor}; 
+                                            font-weight:700;">
+                                    ${key.percentage}%
+                                </div>
+                            </div>
+                            
+                            <div style="display:flex; justify-content:space-between;
+                                        font-size:12px; color:#8e8e93; 
+                                        margin-bottom:6px;">
+                                <span>${key.usage.toLocaleString()} used</span>
+                                <span>${key.remaining.toLocaleString()} remaining</span>
+                            </div>
+                            
+                            <!-- Progress bar -->
+                            <div style="height:6px; background:#222; 
+                                        border-radius:3px; overflow:hidden;">
+                                <div style="height:100%; background:${barColor};
+                                            width:${key.percentage}%; 
+                                            transition:width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <div style="margin-top:24px; padding:12px; 
+                                background:rgba(255,255,255,0.03);
+                                border-radius:8px; font-size:11px; 
+                                color:#555; line-height:1.6;">
+                        ℹ️ Stats reset daily at midnight UTC. 
+                        Keys rotate automatically based on usage.
+                    </div>
+                `;
+                
+                content.innerHTML = html;
+            }
+            
+            // Update quick stats on Settings tab (no password needed)
+            async function updateApiQuickStats() {
+                const label = document.getElementById('apiStatusLabel');
+                if (!label) return;
+                
+                // Simple status without requiring password
+                label.innerText = '✅ Active';
+                label.style.color = 'var(--success)';
+            }
+        
             // Show/hide the actual backup code in settings
             function toggleShowCode() {
                 const display = document.getElementById('cloudPinDisplay');
@@ -2436,7 +2675,17 @@
                 try {
                     // Fetch Station Info
                     stationData = await secureFetch(`/api/weather?type=station&station=${icao}`);
-                    renderInfo(stationData); 
+                    
+                    // ✅ Log which API key was used
+                    if (stationData._meta) {
+                        console.log(
+                            `%c[AVWX] Station Info - Key #${stationData._meta.key_used} ` +
+                            `(${stationData._meta.key_usage}/${stationData._meta.key_limit})`,
+                            'color: #0a84ff; font-weight: bold;'
+                        );
+                    }
+                    
+                    renderInfo(stationData);
                     
                     fetchMeteogram(stationData.latitude, stationData.longitude);
     
@@ -2449,6 +2698,16 @@
     
                     if(metarRes.status === 'fulfilled' && !metarRes.value.error) {
                         const m = metarRes.value;
+                        
+                        // ✅ Log which API key was used
+                        if (m._meta) {
+                            console.log(
+                                `%c[AVWX] METAR - Key #${m._meta.key_used} ` +
+                                `(${m._meta.key_usage}/${m._meta.key_limit})`,
+                                'color: #0a84ff; font-weight: bold;'
+                            );
+                        }
+                        
                         lastMetarObj = m;
                         let dirVal = m.wind_direction?.value;
                             // Check if the raw text says VRB (AVWX sometimes returns value: null for VRB)
@@ -2480,9 +2739,34 @@
                         throw new Error("No Weather Data");
                     }
     
-                    if(tafRes.status === 'fulfilled') renderTaf(tafRes.value);
-                    
-                    if(notamRes.status === 'fulfilled') renderNotams(notamRes.value);
+                    if(tafRes.status === 'fulfilled') {
+                        const tafData = tafRes.value;
+                        
+                        // ✅ Log which API key was used
+                        if (tafData._meta) {
+                            console.log(
+                                `%c[AVWX] TAF - Key #${tafData._meta.key_used} ` +
+                                `(${tafData._meta.key_usage}/${tafData._meta.key_limit})`,
+                                'color: #0a84ff; font-weight: bold;'
+                            );
+                        }
+                        
+                        renderTaf(tafData);
+                    }                    
+                    if(notamRes.status === 'fulfilled') {
+                        const notamData = notamRes.value;
+                        
+                        // ✅ Log which API key was used
+                        if (notamData._meta) {
+                            console.log(
+                                `%c[AVWX] NOTAM - Key #${notamData._meta.key_used} ` +
+                                `(${notamData._meta.key_usage}/${notamData._meta.key_limit})`,
+                                'color: #32d74b; font-weight: bold;'
+                            );
+                        }
+                        
+                        renderNotams(notamData);
+                    }
     
                 } catch(e) {
                     console.error(e);
