@@ -1169,6 +1169,45 @@
             50%       { opacity: 1;   }
         }
 
+        /* ============================================================
+           HELP / USER MANUAL STYLES
+        ============================================================ */
+        .help-section {
+            background: rgba(28, 28, 30, 0.75);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .help-section-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .help-item {
+            margin-bottom: 12px;
+        }
+        .help-item:last-child { margin-bottom: 0; }
+        .help-q {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+        .help-a {
+            font-size: 12px;
+            color: var(--sub-text);
+            line-height: 1.6;
+        }
+        .help-a b { color: var(--text); }
+        
     </style>
 </head>
 
@@ -1256,6 +1295,7 @@
         <div class="tab"          onclick="setTab('world')">WORLD</div>
         <div class="tab"          onclick="setTab('tools')">TOOLS</div>
         <div class="tab"          onclick="setTab('settings')">SETTINGS</div>
+        <div class="tab"          onclick="setTab('help')">HELP</div>
     </div>
 
     <!-- ================================================================
@@ -1698,6 +1738,46 @@
          MODALS
     ================================================================ -->
 
+    <!-- NEARBY AIRPORT PREVIEW MODAL -->
+    <div id="nearbyModal" class="modal-overlay" onclick="closeNearbyModal()">
+        <div class="info-card" style="margin:auto; width:92%; max-width:360px; border:1px solid var(--border); border-radius:16px; padding:0; overflow:hidden;"
+             onclick="event.stopPropagation()">
+
+            <!-- Header bar -->
+            <div style="background:linear-gradient(135deg,#1c3a5e,#0a2040); padding:16px 16px 12px 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                    <div>
+                        <div id="nearModalIcao" style="font-size:26px; font-weight:900; font-family:'SF Mono',monospace; color:#fff; letter-spacing:2px;">----</div>
+                        <div id="nearModalName" style="font-size:13px; color:rgba(255,255,255,0.6); margin-top:2px;">Loading...</div>
+                    </div>
+                    <div id="nearModalCat" class="badge badge-cat" style="font-size:14px; padding:6px 14px; border-radius:8px;">--</div>
+                </div>
+                <div style="display:flex; gap:16px; margin-top:8px; font-size:11px; color:rgba(255,255,255,0.5);">
+                    <span>📍 <span id="nearModalDist">-- nm</span> away</span>
+                    <span>⛰ <span id="nearModalElev">-- ft</span> elev</span>
+                    <span>🌐 <span id="nearModalCoords">--</span></span>
+                </div>
+            </div>
+
+            <!-- Weather preview -->
+            <div style="padding:14px 16px;">
+                <div id="nearModalWeather" style="font-size:12px; color:var(--sub-text); font-style:italic; text-align:center; padding:8px 0;">
+                    Fetching weather...
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex; gap:8px; padding:0 16px 16px 16px;">
+                <button onclick="closeNearbyModal()" style="flex:1; background:#333; border:1px solid #555; color:#8e8e93; padding:12px; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;">
+                    Cancel
+                </button>
+                <button id="nearModalLoadBtn" onclick="loadNearbyFromModal()" style="flex:2; background:var(--accent); border:none; color:#fff; padding:12px; border-radius:10px; font-size:14px; font-weight:800; cursor:pointer;">
+                    ✈️ Load Full Data
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- AWOS Modal -->
     <div id="awosModal" class="modal-overlay">
         <div class="modal-header">
@@ -1855,6 +1935,173 @@
         </button>
     </div>
 
+    <!-- ================================================================
+         TAB: HELP / USER MANUAL
+    ================================================================ -->
+    <div id="tab-help" class="view-section">
+
+        <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
+        <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">Quick reference for all app features</div>
+
+        <!-- SECTION: METAR -->
+        <div class="help-section">
+            <div class="help-section-title">🌤 METAR Tab</div>
+            <div class="help-item">
+                <div class="help-q">What is METAR?</div>
+                <div class="help-a">METAR is the standard aviation weather observation. It reports current conditions at the airport: wind, visibility, sky cover, temperature, dewpoint, and altimeter setting.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Wind Rose</div>
+                <div class="help-a">Shows wind direction relative to the selected runway. The arrow points <b>from</b> where the wind is coming. Use the runway selector to check headwind/crosswind for any runway. <b style="color:var(--success);">Green = headwind (good)</b>, <b style="color:var(--danger);">Red = tailwind (caution)</b>.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Flight Category Badge (top right)</div>
+                <div class="help-a">
+                    <span style="background:var(--success);color:#000;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">VFR</span> Ceiling &gt;3000ft &amp; Vis &gt;5sm &nbsp;
+                    <span style="background:var(--mvfr);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">MVFR</span> Marginal &nbsp;
+                    <span style="background:var(--danger);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">IFR</span> Inst. rules &nbsp;
+                    <span style="background:var(--lifr);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">LIFR</span> Low IFR
+                </div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Nearby Stations</div>
+                <div class="help-a">Tap any nearby airport button to instantly load its weather. The distance shown is in nautical miles from the current station. Tap the button and a preview card will appear with key airport info before loading.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Raw METAR colour highlights</div>
+                <div class="help-a"><span style="color:var(--danger);font-weight:800;">Red</span> = gusts / low ceilings / dangerous wx &nbsp; <span style="color:var(--lifr);font-weight:800;">Purple</span> = low visibility &nbsp; <span style="color:var(--warn);font-weight:800;">Orange</span> = thunderstorm / heavy precip</div>
+            </div>
+        </div>
+
+        <!-- SECTION: TAF -->
+        <div class="help-section">
+            <div class="help-section-title">📅 TAF Tab</div>
+            <div class="help-item">
+                <div class="help-q">Meteogram (24h trend)</div>
+                <div class="help-a">Shows temperature (red), dewpoint (blue), wind arrows, and weather icons over 24 hours from Open-Meteo. The <span style="color:#0a84ff;font-weight:700;">blue NOW line</span> shows your current position in time. <b>Advisory only</b> — not official aviation data.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">TAF Timeline Bar</div>
+                <div class="help-a">Each coloured block is a TAF forecast period. Tap a block to see full details (wind, vis, wx, clouds). The <span style="color:#ff453a;font-weight:700;">red needle</span> marks the current time — tap it to see UTC and local time.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Sky Gradient Strip</div>
+                <div class="help-a">The thin strip below the TAF bar shows day/night cycle. <span style="color:#0ea5e9;font-weight:700;">Blue = day</span>, <span style="color:#f97316;font-weight:700;">Orange = dawn/dusk</span>, <span style="color:#8e8e93;font-weight:700;">Dark = night</span>.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">NOTAMs</div>
+                <div class="help-a">Notices to Airmen are colour-coded: <span style="color:#ff453a;font-weight:800;">⛔ Critical</span> (closures, unserviceable), <span style="color:#ff9f0a;font-weight:800;">⚠️ Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">ℹ️ Info</span> (general).</div>
+            </div>
+        </div>
+
+        <!-- SECTION: INFO -->
+        <div class="help-section">
+            <div class="help-section-title">ℹ️ INFO Tab</div>
+            <div class="help-item">
+                <div class="help-q">Pressure &amp; Density Altitude</div>
+                <div class="help-a">Calculated from current QNH and temperature. <b>Pressure Alt</b> = ISA-corrected altitude. <b>Density Alt</b> = performance altitude — the higher it is above field elevation, the more your aircraft performs like it's at a higher airport. A <span style="color:var(--warn);">⚠️ warning</span> appears if DA is &gt;2000ft above field elevation.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">ISA Deviation</div>
+                <div class="help-a">How far the current temperature is from the International Standard Atmosphere. Positive = warmer than standard (worse performance), Negative = cooler (better performance).</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Sunrise / Sunset</div>
+                <div class="help-a">Times are shown in Zulu (UTC) by default. <b>Tap the time</b> to toggle between UTC and local airport time.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Runway Wind Components</div>
+                <div class="help-a">Shows headwind ↑ / tailwind ↓ and crosswind ➡ / ⬅ for every runway. If a runway exceeds your personal crosswind limit (set in Tools), it shows a red ⚠️ badge.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: ATC -->
+        <div class="help-section">
+            <div class="help-section-title">📡 ATC Tab</div>
+            <div class="help-item">
+                <div class="help-q">CRAFT Clearance Recorder</div>
+                <div class="help-a">A scratchpad for copying your IFR clearance using the CRAFT format:<br><b>C</b>learance limit · <b>R</b>oute · <b>A</b>ltitude · <b>F</b>requency · <b>T</b>ransponder. Your notes are saved automatically and persist between sessions.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Live Audio Streams</div>
+                <div class="help-a">ATIS and ATC scanner streams are available for Taiwanese airports (RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN) powered by TWATC.net. For all other airports, use the LiveATC button.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: TOOLS -->
+        <div class="help-section">
+            <div class="help-section-title">🛠 TOOLS Tab</div>
+            <div class="help-item">
+                <div class="help-q">Cockpit Timer</div>
+                <div class="help-a">A countdown timer for fuel burn monitoring or holding pattern timing. Choose 15/30/45/60m presets or use START/PAUSE/RESET. The card flashes red and vibrates when time expires.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Personal Minimums</div>
+                <div class="help-a">Enter your personal limits for crosswind and ceiling. The app checks live METAR data against your limits and shows a <span style="color:var(--success);font-weight:800;">GO ✅</span> or <span style="color:var(--danger);font-weight:800;">NO-GO ⛔</span> result. A red banner also appears at the top of the screen.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">E6B Flight Computer</div>
+                <div class="help-a">Enter Indicated Altitude, IAS, QNH, temperature, and dewpoint to calculate: <b>Density Altitude</b>, <b>True Airspeed</b>, <b>Estimated Cloud Base</b>, and <b>Freezing Level</b>. Supports both hPa/inHg and °C/°F.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: WORLD -->
+        <div class="help-section">
+            <div class="help-section-title">🌍 WORLD Tab</div>
+            <div class="help-item">
+                <div class="help-q">World Clock</div>
+                <div class="help-a">Shows live local time for cities around the world with their UTC offset. Type a city name or ICAO code and tap <b>Add</b> to add it. Tap <b>✕</b> to remove a city.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Cloud Backup of Cities</div>
+                <div class="help-a">If you have Cloud Backup enabled, you'll be asked to also back up your city list. This lets you restore your world clock on any device using your Backup Code.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: SETTINGS -->
+        <div class="help-section">
+            <div class="help-section-title">⚙️ SETTINGS Tab</div>
+            <div class="help-item">
+                <div class="help-q">Favorite Airports ★</div>
+                <div class="help-a">Favorited airports appear as gold chips at the top of the search bar for quick access. They are pinned above your recent history.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Default Airport</div>
+                <div class="help-a">The app loads this airport's weather automatically every time you open it.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Cockpit Night Mode 🔴</div>
+                <div class="help-a">Switches all colours to red-on-black for dark cockpit environments. Preserves your night vision. Tap again (shows "Day Mode") to return to normal.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">Cloud Backup ☁️</div>
+                <div class="help-a">Your airport favorites, default airport, and settings are saved to the cloud with a 4-6 digit Backup Code. No account needed. Restore on any device by entering your code. <b>Only airport preferences are stored — no personal data.</b></div>
+            </div>
+        </div>
+
+        <!-- SECTION: SEARCH & GPS -->
+        <div class="help-section">
+            <div class="help-section-title">🔍 Search &amp; GPS</div>
+            <div class="help-item">
+                <div class="help-q">Search Bar</div>
+                <div class="help-a">Type any ICAO code (4 letters, e.g. RCTP, KJFK, EGLL) and press Enter or the ↻ button. The field auto-capitalises.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">📍 GPS Button</div>
+                <div class="help-a">Tapping the pin icon uses your device's GPS to find the nearest aviation weather station and loads it automatically. You must allow location permission when prompted.</div>
+            </div>
+            <div class="help-item">
+                <div class="help-q">↻ Force Refresh</div>
+                <div class="help-a">Clears the 10-minute data cache and fetches the very latest METAR, TAF, and NOTAM data from the server.</div>
+            </div>
+        </div>
+
+        <div class="safety-footer" style="margin-top:24px;">
+            ⚠️ METAR GO is for situational awareness only.<br>
+            NOT FOR NAVIGATION. Always cross-check official sources (AIS, official ATIS, ATC) before flight.
+        </div>
+    </div>
+    
 </body>
 
 <script>
@@ -1993,9 +2240,42 @@
 
             async init() {
                 await EFB_DB.init();
+
+                // 1. Try localStorage first (fast path)
                 this.mode = localStorage.getItem('efb_storage_mode');
+
+                // 2. If localStorage was purged by iOS, recover from IndexedDB
+                if (!this.mode) {
+                    const recovered = await EFB_DB.get('_efb_storage_mode');
+                    if (recovered) {
+                        this.mode = recovered;
+                        // Restore critical keys to localStorage
+                        localStorage.setItem('efb_storage_mode', recovered);
+                        const pin = await EFB_DB.get('_efb_cloud_pin');
+                        if (pin) localStorage.setItem('efb_cloud_pin', pin);
+                        console.log('✅ Session recovered from IndexedDB');
+                        return true;
+                    }
+                }
+
+                // 3. Truly first launch — show setup
                 if (!this.mode) { showStorageSetup(); return false; }
+
+                // 4. Start keep-alive to prevent future purges
+                this._startKeepAlive();
                 return true;
+            },
+
+            _startKeepAlive() {
+                // Re-write critical keys every 23h so iOS never marks them stale
+                setInterval(async () => {
+                    if (this.mode) {
+                        localStorage.setItem('efb_storage_mode', this.mode);
+                        await EFB_DB.set('_efb_storage_mode', this.mode);
+                        const pin = localStorage.getItem('efb_cloud_pin');
+                        if (pin) await EFB_DB.set('_efb_cloud_pin', pin);
+                    }
+                }, 23 * 60 * 60 * 1000); // 23 hours
             },
 
             async set(key, value) {
@@ -2005,7 +2285,13 @@
 
             async get(key, fallback = null) { return await EFB_DB.get(key, fallback); },
 
-            async setMode(mode) { this.mode = mode; localStorage.setItem('efb_storage_mode', mode); }
+            async setMode(mode) {
+                this.mode = mode;
+                localStorage.setItem('efb_storage_mode', mode);
+                // Also persist in IndexedDB for iOS resilience
+                await EFB_DB.set('_efb_storage_mode', mode);
+                this._startKeepAlive();
+            }
         };
 
         function renderStorageModeUI() {
@@ -2200,6 +2486,7 @@
 
         async function finalizePinSetup(pin) {
             localStorage.setItem('efb_cloud_pin', pin);
+            await EFB_DB.set('_efb_cloud_pin', pin);   // ← ADD THIS LINE
             await Storage.setMode('cloud');
             const restored = await cloudRestoreAll();
             document.getElementById('pinSetup').style.display    = 'none';
@@ -2870,21 +3157,122 @@
             if (msgs[rule]) { msgEl.innerText = msgs[rule][0]; msgEl.style.color = msgs[rule][1]; }
         }
 
+        // Stores data for the currently-previewed nearby airport
+        let _nearbyModalData = null;
+
         async function findNearbyStations(lat, lon) {
             try {
                 const data = await secureFetch(`/api/weather?type=near&station=${lat},${lon}`);
                 const list = document.getElementById('nearList');
                 list.innerHTML = "";
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
-                const others = data.filter(item => item.station.icao !== currentIcao).slice(0, 4);
-                if (others.length === 0) { list.innerHTML = "<span style='color:#555;'>No stations found nearby.</span>"; return; }
+                const others = data.filter(item => item.station.icao !== currentIcao).slice(0, 5);
+                if (others.length === 0) {
+                    list.innerHTML = "<span style='color:#555;'>No stations found nearby.</span>";
+                    return;
+                }
                 others.forEach(item => {
-                    const btn = document.createElement('div'); btn.className = "nearby-btn";
-                    btn.innerHTML = `<span>✈</span><span>${item.station.icao}</span><span style="color:var(--sub-text);font-size:10px;">${Math.round(item.nautical_miles)}nm</span>`;
-                    btn.onclick = () => { document.getElementById('icao').value = item.station.icao; loadData(); };
+                    const btn = document.createElement('div');
+                    btn.className = "nearby-btn";
+                    btn.innerHTML = `
+                        <span>✈</span>
+                        <span>${item.station.icao}</span>
+                        <span style="color:var(--sub-text);font-size:10px;">${Math.round(item.nautical_miles)}nm</span>`;
+                    // Open preview modal instead of loading directly
+                    btn.onclick = () => openNearbyModal(item);
                     list.appendChild(btn);
                 });
             } catch(e) { console.error(e); }
+        }
+
+        async function openNearbyModal(item) {
+            const stn = item.station;
+            _nearbyModalData = item;
+
+            // Populate static info immediately
+            document.getElementById('nearModalIcao').innerText  = stn.icao;
+            document.getElementById('nearModalName').innerText  = stn.name || stn.city || '--';
+            document.getElementById('nearModalDist').innerText  = `${Math.round(item.nautical_miles)} nm`;
+            document.getElementById('nearModalElev').innerText  = stn.elevation_ft ? `${stn.elevation_ft} ft` : '--';
+            document.getElementById('nearModalCoords').innerText = stn.latitude && stn.longitude
+                ? `${stn.latitude.toFixed(2)}, ${stn.longitude.toFixed(2)}` : '--';
+
+            // Reset weather section and category
+            const catEl = document.getElementById('nearModalCat');
+            catEl.innerText = '--'; catEl.className = 'badge badge-cat';
+            document.getElementById('nearModalWeather').innerHTML =
+                '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;"><span style="color:var(--accent);">⏳</span><span>Fetching current weather...</span></div>';
+
+            // Show modal
+            document.getElementById('nearbyModal').classList.add('active');
+
+            // Fetch METAR in background
+            try {
+                const m = await secureFetch(`/api/weather?type=metar&station=${stn.icao}`);
+                if (m && !m.error) {
+                    // Update flight category badge
+                    const rules = m.flight_rules || '--';
+                    const cssMap = { VFR: 'cat-vfr', MVFR: 'cat-mvfr', IFR: 'cat-ifr', LIFR: 'cat-lifr' };
+                    catEl.innerText = rules;
+                    catEl.className = 'badge badge-cat ' + (cssMap[rules] || '');
+
+                    // Build weather preview
+                    const wind = m.wind_direction?.repr === 'VRB'
+                        ? `VRB / ${m.wind_speed?.value || 0}kt`
+                        : `${(m.wind_direction?.value || 0).toString().padStart(3,'0')}° / ${m.wind_speed?.value || 0}kt`;
+                    const vis   = m.visibility ? `${m.visibility.value} sm` : '--';
+                    const ceil  = m.clouds?.[0] ? `${m.clouds[0].type} ${m.clouds[0].altitude * 100}'` : 'CLR';
+                    const temp  = m.temperature?.value != null ? `${m.temperature.value}°C` : '--';
+                    const alt   = m.altimeter?.value
+                        ? (m.altimeter.value < 200 ? `A${m.altimeter.value.toFixed(2)}` : `Q${m.altimeter.value}`)
+                        : '--';
+                    const now   = new Date();
+                    const mins  = Math.floor((now - new Date(m.time.dt)) / 60000);
+                    const ageColor = mins > 60 ? 'var(--danger)' : 'var(--sub-text)';
+
+                    document.getElementById('nearModalWeather').innerHTML = `
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Wind</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${wind}</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Visibility</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${vis}</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Ceiling</div>
+                                <div style="font-size:14px; font-weight:700; color:var(--text);">${ceil}</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px;">
+                                <div style="font-size:10px; color:var(--sub-text); margin-bottom:2px; text-transform:uppercase;">Temp / Alt</div>
+                                <div style="font-size:13px; font-weight:700; color:var(--text);">${temp} · ${alt}</div>
+                            </div>
+                        </div>
+                        <div style="font-size:10px; color:${ageColor}; text-align:right; padding-top:4px; border-top:1px solid var(--border);">
+                            ${mins > 60 ? '⚠️ ' : ''}Updated ${mins}m ago
+                        </div>`;
+                } else {
+                    document.getElementById('nearModalWeather').innerHTML =
+                        '<div style="color:var(--sub-text);text-align:center;padding:8px;">No weather data available for this station.</div>';
+                }
+            } catch(e) {
+                document.getElementById('nearModalWeather').innerHTML =
+                    '<div style="color:var(--sub-text);text-align:center;padding:8px;">Could not load weather. Check connection.</div>';
+            }
+        }
+
+        function closeNearbyModal() {
+            document.getElementById('nearbyModal').classList.remove('active');
+            _nearbyModalData = null;
+        }
+
+        function loadNearbyFromModal() {
+            if (!_nearbyModalData) return;
+            const icao = _nearbyModalData.station.icao;
+            closeNearbyModal();
+            document.getElementById('icao').value = icao;
+            loadData();
         }
 
         function renderInfo(d) {
