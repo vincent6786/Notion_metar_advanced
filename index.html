@@ -340,15 +340,23 @@
             left: -220px;
             top: 50%;
             transform: translateY(-50%);
-            animation: aircraftSlide 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+            animation: aircraftSlide 2.2s cubic-bezier(0.16, 0.84, 0.44, 1) 0.3s forwards;
+            will-change: transform, left, opacity;
             filter: drop-shadow(0 8px 24px rgba(100, 200, 255, 0.25));
         }
         @keyframes aircraftSlide {
-            0%   { left: -220px; opacity: 0.8; }
-            30%  { opacity: 1; }
-            70%  { left: 50%;   opacity: 1; transform: translateY(-50%) translateX(-50%); }
-            85%  { left: 55%;   opacity: 1; transform: translateY(-52%) translateX(-50%) scale(0.98); }
-            100% { left: 115%;  opacity: 0; transform: translateY(-54%) translateX(-50%) scale(0.95); }
+            0%   { left: -220px; opacity: 0; transform: translateY(-50%) scale(0.95); }
+            5%   { opacity: 0.7; }
+            15%  { opacity: 1; transform: translateY(-50%) scale(1); }
+            /* Smooth acceleration phase */
+            40%  { left: 30%; transform: translateY(-50%) scale(1); }
+            /* Brief coast at center */
+            55%  { left: 50%; transform: translateY(-50%) translateX(-50%) scale(1); }
+            /* Gentle lift-off with slight rotation */
+            70%  { left: 60%; opacity: 1; transform: translateY(-52%) translateX(-50%) scale(0.99) rotate(-2deg); }
+            /* Accelerate away */
+            85%  { left: 80%; opacity: 0.8; transform: translateY(-56%) translateX(-50%) scale(0.96) rotate(-4deg); } 
+            100% { left: 120%; opacity: 0; transform: translateY(-60%) translateX(-50%) scale(0.92) rotate(-5deg); }
         }
         
         /* Ground shadow / surface under aircraft */
@@ -2711,22 +2719,23 @@
                 // Find position using actual time array
                 let nowIndex = 0;
                 if (h.time) {
-                    // Find closest hour in the data array
                     let smallest = 999;
                     h.time.slice(0, len).forEach((t, i) => {
-                        const dataHour = new Date(t + 'Z').getUTCHours() + 
-                                         (new Date(t + 'Z').getUTCMinutes() / 60);
+                        const dataDate = new Date(t + 'Z');
+                        const dataHour = dataDate.getUTCHours() + (dataDate.getUTCMinutes() / 60);
                         const diff = Math.abs(dataHour - nowUTCHour);
-                        if (diff < smallest) { smallest = diff; nowIndex = i; }
+                        if (diff < smallest) { 
+                            smallest = diff; 
+                            nowIndex = i; 
+                        }
                     });
                 }
                 
                 const nowX = getX(nowIndex);
                 
-                // Draw soft blue glow band (not a sharp line like TAF)
-                const gradient = ctx.createLinearGradient(
-                    nowX - 12, 0, nowX + 12, 0
-                );
+                // Draw soft blue glow band
+                ctx.save();
+                const gradient = ctx.createLinearGradient(nowX - 12, 0, nowX + 12, 0);
                 gradient.addColorStop(0,   'rgba(10, 132, 255, 0)');
                 gradient.addColorStop(0.4, 'rgba(10, 132, 255, 0.12)');
                 gradient.addColorStop(0.5, 'rgba(10, 132, 255, 0.20)');
@@ -2737,7 +2746,6 @@
                 ctx.fillRect(nowX - 12, padding.top, 24, H - padding.top - padding.bottom);
                 
                 // Thin center line
-                ctx.save();
                 ctx.strokeStyle = 'rgba(10, 132, 255, 0.7)';
                 ctx.lineWidth = 1;
                 ctx.setLineDash([3, 3]);
@@ -2746,26 +2754,23 @@
                 ctx.lineTo(nowX, H - padding.bottom);
                 ctx.stroke();
                 ctx.setLineDash([]);
-                ctx.restore();
                 
                 // "NOW" label at top — blue, not red
-                ctx.save();
                 ctx.fillStyle = '#0a84ff';
                 ctx.font = '700 9px "SF Mono", monospace';
                 ctx.textAlign = 'center';
                 
-                // Small pill background
-                const pillW = 28; const pillH = 14;
+                // Simple background for label (no roundRect)
+                const pillW = 28;
+                const pillH = 14;
                 ctx.fillStyle = 'rgba(10, 132, 255, 0.2)';
-                ctx.beginPath();
-                ctx.roundRect(nowX - pillW/2, padding.top - 18, pillW, pillH, 4);
-                ctx.fill();
+                ctx.fillRect(nowX - pillW/2, padding.top - 18, pillW, pillH);
                 
                 ctx.fillStyle = '#0a84ff';
                 ctx.fillText('NOW', nowX, padding.top - 7);
                 ctx.restore();
                 
-                // Also redraw every minute so line moves in real time
+                // Redraw every minute so line moves in real time
                 if (!window._meteoNowInterval) {
                     window._meteoNowInterval = setInterval(() => {
                         if (meteoDataCache) drawMeteogram(meteoDataCache);
