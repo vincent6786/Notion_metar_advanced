@@ -285,12 +285,23 @@
             align-items: center;
             padding: 6px 12px;
             gap: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .badge-time:hover {
+            border-color: var(--accent);
+            background: rgba(10,132,255,0.1);
+        }
+        .badge-time-main {
+            font-size: 15px;
+            font-weight: 700;
         }
         .badge-time-offset {
             font-size: 9px;
             color: var(--sub-text);
             font-weight: 600;
             letter-spacing: 0.3px;
+            transition: color 0.2s ease;
         }
         .badge-cat {
             background: var(--card-bg);
@@ -1607,6 +1618,75 @@
 
             .info-grid { grid-template-columns: repeat(5, 1fr); }
         }
+
+        /* ============================================================
+           29. SKELETON LOADING SCREENS
+        ============================================================ */
+        @keyframes shimmer {
+            0%   { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                rgba(28,28,30,0.8) 0%,
+                rgba(60,60,60,0.8) 50%,
+                rgba(28,28,30,0.8) 100%
+            );
+            background-size: 1000px 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            border-radius: 8px;
+            min-height: 20px;
+        }
+        
+        .skeleton-text {
+            height: 14px;
+            margin: 6px 0;
+            background: linear-gradient(
+                90deg,
+                rgba(28,28,30,0.8) 0%,
+                rgba(60,60,60,0.8) 50%,
+                rgba(28,28,30,0.8) 100%
+            );
+            background-size: 1000px 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            border-radius: 4px;
+        }
+        
+        .skeleton-card {
+            background: rgba(28,28,30,0.75);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        /* ============================================================
+           30. WEATHER TREND INDICATORS
+        ============================================================ */
+        .trend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            text-transform: uppercase;
+        }
+        .trend-improving {
+            background: rgba(50, 215, 75, 0.15);
+            color: var(--success);
+        }
+        .trend-worsening {
+            background: rgba(255, 69, 58, 0.15);
+            color: var(--danger);
+        }
+        .trend-steady {
+            background: rgba(255, 159, 10, 0.15);
+            color: var(--warn);
+        }
         
     </style>
 </head>
@@ -1664,8 +1744,8 @@
         <button class="icon-btn" onclick="loadData(true)" title="Force Refresh">↻</button>
         <div id="headerCat" class="badge badge-cat" onclick="toggleLegend(true)"
              style="cursor:pointer;" title="Tap for Legend">--</div>
-        <div id="zuluTime" class="badge badge-time">
-            <span id="zuluTimeMain">--:--Z</span>
+        <div id="zuluTime" class="badge badge-time" onclick="toggleTimeDisplay()">
+            <span id="zuluTimeMain" class="badge-time-main">--:--Z</span>
             <span id="zuluTimeOffset" class="badge-time-offset">UTC</span>
         </div>
         <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
@@ -3264,6 +3344,49 @@
             });
         }
 
+        // ================================================================
+        // 11b. LOADING SKELETONS
+        // ================================================================
+        function showLoadingSkeletons() {
+            // Raw METAR skeleton
+            document.getElementById('rawMetar').innerHTML = `
+                <div class="skeleton" style="height:80px;"></div>`;
+            
+            // Sky section skeleton
+            document.getElementById('skyLayersContainer').innerHTML = `
+                <div class="skeleton-text" style="width:70%;"></div>
+                <div class="skeleton-text" style="width:85%;margin-top:8px;"></div>
+                <div class="skeleton-text" style="width:60%;margin-top:8px;"></div>`;
+            
+            // Flight rule bars skeleton
+            document.getElementById('labelCeilVal').innerText = '--';
+            document.getElementById('labelVisVal').innerText = '--';
+            document.getElementById('gaugeCeil').style.width = '0%';
+            document.getElementById('gaugeVis').style.width = '0%';
+            document.getElementById('frMessage').innerText = 'Analyzing conditions...';
+            
+            // Value cards skeleton
+            const cardIds = ['mWind', 'mVis', 'mCeil', 'mAlt', 'mTempC'];
+            cardIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '<div class="skeleton" style="height:18px;width:70%;"></div>';
+            });
+            
+            // TAF skeleton
+            document.getElementById('rawTaf').innerText = 'Loading forecast...';
+            document.getElementById('tafBar').innerHTML = `
+                <div class="skeleton" style="height:40px;flex:1;margin-right:4px;"></div>
+                <div class="skeleton" style="height:40px;flex:1;margin-right:4px;"></div>
+                <div class="skeleton" style="height:40px;flex:1;"></div>`;
+            
+            // NOTAM skeleton
+            document.getElementById('notamList').innerHTML = `
+                <div class="skeleton-card">
+                    <div class="skeleton-text" style="width:90%;"></div>
+                    <div class="skeleton-text" style="width:75%;"></div>
+                </div>`;
+        }
+    
 // ================================================================
         // 12. MAIN DATA LOADER
         // ================================================================
@@ -3272,11 +3395,8 @@
             if (!icaoVal) return;
             
             if (force) {
-                // Clear ONLY API cache keys — preserve favorites, history, settings
                 Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith('cache_')) {
-                        localStorage.removeItem(key);
-                    }
+                    if (key.startsWith('cache_')) localStorage.removeItem(key);
                 });
                 console.log('[Force Refresh] API cache cleared');
             }
@@ -3286,68 +3406,87 @@
             document.getElementById('icao').blur();
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
-            document.getElementById('rawMetar').innerHTML = 'Loading...';
-            document.getElementById('nearList').innerHTML = '<span style="color:#555;">Scanning...</span>';
+            
+            // Show skeletons immediately for instant feedback
+            showLoadingSkeletons();
+            document.getElementById('nearList').innerHTML = '<span style="color:#555;font-size:12px;">Scanning…</span>';
 
             try {
+                // ── PHASE 1: Station data (fastest, ~100ms) ──
                 stationData = await secureFetch(`/api/weather?type=station&station=${icao}`);
-                if (stationData._meta) console.log(`%c[AVWX] Station Info - Key #${stationData._meta.key_used} (${stationData._meta.key_usage}/${stationData._meta.key_limit})`, 'color:#0a84ff;font-weight:bold;');
-                
-                console.log('[loadData] Station coords:', stationData.latitude, stationData.longitude);
+                if (stationData._meta) console.log(`%c[AVWX] Station - Key #${stationData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
                 
                 renderInfo(stationData);
-                fetchMeteogram(stationData.latitude, stationData.longitude);
-
-                // ── ALWAYS RUN: Audio + Nearby (only need station coords) ──
-                // Run BEFORE fetching METAR so nearby appears even if METAR is slow
                 updateAudioSection(icao);
                 
+                // ── PHASE 2: Start slow tasks in background (don't block) ──
                 if (stationData?.latitude != null && stationData?.longitude != null) {
-                    console.log('[loadData] Calling findNearbyStations...');
                     findNearbyStations(stationData.latitude, stationData.longitude);
+                    fetchMeteogram(stationData.latitude, stationData.longitude);
                 } else {
-                    console.warn('[loadData] No coordinates available');
                     document.getElementById('nearList').innerHTML =
                         '<span style="color:#555;font-size:12px;">No coordinates for this station.</span>';
                 }
-
-                // Now fetch METAR/TAF/NOTAMs in parallel
-                const [metarRes, tafRes, notamRes] = await Promise.allSettled([
+                
+                // ── PHASE 3: Weather data in parallel - render each as it completes ──
+                const weatherPromises = Promise.allSettled([
                     secureFetch(`/api/weather?type=metar&station=${icao}`),
                     secureFetch(`/api/weather?type=taf&station=${icao}`),
                     fetchNotamsFAA(icao)
                 ]);
-
-                if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
-                    const m = metarRes.value;
-                    if (m._meta) console.log(`%c[AVWX] METAR - Key #${m._meta.key_used} (${m._meta.key_usage}/${m._meta.key_limit})`, 'color:#0a84ff;font-weight:bold;');
-                    lastMetarObj = m;
-                    let dirVal = m.wind_direction?.value;
-                    if (m.wind_direction?.repr === 'VRB' || (dirVal === null && m.wind_speed?.value > 0)) dirVal = 'VRB';
-                    currentWind  = { dir: dirVal === null ? 0 : dirVal, spd: m.wind_speed?.value || 0 };
-                    let altVal   = m.altimeter?.value || 1013;
-                    let altUnit  = altVal < 200 ? 'inHg' : 'hPa';
-                    currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit };
-                    renderMetar(m);
-                    renderSkyVisuals(m);
-                    const liveBtn = document.getElementById('btnFetchLive');
-                    if (icao === 'KMHR') liveBtn.classList.remove('hidden'); else liveBtn.classList.add('hidden');
-                    renderFlightRuleBar(m);
-                    setupRunwaySelect();
-                } else { 
-                    throw new Error("No Weather Data"); 
-                }
-
-                if (tafRes.status === 'fulfilled') {
-                    const tafData = tafRes.value;
-                    if (tafData._meta) console.log(`%c[AVWX] TAF - Key #${tafData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
-                    renderTaf(tafData);
-                }
                 
-                if (notamRes.status === 'fulfilled') {
-                    const notamData = notamRes.value;
-                    renderNotams(notamData);
-                }
+                // Process results as they arrive
+                weatherPromises.then(([metarRes, tafRes, notamRes]) => {
+                    
+                    // METAR
+                    if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
+                        const m = metarRes.value;
+                        if (m._meta) console.log(`%c[AVWX] METAR - Key #${m._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
+                        
+                        lastMetarObj = m;
+                        let dirVal = m.wind_direction?.value;
+                        if (m.wind_direction?.repr === 'VRB' || (dirVal === null && m.wind_speed?.value > 0)) dirVal = 'VRB';
+                        currentWind = { dir: dirVal === null ? 0 : dirVal, spd: m.wind_speed?.value || 0 };
+                        let altVal = m.altimeter?.value || 1013;
+                        let altUnit = altVal < 200 ? 'inHg' : 'hPa';
+                        currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit };
+                        
+                        renderMetar(m);
+                        renderSkyVisuals(m);
+                        renderFlightRuleBar(m);
+                        setupRunwaySelect();
+                        
+                        // Store for trend analysis
+                        storeMetarForTrend(icao, m);
+                        
+                        const liveBtn = document.getElementById('btnFetchLive');
+                        if (icao === 'KMHR') liveBtn.classList.remove('hidden'); 
+                        else liveBtn.classList.add('hidden');
+                    } else {
+                        updateHeaderCat('N/A', 'cat-ifr');
+                        document.getElementById('rawMetar').innerHTML = `
+                            <div style="text-align:center;padding:20px 10px;">
+                                <div style="color:var(--danger);font-weight:800;margin-bottom:15px;">METAR UNAVAILABLE</div>
+                            </div>`;
+                    }
+                    
+                    // TAF
+                    if (tafRes.status === 'fulfilled') {
+                        const tafData = tafRes.value;
+                        if (tafData._meta) console.log(`%c[AVWX] TAF - Key #${tafData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
+                        renderTaf(tafData);
+                    } else {
+                        document.getElementById('rawTaf').innerText = 'No TAF available for this station.';
+                    }
+                    
+                    // NOTAMs
+                    if (notamRes.status === 'fulfilled') {
+                        renderNotams(notamRes.value);
+                    } else {
+                        document.getElementById('notamList').innerHTML = 
+                            '<div style="color:#555;font-style:italic;padding:8px;">No NOTAMs available.</div>';
+                    }
+                });
 
             } catch(e) {
                 console.error('[loadData] Error:', e);
@@ -3356,7 +3495,10 @@
                 document.getElementById('rawMetar').innerHTML = `
                     <div style="text-align:center;padding:20px 10px;">
                         <div style="color:var(--danger);font-weight:800;margin-bottom:15px;">STATION DATA UNAVAILABLE</div>
-                        <a href="https://metar-taf.com/${ic}" target="_blank" class="atc-btn" style="justify-content:center;background:var(--accent);border:none;color:#fff;"><span>View on Metar-Taf.com ↗</span></a>
+                        <a href="https://metar-taf.com/${ic}" target="_blank" class="atc-btn" 
+                           style="justify-content:center;background:var(--accent);border:none;color:#fff;">
+                            <span>View on Metar-Taf.com ↗</span>
+                        </a>
                     </div>`;
             }
         }
@@ -3644,9 +3786,105 @@
         }
 
         // ================================================================
-        // 16. METAR RENDERING
+        // 16a. METAR TREND ANALYSIS
         // ================================================================
-        function renderMetar(d) {
+        function storeMetarForTrend(icao, metar) {
+            try {
+                const key = `metar_history_${icao}`;
+                let history = JSON.parse(localStorage.getItem(key)) || [];
+                
+                // Store timestamp + key values
+                const record = {
+                    ts: Date.now(),
+                    ceil: metar.ceiling?.value || 99999,
+                    vis: metar.visibility?.value || 10,
+                    windSpd: metar.wind_speed?.value || 0
+                };
+                
+                history.unshift(record);
+                
+                // Keep last 24 hours only
+                const dayAgo = Date.now() - 86400000;
+                history = history.filter(h => h.ts > dayAgo).slice(0, 50);
+                
+                localStorage.setItem(key, JSON.stringify(history));
+            } catch(e) {
+                console.error('[Trend] Storage error:', e);
+            }
+        }
+
+        function analyzeTrend(icao, param, currentValue) {
+            try {
+                const key = `metar_history_${icao}`;
+                const history = JSON.parse(localStorage.getItem(key)) || [];
+                
+                if (history.length < 2) return null; // Not enough data
+                
+                // Find readings from ~1h and ~3h ago
+                const now = Date.now();
+                const oneHourAgo = history.find(h => now - h.ts >= 3300000 && now - h.ts <= 4200000); // 55-70min
+                const threeHoursAgo = history.find(h => now - h.ts >= 10200000 && now - h.ts <= 11400000); // 170-190min
+                
+                const compareValue = oneHourAgo?.[param] || threeHoursAgo?.[param];
+                if (!compareValue) return null;
+                
+                // Determine trend based on parameter type
+                let improving = false;
+                let threshold = 0;
+                
+                if (param === 'ceil') {
+                    // Higher ceiling = better
+                    threshold = 500; // 500ft change
+                    improving = currentValue > compareValue + threshold;
+                    const worsening = currentValue < compareValue - threshold;
+                    if (improving) return 'improving';
+                    if (worsening) return 'worsening';
+                } else if (param === 'vis') {
+                    // Higher visibility = better
+                    threshold = 1; // 1 statute mile
+                    improving = currentValue > compareValue + threshold;
+                    const worsening = currentValue < compareValue - threshold;
+                    if (improving) return 'improving';
+                    if (worsening) return 'worsening';
+                } else if (param === 'windSpd') {
+                    // Lower wind = better
+                    threshold = 5; // 5 knots
+                    improving = currentValue < compareValue - threshold;
+                    const worsening = currentValue > compareValue + threshold;
+                    if (improving) return 'improving';
+                    if (worsening) return 'worsening';
+                }
+                
+                return 'steady';
+                
+            } catch(e) {
+                console.error('[Trend] Analysis error:', e);
+                return null;
+            }
+        }
+
+        function getTrendBadge(trend) {
+            if (!trend) return '';
+            
+            const icons = {
+                improving: '↗',
+                worsening: '↘',
+                steady: '→'
+            };
+            
+            const labels = {
+                improving: 'Better',
+                worsening: 'Worse',
+                steady: 'Steady'
+            };
+            
+            return `<span class="trend-badge trend-${trend}">${icons[trend]} ${labels[trend]}</span>`;
+        }
+    
+        // ================================================================
+        // 16b. METAR RENDERING
+        // ================================================================
+         function renderMetar(d) {
             const rawContainer = document.getElementById('rawMetar');
             const now = new Date(), metarTime = new Date(d.time.dt);
             const minAgo = Math.floor((now - metarTime) / 60000);
@@ -3656,10 +3894,28 @@
             let css = 'cat-vfr';
             if (rules === 'MVFR') css = 'cat-mvfr'; if (rules === 'IFR') css = 'cat-ifr'; if (rules === 'LIFR') css = 'cat-lifr';
             updateHeaderCat(rules, css);
-            document.getElementById('mWind').innerText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
-            document.getElementById('mVis').innerText  = d.visibility ? `${d.visibility.value} sm` : '--';
+            
+            // ── GET CURRENT ICAO FOR TREND ANALYSIS ──
+            const icao = document.getElementById('icao').value.toUpperCase();
+            
+            // ── WIND with trend ──
+            const windText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
+            const windTrend = analyzeTrend(icao, 'windSpd', currentWind.spd);
+            document.getElementById('mWind').innerHTML = windText + getTrendBadge(windTrend);
+            
+            // ── VISIBILITY with trend ──
+            const visText = d.visibility ? `${d.visibility.value} sm` : '--';
+            const visTrend = analyzeTrend(icao, 'vis', d.visibility?.value || 10);
+            document.getElementById('mVis').innerHTML = visText + getTrendBadge(visTrend);
+            
+            // ── CEILING with trend ──
             const c = d.clouds?.[0];
-            document.getElementById('mCeil').innerText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
+            const ceilText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
+            const ceilValue = c ? c.altitude * 100 : 99999; // Convert to feet AGL
+            const ceilTrend = analyzeTrend(icao, 'ceil', ceilValue);
+            document.getElementById('mCeil').innerHTML = ceilText + getTrendBadge(ceilTrend);
+            
+            // ── REST OF FUNCTION (unchanged) ──
             const alt = d.altimeter?.value;
             if (alt) {
                 if (currentMetar.altUnit === 'hPa') { const inHg = (alt * 0.02953).toFixed(2); document.getElementById('mAlt').innerText = `Q${alt} / A${inHg}`; }
@@ -4321,32 +4577,52 @@ async function findNearbyStations(lat, lon) {
 
         function updateClock() {
             const now = new Date();
-            const zuluStr = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}Z`;
-            document.getElementById('zuluTimeMain').innerText = zuluStr;
-            
-            // Update UTC offset for current airport (if available)
+            const mainEl = document.getElementById('zuluTimeMain');
             const offsetEl = document.getElementById('zuluTimeOffset');
-            if (stationData?.latitude && stationData?.longitude && meteoDataCache) {
+            
+            if (!mainEl || !offsetEl) return;
+            
+            if (showLocalTime && stationData?.latitude && meteoDataCache) {
+                // LOCAL time at the searched airport
                 const offsetSec = stationOffsetSec || 0;
+                const localTime = new Date(now.getTime() + (offsetSec * 1000));
+                const timeStr = `${localTime.getUTCHours().toString().padStart(2,'0')}:${localTime.getUTCMinutes().toString().padStart(2,'0')}`;
+                mainEl.innerText = timeStr;
+                
                 const offsetHrs = Math.round(offsetSec / 3600);
-                if (offsetHrs === 0) {
-                    offsetEl.innerText = 'UTC';
-                } else {
-                    const sign = offsetHrs > 0 ? '+' : '';
-                    offsetEl.innerText = `UTC${sign}${offsetHrs}`;
-                }
+                const sign = offsetHrs >= 0 ? '+' : '';
+                offsetEl.innerText = `LOCAL (UTC${sign}${offsetHrs})`;
+                offsetEl.style.color = 'var(--accent)';
             } else {
-                offsetEl.innerText = 'UTC';
+                // ZULU time (UTC)
+                const zuluStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
+                mainEl.innerText = zuluStr;
+                
+                // Show UTC offset for current airport if available
+                if (stationData?.latitude && meteoDataCache) {
+                    const offsetSec = stationOffsetSec || 0;
+                    const offsetHrs = Math.round(offsetSec / 3600);
+                    if (offsetHrs === 0) {
+                        offsetEl.innerText = 'UTC';
+                    } else {
+                        const sign = offsetHrs > 0 ? '+' : '';
+                        offsetEl.innerText = `UTC${sign}${offsetHrs}`;
+                    }
+                } else {
+                    offsetEl.innerText = 'UTC';
+                }
+                offsetEl.style.color = 'var(--sub-text)';
             }
 
+            // World clock updates (existing code)
             if (document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer');
                 container.innerHTML = '';
                 cityList.forEach((c, index) => {
-                    const timeStr  = now.toLocaleTimeString('en-GB', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
+                    const timeStr = now.toLocaleTimeString('en-GB', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
                     const cityDate = new Date(now.toLocaleString('en-US', { timeZone: c.z }));
-                    const utcDate  = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
-                    const diffHrs  = Math.round((cityDate - utcDate) / 3600000);
+                    const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+                    const diffHrs = Math.round((cityDate - utcDate) / 3600000);
                     let offsetLabel = diffHrs === 0 ? "UTC" : (diffHrs > 0 ? `UTC +${diffHrs}` : `UTC ${diffHrs}`);
                     const card = document.createElement('div'); card.className = 'clock-card';
                     card.innerHTML = `
@@ -4494,6 +4770,25 @@ async function findNearbyStations(lat, lon) {
             }
         }
 
+        // ================================================================
+        // 19b. ZULU TIME TOGGLE
+        // ================================================================
+        let showLocalTime = false;
+
+        function toggleTimeDisplay() {
+            if (!stationData?.latitude || !meteoDataCache) {
+                showToast('⚠️ Search an airport first');
+                return;
+            }
+            showLocalTime = !showLocalTime;
+            updateClock();
+            
+            // Visual feedback
+            const badge = document.getElementById('zuluTime');
+            badge.style.transform = 'scale(0.95)';
+            setTimeout(() => { badge.style.transform = 'scale(1)'; }, 100);
+        }
+    
         // ================================================================
         // 20. TOOLS — PERSONAL MINIMUMS & E6B
         // ================================================================
