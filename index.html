@@ -1319,12 +1319,15 @@
 
         /* ============================================================
            28. RESPONSIVE LAYOUT — TABLET & DESKTOP
+           820px  = iPad landscape
+           1100px = Desktop
+           1400px = Wide desktop
         ============================================================ */
 
-        /* ── 820px: iPad landscape — sidebar nav + 2-panel METAR ── */
+        /* ── 820px+: Sidebar nav + 2-panel METAR tab ── */
         @media (min-width: 820px) {
 
-            /* ─ body becomes CSS Grid with named areas ─ */
+            /* ─── Body: CSS Named Grid ─── */
             body {
                 max-width: 1280px;
                 margin: 0 auto;
@@ -1336,14 +1339,13 @@
                     "banner   banner"
                     "sidenav  content"
                     "sidenav  sfooter";
-                grid-template-columns: 136px 1fr;
+                grid-template-columns: 138px 1fr;
                 grid-template-rows: auto auto auto 1fr auto;
                 column-gap: 20px;
                 row-gap: 10px;
                 align-items: start;
             }
 
-            /* Named area slots for every direct child of body */
             .top-bar          { grid-area: topbar;  }
             .quick-select-row { grid-area: chips;   }
             #minBanner        { grid-area: banner;  }
@@ -1352,7 +1354,7 @@
             .view-section     { grid-area: content; }
             .safety-footer    { grid-area: sfooter; }
 
-            /* ─ Sidebar: vertical tab pill ─ */
+            /* ─── Vertical sidebar tab pill ─── */
             .tabs {
                 flex-direction: column;
                 gap: 2px;
@@ -1362,13 +1364,12 @@
                 position: sticky;
                 top: 16px;
                 align-self: start;
-                background: rgba(28,28,30,0.75);
+                background: rgba(28,28,30,0.78);
                 border-radius: 10px;
                 border: 1px solid var(--border);
                 backdrop-filter: blur(16px);
                 -webkit-backdrop-filter: blur(16px);
             }
-
             .tab {
                 padding: 10px 12px;
                 text-align: left;
@@ -1389,105 +1390,127 @@
                 border-right-color: var(--accent);
                 color: var(--accent);
             }
-            .tab::after { display: none; }  /* hide horizontal underline */
+            .tab::after { display: none; }
 
 
-            /* ─ METAR tab: wind rose LEFT | data grid RIGHT ─
-               Uses a 2-column sub-grid on #tab-metar itself.
-               Column 1 (220px): wind rose + AWOS button
-               Column 2 (1fr):   metar-grid, raw text, nearby stations
-            ─ */
+            /* ═══════════════════════════════════════════════════
+               METAR TAB: 2-column explicit grid
+               Col 1 (220px): wind rose → AWOS btn → raw METAR → footer
+               Col 2 (1fr):   metar-grid (sky+fr side-by-side + value cards)
+               Row 5 (full):  nearby stations
+            ═══════════════════════════════════════════════════ */
             #tab-metar {
                 display: grid;
                 grid-template-columns: 220px 1fr;
-                grid-template-rows: auto auto 1fr;
+                /* 5 explicit rows:
+                   1 = rose + grid top
+                   2 = awos + grid mid
+                   3 = rawmetar + grid (continues)
+                   4 = footer + grid bottom
+                   5 = nearby (full width)       */
+                grid-template-rows: auto auto 1fr auto auto;
                 column-gap: 16px;
+                row-gap: 0;
                 align-items: start;
             }
 
-            /* Wind rose panel: col 1, rows 1-2 (spans over AWOS row) */
+            /* ── Col 1, Row 1: Wind rose ── */
             #tab-metar > .wind-vis-container {
                 grid-column: 1;
-                grid-row: 1 / 3;
+                grid-row: 1;
                 flex-direction: column;
                 align-items: center;
                 justify-content: flex-start;
                 margin-top: 0;
-                padding: 18px 14px;
-                gap: 14px;
-                min-height: 220px;
+                padding: 16px 14px 12px;
+                gap: 12px;
             }
-
-            /* Make wind rose canvas bigger */
             #tab-metar #windRose {
                 width: 150px !important;
                 height: 150px !important;
             }
-
-            /* wind-controls: full width, centered */
             #tab-metar .wind-controls {
                 width: 100%;
             }
 
-            /* AWOS button: col 1, row 3 — sits below wind rose */
+            /* ── Col 1, Row 2: AWOS button (KMHR only) ── */
             #tab-metar > #btnFetchLive {
                 grid-column: 1;
-                grid-row: 3;
-                margin: 0;
+                grid-row: 2;
+                margin: 8px 0 4px;
                 font-size: 11px;
-                padding: 10px 8px;
+                padding: 9px 8px;
+                line-height: 1.3;
                 align-self: start;
             }
 
-            /* metar-grid: col 2, rows 1-3 (fills all rows beside wind rose) */
+            /* ── Col 1, Row 3: Raw METAR text ── */
+            #tab-metar > .raw-text {
+                grid-column: 1;
+                grid-row: 3;
+                font-size: 11px;
+                line-height: 1.6;
+                margin-top: 8px;
+                padding: 10px;
+                overflow-wrap: break-word;
+                word-break: break-all;
+                align-self: start;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            /* ── Col 1, Row 4: Age + spread footer ── */
+            #tab-metar > .metar-footer {
+                grid-column: 1;
+                grid-row: 4;
+                font-size: 11px;
+                margin-top: 6px;
+                padding: 0 4px;
+                flex-direction: column;
+                gap: 2px;
+                align-items: flex-start;
+                align-self: start;
+            }
+
+            /* ── Col 2, Rows 1-4: metar-grid ── */
             #tab-metar > .metar-grid {
                 grid-column: 2;
-                grid-row: 1 / 4;
-                grid-template-columns: 1fr 1fr 1fr;
+                grid-row: 1 / 5;
+                /* 2-column sub-grid inside: sky | flight-cat side by side,
+                   then value cards fill 2 cols each              */
+                grid-template-columns: 1fr 1fr;
                 align-self: start;
+                gap: 8px;
             }
 
-            /* Inside metar-grid: full-width items span 3 cols */
-            #tab-metar .sky-section,
-            #tab-metar .fr-bar-container,
-            #tab-metar .metar-card.full-width {
-                grid-column: span 3;
-            }
+            /* Sky Cover + Flight Category: each takes ONE col → side by side */
+            #tab-metar .sky-section     { grid-column: span 1 !important; }
+            #tab-metar .fr-bar-container { grid-column: span 1 !important; }
 
-            /* Raw METAR text: spans both columns (below the 2-panel area) */
-            #tab-metar > .raw-text {
-                grid-column: 1 / -1;
-                grid-row: 4;
-                margin-top: 8px;
-            }
+            /* Value cards: each 1 col (2 per row: WIND|VIS then CEIL|ALT) */
+            #tab-metar .metar-card { grid-column: span 1; }
 
-            /* METAR footer: spans both columns */
-            #tab-metar > .metar-footer {
-                grid-column: 1 / -1;
-                grid-row: 5;
-            }
+            /* TEMP/DEWPOINT: full width of the 2-col grid */
+            #tab-metar .metar-card.full-width { grid-column: span 2 !important; }
 
-            /* Nearby stations: spans both columns */
+            /* ── Row 5: Nearby stations — full width ── */
             #tab-metar > .nearby-container {
                 grid-column: 1 / -1;
-                grid-row: 6;
+                grid-row: 5;
+                margin-top: 10px;
             }
 
 
-            /* ─ Other tabs: standard 3-col data grids ─ */
-            .metar-grid { grid-template-columns: 1fr 1fr 1fr; }
+            /* ─── Other tabs: standard 3-col grids ─── */
             .info-grid  { grid-template-columns: 1fr 1fr 1fr; }
             .freq-grid  { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-            .metar-card.full-width { grid-column: span 3; }
-            .sky-section           { grid-column: span 3; }
-            .fr-bar-container      { grid-column: span 3; }
 
-            /* Taller meteogram */
+            /* Meteogram taller */
             #meteoCanvas { height: 175px; }
         }
 
 
-        /* ── 1100px: Desktop — wider sidebar, 4-col grids ── */
+        /* ── 1100px+: Desktop ── */
         @media (min-width: 1100px) {
 
             body {
@@ -1496,17 +1519,16 @@
                 column-gap: 28px;
             }
 
-            .tab { font-size: 12px; padding: 11px 16px; }
+            .tab { font-size: 12px; padding: 11px 15px; }
 
-            /* Wider wind rose panel on desktop */
+            /* Wider wind rose column */
             #tab-metar {
                 grid-template-columns: 240px 1fr;
                 column-gap: 20px;
             }
 
             #tab-metar > .wind-vis-container {
-                padding: 20px 16px;
-                min-height: 240px;
+                padding: 18px 16px 14px;
             }
 
             #tab-metar #windRose {
@@ -1514,24 +1536,36 @@
                 height: 160px !important;
             }
 
-            /* 3-col keeps for metar-grid inside METAR tab (its panel is already narrower) */
+            /* Keep 2-col for metar-grid panel (sky+fr side by side looks better) */
             #tab-metar > .metar-grid {
-                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-columns: 1fr 1fr;
             }
 
-            /* Other tabs: 4-col data grids */
-            .info-grid  { grid-template-columns: 1fr 1fr 1fr 1fr; }
-            .freq-grid  { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+            /* Value cards: 4 per row on wide screens inside the 2-col grid
+               we can bump to a 4-col layout here since the right panel is wide */
+            #tab-metar > .metar-grid {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+            /* Sky and FR still span 2 cols each → side by side in 4-col */
+            #tab-metar .sky-section      { grid-column: span 2 !important; }
+            #tab-metar .fr-bar-container { grid-column: span 2 !important; }
+            /* Value cards: 1 col each (4 per row) */
+            #tab-metar .metar-card { grid-column: span 1; }
+            /* Temp/dewpoint: span 4 */
+            #tab-metar .metar-card.full-width { grid-column: span 4 !important; }
 
             /* Taller meteogram */
             #meteoCanvas { height: 200px; }
 
             /* Nearby buttons larger */
             .nearby-btn { padding: 8px 14px; font-size: 13px; }
+
+            /* Other tab grids */
+            .info-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
         }
 
 
-        /* ── 1400px: Wide desktop — 4-col metar-grid panel ── */
+        /* ── 1400px+: Wide desktop ── */
         @media (min-width: 1400px) {
 
             body {
@@ -1542,21 +1576,22 @@
 
             .tab { font-size: 12px; padding: 12px 18px; }
 
-            /* Wider wind rose panel */
             #tab-metar {
                 grid-template-columns: 260px 1fr;
             }
 
-            #tab-metar > .wind-vis-container { min-height: 260px; }
+            #tab-metar > .wind-vis-container {
+                padding: 20px 18px 16px;
+            }
 
-            /* 4-col metar-grid inside the right panel */
+            #tab-metar #windRose {
+                width: 170px !important;
+                height: 170px !important;
+            }
+
+            /* 5-col metar-grid: sky(2)+fr(2)+extra, then 4+1 value cards */
             #tab-metar > .metar-grid {
                 grid-template-columns: 1fr 1fr 1fr 1fr;
-            }
-            #tab-metar .sky-section,
-            #tab-metar .fr-bar-container,
-            #tab-metar .metar-card.full-width {
-                grid-column: span 4;
             }
 
             .info-grid { grid-template-columns: repeat(5, 1fr); }
@@ -3244,13 +3279,13 @@
 
                 // ── Always run: nearby stations + audio update ──
                 // These only need station coords — not gated by METAR success
+                updateAudioSection(icao);
                 if (stationData?.latitude && stationData?.longitude) {
                     findNearbyStations(stationData.latitude, stationData.longitude);
                 } else {
                     document.getElementById('nearList').innerHTML =
                         '<span style="color:#555;font-size:12px;">No coordinates available.</span>';
                 }
-                updateAudioSection(icao);
                 
                 if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
@@ -3669,7 +3704,6 @@
             return 0;
         }
 
-        // Stores data for the currently-previewed nearby airport
         let _nearbyModalData = null;
 
         async function findNearbyStations(lat, lon) {
@@ -3679,37 +3713,27 @@
                 const data = await secureFetch(
                     `/api/weather?type=near&station=${lat},${lon}&distance=150`
                 );
-
-                // AVWX may return array OR { results: [...] }
                 const items = Array.isArray(data) ? data
                             : (data.results || data.stations || []);
-
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
                 const others = items
                     .filter(item => (item.station?.icao || item.icao) !== currentIcao)
-                    .sort((a, b) => getNm(a) - getNm(b))   // closest first
+                    .sort((a, b) => getNm(a) - getNm(b))
                     .slice(0, 5);
-
                 list.innerHTML = '';
-
                 if (others.length === 0) {
                     list.innerHTML = '<span style="color:#555;font-size:12px;">No stations found within 150nm.</span>';
                     return;
                 }
-
                 others.forEach(item => {
                     const icao = item.station?.icao || item.icao || '????';
                     const nm   = Math.round(getNm(item));
                     const btn  = document.createElement('div');
                     btn.className = 'nearby-btn';
-                    btn.innerHTML =
-                        `<span>✈</span>` +
-                        `<span>${icao}</span>` +
-                        `<span style="color:var(--sub-text);font-size:10px;">${nm}nm</span>`;
+                    btn.innerHTML = `<span>✈</span><span>${icao}</span><span style="color:var(--sub-text);font-size:10px;">${nm}nm</span>`;
                     btn.onclick = () => openNearbyModal(item);
                     list.appendChild(btn);
                 });
-
             } catch(e) {
                 console.error('findNearbyStations error:', e);
                 list.innerHTML = '<span style="color:#555;font-size:12px;">Could not load nearby stations.</span>';
