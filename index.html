@@ -4591,7 +4591,7 @@ async function findNearbyStations(lat, lon) {
                 
                 const offsetHrs = Math.round(offsetSec / 3600);
                 const sign = offsetHrs >= 0 ? '+' : '';
-                offsetEl.innerText = `LOCAL (UTC${sign}${offsetHrs})`;
+                offsetEl.innerText = `LOCAL`;
                 offsetEl.style.color = 'var(--accent)';
             } else {
                 // ZULU time (UTC)
