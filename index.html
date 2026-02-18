@@ -3726,7 +3726,7 @@
 
         let _nearbyModalData = null;
 
-        async function findNearbyStations(lat, lon) {
+async function findNearbyStations(lat, lon) {
             console.log(`[Nearby] 🔍 Called with lat=${lat}, lon=${lon}`);
             
             const list = document.getElementById('nearList');
@@ -3743,15 +3743,24 @@
                 
                 const data = await secureFetch(url);
                 console.log('[Nearby] 📦 Raw API response:', data);
-                console.log('[Nearby] 📦 Response type:', typeof data, Array.isArray(data) ? 'Array' : 'Object');
                 
-                // AVWX may return array directly OR wrapped in {results:[]}
-                const items = Array.isArray(data) ? data
-                            : (data.results || data.stations || []);
+                // CRITICAL FIX: AVWX returns {0:{...}, 1:{...}, _meta:{...}}
+                // Convert to array and filter out _meta
+                let items;
+                if (Array.isArray(data)) {
+                    items = data;
+                } else if (typeof data === 'object' && data !== null) {
+                    // Object with numeric keys + _meta → convert to array
+                    items = Object.values(data).filter(item => 
+                        item && typeof item === 'object' && !item.hasOwnProperty('key_used')
+                    );
+                } else {
+                    items = [];
+                }
                 
                 console.log(`[Nearby] 📊 Extracted ${items.length} items`);
                 if (items.length > 0) {
-                    console.log('[Nearby] 🔬 First item:', JSON.stringify(items[0], null, 2));
+                    console.log('[Nearby] 🔬 First item:', items[0]);
                 }
                 
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
