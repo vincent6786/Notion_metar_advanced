@@ -280,6 +280,17 @@
             color: var(--text);
             font-family: 'SF Mono', monospace;
             letter-spacing: -0.5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 12px;
+            gap: 2px;
+        }
+        .badge-time-offset {
+            font-size: 9px;
+            color: var(--sub-text);
+            font-weight: 600;
+            letter-spacing: 0.3px;
         }
         .badge-cat {
             background: var(--card-bg);
@@ -1316,6 +1327,286 @@
             line-height: 1.6;
         }
         .help-a b { color: var(--text); }
+
+        /* ============================================================
+           28. RESPONSIVE LAYOUT — TABLET & DESKTOP
+           820px  = iPad landscape
+           1100px = Desktop
+           1400px = Wide desktop
+        ============================================================ */
+
+        /* ── 820px+: Sidebar nav + 2-panel METAR tab ── */
+        @media (min-width: 820px) {
+
+            /* ─── Body: CSS Named Grid ─── */
+            body {
+                max-width: 1280px;
+                margin: 0 auto;
+                padding: 16px 28px;
+                display: grid;
+                grid-template-areas:
+                    "topbar   topbar"
+                    "chips    chips"
+                    "banner   banner"
+                    "sidenav  content"
+                    "sidenav  sfooter";
+                grid-template-columns: 138px 1fr;
+                grid-template-rows: auto auto auto 1fr auto;
+                column-gap: 20px;
+                row-gap: 10px;
+                align-items: start;
+            }
+
+            .top-bar          { grid-area: topbar;  }
+            .quick-select-row { grid-area: chips;   }
+            #minBanner        { grid-area: banner;  }
+            #offlineBanner    { grid-area: banner;  }
+            .tabs             { grid-area: sidenav; }
+            .view-section     { grid-area: content; }
+            .safety-footer    { grid-area: sfooter; }
+
+            /* ─── Vertical sidebar tab pill ─── */
+            .tabs {
+                flex-direction: column;
+                gap: 2px;
+                padding: 4px;
+                border-bottom: none;
+                overflow: visible;
+                position: sticky;
+                top: 16px;
+                align-self: start;
+                background: rgba(28,28,30,0.78);
+                border-radius: 10px;
+                border: 1px solid var(--border);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+            }
+            .tab {
+                padding: 10px 12px;
+                text-align: left;
+                font-size: 11px;
+                letter-spacing: 0.3px;
+                border-radius: 7px;
+                border-bottom: none;
+                border-right: 3px solid transparent;
+                white-space: nowrap;
+                width: 100%;
+            }
+            .tab:hover:not(.active) {
+                background: rgba(255,255,255,0.06);
+                color: var(--text);
+            }
+            .tab.active {
+                background: rgba(10,132,255,0.14);
+                border-right-color: var(--accent);
+                color: var(--accent);
+            }
+            .tab::after { display: none; }
+
+
+            /* ═══════════════════════════════════════════════════
+               METAR TAB: 2-column explicit grid
+               Col 1 (220px): wind rose → AWOS btn → raw METAR → footer
+               Col 2 (1fr):   metar-grid (sky+fr side-by-side + value cards)
+               Row 5 (full):  nearby stations
+            ═══════════════════════════════════════════════════ */
+            #tab-metar {
+                display: grid;
+                grid-template-columns: 220px 1fr;
+                /* 5 explicit rows:
+                   1 = rose + grid top
+                   2 = awos + grid mid
+                   3 = rawmetar + grid (continues)
+                   4 = footer + grid bottom
+                   5 = nearby (full width)       */
+                grid-template-rows: auto auto 1fr auto auto;
+                column-gap: 16px;
+                row-gap: 0;
+                align-items: start;
+            }
+
+            /* ── Col 1, Row 1: Wind rose ── */
+            #tab-metar > .wind-vis-container {
+                grid-column: 1;
+                grid-row: 1;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                margin-top: 0;
+                padding: 16px 14px 12px;
+                gap: 12px;
+            }
+            #tab-metar #windRose {
+                width: 150px !important;
+                height: 150px !important;
+            }
+            #tab-metar .wind-controls {
+                width: 100%;
+            }
+
+            /* ── Col 1, Row 2: AWOS button (KMHR only) ── */
+            #tab-metar > #btnFetchLive {
+                grid-column: 1;
+                grid-row: 2;
+                margin: 8px 0 4px;
+                font-size: 11px;
+                padding: 9px 8px;
+                line-height: 1.3;
+                align-self: start;
+            }
+
+            /* ── Col 1, Row 3: Raw METAR text ── */
+            #tab-metar > .raw-text {
+                grid-column: 1;
+                grid-row: 3;
+                font-size: 11px;
+                line-height: 1.6;
+                margin-top: 8px;
+                padding: 10px;
+                overflow-wrap: break-word;
+                word-break: break-all;
+                align-self: start;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            /* ── Col 1, Row 4: Age + spread footer ── */
+            #tab-metar > .metar-footer {
+                grid-column: 1;
+                grid-row: 4;
+                font-size: 11px;
+                margin-top: 6px;
+                padding: 0 4px;
+                flex-direction: column;
+                gap: 2px;
+                align-items: flex-start;
+                align-self: start;
+            }
+
+            /* ── Col 2, Rows 1-4: metar-grid ── */
+            #tab-metar > .metar-grid {
+                grid-column: 2;
+                grid-row: 1 / 5;
+                /* 2-column sub-grid inside: sky | flight-cat side by side,
+                   then value cards fill 2 cols each              */
+                grid-template-columns: 1fr 1fr;
+                align-self: start;
+                gap: 8px;
+            }
+
+            /* Sky Cover + Flight Category: each takes ONE col → side by side */
+            #tab-metar .sky-section     { grid-column: span 1 !important; }
+            #tab-metar .fr-bar-container { grid-column: span 1 !important; }
+
+            /* Value cards: each 1 col (2 per row: WIND|VIS then CEIL|ALT) */
+            #tab-metar .metar-card { grid-column: span 1; }
+
+            /* TEMP/DEWPOINT: full width of the 2-col grid */
+            #tab-metar .metar-card.full-width { grid-column: span 2 !important; }
+
+            /* ── Row 5: Nearby stations — full width ── */
+            #tab-metar > .nearby-container {
+                grid-column: 1 / -1;
+                grid-row: 5;
+                margin-top: 10px;
+            }
+
+
+            /* ─── Other tabs: standard 3-col grids ─── */
+            .info-grid  { grid-template-columns: 1fr 1fr 1fr; }
+            .freq-grid  { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+
+            /* Meteogram taller */
+            #meteoCanvas { height: 175px; }
+        }
+
+
+        /* ── 1100px+: Desktop ── */
+        @media (min-width: 1100px) {
+
+            body {
+                padding: 20px 40px;
+                grid-template-columns: 152px 1fr;
+                column-gap: 28px;
+            }
+
+            .tab { font-size: 12px; padding: 11px 15px; }
+
+            /* Wider wind rose column */
+            #tab-metar {
+                grid-template-columns: 240px 1fr;
+                column-gap: 20px;
+            }
+
+            #tab-metar > .wind-vis-container {
+                padding: 18px 16px 14px;
+            }
+
+            #tab-metar #windRose {
+                width: 160px !important;
+                height: 160px !important;
+            }
+
+            /* Keep 2-col for metar-grid panel (sky+fr side by side looks better) */
+            #tab-metar > .metar-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            /* Value cards: 4 per row on wide screens inside the 2-col grid
+               we can bump to a 4-col layout here since the right panel is wide */
+            #tab-metar > .metar-grid {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+            /* Sky and FR still span 2 cols each → side by side in 4-col */
+            #tab-metar .sky-section      { grid-column: span 2 !important; }
+            #tab-metar .fr-bar-container { grid-column: span 2 !important; }
+            /* Value cards: 1 col each (4 per row) */
+            #tab-metar .metar-card { grid-column: span 1; }
+            /* Temp/dewpoint: span 4 */
+            #tab-metar .metar-card.full-width { grid-column: span 4 !important; }
+
+            /* Taller meteogram */
+            #meteoCanvas { height: 200px; }
+
+            /* Nearby buttons larger */
+            .nearby-btn { padding: 8px 14px; font-size: 13px; }
+
+            /* Other tab grids */
+            .info-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        }
+
+
+        /* ── 1400px+: Wide desktop ── */
+        @media (min-width: 1400px) {
+
+            body {
+                max-width: 1440px;
+                padding: 24px 48px;
+                grid-template-columns: 160px 1fr;
+            }
+
+            .tab { font-size: 12px; padding: 12px 18px; }
+
+            #tab-metar {
+                grid-template-columns: 260px 1fr;
+            }
+
+            #tab-metar > .wind-vis-container {
+                padding: 20px 18px 16px;
+            }
+
+            #tab-metar #windRose {
+                width: 170px !important;
+                height: 170px !important;
+            }
+
+            /* 5-col metar-grid: sky(2)+fr(2)+extra, then 4+1 value cards */
+            #tab-metar > .metar-grid {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+
+            .info-grid { grid-template-columns: repeat(5, 1fr); }
+        }
         
     </style>
 </head>
@@ -1373,7 +1664,10 @@
         <button class="icon-btn" onclick="loadData(true)" title="Force Refresh">↻</button>
         <div id="headerCat" class="badge badge-cat" onclick="toggleLegend(true)"
              style="cursor:pointer;" title="Tap for Legend">--</div>
-        <div id="zuluTime" class="badge badge-time">--:--Z</div>
+        <div id="zuluTime" class="badge badge-time">
+            <span id="zuluTimeMain">--:--Z</span>
+            <span id="zuluTimeOffset" class="badge-time-offset">UTC</span>
+        </div>
         <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
     </div>
 
@@ -1387,6 +1681,9 @@
         ⚠️ NO-GO CHECK TOOLS
     </div>
 
+    <!-- Offline mode banner: pre-created for CSS Grid placement -->
+    <div id="offlineBanner" class="offline-banner hidden" onclick="retryOnline()"></div>
+    
     <!-- ================================================================
          TABS
     ================================================================ -->
@@ -2967,13 +3264,23 @@
             });
         }
 
-        // ================================================================
+// ================================================================
         // 12. MAIN DATA LOADER
         // ================================================================
         async function loadData(force = false) {
             const icaoVal = document.getElementById('icao').value;
             if (!icaoVal) return;
-            if (force) localStorage.clear();
+            
+            if (force) {
+                // Clear ONLY API cache keys — preserve favorites, history, settings
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('cache_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                console.log('[Force Refresh] API cache cleared');
+            }
+            
             const icao = icaoVal.toUpperCase();
             addToHistory(icao);
             document.getElementById('icao').blur();
@@ -2985,24 +3292,32 @@
             try {
                 stationData = await secureFetch(`/api/weather?type=station&station=${icao}`);
                 if (stationData._meta) console.log(`%c[AVWX] Station Info - Key #${stationData._meta.key_used} (${stationData._meta.key_usage}/${stationData._meta.key_limit})`, 'color:#0a84ff;font-weight:bold;');
+                
+                console.log('[loadData] Station coords:', stationData.latitude, stationData.longitude);
+                
                 renderInfo(stationData);
                 fetchMeteogram(stationData.latitude, stationData.longitude);
 
+                // ── ALWAYS RUN: Audio + Nearby (only need station coords) ──
+                // Run BEFORE fetching METAR so nearby appears even if METAR is slow
+                updateAudioSection(icao);
+                
+                if (stationData?.latitude != null && stationData?.longitude != null) {
+                    console.log('[loadData] Calling findNearbyStations...');
+                    findNearbyStations(stationData.latitude, stationData.longitude);
+                } else {
+                    console.warn('[loadData] No coordinates available');
+                    document.getElementById('nearList').innerHTML =
+                        '<span style="color:#555;font-size:12px;">No coordinates for this station.</span>';
+                }
+
+                // Now fetch METAR/TAF/NOTAMs in parallel
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
                     secureFetch(`/api/weather?type=metar&station=${icao}`),
                     secureFetch(`/api/weather?type=taf&station=${icao}`),
                     fetchNotamsFAA(icao)
                 ]);
 
-                // Nearby stations runs immediately from station coords — not gated by METAR
-                if (stationData.latitude && stationData.longitude) {
-                    findNearbyStations(stationData.latitude, stationData.longitude);
-                } else {
-                    document.getElementById('nearList').innerHTML =
-                        '<span style="color:#555;">No coordinates for this station.</span>';
-                }
-                updateAudioSection(icao);
-                
                 if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
                     if (m._meta) console.log(`%c[AVWX] METAR - Key #${m._meta.key_used} (${m._meta.key_usage}/${m._meta.key_limit})`, 'color:#0a84ff;font-weight:bold;');
@@ -3019,21 +3334,23 @@
                     if (icao === 'KMHR') liveBtn.classList.remove('hidden'); else liveBtn.classList.add('hidden');
                     renderFlightRuleBar(m);
                     setupRunwaySelect();
-                } else { throw new Error("No Weather Data"); }
+                } else { 
+                    throw new Error("No Weather Data"); 
+                }
 
                 if (tafRes.status === 'fulfilled') {
                     const tafData = tafRes.value;
                     if (tafData._meta) console.log(`%c[AVWX] TAF - Key #${tafData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
                     renderTaf(tafData);
                 }
+                
                 if (notamRes.status === 'fulfilled') {
                     const notamData = notamRes.value;
-                    if (notamData._meta) console.log(`%c[AVWX] NOTAM - Key #${notamData._meta.key_used}`, 'color:#32d74b;font-weight:bold;');
                     renderNotams(notamData);
                 }
 
             } catch(e) {
-                console.error(e);
+                console.error('[loadData] Error:', e);
                 updateHeaderCat('N/A', 'cat-ifr');
                 const ic = document.getElementById('icao').value.toUpperCase();
                 document.getElementById('rawMetar').innerHTML = `
@@ -3413,6 +3730,29 @@
             if (msgs[rule]) { msgEl.innerText = msgs[rule][0]; msgEl.style.color = msgs[rule][1]; }
         }
 
+        // Calculate bearing from point A to point B
+        function getBearing(lat1, lon1, lat2, lon2) {
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) -
+                      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            
+            let θ = Math.atan2(y, x);
+            let bearing = (θ * 180 / Math.PI + 360) % 360;
+            return Math.round(bearing);
+        }
+        
+        // Convert bearing to cardinal direction
+        function bearingToCardinal(bearing) {
+            const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+                          'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+            const index = Math.round(bearing / 22.5) % 16;
+            return dirs[index];
+        }
+    
         // Safe distance extractor — handles both AVWX and cached shapes
         function getNm(item) {
             if (item.nautical_miles != null) return item.nautical_miles;      // cached old shape
@@ -3420,46 +3760,105 @@
             return 0;
         }
 
-        // Stores data for the currently-previewed nearby airport
+
         let _nearbyModalData = null;
 
-        async function findNearbyStations(lat, lon) {
+async function findNearbyStations(lat, lon) {
+            console.log(`[Nearby] 🔍 Called with lat=${lat}, lon=${lon}`);
+            
+            const list = document.getElementById('nearList');
+            if (!list) {
+                console.error('[Nearby] ❌ Element #nearList not found!');
+                return;
+            }
+            
+            list.innerHTML = '<span style="color:#555;font-size:12px;">Scanning…</span>';
+            
             try {
-                const data = await secureFetch(
-                    `/api/weather?type=near&station=${lat},${lon}&distance=150`
-                );
-                const list = document.getElementById('nearList');
-                list.innerHTML = '';
-
-                // Normalize: the API may return an array or an object with a results key
-                const items = Array.isArray(data) ? data : (data.results || data.stations || []);
-
+                const url = `/api/weather?type=near&station=${lat},${lon}&distance=150`;
+                console.log(`[Nearby] 📡 Fetching: ${url}`);
+                
+                const data = await secureFetch(url);
+                console.log('[Nearby] 📦 Raw API response:', data);
+                
+                // CRITICAL FIX: AVWX returns {0:{...}, 1:{...}, _meta:{...}}
+                // Convert to array and filter out _meta
+                let items;
+                if (Array.isArray(data)) {
+                    items = data;
+                } else if (typeof data === 'object' && data !== null) {
+                    // Object with numeric keys + _meta → convert to array
+                    items = Object.values(data).filter(item => 
+                        item && typeof item === 'object' && !item.hasOwnProperty('key_used')
+                    );
+                } else {
+                    items = [];
+                }
+                
+                console.log(`[Nearby] 📊 Extracted ${items.length} items`);
+                if (items.length > 0) {
+                    console.log('[Nearby] 🔬 First item:', items[0]);
+                }
+                
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
+                console.log(`[Nearby] 🛫 Current airport: ${currentIcao}`);
+                
+                // Filter out current airport, sort by distance, take top 5
                 const others = items
-                    .filter(item => (item.station?.icao || item.icao) !== currentIcao)
+                    .filter(item => {
+                        const icao = item.station?.icao || item.icao || '';
+                        const keep = icao !== currentIcao;
+                        if (!keep) console.log(`[Nearby] ⏭️  Skipping current airport: ${icao}`);
+                        return keep;
+                    })
+                    .sort((a, b) => getNm(a) - getNm(b))
                     .slice(0, 5);
-
+                
+                console.log(`[Nearby] ✂️  After filter: ${others.length} stations`);
+                others.forEach((item, i) => {
+                    const icao = item.station?.icao || item.icao || '????';
+                    const nm = getNm(item);
+                    console.log(`[Nearby]   ${i+1}. ${icao} - ${nm}nm`);
+                });
+                
+                list.innerHTML = '';
+                
                 if (others.length === 0) {
-                    list.innerHTML = "<span style='color:#555;font-size:12px;'>No stations found within 150nm.</span>";
+                    console.log('[Nearby] ⚠️  No nearby stations found');
+                    list.innerHTML = '<span style="color:#555;font-size:12px;">No stations found within 150nm.</span>';
                     return;
                 }
-
+                
                 others.forEach(item => {
                     const icao = item.station?.icao || item.icao || '????';
                     const nm   = Math.round(getNm(item));
-                    const btn  = document.createElement('div');
+                    
+                    // Calculate bearing from current station to this one
+                    const stn = item.station || item;
+                    let bearingStr = '';
+                    if (lat != null && lon != null && stn.latitude != null && stn.longitude != null) {
+                        const bearing = getBearing(lat, lon, stn.latitude, stn.longitude);
+                        const cardinal = bearingToCardinal(bearing);
+                        bearingStr = ` · ${bearing}° (${cardinal})`;
+                    }
+                    
+                    const btn = document.createElement('div');
                     btn.className = 'nearby-btn';
                     btn.innerHTML = `
                         <span>✈</span>
                         <span>${icao}</span>
-                        <span style="color:var(--sub-text);font-size:10px;">${nm}nm</span>`;
+                        <span style="color:var(--sub-text);font-size:10px;">${nm}nm${bearingStr}</span>`;
+                    
                     btn.onclick = () => openNearbyModal(item);
                     list.appendChild(btn);
                 });
+                
+                console.log('[Nearby] ✅ Rendered successfully - check UI!');
+                
             } catch(e) {
-                console.error('findNearbyStations error:', e);
-                document.getElementById('nearList').innerHTML =
-                    "<span style='color:#555;font-size:12px;'>Could not load nearby stations.</span>";
+                console.error('[Nearby] ❌ Error:', e);
+                console.error('[Nearby] ❌ Stack:', e.stack);
+                list.innerHTML = '<span style="color:#555;font-size:12px;">Failed to load nearby stations.</span>';
             }
         }
 
@@ -3766,7 +4165,44 @@
         // 18. TAF RENDERING
         // ================================================================
         function renderTaf(d) {
+            // Raw TAF text
             document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
+            
+            // Issued + Expiry times
+            const issuedEl = document.getElementById('tafIssued');
+            if (d.time && d.forecast && d.forecast.length > 0) {
+                const issued = new Date(d.time.dt);
+                const expiry = new Date(d.forecast[d.forecast.length - 1].end_time.dt);
+                const now = new Date();
+                
+                const issuedStr = `${issued.getUTCDate().toString().padStart(2,'0')}/${(issued.getUTCMonth()+1).toString().padStart(2,'0')} ${issued.getUTCHours().toString().padStart(2,'0')}:${issued.getUTCMinutes().toString().padStart(2,'0')}Z`;
+                
+                const remainMs = expiry - now;
+                const remainHrs = Math.floor(remainMs / 3600000);
+                const remainMins = Math.floor((remainMs % 3600000) / 60000);
+                
+                let timeLeftStr = '';
+                if (remainMs > 0) {
+                    if (remainHrs > 0) {
+                        timeLeftStr = `${remainHrs}h ${remainMins}m left`;
+                    } else if (remainMins > 0) {
+                        timeLeftStr = `${remainMins}m left`;
+                    } else {
+                        timeLeftStr = 'Expiring soon';
+                    }
+                } else {
+                    timeLeftStr = '⚠️ EXPIRED';
+                }
+                
+                const expiryColor = remainMs < 1800000 ? 'var(--warn)' : 'var(--sub-text)';  // warn if <30min
+                
+                issuedEl.innerHTML = `
+                    <span>Issued: ${issuedStr}</span>
+                    <span style="color:${expiryColor};margin-left:12px;">⏱ ${timeLeftStr}</span>
+                `;
+            } else {
+                issuedEl.innerText = '--';
+            }
             tafDataCache = d.forecast;
             const bar  = document.getElementById('tafBar');
             const axis = document.getElementById('tafAxis');
@@ -3885,8 +4321,23 @@
 
         function updateClock() {
             const now = new Date();
-            document.getElementById('zuluTime').innerText =
-                `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}Z`;
+            const zuluStr = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}Z`;
+            document.getElementById('zuluTimeMain').innerText = zuluStr;
+            
+            // Update UTC offset for current airport (if available)
+            const offsetEl = document.getElementById('zuluTimeOffset');
+            if (stationData?.latitude && stationData?.longitude && meteoDataCache) {
+                const offsetSec = stationOffsetSec || 0;
+                const offsetHrs = Math.round(offsetSec / 3600);
+                if (offsetHrs === 0) {
+                    offsetEl.innerText = 'UTC';
+                } else {
+                    const sign = offsetHrs > 0 ? '+' : '';
+                    offsetEl.innerText = `UTC${sign}${offsetHrs}`;
+                }
+            } else {
+                offsetEl.innerText = 'UTC';
+            }
 
             if (document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer');
@@ -3949,26 +4400,89 @@
 
         async function addCustomCity() {
             const input = document.getElementById('newCityInput');
-            const val   = input.value.trim();
+            const val   = input.value.trim().toUpperCase();
             if (!val) return;
+            
             const btn = document.getElementById('btnAddCity');
             btn.innerText = "⏳";
+            btn.disabled = true;
+            
             try {
+                console.log(`[World Clock] Searching for: ${val}`);
+                
+                // Try AVWX search API
                 const res = await secureFetch(`/api/weather?type=search&station=${val}`);
-                let station = Array.isArray(res) ? (res.length === 0 ? null : res[0]) : res;
-                if (!station) throw new Error("No city found");
-                const tzRes  = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${station.latitude}&longitude=${station.longitude}&current_weather=true&timezone=auto`);
+                console.log('[World Clock] Search result:', res);
+                
+                // Handle various response shapes
+                let station;
+                if (Array.isArray(res)) {
+                    station = res.length > 0 ? res[0] : null;
+                } else if (res && typeof res === 'object') {
+                    // Check if it's {0: {...}, 1: {...}} format
+                    const items = Object.values(res).filter(item => 
+                        item && typeof item === 'object' && item.icao
+                    );
+                    station = items.length > 0 ? items[0] : res;
+                } else {
+                    station = res;
+                }
+                
+                if (!station || !station.latitude || !station.longitude) {
+                    throw new Error("Airport not found in database");
+                }
+                
+                console.log('[World Clock] Station found:', station);
+                
+                // Get timezone from Open-Meteo
+                const tzRes = await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=${station.latitude}&longitude=${station.longitude}&current=temperature_2m&timezone=auto`
+                );
+                
+                if (!tzRes.ok) throw new Error("Timezone API failed");
+                
                 const tzData = await tzRes.json();
-                if (!tzData.timezone) throw new Error("Timezone lookup failed");
-                const newCity = { n: station.city || station.name, icao: station.icao, z: tzData.timezone };
+                console.log('[World Clock] Timezone data:', tzData);
+                
+                if (!tzData.timezone) {
+                    throw new Error("Could not determine timezone");
+                }
+                
+                const cityName = station.city || station.name || station.icao;
+                const newCity = { 
+                    n: cityName, 
+                    icao: station.icao, 
+                    z: tzData.timezone 
+                };
+                
+                // Check for duplicates
+                const exists = cityList.some(c => c.icao === station.icao);
+                if (exists) {
+                    showToast(`⚠️ ${station.icao} already in list`);
+                    input.value = '';
+                    return;
+                }
+                
                 cityList.push(newCity);
                 localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
-                if (shouldBackupCities()) { await savecitiesToCloud(); showToast(`✅ ${newCity.n} added & backed up`); }
-                else { promptWorldClockBackup(); }
+                
+                if (shouldBackupCities()) { 
+                    await savecitiesToCloud(); 
+                    showToast(`✅ ${cityName} added & backed up`); 
+                } else { 
+                    promptWorldClockBackup(); 
+                }
+                
                 input.value = '';
                 updateClock();
-            } catch(e) { console.error(e); alert("Could not find city or airport. Try a valid ICAO code (e.g. KJFK)."); }
-            finally   { btn.innerText = "Add"; }
+                
+            } catch(e) { 
+                console.error('[World Clock] Error:', e);
+                showToast(`❌ Could not add ${val}. Try a valid ICAO code.`);
+            } finally {
+                btn.innerText = "Add";
+                btn.disabled = false;
+            }
         }
 
         async function removeCity(index) {
@@ -4253,47 +4767,38 @@
             setTimeout(() => toast.remove(), duration);
         }
 
+        function retryOnline() {
+            if (navigator.onLine) { loadData(true); hideOfflineBanner(); }
+        }
+
         function showOfflineBanner(ts) {
             const ageMin = Math.round((Date.now() - ts) / 60000);
-            const ageStr = ageMin < 1 ? 'just now'
+            const ageStr = ageMin < 1  ? 'just now'
                          : ageMin < 60 ? `${ageMin}m ago`
                          : `${Math.round(ageMin / 60)}h ago`;
 
-            // Persistent top banner
-            let banner = document.getElementById('offlineBanner');
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'offlineBanner';
-                banner.className = 'offline-banner';
-                banner.onclick = () => { if (navigator.onLine) { loadData(true); hideOfflineBanner(); } };
-                // Insert inside .app-wrapper or at top of body
-                const wrapper = document.querySelector('.app-wrapper') || document.body;
-                wrapper.insertBefore(banner, wrapper.firstElementChild);
-            }
+            const banner = document.getElementById('offlineBanner');
+            if (!banner) return;
+
             banner.innerHTML = `
                 <span>⚡ OFFLINE MODE</span>
-                <span style="margin:0 8px;opacity:0.4;">|</span>
+                <span style="margin:0 8px;opacity:0.3;">|</span>
                 <span>Showing cached data · ${ageStr}</span>
-                <span style="margin-left:8px;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:10px;font-size:10px;">
+                <span style="margin-left:8px;background:rgba(0,0,0,0.25);padding:2px 10px;border-radius:10px;font-size:10px;">
                     ${navigator.onLine ? 'Tap to refresh ↻' : 'No connection'}
                 </span>`;
 
-            // Also update the Zulu time badge with offline dot
+            banner.classList.remove('hidden');
+
             const zuluEl = document.getElementById('zuluTime');
-            if (zuluEl && !zuluEl.dataset.offlineOrig) {
-                zuluEl.dataset.offlineOrig = '1';
-                zuluEl.style.borderLeft = '3px solid #ff9f0a';
-            }
+            if (zuluEl) zuluEl.style.borderLeft = '3px solid #ff9f0a';
         }
 
         function hideOfflineBanner() {
-            document.getElementById('offlineBanner')?.remove();
-            // Remove offline indicator from time badge
+            const banner = document.getElementById('offlineBanner');
+            if (banner) banner.classList.add('hidden');
             const zuluEl = document.getElementById('zuluTime');
-            if (zuluEl) {
-                delete zuluEl.dataset.offlineOrig;
-                zuluEl.style.borderLeft = '';
-            }
+            if (zuluEl) zuluEl.style.borderLeft = '';
         }
 
         window.addEventListener('online', () => {
