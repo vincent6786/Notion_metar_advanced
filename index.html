@@ -3250,12 +3250,13 @@
             });
         }
 
-        // ================================================================
+// ================================================================
         // 12. MAIN DATA LOADER
         // ================================================================
         async function loadData(force = false) {
             const icaoVal = document.getElementById('icao').value;
             if (!icaoVal) return;
+            
             if (force) {
                 // Clear ONLY API cache keys — preserve favorites, history, settings
                 Object.keys(localStorage).forEach(key => {
@@ -3264,7 +3265,8 @@
                     }
                 });
                 console.log('[Force Refresh] API cache cleared');
-            }            
+            }
+            
             const icao = icaoVal.toUpperCase();
             addToHistory(icao);
             document.getElementById('icao').blur();
@@ -3276,33 +3278,31 @@
             try {
                 stationData = await secureFetch(`/api/weather?type=station&station=${icao}`);
                 if (stationData._meta) console.log(`%c[AVWX] Station Info - Key #${stationData._meta.key_used} (${stationData._meta.key_usage}/${stationData._meta.key_limit})`, 'color:#0a84ff;font-weight:bold;');
+                
+                console.log('[loadData] Station coords:', stationData.latitude, stationData.longitude);
+                
                 renderInfo(stationData);
                 fetchMeteogram(stationData.latitude, stationData.longitude);
 
+                // ── ALWAYS RUN: Audio + Nearby (only need station coords) ──
+                // Run BEFORE fetching METAR so nearby appears even if METAR is slow
+                updateAudioSection(icao);
+                
+                if (stationData?.latitude != null && stationData?.longitude != null) {
+                    console.log('[loadData] Calling findNearbyStations...');
+                    findNearbyStations(stationData.latitude, stationData.longitude);
+                } else {
+                    console.warn('[loadData] No coordinates available');
+                    document.getElementById('nearList').innerHTML =
+                        '<span style="color:#555;font-size:12px;">No coordinates for this station.</span>';
+                }
+
+                // Now fetch METAR/TAF/NOTAMs in parallel
                 const [metarRes, tafRes, notamRes] = await Promise.allSettled([
                     secureFetch(`/api/weather?type=metar&station=${icao}`),
                     secureFetch(`/api/weather?type=taf&station=${icao}`),
                     fetchNotamsFAA(icao)
                 ]);
-
-                // ── Always run: nearby stations + audio update ──
-                // These only need station coords — not gated by METAR success
-                updateAudioSection(icao);
-                if (stationData?.latitude && stationData?.longitude) {
-                    findNearbyStations(stationData.latitude, stationData.longitude);
-                } else {
-                    document.getElementById('nearList').innerHTML =
-                        '<span style="color:#555;font-size:12px;">No coordinates available.</span>';
-                }
-                
-                // ── ALWAYS RUN: Audio + Nearby (only need station coords) ──
-                updateAudioSection(icao);
-                if (stationData?.latitude != null && stationData?.longitude != null) {
-                    findNearbyStations(stationData.latitude, stationData.longitude);
-                } else {
-                    document.getElementById('nearList').innerHTML =
-                        '<span style="color:#555;font-size:12px;">No coordinates for this station.</span>';
-                }
 
                 if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
@@ -3320,22 +3320,23 @@
                     if (icao === 'KMHR') liveBtn.classList.remove('hidden'); else liveBtn.classList.add('hidden');
                     renderFlightRuleBar(m);
                     setupRunwaySelect();
-                    // ← findNearbyStations and updateAudioSection moved above
-                } else { throw new Error("No Weather Data"); }
+                } else { 
+                    throw new Error("No Weather Data"); 
+                }
 
                 if (tafRes.status === 'fulfilled') {
                     const tafData = tafRes.value;
                     if (tafData._meta) console.log(`%c[AVWX] TAF - Key #${tafData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
                     renderTaf(tafData);
                 }
+                
                 if (notamRes.status === 'fulfilled') {
                     const notamData = notamRes.value;
-                    if (notamData._meta) console.log(`%c[AVWX] NOTAM - Key #${notamData._meta.key_used}`, 'color:#32d74b;font-weight:bold;');
                     renderNotams(notamData);
                 }
 
             } catch(e) {
-                console.error(e);
+                console.error('[loadData] Error:', e);
                 updateHeaderCat('N/A', 'cat-ifr');
                 const ic = document.getElementById('icao').value.toUpperCase();
                 document.getElementById('rawMetar').innerHTML = `
@@ -3726,40 +3727,66 @@
         let _nearbyModalData = null;
 
         async function findNearbyStations(lat, lon) {
+            console.log(`[Nearby] 🔍 Called with lat=${lat}, lon=${lon}`);
+            
             const list = document.getElementById('nearList');
+            if (!list) {
+                console.error('[Nearby] ❌ Element #nearList not found!');
+                return;
+            }
+            
             list.innerHTML = '<span style="color:#555;font-size:12px;">Scanning…</span>';
-
+            
             try {
-                const data = await secureFetch(
-                    `/api/weather?type=near&station=${lat},${lon}&distance=150`
-                );
-
+                const url = `/api/weather?type=near&station=${lat},${lon}&distance=150`;
+                console.log(`[Nearby] 📡 Fetching: ${url}`);
+                
+                const data = await secureFetch(url);
+                console.log('[Nearby] 📦 Raw API response:', data);
+                console.log('[Nearby] 📦 Response type:', typeof data, Array.isArray(data) ? 'Array' : 'Object');
+                
                 // AVWX may return array directly OR wrapped in {results:[]}
                 const items = Array.isArray(data) ? data
                             : (data.results || data.stations || []);
-
+                
+                console.log(`[Nearby] 📊 Extracted ${items.length} items`);
+                if (items.length > 0) {
+                    console.log('[Nearby] 🔬 First item:', JSON.stringify(items[0], null, 2));
+                }
+                
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
-
+                console.log(`[Nearby] 🛫 Current airport: ${currentIcao}`);
+                
                 // Filter out current airport, sort by distance, take top 5
                 const others = items
                     .filter(item => {
                         const icao = item.station?.icao || item.icao || '';
-                        return icao !== currentIcao;
+                        const keep = icao !== currentIcao;
+                        if (!keep) console.log(`[Nearby] ⏭️  Skipping current airport: ${icao}`);
+                        return keep;
                     })
                     .sort((a, b) => getNm(a) - getNm(b))
                     .slice(0, 5);
-
+                
+                console.log(`[Nearby] ✂️  After filter: ${others.length} stations`);
+                others.forEach((item, i) => {
+                    const icao = item.station?.icao || item.icao || '????';
+                    const nm = getNm(item);
+                    console.log(`[Nearby]   ${i+1}. ${icao} - ${nm}nm`);
+                });
+                
                 list.innerHTML = '';
-
+                
                 if (others.length === 0) {
+                    console.log('[Nearby] ⚠️  No nearby stations found');
                     list.innerHTML = '<span style="color:#555;font-size:12px;">No stations found within 150nm.</span>';
                     return;
                 }
-
+                
                 others.forEach(item => {
                     const icao = item.station?.icao || item.icao || '????';
                     const nm   = Math.round(getNm(item));
-
+                    
                     const btn = document.createElement('div');
                     btn.className = 'nearby-btn';
                     btn.innerHTML = `
@@ -3767,13 +3794,15 @@
                         <span>${icao}</span>
                         <span style="color:var(--sub-text);font-size:10px;">${nm}nm</span>`;
                     
-                    // Open preview modal instead of loading directly
                     btn.onclick = () => openNearbyModal(item);
                     list.appendChild(btn);
                 });
-
+                
+                console.log('[Nearby] ✅ Rendered successfully - check UI!');
+                
             } catch(e) {
-                console.error('findNearbyStations error:', e);
+                console.error('[Nearby] ❌ Error:', e);
+                console.error('[Nearby] ❌ Stack:', e.stack);
                 list.innerHTML = '<span style="color:#555;font-size:12px;">Failed to load nearby stations.</span>';
             }
         }
