@@ -3256,7 +3256,15 @@
         async function loadData(force = false) {
             const icaoVal = document.getElementById('icao').value;
             if (!icaoVal) return;
-            if (force) localStorage.clear();
+            if (force) {
+                // Clear ONLY API cache keys — preserve favorites, history, settings
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('cache_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                console.log('[Force Refresh] API cache cleared');
+            }            
             const icao = icaoVal.toUpperCase();
             addToHistory(icao);
             document.getElementById('icao').blur();
@@ -3287,6 +3295,15 @@
                         '<span style="color:#555;font-size:12px;">No coordinates available.</span>';
                 }
                 
+                // ── ALWAYS RUN: Audio + Nearby (only need station coords) ──
+                updateAudioSection(icao);
+                if (stationData?.latitude != null && stationData?.longitude != null) {
+                    findNearbyStations(stationData.latitude, stationData.longitude);
+                } else {
+                    document.getElementById('nearList').innerHTML =
+                        '<span style="color:#555;font-size:12px;">No coordinates for this station.</span>';
+                }
+
                 if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const m = metarRes.value;
                     if (m._meta) console.log(`%c[AVWX] METAR - Key #${m._meta.key_used} (${m._meta.key_usage}/${m._meta.key_limit})`, 'color:#0a84ff;font-weight:bold;');
@@ -3303,6 +3320,7 @@
                     if (icao === 'KMHR') liveBtn.classList.remove('hidden'); else liveBtn.classList.add('hidden');
                     renderFlightRuleBar(m);
                     setupRunwaySelect();
+                    // ← findNearbyStations and updateAudioSection moved above
                 } else { throw new Error("No Weather Data"); }
 
                 if (tafRes.status === 'fulfilled') {
@@ -3704,39 +3722,59 @@
             return 0;
         }
 
+
         let _nearbyModalData = null;
 
         async function findNearbyStations(lat, lon) {
             const list = document.getElementById('nearList');
             list.innerHTML = '<span style="color:#555;font-size:12px;">Scanning…</span>';
+
             try {
                 const data = await secureFetch(
                     `/api/weather?type=near&station=${lat},${lon}&distance=150`
                 );
+
+                // AVWX may return array directly OR wrapped in {results:[]}
                 const items = Array.isArray(data) ? data
                             : (data.results || data.stations || []);
+
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
+
+                // Filter out current airport, sort by distance, take top 5
                 const others = items
-                    .filter(item => (item.station?.icao || item.icao) !== currentIcao)
+                    .filter(item => {
+                        const icao = item.station?.icao || item.icao || '';
+                        return icao !== currentIcao;
+                    })
                     .sort((a, b) => getNm(a) - getNm(b))
                     .slice(0, 5);
+
                 list.innerHTML = '';
+
                 if (others.length === 0) {
                     list.innerHTML = '<span style="color:#555;font-size:12px;">No stations found within 150nm.</span>';
                     return;
                 }
+
                 others.forEach(item => {
                     const icao = item.station?.icao || item.icao || '????';
                     const nm   = Math.round(getNm(item));
-                    const btn  = document.createElement('div');
+
+                    const btn = document.createElement('div');
                     btn.className = 'nearby-btn';
-                    btn.innerHTML = `<span>✈</span><span>${icao}</span><span style="color:var(--sub-text);font-size:10px;">${nm}nm</span>`;
+                    btn.innerHTML = `
+                        <span>✈</span>
+                        <span>${icao}</span>
+                        <span style="color:var(--sub-text);font-size:10px;">${nm}nm</span>`;
+                    
+                    // Open preview modal instead of loading directly
                     btn.onclick = () => openNearbyModal(item);
                     list.appendChild(btn);
                 });
+
             } catch(e) {
                 console.error('findNearbyStations error:', e);
-                list.innerHTML = '<span style="color:#555;font-size:12px;">Could not load nearby stations.</span>';
+                list.innerHTML = '<span style="color:#555;font-size:12px;">Failed to load nearby stations.</span>';
             }
         }
 
