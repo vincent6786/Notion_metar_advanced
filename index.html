@@ -280,6 +280,17 @@
             color: var(--text);
             font-family: 'SF Mono', monospace;
             letter-spacing: -0.5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 12px;
+            gap: 2px;
+        }
+        .badge-time-offset {
+            font-size: 9px;
+            color: var(--sub-text);
+            font-weight: 600;
+            letter-spacing: 0.3px;
         }
         .badge-cat {
             background: var(--card-bg);
@@ -1653,7 +1664,10 @@
         <button class="icon-btn" onclick="loadData(true)" title="Force Refresh">↻</button>
         <div id="headerCat" class="badge badge-cat" onclick="toggleLegend(true)"
              style="cursor:pointer;" title="Tap for Legend">--</div>
-        <div id="zuluTime" class="badge badge-time">--:--Z</div>
+        <div id="zuluTime" class="badge badge-time">
+            <span id="zuluTimeMain">--:--Z</span>
+            <span id="zuluTimeOffset" class="badge-time-offset">UTC</span>
+        </div>
         <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
     </div>
 
@@ -3716,6 +3730,29 @@
             if (msgs[rule]) { msgEl.innerText = msgs[rule][0]; msgEl.style.color = msgs[rule][1]; }
         }
 
+        // Calculate bearing from point A to point B
+        function getBearing(lat1, lon1, lat2, lon2) {
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) -
+                      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            
+            let θ = Math.atan2(y, x);
+            let bearing = (θ * 180 / Math.PI + 360) % 360;
+            return Math.round(bearing);
+        }
+        
+        // Convert bearing to cardinal direction
+        function bearingToCardinal(bearing) {
+            const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+                          'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+            const index = Math.round(bearing / 22.5) % 16;
+            return dirs[index];
+        }
+    
         // Safe distance extractor — handles both AVWX and cached shapes
         function getNm(item) {
             if (item.nautical_miles != null) return item.nautical_miles;      // cached old shape
@@ -3796,12 +3833,21 @@ async function findNearbyStations(lat, lon) {
                     const icao = item.station?.icao || item.icao || '????';
                     const nm   = Math.round(getNm(item));
                     
+                    // Calculate bearing from current station to this one
+                    const stn = item.station || item;
+                    let bearingStr = '';
+                    if (lat != null && lon != null && stn.latitude != null && stn.longitude != null) {
+                        const bearing = getBearing(lat, lon, stn.latitude, stn.longitude);
+                        const cardinal = bearingToCardinal(bearing);
+                        bearingStr = ` · ${bearing}° (${cardinal})`;
+                    }
+                    
                     const btn = document.createElement('div');
                     btn.className = 'nearby-btn';
                     btn.innerHTML = `
                         <span>✈</span>
                         <span>${icao}</span>
-                        <span style="color:var(--sub-text);font-size:10px;">${nm}nm</span>`;
+                        <span style="color:var(--sub-text);font-size:10px;">${nm}nm${bearingStr}</span>`;
                     
                     btn.onclick = () => openNearbyModal(item);
                     list.appendChild(btn);
@@ -4119,7 +4165,44 @@ async function findNearbyStations(lat, lon) {
         // 18. TAF RENDERING
         // ================================================================
         function renderTaf(d) {
+            // Raw TAF text
             document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
+            
+            // Issued + Expiry times
+            const issuedEl = document.getElementById('tafIssued');
+            if (d.time && d.forecast && d.forecast.length > 0) {
+                const issued = new Date(d.time.dt);
+                const expiry = new Date(d.forecast[d.forecast.length - 1].end_time.dt);
+                const now = new Date();
+                
+                const issuedStr = `${issued.getUTCDate().toString().padStart(2,'0')}/${(issued.getUTCMonth()+1).toString().padStart(2,'0')} ${issued.getUTCHours().toString().padStart(2,'0')}:${issued.getUTCMinutes().toString().padStart(2,'0')}Z`;
+                
+                const remainMs = expiry - now;
+                const remainHrs = Math.floor(remainMs / 3600000);
+                const remainMins = Math.floor((remainMs % 3600000) / 60000);
+                
+                let timeLeftStr = '';
+                if (remainMs > 0) {
+                    if (remainHrs > 0) {
+                        timeLeftStr = `${remainHrs}h ${remainMins}m left`;
+                    } else if (remainMins > 0) {
+                        timeLeftStr = `${remainMins}m left`;
+                    } else {
+                        timeLeftStr = 'Expiring soon';
+                    }
+                } else {
+                    timeLeftStr = '⚠️ EXPIRED';
+                }
+                
+                const expiryColor = remainMs < 1800000 ? 'var(--warn)' : 'var(--sub-text)';  // warn if <30min
+                
+                issuedEl.innerHTML = `
+                    <span>Issued: ${issuedStr}</span>
+                    <span style="color:${expiryColor};margin-left:12px;">⏱ ${timeLeftStr}</span>
+                `;
+            } else {
+                issuedEl.innerText = '--';
+            }
             tafDataCache = d.forecast;
             const bar  = document.getElementById('tafBar');
             const axis = document.getElementById('tafAxis');
@@ -4238,8 +4321,23 @@ async function findNearbyStations(lat, lon) {
 
         function updateClock() {
             const now = new Date();
-            document.getElementById('zuluTime').innerText =
-                `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}Z`;
+            const zuluStr = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}Z`;
+            document.getElementById('zuluTimeMain').innerText = zuluStr;
+            
+            // Update UTC offset for current airport (if available)
+            const offsetEl = document.getElementById('zuluTimeOffset');
+            if (stationData?.latitude && stationData?.longitude && meteoDataCache) {
+                const offsetSec = stationOffsetSec || 0;
+                const offsetHrs = Math.round(offsetSec / 3600);
+                if (offsetHrs === 0) {
+                    offsetEl.innerText = 'UTC';
+                } else {
+                    const sign = offsetHrs > 0 ? '+' : '';
+                    offsetEl.innerText = `UTC${sign}${offsetHrs}`;
+                }
+            } else {
+                offsetEl.innerText = 'UTC';
+            }
 
             if (document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer');
@@ -4302,26 +4400,89 @@ async function findNearbyStations(lat, lon) {
 
         async function addCustomCity() {
             const input = document.getElementById('newCityInput');
-            const val   = input.value.trim();
+            const val   = input.value.trim().toUpperCase();
             if (!val) return;
+            
             const btn = document.getElementById('btnAddCity');
             btn.innerText = "⏳";
+            btn.disabled = true;
+            
             try {
+                console.log(`[World Clock] Searching for: ${val}`);
+                
+                // Try AVWX search API
                 const res = await secureFetch(`/api/weather?type=search&station=${val}`);
-                let station = Array.isArray(res) ? (res.length === 0 ? null : res[0]) : res;
-                if (!station) throw new Error("No city found");
-                const tzRes  = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${station.latitude}&longitude=${station.longitude}&current_weather=true&timezone=auto`);
+                console.log('[World Clock] Search result:', res);
+                
+                // Handle various response shapes
+                let station;
+                if (Array.isArray(res)) {
+                    station = res.length > 0 ? res[0] : null;
+                } else if (res && typeof res === 'object') {
+                    // Check if it's {0: {...}, 1: {...}} format
+                    const items = Object.values(res).filter(item => 
+                        item && typeof item === 'object' && item.icao
+                    );
+                    station = items.length > 0 ? items[0] : res;
+                } else {
+                    station = res;
+                }
+                
+                if (!station || !station.latitude || !station.longitude) {
+                    throw new Error("Airport not found in database");
+                }
+                
+                console.log('[World Clock] Station found:', station);
+                
+                // Get timezone from Open-Meteo
+                const tzRes = await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=${station.latitude}&longitude=${station.longitude}&current=temperature_2m&timezone=auto`
+                );
+                
+                if (!tzRes.ok) throw new Error("Timezone API failed");
+                
                 const tzData = await tzRes.json();
-                if (!tzData.timezone) throw new Error("Timezone lookup failed");
-                const newCity = { n: station.city || station.name, icao: station.icao, z: tzData.timezone };
+                console.log('[World Clock] Timezone data:', tzData);
+                
+                if (!tzData.timezone) {
+                    throw new Error("Could not determine timezone");
+                }
+                
+                const cityName = station.city || station.name || station.icao;
+                const newCity = { 
+                    n: cityName, 
+                    icao: station.icao, 
+                    z: tzData.timezone 
+                };
+                
+                // Check for duplicates
+                const exists = cityList.some(c => c.icao === station.icao);
+                if (exists) {
+                    showToast(`⚠️ ${station.icao} already in list`);
+                    input.value = '';
+                    return;
+                }
+                
                 cityList.push(newCity);
                 localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
-                if (shouldBackupCities()) { await savecitiesToCloud(); showToast(`✅ ${newCity.n} added & backed up`); }
-                else { promptWorldClockBackup(); }
+                
+                if (shouldBackupCities()) { 
+                    await savecitiesToCloud(); 
+                    showToast(`✅ ${cityName} added & backed up`); 
+                } else { 
+                    promptWorldClockBackup(); 
+                }
+                
                 input.value = '';
                 updateClock();
-            } catch(e) { console.error(e); alert("Could not find city or airport. Try a valid ICAO code (e.g. KJFK)."); }
-            finally   { btn.innerText = "Add"; }
+                
+            } catch(e) { 
+                console.error('[World Clock] Error:', e);
+                showToast(`❌ Could not add ${val}. Try a valid ICAO code.`);
+            } finally {
+                btn.innerText = "Add";
+                btn.disabled = false;
+            }
         }
 
         async function removeCity(index) {
