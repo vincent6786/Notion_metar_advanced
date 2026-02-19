@@ -5485,14 +5485,9 @@ async function findNearbyStations(lat, lon) {
         // ================================================================
         async function copyMetar() {
             const element = document.getElementById('rawMetar');
-            if (!element) return;
-            
-            // Get plain text (strip HTML formatting)
-            const text = element.innerText || element.textContent;
-            
-            if (!text || text === 'Select an airport above.' || text === 'Loading...') {
-                showToast('⚠️ No METAR to copy');
-                return;
+            const text = element.innerText?.trim();
+            if (!text || text.includes('Select an airport') || text.length < 10) {
+                showToast('⚠️ No METAR to copy'); return;
             }
             
             try {
