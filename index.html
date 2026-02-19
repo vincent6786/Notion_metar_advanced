@@ -1720,6 +1720,228 @@
             align-items: center;
             margin-bottom: 8px;
         }
+
+        /* ============================================================
+           32. PHONE NUMBER CARDS
+        ============================================================ */
+        .phone-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .phone-label {
+            font-size: 10px;
+            color: var(--sub-text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+        .phone-number {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: 'SF Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .phone-number:active {
+            transform: scale(0.98);
+        }
+
+        /* ============================================================
+           33. MULTI-AIRPORT DASHBOARD
+        ============================================================ */
+        .multi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .multi-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .multi-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(10,132,255,0.2);
+        }
+        .multi-card:active {
+            transform: translateY(0);
+        }
+        
+        .multi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .multi-icao {
+            font-size: 20px;
+            font-weight: 800;
+            font-family: 'SF Mono', monospace;
+            color: var(--text);
+        }
+        .multi-remove {
+            background: rgba(255,69,58,0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .multi-remove:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+        
+        .multi-name {
+            font-size: 11px;
+            color: var(--sub-text);
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .multi-data {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-size: 11px;
+        }
+        .multi-data-item {
+            background: rgba(255,255,255,0.03);
+            padding: 6px 8px;
+            border-radius: 6px;
+        }
+        .multi-data-label {
+            color: var(--sub-text);
+            font-size: 9px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .multi-data-value {
+            font-weight: 700;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        .multi-age {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 9px;
+            color: var(--sub-text);
+        }
+        
+        .multi-loading {
+            color: var(--sub-text);
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+        }
+        
+        .multi-add-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .multi-add-input {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            outline: none;
+        }
+        .multi-add-input:focus {
+            border-color: var(--accent);
+        }
+        .multi-add-btn {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .multi-add-btn:active {
+            transform: scale(0.98);
+        }
+        
+        @media (min-width: 820px) {
+            .multi-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+        @media (min-width: 1100px) {
+            .multi-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 28px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: var(--accent);
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
         
     </style>
 </head>
@@ -1809,6 +2031,7 @@
         <div class="tab"          onclick="setTab('tools')">TOOLS</div>
         <div class="tab"          onclick="setTab('settings')">SETTINGS</div>
         <div class="tab"          onclick="setTab('help')">HELP</div>
+        <div id="tabMulti" class="tab" style="display:none;" onclick="setTab('multi')">MULTI</div>
     </div>
 
     <!-- ================================================================
@@ -1963,7 +2186,6 @@
                 </div>
             </div>
         </div>
-        <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">Raw TAF</div>
         <div class="section-header-row">
             <div class="section-title" style="margin:0;">RAW TAF</div>
             <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
@@ -1994,6 +2216,11 @@
         </div>
         <div class="section-title">RUNWAYS & FREQ</div>
         <div id="freqContainer" class="freq-grid"></div>
+        <!-- ATIS/AWOS Phone Numbers -->
+        <div class="section-title">ATIS / AWOS PHONE</div>
+        <div id="atisPhones" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:16px;">
+            <div style="color:#555;font-size:12px;">Loading...</div>
+        </div>
         <div class="section-title">RUNWAY WIND COMPONENTS</div>
         <div style="display:flex; gap:16px; margin-bottom:8px; font-size:10px; color:var(--sub-text); padding:0 4px;">
             <div style="display:flex; align-items:center; gap:6px;">
@@ -2180,6 +2407,21 @@
                 style="justify-content:center; margin-bottom:20px; border:1px solid var(--danger);">
             <span>🔴 Cockpit Night Mode</span>
         </button>
+
+        <!-- Multi-Airport Dashboard Toggle -->
+        <div class="section-title">Multi-Airport Dashboard</div>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-weight:700;margin-bottom:4px;">Enable Dashboard Tab</div>
+                    <div style="font-size:12px;color:var(--sub-text);">Track up to 8 airports simultaneously</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleMultiDashboard" onchange="toggleMultiDashboard()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
 
         <!-- API Usage Monitor -->
         <div class="section-title">API Usage Monitor</div>
@@ -2623,6 +2865,29 @@
             NOT FOR NAVIGATION. Always cross-check official sources (AIS, official ATIS, ATC) before flight.
         </div>
     </div>
+
+        <!-- ================================================================
+             TAB: MULTI-AIRPORT DASHBOARD (Optional)
+        ================================================================ -->
+        <div id="tab-multi" class="view-section" style="display:none;">
+            <div style="color:var(--sub-text);font-size:13px;margin-bottom:16px;line-height:1.5;">
+                Track multiple airports at once. Tap any card to load full details in other tabs.
+            </div>
+            
+            <div class="multi-add-form">
+                <input type="text" 
+                       id="multiAddInput" 
+                       class="multi-add-input" 
+                       placeholder="Enter ICAO (e.g. KJFK)" 
+                       maxlength="4"
+                       onkeypress="if(event.key==='Enter') addMultiAirport()">
+                <button class="multi-add-btn" onclick="addMultiAirport()">+ Add</button>
+            </div>
+            
+            <div id="multiGrid" class="multi-grid">
+                <div class="multi-loading">Add airports above to start tracking</div>
+            </div>
+        </div>
     
 </body>
 
@@ -3151,6 +3416,8 @@
             checkNightModeSaved();
             renderFavoritesSettings();
             renderHistory();
+            checkMultiDashboardEnabled();
+            
 
             const savedCraft = localStorage.getItem('efb_craft');
             if (savedCraft) document.getElementById('craftPad').value = savedCraft;
@@ -4294,6 +4561,48 @@ async function findNearbyStations(lat, lon) {
                     fContainer.appendChild(card);
                 });
             }
+            // ── ATIS/AWOS Phone Numbers ──
+            const phoneContainer = document.getElementById('atisPhones');
+            if (phoneContainer) {
+                let phones = [];
+                
+                // Extract from communications array
+                if (d.communications && Array.isArray(d.communications)) {
+                    phones = d.communications
+                        .filter(c => {
+                            const type = (c.type || '').toUpperCase();
+                            return (type === 'ATIS' || type === 'AWOS' || type === 'ASOS') && c.phone;
+                        })
+                        .map(c => ({
+                            type: c.type.toUpperCase(),
+                            phone: c.phone,
+                            freq: c.frequency ? `${c.frequency} MHz` : ''
+                        }));
+                }
+                
+                // Also check for phone field directly on station
+                if (d.phone && !phones.some(p => p.phone === d.phone)) {
+                    phones.push({
+                        type: 'STATION',
+                        phone: d.phone,
+                        freq: ''
+                    });
+                }
+                
+                if (phones.length > 0) {
+                    phoneContainer.innerHTML = phones.map(p => `
+                        <div class="phone-card">
+                            <div class="phone-label">${p.type}${p.freq ? ' · ' + p.freq : ''}</div>
+                            <a href="tel:${p.phone}" class="phone-number">
+                                📞 ${p.phone}
+                            </a>
+                        </div>
+                    `).join('');
+                } else {
+                    phoneContainer.innerHTML = '<div style="color:#555;font-size:12px;padding:8px;">No phone numbers available for this station.</div>';
+                }
+            }
+            
             updateSunDisplay();
             const sunEl = document.getElementById('infoSun');
             sunEl.style.cursor = "pointer"; sunEl.style.textDecoration = "underline"; sunEl.style.textDecorationColor = "#555";
@@ -5260,7 +5569,7 @@ async function findNearbyStations(lat, lon) {
         let touchStartY = 0;
         let touchEndY = 0;
 
-        const tabOrder = ['metar', 'taf', 'info', 'atc', 'world', 'tools', 'settings', 'help'];
+        const tabOrder = ['metar', 'taf', 'info', 'atc', 'multi', 'world', 'tools', 'settings', 'help'];
 
         function handleSwipe() {
             const swipeThreshold = 80;  // Minimum swipe distance
@@ -5327,6 +5636,229 @@ async function findNearbyStations(lat, lon) {
                 touchEndY = e.changedTouches[0].screenY;
                 handleSwipe();
             }, { passive: true });
+        }
+
+        // ================================================================
+        // 28. MULTI-AIRPORT DASHBOARD
+        // ================================================================
+        let multiAirports = [];
+        let multiDataCache = {};
+        let multiRefreshInterval = null;
+
+        function toggleMultiDashboard() {
+            const enabled = document.getElementById('toggleMultiDashboard').checked;
+            const tabBtn = document.getElementById('tabMulti');
+            
+            if (enabled) {
+                tabBtn.style.display = 'block';
+                localStorage.setItem('efb_multi_dashboard', 'true');
+                showToast('✅ Multi-Airport Dashboard enabled');
+                loadMultiAirports();
+            } else {
+                tabBtn.style.display = 'none';
+                localStorage.setItem('efb_multi_dashboard', 'false');
+                showToast('Multi-Airport Dashboard disabled');
+                if (multiRefreshInterval) {
+                    clearInterval(multiRefreshInterval);
+                    multiRefreshInterval = null;
+                }
+            }
+        }
+
+        function checkMultiDashboardEnabled() {
+            const enabled = localStorage.getItem('efb_multi_dashboard') === 'true';
+            const toggle = document.getElementById('toggleMultiDashboard');
+            const tabBtn = document.getElementById('tabMulti');
+            
+            if (toggle) toggle.checked = enabled;
+            if (tabBtn) tabBtn.style.display = enabled ? 'block' : 'none';
+            
+            if (enabled) {
+                loadMultiAirports();
+            }
+        }
+
+        function loadMultiAirports() {
+            const saved = localStorage.getItem('efb_multi_airports');
+            multiAirports = saved ? JSON.parse(saved) : [];
+            renderMultiDashboard();
+            
+            // Auto-refresh every 5 minutes
+            if (multiRefreshInterval) clearInterval(multiRefreshInterval);
+            if (multiAirports.length > 0) {
+                refreshMultiData();
+                multiRefreshInterval = setInterval(refreshMultiData, 300000);
+            }
+        }
+
+        function saveMultiAirports() {
+            localStorage.setItem('efb_multi_airports', JSON.stringify(multiAirports));
+        }
+
+        async function addMultiAirport() {
+            const input = document.getElementById('multiAddInput');
+            const icao = input.value.trim().toUpperCase();
+            
+            if (!icao || icao.length !== 4) {
+                showToast('⚠️ Enter a valid 4-letter ICAO code');
+                return;
+            }
+            
+            if (multiAirports.includes(icao)) {
+                showToast('⚠️ Already tracking ' + icao);
+                return;
+            }
+            
+            if (multiAirports.length >= 8) {
+                showToast('⚠️ Maximum 8 airports');
+                return;
+            }
+            
+            multiAirports.push(icao);
+            saveMultiAirports();
+            input.value = '';
+            
+            renderMultiDashboard();
+            fetchMultiAirportData(icao);
+            
+            if (!multiRefreshInterval) {
+                multiRefreshInterval = setInterval(refreshMultiData, 300000);
+            }
+        }
+
+        function removeMultiAirport(icao) {
+            multiAirports = multiAirports.filter(i => i !== icao);
+            delete multiDataCache[icao];
+            saveMultiAirports();
+            renderMultiDashboard();
+            
+            if (multiAirports.length === 0 && multiRefreshInterval) {
+                clearInterval(multiRefreshInterval);
+                multiRefreshInterval = null;
+            }
+        }
+
+        async function fetchMultiAirportData(icao) {
+            try {
+                const metar = await secureFetch(`/api/weather?type=metar&station=${icao}`);
+                if (metar && !metar.error) {
+                    multiDataCache[icao] = {
+                        metar: metar,
+                        fetchTime: Date.now()
+                    };
+                    renderMultiCard(icao);
+                }
+            } catch(e) {
+                console.error(`[Multi] Error fetching ${icao}:`, e);
+            }
+        }
+
+        async function refreshMultiData() {
+            console.log('[Multi] Refreshing all airports...');
+            for (const icao of multiAirports) {
+                await fetchMultiAirportData(icao);
+            }
+        }
+
+        function renderMultiDashboard() {
+            const grid = document.getElementById('multiGrid');
+            
+            if (multiAirports.length === 0) {
+                grid.innerHTML = '<div class="multi-loading">Add airports above to start tracking</div>';
+                return;
+            }
+            
+            grid.innerHTML = multiAirports.map(icao => {
+                const cached = multiDataCache[icao];
+                if (!cached) {
+                    return `
+                        <div class="multi-card">
+                            <div class="multi-header">
+                                <div class="multi-icao">${icao}</div>
+                                <div class="multi-remove" onclick="event.stopPropagation(); removeMultiAirport('${icao}')">×</div>
+                            </div>
+                            <div class="multi-loading">Loading...</div>
+                        </div>`;
+                }
+                
+                return renderMultiCardHTML(icao, cached);
+            }).join('');
+        }
+
+        function renderMultiCard(icao) {
+            const cached = multiDataCache[icao];
+            if (!cached) return;
+            
+            const cardEl = document.querySelector(`[data-icao="${icao}"]`);
+            if (cardEl) {
+                cardEl.outerHTML = renderMultiCardHTML(icao, cached);
+            } else {
+                renderMultiDashboard();
+            }
+        }
+
+        function renderMultiCardHTML(icao, cached) {
+            const m = cached.metar;
+            const rules = m.flight_rules || 'UNKN';
+            const rulesColor = {
+                VFR: 'var(--success)',
+                MVFR: 'var(--mvfr)',
+                IFR: 'var(--danger)',
+                LIFR: 'var(--lifr)'
+            }[rules] || '#555';
+            
+            const wind = m.wind_direction?.repr === 'VRB' 
+                ? `VRB/${m.wind_speed?.value || 0}kt`
+                : `${String(m.wind_direction?.value || 0).padStart(3,'0')}°/${m.wind_speed?.value || 0}kt`;
+            
+            const vis = m.visibility ? `${m.visibility.value} sm` : '--';
+            
+            const ceil = m.clouds?.[0] 
+                ? `${m.clouds[0].type} ${m.clouds[0].altitude.toString().padStart(3,'0')}`
+                : 'CLR';
+            
+            const temp = m.temperature?.value != null ? `${m.temperature.value}°C` : '--';
+            
+            const ageMin = Math.floor((Date.now() - new Date(m.time.dt)) / 60000);
+            const ageColor = ageMin > 60 ? 'var(--danger)' : 'var(--sub-text)';
+            
+            return `
+                <div class="multi-card" data-icao="${icao}" onclick="loadMultiAirport('${icao}')">
+                    <div class="multi-header">
+                        <div class="multi-icao" style="color:${rulesColor}">${icao}</div>
+                        <div class="multi-remove" onclick="event.stopPropagation(); removeMultiAirport('${icao}')">×</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                        <div style="background:${rulesColor};color:#000;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;">${rules}</div>
+                        <div class="multi-name">${m.station?.name || icao}</div>
+                    </div>
+                    <div class="multi-data">
+                        <div class="multi-data-item">
+                            <div class="multi-data-label">Wind</div>
+                            <div class="multi-data-value">${wind}</div>
+                        </div>
+                        <div class="multi-data-item">
+                            <div class="multi-data-label">Visibility</div>
+                            <div class="multi-data-value">${vis}</div>
+                        </div>
+                        <div class="multi-data-item">
+                            <div class="multi-data-label">Ceiling</div>
+                            <div class="multi-data-value">${ceil}</div>
+                        </div>
+                        <div class="multi-data-item">
+                            <div class="multi-data-label">Temp</div>
+                            <div class="multi-data-value">${temp}</div>
+                        </div>
+                    </div>
+                    <div class="multi-age" style="color:${ageColor}">${ageMin}m ago</div>
+                </div>`;
+        }
+
+        function loadMultiAirport(icao) {
+            document.getElementById('icao').value = icao;
+            loadData();
+            setTab('metar');
+            showToast(`Loading ${icao}...`);
         }
     
     </script>
