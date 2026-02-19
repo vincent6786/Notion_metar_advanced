@@ -1687,6 +1687,39 @@
             background: rgba(255, 159, 10, 0.15);
             color: var(--warn);
         }
+
+        /* ============================================================
+           31. COPY BUTTONS
+        ============================================================ */
+        .copy-btn {
+            background: rgba(10,132,255,0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .copy-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .section-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
         
     </style>
 </head>
@@ -1870,10 +1903,15 @@
             </div>
         </div>
 
+        <div class="section-header-row">
+            <div class="section-title" style="margin:0;">RAW METAR</div>
+            <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
+        </div>
         <div class="raw-text" id="rawMetar">Select an airport above.</div>
         <div class="metar-footer">
             <span id="mAge">--</span>
             <span id="mSpread">Spread: --</span>
+            <span id="mHumidity">RH: --%</span>
         </div>
 
         <!-- Nearby Stations -->
@@ -1926,7 +1964,11 @@
             </div>
         </div>
         <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">Raw TAF</div>
-        <div class="raw-text" id="rawTaf">Loading...</div>
+        <div class="section-header-row">
+            <div class="section-title" style="margin:0;">RAW TAF</div>
+            <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
+        </div>
+        <div class="raw-text" id="rawTaf">--</div>
         <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
         <div id="notamList" class="raw-text"
              style="max-height:300px; overflow-y:auto; font-size:11px; background:transparent; padding:0;">Loading...</div>
@@ -3926,6 +3968,24 @@
                 document.getElementById('mTempC').innerText = `${t}°C / ${dew != null ? dew : '--'}°C`;
                 document.getElementById('mTempF').innerText = `(${Math.round(t * 1.8 + 32)}°F)`;
                 document.getElementById('mSpread').innerText = `Spread: ${(t - dew).toFixed(1)}°C`;
+                
+                // Calculate Relative Humidity using Magnus formula
+                if (dew != null) {
+                    const rh = Math.round(100 * Math.exp((17.625 * dew) / (243.04 + dew)) / Math.exp((17.625 * t) / (243.04 + t)));
+                    document.getElementById('mHumidity').innerText = `RH: ${rh}%`;
+                    
+                    // Color code based on humidity level
+                    const humidityEl = document.getElementById('mHumidity');
+                    if (rh < 30) {
+                        humidityEl.style.color = 'var(--warn)'; // Dry
+                    } else if (rh > 80) {
+                        humidityEl.style.color = 'var(--accent)'; // Very humid
+                    } else {
+                        humidityEl.style.color = 'var(--sub-text)'; // Normal
+                    }
+                } else {
+                    document.getElementById('mHumidity').innerText = 'RH: --%';
+                }
             }
             const ageEl = document.getElementById('mAge');
             ageEl.innerText = `${minAgo}m ago`;
@@ -5103,6 +5163,66 @@ async function findNearbyStations(lat, lon) {
         window.addEventListener('offline', () => { showOfflineBanner(Date.now()); });
 
         // ================================================================
+        // 26b. CLIPBOARD FUNCTIONS
+        // ================================================================
+        async function copyMetar() {
+            const element = document.getElementById('rawMetar');
+            if (!element) return;
+            
+            // Get plain text (strip HTML formatting)
+            const text = element.innerText || element.textContent;
+            
+            if (!text || text === 'Select an airport above.' || text === 'Loading...') {
+                showToast('⚠️ No METAR to copy');
+                return;
+            }
+            
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('✅ METAR copied');
+            } catch(e) {
+                // Fallback for older browsers or iOS
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('✅ METAR copied');
+            }
+        }
+
+        async function copyTaf() {
+            const element = document.getElementById('rawTaf');
+            if (!element) return;
+            
+            const text = element.innerText || element.textContent;
+            
+            if (!text || text === '--' || text === 'Loading forecast...') {
+                showToast('⚠️ No TAF to copy');
+                return;
+            }
+            
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('✅ TAF copied');
+            } catch(e) {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('✅ TAF copied');
+            }
+        }
+    
+        // ================================================================
         // 27. LAUNCH ANIMATION & STARTUP
         // ================================================================
         function runLaunchAnimation() {
@@ -5132,6 +5252,83 @@ async function findNearbyStations(lat, lon) {
             initApp();
         });
 
+        // ================================================================
+        // 27b. SWIPE NAVIGATION
+        // ================================================================
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        const tabOrder = ['metar', 'taf', 'info', 'atc', 'world', 'tools', 'settings', 'help'];
+
+        function handleSwipe() {
+            const swipeThreshold = 80;  // Minimum swipe distance
+            const verticalThreshold = 50; // Maximum vertical movement
+            
+            const horizontalDiff = touchStartX - touchEndX;
+            const verticalDiff = Math.abs(touchStartY - touchEndY);
+            
+            // Ignore if vertical scroll (not a horizontal swipe)
+            if (verticalDiff > verticalThreshold) return;
+            
+            // Ignore if swipe too short
+            if (Math.abs(horizontalDiff) < swipeThreshold) return;
+            
+            // Get current active tab
+            const currentTab = document.querySelector('.view-section.active')?.id.replace('tab-', '');
+            if (!currentTab) return;
+            
+            const currentIndex = tabOrder.indexOf(currentTab);
+            if (currentIndex === -1) return;
+            
+            let newIndex;
+            
+            if (horizontalDiff > 0) {
+                // Swipe left → next tab
+                newIndex = (currentIndex + 1) % tabOrder.length;
+            } else {
+                // Swipe right → previous tab
+                newIndex = (currentIndex - 1 + tabOrder.length) % tabOrder.length;
+            }
+            
+            setTab(tabOrder[newIndex]);
+            
+            // Visual feedback
+            const newTab = document.getElementById(`tab-${tabOrder[newIndex]}`);
+            if (newTab) {
+                newTab.style.animation = 'none';
+                setTimeout(() => {
+                    newTab.style.animation = '';
+                }, 10);
+            }
+        }
+
+        // Only enable swipe on touch devices
+        if ('ontouchstart' in window) {
+            document.addEventListener('touchstart', e => {
+                // Ignore if touching an input, button, or scrollable element
+                const target = e.target;
+                if (target.tagName === 'INPUT' || 
+                    target.tagName === 'BUTTON' || 
+                    target.tagName === 'SELECT' ||
+                    target.closest('.metar-grid') ||
+                    target.closest('.raw-text') ||
+                    target.closest('canvas')) {
+                    return;
+                }
+                
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            document.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipe();
+            }, { passive: true });
+        }
+    
     </script>
 </body>
 </html>
