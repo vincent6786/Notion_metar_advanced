@@ -5943,6 +5943,12 @@ async function findNearbyStations(lat, lon) {
                 IFR: 'var(--danger)',
                 LIFR: 'var(--lifr)'
             }[rules] || '#555';
+            const rulesBg = {
+                VFR: 'var(--success)',
+                MVFR: 'var(--mvfr)',
+                IFR: 'var(--danger)',
+                LIFR: 'var(--lifr)'
+            }[rules] || '#555';
         
             const ageMin = Math.floor((Date.now() - new Date(m.time.dt)) / 60000);
             const ageColor = ageMin > 60 ? 'var(--danger)' : 'var(--sub-text)';
@@ -5951,14 +5957,13 @@ async function findNearbyStations(lat, lon) {
             return `
                 <div class="multi-card" data-icao="${icao}" onclick="loadMultiAirport('${icao}')">
                     <div class="multi-header">
-                        <div class="multi-icao" style="color:${rulesColor}">${icao}</div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div class="multi-icao">${icao}</div>
+                            <div style="background:${rulesBg};color:${rules==='VFR'?'#000':'#fff'};font-size:11px;font-weight:900;padding:3px 9px;border-radius:5px;letter-spacing:0.5px;">${rules}</div>
+                        </div>
                         <div class="multi-remove" onclick="event.stopPropagation(); removeMultiAirport('${icao}')">×</div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                        <div style="background:${rulesColor};color:${rules==='VFR'?'#000':'#fff'};font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;">${rules}</div>
-                        <div class="multi-name" style="font-size:11px;color:var(--sub-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.station?.name || icao}</div>
-                    </div>
-                    <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:8px;font-family:'SF Mono',monospace;font-size:10px;color:#d0d0d0;line-height:1.5;word-break:break-all;white-space:pre-wrap;">${formatRawMetar(rawMetar)}</div>
+                    <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:10px 10px 8px;font-family:'SF Mono',monospace;font-size:12px;color:#e0e0e0;line-height:1.6;word-break:break-all;white-space:pre-wrap;margin-top:6px;">${formatRawMetar(rawMetar)}</div>
                     <div class="multi-age" style="color:${ageColor};margin-top:6px;">${ageMin > 60 ? '⚠️ ' : ''}${ageMin}m ago · Tap to load full data</div>
                 </div>`;
         }
