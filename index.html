@@ -2699,319 +2699,319 @@
         </button>
     </div>
 
-    <!-- ================================================================
-         TAB: HELP / USER MANUAL
-    ================================================================ -->
-    <div id="tab-help" class="view-section">
-    
-            <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-            <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v2.0 · Cloud Edition · Quick reference for all features</div>
-    
-            <!-- METAR -->
-            <div class="help-section">
-                <div class="help-section-title">🌤 METAR Tab</div>
-                <div class="help-item">
-                    <div class="help-q">Wind Rose</div>
-                    <div class="help-a">Shows wind direction relative to the selected runway. <b style="color:var(--success);">Green = headwind</b>, <b style="color:var(--danger);">Red = tailwind</b>. The runway selector auto-picks the best runway for current winds.</div>
-                </div>
-                <div class="help-item">
-                    <div class="help-q">Flight Category Badge (top right)</div>
-                    <div class="help-a">
-                        <span style="background:var(--success);color:#000;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">VFR</span> Ceiling &gt;3000ft &amp; Vis &gt;5sm &nbsp;
-                        <span style="background:var(--mvfr);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">MVFR</span> Marginal &nbsp;
-                        <span style="background:var(--danger);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">IFR</span> &nbsp;
-                        <span style="background:var(--lifr);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">LIFR</span> Low IFR<br>
-                        <span style="color:var(--sub-text);">Tap the badge to open the legend. Tap the time badge to toggle Zulu ↔ Local airport time.</span>
+        <!-- ================================================================
+             TAB: HELP / USER MANUAL
+        ================================================================ -->
+        <div id="tab-help" class="view-section">
+        
+                <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v2.0 · Cloud Edition · Quick reference for all features</div>
+        
+                <!-- METAR -->
+                <div class="help-section">
+                    <div class="help-section-title">🌤 METAR Tab</div>
+                    <div class="help-item">
+                        <div class="help-q">Wind Rose</div>
+                        <div class="help-a">Shows wind direction relative to the selected runway. <b style="color:var(--success);">Green = headwind</b>, <b style="color:var(--danger);">Red = tailwind</b>. The runway selector auto-picks the best runway for current winds.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Flight Category Badge (top right)</div>
+                        <div class="help-a">
+                            <span style="background:var(--success);color:#000;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">VFR</span> Ceiling &gt;3000ft &amp; Vis &gt;5sm &nbsp;
+                            <span style="background:var(--mvfr);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">MVFR</span> Marginal &nbsp;
+                            <span style="background:var(--danger);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">IFR</span> &nbsp;
+                            <span style="background:var(--lifr);color:#fff;padding:1px 6px;border-radius:4px;font-weight:800;font-size:11px;">LIFR</span> Low IFR<br>
+                            <span style="color:var(--sub-text);">Tap the badge to open the legend. Tap the time badge to toggle Zulu ↔ Local airport time.</span>
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Trend Indicators (↗ ↘ →)</div>
+                        <div class="help-a">Appear next to wind, visibility, and ceiling values. Compares current reading against data from ~1 hour ago. <b>Requires at least 2 METAR loads</b> for the same airport to appear. <span style="color:var(--success);">↗ Better</span> · <span style="color:var(--danger);">↘ Worse</span> · <span style="color:var(--warn);">→ Steady</span></div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Nearby Stations</div>
+                        <div class="help-a">Tap any nearby airport chip to preview its weather in a popup card (METAR, distance, elevation). Tap <b>Load Full Data</b> to switch to that airport. Distance and bearing are shown from current station.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Raw METAR highlights</div>
+                        <div class="help-a"><span style="color:var(--danger);font-weight:800;">Red</span> = gusts/low ceiling &nbsp; <span style="color:var(--lifr);font-weight:800;">Purple</span> = low visibility &nbsp; <span style="color:var(--warn);font-weight:800;">Orange</span> = thunderstorm / heavy precip</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">📋 Copy Button</div>
+                        <div class="help-a">Copies the raw METAR or TAF text to your clipboard for pasting into flight planning tools.</div>
                     </div>
                 </div>
-                <div class="help-item">
-                    <div class="help-q">Trend Indicators (↗ ↘ →)</div>
-                    <div class="help-a">Appear next to wind, visibility, and ceiling values. Compares current reading against data from ~1 hour ago. <b>Requires at least 2 METAR loads</b> for the same airport to appear. <span style="color:var(--success);">↗ Better</span> · <span style="color:var(--danger);">↘ Worse</span> · <span style="color:var(--warn);">→ Steady</span></div>
+        
+                <!-- TAF -->
+                <div class="help-section">
+                    <div class="help-section-title">📅 TAF Tab</div>
+                    <div class="help-item">
+                        <div class="help-q">Meteogram (24h trend)</div>
+                        <div class="help-a">Shows temperature (red line), dewpoint (blue line), wind arrows, and weather icons from Open-Meteo. The <span style="color:#0a84ff;font-weight:700;">blue NOW line</span> marks your current position. <b>Advisory only</b> — not official aviation data. When temp/dewpoint lines nearly converge (red area), fog risk is high.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">TAF Timeline Bar</div>
+                        <div class="help-a">Each coloured block is a TAF period. Tap a block to expand its details. The <span style="color:#ff453a;font-weight:700;">red needle</span> marks now — tap it to see UTC and local time. The thin strip below shows the day/night cycle at that airport.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">TAF Expiry Timer</div>
+                        <div class="help-a">Shows how much time remains on the current TAF. Turns <span style="color:var(--warn);">orange</span> when less than 30 minutes remain. An <span style="color:var(--danger);">⚠️ EXPIRED</span> tag appears if the TAF has lapsed.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">NOTAMs</div>
+                        <div class="help-a">Colour-coded: <span style="color:#ff453a;font-weight:800;">⛔ Critical</span> (closures, unserviceable navaids), <span style="color:#ff9f0a;font-weight:800;">⚠️ Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">ℹ️ Info</span>. Data from FAA aviationweather.gov.</div>
+                    </div>
                 </div>
-                <div class="help-item">
-                    <div class="help-q">Nearby Stations</div>
-                    <div class="help-a">Tap any nearby airport chip to preview its weather in a popup card (METAR, distance, elevation). Tap <b>Load Full Data</b> to switch to that airport. Distance and bearing are shown from current station.</div>
+        
+                <!-- INFO -->
+                <div class="help-section">
+                    <div class="help-section-title">ℹ️ INFO Tab</div>
+                    <div class="help-item">
+                        <div class="help-q">Pressure &amp; Density Altitude</div>
+                        <div class="help-a"><b>Pressure Alt</b> = ISA-corrected altitude. <b>Density Alt</b> = performance altitude. A <span style="color:var(--warn);">⚠️ warning</span> appears if DA is &gt;2000ft above field elevation — expect degraded aircraft performance.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Sunrise / Sunset</div>
+                        <div class="help-a">Times default to Zulu (UTC). <b>Tap the time</b> to toggle between UTC and local airport time.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Runway Wind Components</div>
+                        <div class="help-a">Shows headwind ↑ / tailwind ↓ and crosswind ➡ / ⬅ for every runway. If a runway exceeds your personal crosswind limit (set in Tools), a red ⚠️ badge appears.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Frequencies &amp; ATIS Phone</div>
+                        <div class="help-a">Frequencies come from AVWX / aviationweather.gov — available for most ICAO airports. ATIS phone numbers are built-in for major Taiwan airports (RCTP, RCSS, RCKH, RCMQ, RCFN, RCBS, RCKU). For other airports, a link to AirNav is provided.</div>
+                    </div>
                 </div>
-                <div class="help-item">
-                    <div class="help-q">Raw METAR highlights</div>
-                    <div class="help-a"><span style="color:var(--danger);font-weight:800;">Red</span> = gusts/low ceiling &nbsp; <span style="color:var(--lifr);font-weight:800;">Purple</span> = low visibility &nbsp; <span style="color:var(--warn);font-weight:800;">Orange</span> = thunderstorm / heavy precip</div>
+        
+                <!-- ATC -->
+                <div class="help-section">
+                    <div class="help-section-title">📡 ATC Tab</div>
+                    <div class="help-item">
+                        <div class="help-q">CRAFT Clearance Recorder</div>
+                        <div class="help-a">Scratchpad for IFR clearances using the CRAFT format: <b>C</b>learance limit · <b>R</b>oute · <b>A</b>ltitude · <b>F</b>requency · <b>T</b>ransponder. Auto-saves as you type.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Live Audio Streams</div>
+                        <div class="help-a">In-app ATIS and ATC scanner streams for major Taiwan airports (RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN) via TWATC.net. For all other airports, use the LiveATC button.</div>
+                    </div>
                 </div>
-                <div class="help-item">
-                    <div class="help-q">📋 Copy Button</div>
-                    <div class="help-a">Copies the raw METAR or TAF text to your clipboard for pasting into flight planning tools.</div>
+        
+                <!-- TOOLS -->
+                <div class="help-section">
+                    <div class="help-section-title">🛠 TOOLS Tab</div>
+                    <div class="help-item">
+                        <div class="help-q">Cockpit Timer</div>
+                        <div class="help-a">Countdown timer for fuel burn or holding patterns. Presets: 15/30/45/60 minutes. The card flashes red and vibrates on expiry. Use PAUSE / RESUME to interrupt.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Personal Minimums</div>
+                        <div class="help-a">Set your limits for crosswind and ceiling. The app checks live METAR data and shows <span style="color:var(--success);font-weight:800;">GO ✅</span> or <span style="color:var(--danger);font-weight:800;">NO-GO ⛔</span>. A red banner appears at the top when conditions exceed your limits.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">E6B Flight Computer</div>
+                        <div class="help-a">Calculates <b>Density Altitude</b>, <b>True Airspeed</b>, <b>Estimated Cloud Base</b>, and <b>Freezing Level</b> from your inputs. Supports hPa/inHg and °C/°F.</div>
+                    </div>
                 </div>
+        
+                <!-- WORLD -->
+                <div class="help-section">
+                    <div class="help-section-title">🌍 WORLD Tab</div>
+                    <div class="help-item">
+                        <div class="help-q">World Clock</div>
+                        <div class="help-a">Live local times for airports worldwide. Type any ICAO code (e.g. EGLL) and tap <b>Add</b>. Timezone is auto-detected via coordinates. Tap <b>✕</b> to remove a city.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Zulu Time Badge</div>
+                        <div class="help-a">Tap the time badge in the top-right to toggle between Zulu and the local time at your currently loaded airport. The offset (e.g. UTC+8) is shown below the time.</div>
+                    </div>
+                </div>
+        
+                <!-- MULTI -->
+                <div class="help-section">
+                    <div class="help-section-title">🗂 MULTI Tab (Dashboard)</div>
+                    <div class="help-item">
+                        <div class="help-q">Enabling the Dashboard</div>
+                        <div class="help-a">Go to <b>Settings → Multi-Airport Dashboard</b> and toggle it on. A new MULTI tab will appear. Track up to 8 airports simultaneously.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Cards</div>
+                        <div class="help-a">Each card shows the raw METAR string with flight category colour and age. Tap any card to load that airport's full data in all other tabs.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Auto-Refresh &amp; Cloud Sync</div>
+                        <div class="help-a">Data refreshes every 5 minutes automatically. Your airport list is saved to Cloud Backup (if enabled) so it restores on any device.</div>
+                    </div>
+                </div>
+        
+                <!-- SETTINGS -->
+                <div class="help-section">
+                    <div class="help-section-title">⚙️ SETTINGS Tab</div>
+                    <div class="help-item">
+                        <div class="help-q">Favorite Airports ★</div>
+                        <div class="help-a">Appear as gold chips above the search bar. Synced to Cloud Backup when enabled.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Default Airport</div>
+                        <div class="help-a">Loaded automatically every time you open the app.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Cockpit Night Mode 🔴</div>
+                        <div class="help-a">Switches all UI colours to red-on-black. Tap again (shows "Day Mode") to return to normal.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Cloud Backup ☁️</div>
+                        <div class="help-a">Saves favorites, default airport, world clock cities, and multi-airport list using a 4-6 digit code. No account needed. Restore on any device with your code.</div>
+                    </div>
+                </div>
+        
+                <!-- SEARCH & GPS -->
+                <div class="help-section">
+                    <div class="help-section-title">🔍 Search &amp; GPS</div>
+                    <div class="help-item">
+                        <div class="help-q">📍 GPS Button</div>
+                        <div class="help-a">Finds the nearest aviation weather station within 150nm using your device GPS. Allow location permission when prompted.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">↻ Force Refresh</div>
+                        <div class="help-a">Clears the 10-minute data cache and fetches the latest data from all sources immediately.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Swipe Navigation</div>
+                        <div class="help-a">On touch devices, swipe left/right anywhere on screen to move between tabs. Swiping is disabled on inputs, buttons, canvas, and scrollable cards to avoid conflicts.</div>
+                    </div>
+                </div>
+        
             </div>
     
-            <!-- TAF -->
+            <!-- SECTION: TAF -->
             <div class="help-section">
                 <div class="help-section-title">📅 TAF Tab</div>
                 <div class="help-item">
                     <div class="help-q">Meteogram (24h trend)</div>
-                    <div class="help-a">Shows temperature (red line), dewpoint (blue line), wind arrows, and weather icons from Open-Meteo. The <span style="color:#0a84ff;font-weight:700;">blue NOW line</span> marks your current position. <b>Advisory only</b> — not official aviation data. When temp/dewpoint lines nearly converge (red area), fog risk is high.</div>
+                    <div class="help-a">Shows temperature (red), dewpoint (blue), wind arrows, and weather icons over 24 hours from Open-Meteo. The <span style="color:#0a84ff;font-weight:700;">blue NOW line</span> shows your current position in time. <b>Advisory only</b> — not official aviation data.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">TAF Timeline Bar</div>
-                    <div class="help-a">Each coloured block is a TAF period. Tap a block to expand its details. The <span style="color:#ff453a;font-weight:700;">red needle</span> marks now — tap it to see UTC and local time. The thin strip below shows the day/night cycle at that airport.</div>
+                    <div class="help-a">Each coloured block is a TAF forecast period. Tap a block to see full details (wind, vis, wx, clouds). The <span style="color:#ff453a;font-weight:700;">red needle</span> marks the current time — tap it to see UTC and local time.</div>
                 </div>
                 <div class="help-item">
-                    <div class="help-q">TAF Expiry Timer</div>
-                    <div class="help-a">Shows how much time remains on the current TAF. Turns <span style="color:var(--warn);">orange</span> when less than 30 minutes remain. An <span style="color:var(--danger);">⚠️ EXPIRED</span> tag appears if the TAF has lapsed.</div>
+                    <div class="help-q">Sky Gradient Strip</div>
+                    <div class="help-a">The thin strip below the TAF bar shows day/night cycle. <span style="color:#0ea5e9;font-weight:700;">Blue = day</span>, <span style="color:#f97316;font-weight:700;">Orange = dawn/dusk</span>, <span style="color:#8e8e93;font-weight:700;">Dark = night</span>.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">NOTAMs</div>
-                    <div class="help-a">Colour-coded: <span style="color:#ff453a;font-weight:800;">⛔ Critical</span> (closures, unserviceable navaids), <span style="color:#ff9f0a;font-weight:800;">⚠️ Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">ℹ️ Info</span>. Data from FAA aviationweather.gov.</div>
+                    <div class="help-a">Notices to Airmen are colour-coded: <span style="color:#ff453a;font-weight:800;">⛔ Critical</span> (closures, unserviceable), <span style="color:#ff9f0a;font-weight:800;">⚠️ Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">ℹ️ Info</span> (general).</div>
                 </div>
             </div>
     
-            <!-- INFO -->
+            <!-- SECTION: INFO -->
             <div class="help-section">
                 <div class="help-section-title">ℹ️ INFO Tab</div>
                 <div class="help-item">
                     <div class="help-q">Pressure &amp; Density Altitude</div>
-                    <div class="help-a"><b>Pressure Alt</b> = ISA-corrected altitude. <b>Density Alt</b> = performance altitude. A <span style="color:var(--warn);">⚠️ warning</span> appears if DA is &gt;2000ft above field elevation — expect degraded aircraft performance.</div>
+                    <div class="help-a">Calculated from current QNH and temperature. <b>Pressure Alt</b> = ISA-corrected altitude. <b>Density Alt</b> = performance altitude — the higher it is above field elevation, the more your aircraft performs like it's at a higher airport. A <span style="color:var(--warn);">⚠️ warning</span> appears if DA is &gt;2000ft above field elevation.</div>
+                </div>
+                <div class="help-item">
+                    <div class="help-q">ISA Deviation</div>
+                    <div class="help-a">How far the current temperature is from the International Standard Atmosphere. Positive = warmer than standard (worse performance), Negative = cooler (better performance).</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">Sunrise / Sunset</div>
-                    <div class="help-a">Times default to Zulu (UTC). <b>Tap the time</b> to toggle between UTC and local airport time.</div>
+                    <div class="help-a">Times are shown in Zulu (UTC) by default. <b>Tap the time</b> to toggle between UTC and local airport time.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">Runway Wind Components</div>
-                    <div class="help-a">Shows headwind ↑ / tailwind ↓ and crosswind ➡ / ⬅ for every runway. If a runway exceeds your personal crosswind limit (set in Tools), a red ⚠️ badge appears.</div>
-                </div>
-                <div class="help-item">
-                    <div class="help-q">Frequencies &amp; ATIS Phone</div>
-                    <div class="help-a">Frequencies come from AVWX / aviationweather.gov — available for most ICAO airports. ATIS phone numbers are built-in for major Taiwan airports (RCTP, RCSS, RCKH, RCMQ, RCFN, RCBS, RCKU). For other airports, a link to AirNav is provided.</div>
+                    <div class="help-a">Shows headwind ↑ / tailwind ↓ and crosswind ➡ / ⬅ for every runway. If a runway exceeds your personal crosswind limit (set in Tools), it shows a red ⚠️ badge.</div>
                 </div>
             </div>
     
-            <!-- ATC -->
+            <!-- SECTION: ATC -->
             <div class="help-section">
                 <div class="help-section-title">📡 ATC Tab</div>
                 <div class="help-item">
                     <div class="help-q">CRAFT Clearance Recorder</div>
-                    <div class="help-a">Scratchpad for IFR clearances using the CRAFT format: <b>C</b>learance limit · <b>R</b>oute · <b>A</b>ltitude · <b>F</b>requency · <b>T</b>ransponder. Auto-saves as you type.</div>
+                    <div class="help-a">A scratchpad for copying your IFR clearance using the CRAFT format:<br><b>C</b>learance limit · <b>R</b>oute · <b>A</b>ltitude · <b>F</b>requency · <b>T</b>ransponder. Your notes are saved automatically and persist between sessions.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">Live Audio Streams</div>
-                    <div class="help-a">In-app ATIS and ATC scanner streams for major Taiwan airports (RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN) via TWATC.net. For all other airports, use the LiveATC button.</div>
+                    <div class="help-a">ATIS and ATC scanner streams are available for Taiwanese airports (RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN) powered by TWATC.net. For all other airports, use the LiveATC button.</div>
                 </div>
             </div>
     
-            <!-- TOOLS -->
+            <!-- SECTION: TOOLS -->
             <div class="help-section">
                 <div class="help-section-title">🛠 TOOLS Tab</div>
                 <div class="help-item">
                     <div class="help-q">Cockpit Timer</div>
-                    <div class="help-a">Countdown timer for fuel burn or holding patterns. Presets: 15/30/45/60 minutes. The card flashes red and vibrates on expiry. Use PAUSE / RESUME to interrupt.</div>
+                    <div class="help-a">A countdown timer for fuel burn monitoring or holding pattern timing. Choose 15/30/45/60m presets or use START/PAUSE/RESET. The card flashes red and vibrates when time expires.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">Personal Minimums</div>
-                    <div class="help-a">Set your limits for crosswind and ceiling. The app checks live METAR data and shows <span style="color:var(--success);font-weight:800;">GO ✅</span> or <span style="color:var(--danger);font-weight:800;">NO-GO ⛔</span>. A red banner appears at the top when conditions exceed your limits.</div>
+                    <div class="help-a">Enter your personal limits for crosswind and ceiling. The app checks live METAR data against your limits and shows a <span style="color:var(--success);font-weight:800;">GO ✅</span> or <span style="color:var(--danger);font-weight:800;">NO-GO ⛔</span> result. A red banner also appears at the top of the screen.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">E6B Flight Computer</div>
-                    <div class="help-a">Calculates <b>Density Altitude</b>, <b>True Airspeed</b>, <b>Estimated Cloud Base</b>, and <b>Freezing Level</b> from your inputs. Supports hPa/inHg and °C/°F.</div>
+                    <div class="help-a">Enter Indicated Altitude, IAS, QNH, temperature, and dewpoint to calculate: <b>Density Altitude</b>, <b>True Airspeed</b>, <b>Estimated Cloud Base</b>, and <b>Freezing Level</b>. Supports both hPa/inHg and °C/°F.</div>
                 </div>
             </div>
     
-            <!-- WORLD -->
+            <!-- SECTION: WORLD -->
             <div class="help-section">
                 <div class="help-section-title">🌍 WORLD Tab</div>
                 <div class="help-item">
                     <div class="help-q">World Clock</div>
-                    <div class="help-a">Live local times for airports worldwide. Type any ICAO code (e.g. EGLL) and tap <b>Add</b>. Timezone is auto-detected via coordinates. Tap <b>✕</b> to remove a city.</div>
+                    <div class="help-a">Shows live local time for cities around the world with their UTC offset. Type a city name or ICAO code and tap <b>Add</b> to add it. Tap <b>✕</b> to remove a city.</div>
                 </div>
                 <div class="help-item">
-                    <div class="help-q">Zulu Time Badge</div>
-                    <div class="help-a">Tap the time badge in the top-right to toggle between Zulu and the local time at your currently loaded airport. The offset (e.g. UTC+8) is shown below the time.</div>
+                    <div class="help-q">Cloud Backup of Cities</div>
+                    <div class="help-a">If you have Cloud Backup enabled, you'll be asked to also back up your city list. This lets you restore your world clock on any device using your Backup Code.</div>
                 </div>
             </div>
     
-            <!-- MULTI -->
-            <div class="help-section">
-                <div class="help-section-title">🗂 MULTI Tab (Dashboard)</div>
-                <div class="help-item">
-                    <div class="help-q">Enabling the Dashboard</div>
-                    <div class="help-a">Go to <b>Settings → Multi-Airport Dashboard</b> and toggle it on. A new MULTI tab will appear. Track up to 8 airports simultaneously.</div>
-                </div>
-                <div class="help-item">
-                    <div class="help-q">Cards</div>
-                    <div class="help-a">Each card shows the raw METAR string with flight category colour and age. Tap any card to load that airport's full data in all other tabs.</div>
-                </div>
-                <div class="help-item">
-                    <div class="help-q">Auto-Refresh &amp; Cloud Sync</div>
-                    <div class="help-a">Data refreshes every 5 minutes automatically. Your airport list is saved to Cloud Backup (if enabled) so it restores on any device.</div>
-                </div>
-            </div>
-    
-            <!-- SETTINGS -->
+            <!-- SECTION: SETTINGS -->
             <div class="help-section">
                 <div class="help-section-title">⚙️ SETTINGS Tab</div>
                 <div class="help-item">
                     <div class="help-q">Favorite Airports ★</div>
-                    <div class="help-a">Appear as gold chips above the search bar. Synced to Cloud Backup when enabled.</div>
+                    <div class="help-a">Favorited airports appear as gold chips at the top of the search bar for quick access. They are pinned above your recent history.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">Default Airport</div>
-                    <div class="help-a">Loaded automatically every time you open the app.</div>
+                    <div class="help-a">The app loads this airport's weather automatically every time you open it.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">Cockpit Night Mode 🔴</div>
-                    <div class="help-a">Switches all UI colours to red-on-black. Tap again (shows "Day Mode") to return to normal.</div>
+                    <div class="help-a">Switches all colours to red-on-black for dark cockpit environments. Preserves your night vision. Tap again (shows "Day Mode") to return to normal.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">Cloud Backup ☁️</div>
-                    <div class="help-a">Saves favorites, default airport, world clock cities, and multi-airport list using a 4-6 digit code. No account needed. Restore on any device with your code.</div>
+                    <div class="help-a">Your airport favorites, default airport, and settings are saved to the cloud with a 4-6 digit Backup Code. No account needed. Restore on any device by entering your code. <b>Only airport preferences are stored — no personal data.</b></div>
                 </div>
             </div>
     
-            <!-- SEARCH & GPS -->
+            <!-- SECTION: SEARCH & GPS -->
             <div class="help-section">
                 <div class="help-section-title">🔍 Search &amp; GPS</div>
                 <div class="help-item">
+                    <div class="help-q">Search Bar</div>
+                    <div class="help-a">Type any ICAO code (4 letters, e.g. RCTP, KJFK, EGLL) and press Enter or the ↻ button. The field auto-capitalises.</div>
+                </div>
+                <div class="help-item">
                     <div class="help-q">📍 GPS Button</div>
-                    <div class="help-a">Finds the nearest aviation weather station within 150nm using your device GPS. Allow location permission when prompted.</div>
+                    <div class="help-a">Tapping the pin icon uses your device's GPS to find the nearest aviation weather station and loads it automatically. You must allow location permission when prompted.</div>
                 </div>
                 <div class="help-item">
                     <div class="help-q">↻ Force Refresh</div>
-                    <div class="help-a">Clears the 10-minute data cache and fetches the latest data from all sources immediately.</div>
-                </div>
-                <div class="help-item">
-                    <div class="help-q">Swipe Navigation</div>
-                    <div class="help-a">On touch devices, swipe left/right anywhere on screen to move between tabs. Swiping is disabled on inputs, buttons, canvas, and scrollable cards to avoid conflicts.</div>
+                    <div class="help-a">Clears the 10-minute data cache and fetches the very latest METAR, TAF, and NOTAM data from the server.</div>
                 </div>
             </div>
     
-        </div>
-
-        <!-- SECTION: TAF -->
-        <div class="help-section">
-            <div class="help-section-title">📅 TAF Tab</div>
-            <div class="help-item">
-                <div class="help-q">Meteogram (24h trend)</div>
-                <div class="help-a">Shows temperature (red), dewpoint (blue), wind arrows, and weather icons over 24 hours from Open-Meteo. The <span style="color:#0a84ff;font-weight:700;">blue NOW line</span> shows your current position in time. <b>Advisory only</b> — not official aviation data.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">TAF Timeline Bar</div>
-                <div class="help-a">Each coloured block is a TAF forecast period. Tap a block to see full details (wind, vis, wx, clouds). The <span style="color:#ff453a;font-weight:700;">red needle</span> marks the current time — tap it to see UTC and local time.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Sky Gradient Strip</div>
-                <div class="help-a">The thin strip below the TAF bar shows day/night cycle. <span style="color:#0ea5e9;font-weight:700;">Blue = day</span>, <span style="color:#f97316;font-weight:700;">Orange = dawn/dusk</span>, <span style="color:#8e8e93;font-weight:700;">Dark = night</span>.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">NOTAMs</div>
-                <div class="help-a">Notices to Airmen are colour-coded: <span style="color:#ff453a;font-weight:800;">⛔ Critical</span> (closures, unserviceable), <span style="color:#ff9f0a;font-weight:800;">⚠️ Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">ℹ️ Info</span> (general).</div>
+            <div class="safety-footer" style="margin-top:24px;">
+                ⚠️ METAR GO is for situational awareness only.<br>
+                NOT FOR NAVIGATION. Always cross-check official sources (AIS, official ATIS, ATC) before flight.
             </div>
         </div>
-
-        <!-- SECTION: INFO -->
-        <div class="help-section">
-            <div class="help-section-title">ℹ️ INFO Tab</div>
-            <div class="help-item">
-                <div class="help-q">Pressure &amp; Density Altitude</div>
-                <div class="help-a">Calculated from current QNH and temperature. <b>Pressure Alt</b> = ISA-corrected altitude. <b>Density Alt</b> = performance altitude — the higher it is above field elevation, the more your aircraft performs like it's at a higher airport. A <span style="color:var(--warn);">⚠️ warning</span> appears if DA is &gt;2000ft above field elevation.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">ISA Deviation</div>
-                <div class="help-a">How far the current temperature is from the International Standard Atmosphere. Positive = warmer than standard (worse performance), Negative = cooler (better performance).</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Sunrise / Sunset</div>
-                <div class="help-a">Times are shown in Zulu (UTC) by default. <b>Tap the time</b> to toggle between UTC and local airport time.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Runway Wind Components</div>
-                <div class="help-a">Shows headwind ↑ / tailwind ↓ and crosswind ➡ / ⬅ for every runway. If a runway exceeds your personal crosswind limit (set in Tools), it shows a red ⚠️ badge.</div>
-            </div>
-        </div>
-
-        <!-- SECTION: ATC -->
-        <div class="help-section">
-            <div class="help-section-title">📡 ATC Tab</div>
-            <div class="help-item">
-                <div class="help-q">CRAFT Clearance Recorder</div>
-                <div class="help-a">A scratchpad for copying your IFR clearance using the CRAFT format:<br><b>C</b>learance limit · <b>R</b>oute · <b>A</b>ltitude · <b>F</b>requency · <b>T</b>ransponder. Your notes are saved automatically and persist between sessions.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Live Audio Streams</div>
-                <div class="help-a">ATIS and ATC scanner streams are available for Taiwanese airports (RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN) powered by TWATC.net. For all other airports, use the LiveATC button.</div>
-            </div>
-        </div>
-
-        <!-- SECTION: TOOLS -->
-        <div class="help-section">
-            <div class="help-section-title">🛠 TOOLS Tab</div>
-            <div class="help-item">
-                <div class="help-q">Cockpit Timer</div>
-                <div class="help-a">A countdown timer for fuel burn monitoring or holding pattern timing. Choose 15/30/45/60m presets or use START/PAUSE/RESET. The card flashes red and vibrates when time expires.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Personal Minimums</div>
-                <div class="help-a">Enter your personal limits for crosswind and ceiling. The app checks live METAR data against your limits and shows a <span style="color:var(--success);font-weight:800;">GO ✅</span> or <span style="color:var(--danger);font-weight:800;">NO-GO ⛔</span> result. A red banner also appears at the top of the screen.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">E6B Flight Computer</div>
-                <div class="help-a">Enter Indicated Altitude, IAS, QNH, temperature, and dewpoint to calculate: <b>Density Altitude</b>, <b>True Airspeed</b>, <b>Estimated Cloud Base</b>, and <b>Freezing Level</b>. Supports both hPa/inHg and °C/°F.</div>
-            </div>
-        </div>
-
-        <!-- SECTION: WORLD -->
-        <div class="help-section">
-            <div class="help-section-title">🌍 WORLD Tab</div>
-            <div class="help-item">
-                <div class="help-q">World Clock</div>
-                <div class="help-a">Shows live local time for cities around the world with their UTC offset. Type a city name or ICAO code and tap <b>Add</b> to add it. Tap <b>✕</b> to remove a city.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Cloud Backup of Cities</div>
-                <div class="help-a">If you have Cloud Backup enabled, you'll be asked to also back up your city list. This lets you restore your world clock on any device using your Backup Code.</div>
-            </div>
-        </div>
-
-        <!-- SECTION: SETTINGS -->
-        <div class="help-section">
-            <div class="help-section-title">⚙️ SETTINGS Tab</div>
-            <div class="help-item">
-                <div class="help-q">Favorite Airports ★</div>
-                <div class="help-a">Favorited airports appear as gold chips at the top of the search bar for quick access. They are pinned above your recent history.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Default Airport</div>
-                <div class="help-a">The app loads this airport's weather automatically every time you open it.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Cockpit Night Mode 🔴</div>
-                <div class="help-a">Switches all colours to red-on-black for dark cockpit environments. Preserves your night vision. Tap again (shows "Day Mode") to return to normal.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">Cloud Backup ☁️</div>
-                <div class="help-a">Your airport favorites, default airport, and settings are saved to the cloud with a 4-6 digit Backup Code. No account needed. Restore on any device by entering your code. <b>Only airport preferences are stored — no personal data.</b></div>
-            </div>
-        </div>
-
-        <!-- SECTION: SEARCH & GPS -->
-        <div class="help-section">
-            <div class="help-section-title">🔍 Search &amp; GPS</div>
-            <div class="help-item">
-                <div class="help-q">Search Bar</div>
-                <div class="help-a">Type any ICAO code (4 letters, e.g. RCTP, KJFK, EGLL) and press Enter or the ↻ button. The field auto-capitalises.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">📍 GPS Button</div>
-                <div class="help-a">Tapping the pin icon uses your device's GPS to find the nearest aviation weather station and loads it automatically. You must allow location permission when prompted.</div>
-            </div>
-            <div class="help-item">
-                <div class="help-q">↻ Force Refresh</div>
-                <div class="help-a">Clears the 10-minute data cache and fetches the very latest METAR, TAF, and NOTAM data from the server.</div>
-            </div>
-        </div>
-
-        <div class="safety-footer" style="margin-top:24px;">
-            ⚠️ METAR GO is for situational awareness only.<br>
-            NOT FOR NAVIGATION. Always cross-check official sources (AIS, official ATIS, ATC) before flight.
-        </div>
-    </div>
 
         <!-- ================================================================
              TAB: MULTI-AIRPORT DASHBOARD (Optional)
