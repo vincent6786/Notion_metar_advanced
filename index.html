@@ -1532,6 +1532,174 @@
             #meteoCanvas { height: 175px; }
         }
 
+        /* ============================================================
+           WEATHER TAB — mirror METAR tab 2-column layout on 820px+
+        ============================================================ */
+        @media (min-width: 820px) {
+        
+            /* ── METAR pane inside Weather tab ── */
+            #weather-metar-pane {
+                display: grid;
+                grid-template-columns: 220px 1fr;
+                grid-template-rows: auto auto auto 1fr auto auto;
+                column-gap: 16px;
+                row-gap: 0;
+                align-items: start;
+            }
+        
+            /* Col 1 Row 1 – wind rose */
+            #weather-metar-pane > .wind-vis-container {
+                grid-column: 1;
+                grid-row: 1;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                margin-top: 0;
+                padding: 16px 14px 12px;
+                gap: 12px;
+            }
+            #weather-metar-pane #windRose2 {
+                width: 150px !important;
+                height: 150px !important;
+            }
+            #weather-metar-pane .wind-controls { width: 100%; }
+        
+            /* Col 1 Row 2 – AWOS button */
+            #weather-metar-pane > #btnFetchLive2 {
+                grid-column: 1;
+                grid-row: 2;
+                margin: 8px 0 4px;
+                font-size: 11px;
+                padding: 9px 8px;
+                line-height: 1.3;
+                align-self: start;
+            }
+        
+            /* Col 1 Row 3 – "RAW METAR" label + copy button */
+            #weather-metar-pane > .section-header-row {
+                grid-column: 1;
+                grid-row: 3;
+                align-self: end;
+                margin-top: 8px;
+                margin-bottom: 4px;
+            }
+        
+            /* Col 1 Row 4 – raw METAR text */
+            #weather-metar-pane > .raw-text {
+                grid-column: 1;
+                grid-row: 4;
+                font-size: 11px;
+                line-height: 1.6;
+                padding: 10px;
+                overflow-wrap: break-word;
+                word-break: break-all;
+                align-self: start;
+                max-height: 300px;
+                overflow-y: auto;
+                margin-top: 0;
+            }
+        
+            /* Col 1 Row 5 – age / spread footer */
+            #weather-metar-pane > .metar-footer {
+                grid-column: 1;
+                grid-row: 5;
+                font-size: 11px;
+                margin-top: 6px;
+                flex-direction: column;
+                gap: 2px;
+                align-items: flex-start;
+                align-self: start;
+            }
+        
+            /* Col 2 Rows 1-5 – METAR data grid */
+            #weather-metar-pane > .metar-grid {
+                grid-column: 2;
+                grid-row: 1 / 6;
+                grid-template-columns: 1fr 1fr;
+                align-self: start;
+                gap: 8px;
+            }
+            #weather-metar-pane .sky-section      { grid-column: span 1 !important; }
+            #weather-metar-pane .fr-bar-container { grid-column: span 1 !important; }
+            #weather-metar-pane .metar-card       { grid-column: span 1; }
+            #weather-metar-pane .metar-card.full-width { grid-column: span 2 !important; }
+        
+            /* Row 6 – nearby stations (full width) */
+            #weather-metar-pane > .nearby-container {
+                grid-column: 1 / -1;
+                grid-row: 6;
+                margin-top: 10px;
+            }
+        
+            /* ── TAF pane inside Weather tab ── */
+            #weather-taf-pane {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                column-gap: 20px;
+                align-items: start;
+            }
+        
+            /* Meteogram header + canvas: left column, spans 2 rows */
+            #weather-taf-pane > div:first-child,       /* "24H Trend" header row */
+            #weather-taf-pane > .meteogram-container {
+                grid-column: 1;
+            }
+            #weather-taf-pane > div:first-child { grid-row: 1; }
+            #weather-taf-pane > .meteogram-container   { grid-row: 2; }
+        
+            /* TAF viz header + viz block: right column */
+            #weather-taf-pane > div:nth-child(3),      /* "Official Forecast" header row */
+            #weather-taf-pane > .taf-viz-container {
+                grid-column: 2;
+            }
+            #weather-taf-pane > div:nth-child(3) { grid-row: 1; }
+            #weather-taf-pane > .taf-viz-container    { grid-row: 2; }
+        
+            /* Raw TAF + NOTAMs: full width below */
+            #weather-taf-pane > .section-header-row,
+            #weather-taf-pane > .raw-text,
+            #weather-taf-pane > div:has(#notamList2),
+            #weather-taf-pane > #notamList2 {
+                grid-column: 1 / -1;
+            }
+        }
+        
+        /* ── 1100px+: widen wind column, 4-col metar grid ── */
+        @media (min-width: 1100px) {
+            #weather-metar-pane {
+                grid-template-columns: 240px 1fr;
+                column-gap: 20px;
+            }
+            #weather-metar-pane #windRose2 {
+                width: 160px !important;
+                height: 160px !important;
+            }
+            #weather-metar-pane > .wind-vis-container {
+                padding: 18px 16px 14px;
+            }
+            #weather-metar-pane > .metar-grid {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+            #weather-metar-pane .sky-section      { grid-column: span 2 !important; }
+            #weather-metar-pane .fr-bar-container { grid-column: span 2 !important; }
+            #weather-metar-pane .metar-card       { grid-column: span 1; }
+            #weather-metar-pane .metar-card.full-width { grid-column: span 4 !important; }
+        }
+        
+        /* ── 1400px+: wider ── */
+        @media (min-width: 1400px) {
+            #weather-metar-pane {
+                grid-template-columns: 260px 1fr;
+            }
+            #weather-metar-pane #windRose2 {
+                width: 170px !important;
+                height: 170px !important;
+            }
+            #weather-metar-pane > .wind-vis-container {
+                padding: 20px 18px 16px;
+            }
+        }
+        
 
         /* ── 1100px+: Desktop ── */
         @media (min-width: 1100px) {
@@ -4249,10 +4417,16 @@
 
         function drawMeteogram(h, canvasId = 'meteoCanvas') {
             const cvs = document.getElementById(canvasId);
+            if (!cvs) return;
             const ctx = cvs.getContext('2d');
             const dpr  = window.devicePixelRatio || 1;
             const rect = cvs.getBoundingClientRect();
-            cvs.width  = rect.width * dpr; cvs.height = rect.height * dpr;
+            // If canvas is inside a hidden pane rect will be 0 — fall back to container/window width
+            const W = rect.width  || cvs.closest('.meteogram-container')?.clientWidth
+                                   || window.innerWidth - 56
+                                   || 360;
+            const H = 150;
+            cvs.width  = W * dpr; cvs.height = H * dpr;
             ctx.scale(dpr, dpr);
             const W = rect.width, H = rect.height;
             const padding = { top: 40, bottom: 35, left: 15, right: 15 };
@@ -4303,7 +4477,7 @@
             ctx.fillStyle = 'rgba(10,132,255,0.2)'; ctx.fillRect(nowX - 14, padding.top - 18, 28, 14);
             ctx.fillStyle = '#0a84ff'; ctx.font = '700 9px "SF Mono",monospace'; ctx.textAlign = 'center'; ctx.fillText('NOW', nowX, padding.top - 7);
             ctx.restore();
-            if (canvasId === 'meteoCanvas') {
+            if (canvasId === 'meteoCanvas') {           // only register once
                 if (window._meteoNowInterval) clearInterval(window._meteoNowInterval);
                 window._meteoNowInterval = setInterval(() => {
                     if (meteoDataCache) {
@@ -5149,9 +5323,9 @@ async function findNearbyStations(lat, lon) {
                 
                 issuedEl.innerHTML = `
                     <span style="white-space:nowrap;">Issued: ${issuedStr}</span>
-                    <span style="color:${expiryColor};margin-left:8px;white-space:nowrap;">⏱ ${timeLeftStr}</span>
+                    <span style="color:${expiryColor};white-space:nowrap;margin-left:8px;">⏱ ${timeLeftStr}</span>
                 `;
-                issuedEl.style.cssText = 'display:flex;flex-wrap:nowrap;align-items:center;gap:0;overflow:hidden;min-width:0;';
+                issuedEl.style.cssText = 'display:flex;align-items:center;flex-wrap:nowrap;overflow:hidden;min-width:0;font-size:11px;';
             } else {
                 issuedEl.innerText = '--';
             }
@@ -5786,7 +5960,7 @@ async function findNearbyStations(lat, lon) {
                 tafPane.style.display   = '';
                 pillMetar?.classList.remove('active');
                 pillTaf?.classList.add('active');
-                if (meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 50);
+                if (meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 120);
             } else {
                 tafPane.style.display   = 'none';
                 metarPane.style.display = '';
