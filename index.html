@@ -2244,7 +2244,20 @@
             max-height: 2000px;
             opacity: 1;
         }
-
+        /* ── Drag handle ── */
+        .sort-handle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--sub-text);
+            font-size: 16px;
+            letter-spacing: -4px;
+            padding: 0 10px 0 4px;
+            flex-shrink: 0;
+            cursor: grab;
+            user-select: none;
+            opacity: 0.5;
+        }
 
         
     </style>
@@ -2770,11 +2783,18 @@
     <div id="tab-world" class="view-section">
         <div style="display:flex; gap:8px; margin-bottom:12px; background:var(--card-bg); padding:8px; border-radius:8px;">
             <input type="text" id="newCityInput" class="conv-inp"
-                   placeholder="City Name (e.g. Paris) or ICAO (LFPG)..."
+                   placeholder="City Name or ICAO (e.g. LFPG)..."
                    style="margin:0;">
             <button id="btnAddCity" class="tool-btn"
                     style="width:auto; margin:0; background:var(--accent); border:none;"
                     onclick="addCustomCity()">Add</button>
+            <button id="btnReorderCities"
+                    style="background:rgba(10,132,255,0.12); border:1px solid var(--accent);
+                           color:var(--accent); padding:0 12px; border-radius:8px;
+                           font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0;">
+                ⇅ Reorder
+            </button>
+        </div>
         </div>
         <div id="worldContainer" style="display:flex; flex-direction:column; gap:2px;"></div>
     </div>
@@ -3473,6 +3493,13 @@
                                display:flex; align-items:center; gap:5px; white-space:nowrap; flex-shrink:0; margin-left:10px;">
                     ↻ Refresh
                 </button>
+                <button id="btnReorderDashboard"
+                        style="background:rgba(10,132,255,0.12); border:1px solid var(--accent);
+                               color:var(--accent); padding:7px 12px; border-radius:8px;
+                               font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0;">
+                    ⇅ Reorder
+                </button>
+                
             </div>
             <div id="multiLastUpdated" style="font-size:10px; color:#555; margin-bottom:12px; text-align:right; height:14px;"></div>
             
@@ -5785,15 +5812,27 @@ async function findNearbyStations(lat, lon) {
                 ];
                 localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
             }
-            // Enable drag reorder on world clock container
+            // At end of initWorldClock():
             const wc = document.getElementById('worldContainer');
-            if (wc) initSortable(wc, 'clock-card', async (from, to) => {
+            if (wc) initSortable(wc, 'clock-card', 'btnReorderCities', async (from, to, isSave) => {
+                if (isSave) {
+                    // Done button pressed — persist final DOM order
+                    const items = [...wc.querySelectorAll('.clock-card')];
+                    const newOrder = items.map(el => {
+                        const icao = el.querySelector('.clock-diff')?.innerText.match(/[A-Z]{4}/)?.[0];
+                        return cityList.find(c => c.icao === icao) || null;
+                    }).filter(Boolean);
+                    if (newOrder.length === cityList.length) {
+                        cityList = newOrder;
+                        localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
+                        if (shouldBackupCities()) await savecitiesToCloud();
+                        showToast('✅ Order saved');
+                    }
+                    return;
+                }
+                // Live swap during drag
                 const moved = cityList.splice(from, 1)[0];
                 cityList.splice(to, 0, moved);
-                localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
-                if (shouldBackupCities()) await savecitiesToCloud();
-                updateClock();
-                showToast('✅ Order saved');
             });
             
         }
@@ -5840,7 +5879,7 @@ async function findNearbyStations(lat, lon) {
             // World clock updates (existing code)
             if (document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer');
-                if (window._dragState?.active && window._dragState?.container === container) return; // pause during drag
+                if (window._sortMode?.active && window._sortMode?.container === container) return;
                 container.innerHTML = '';
                 cityList.forEach((c, index) => {
                     const timeStr = now.toLocaleTimeString('en-GB', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
@@ -6654,102 +6693,118 @@ async function findNearbyStations(lat, lon) {
         }
 
         // ================================================================
-        // LONG-PRESS DRAG TO REORDER UTILITY
+        // EDIT-MODE DRAG TO REORDER UTILITY
         // ================================================================
-        window._dragState = {
-            active:    false,
-            timer:     null,
-            dragEl:    null,
+        window._sortMode = {
+            active: false,
+            dragEl: null,
             fromIndex: -1,
-            toIndex:   -1,
-            startY:    0,
+            toIndex: -1,
+            startY: 0,
             container: null,
             itemClass: null
         };
         
-        function initSortable(containerEl, itemClass, onReorder) {
+        function initSortable(containerEl, itemClass, toggleBtnId, onReorder) {
+            const toggleBtn = document.getElementById(toggleBtnId);
+            if (!toggleBtn) return;
+        
+            // Toggle edit mode on/off
+            toggleBtn.addEventListener('click', () => {
+                const sm = window._sortMode;
+                const entering = !sm.active;
+                sm.active     = entering;
+                sm.container  = entering ? containerEl : null;
+                sm.itemClass  = itemClass;
+        
+                toggleBtn.innerText      = entering ? '✓ Done' : '⇅ Reorder';
+                toggleBtn.style.background  = entering ? 'var(--success)' : 'rgba(10,132,255,0.12)';
+                toggleBtn.style.color       = entering ? '#000' : 'var(--accent)';
+                toggleBtn.style.borderColor = entering ? 'var(--success)' : 'var(--accent)';
+        
+                // Show/hide drag handles
+                containerEl.querySelectorAll('.' + itemClass).forEach(el => {
+                    let handle = el.querySelector('.sort-handle');
+                    if (entering) {
+                        if (!handle) {
+                            handle = document.createElement('div');
+                            handle.className = 'sort-handle';
+                            handle.innerHTML = '&#8942;&#8942;'; // ⋮⋮
+                            el.prepend(handle);
+                        }
+                        handle.style.display = 'flex';
+                        el.style.transition = 'box-shadow 0.2s, transform 0.2s';
+                    } else {
+                        if (handle) handle.style.display = 'none';
+                        el.style.transform = '';
+                        el.style.boxShadow = '';
+                        el.style.outline   = '';
+                    }
+                });
+        
+                if (entering) {
+                    navigator.vibrate?.(30);
+                } else {
+                    onReorder(-1, -1, true); // signal "save final order"
+                }
+            });
+        
+            // Drag only active in edit mode
             containerEl.addEventListener('touchstart', e => {
+                const sm = window._sortMode;
+                if (!sm.active || sm.container !== containerEl) return;
                 const item = e.target.closest('.' + itemClass);
-                if (!item || e.target.closest('button') || e.target.closest('a')) return;
+                if (!item) return;
         
-                const ds = window._dragState;
-                ds.startY = e.touches[0].clientY;
-                ds.timer = setTimeout(() => {
-                    const items = [...containerEl.querySelectorAll('.' + itemClass)];
-                    const idx   = items.indexOf(item);
-                    if (idx === -1) return;
+                sm.dragEl    = item;
+                sm.startY    = e.touches[0].clientY;
+                sm.fromIndex = [...containerEl.querySelectorAll('.' + itemClass)].indexOf(item);
+                sm.toIndex   = sm.fromIndex;
         
-                    ds.active    = true;
-                    ds.dragEl    = item;
-                    ds.fromIndex = idx;
-                    ds.toIndex   = idx;
-                    ds.container = containerEl;
-                    ds.itemClass = itemClass;
-        
-                    // Visual: highlight drag item
-                    item.style.opacity   = '0.55';
-                    item.style.transform = 'scale(0.97)';
-                    item.style.outline   = '2px solid var(--accent)';
-                    item.style.zIndex    = '10';
-        
-                    if (navigator.vibrate) navigator.vibrate(40);
-                }, 480);
-        
+                item.style.outline   = '2px solid var(--accent)';
+                item.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
+                item.style.transform = 'scale(0.98)';
+                navigator.vibrate?.(25);
             }, { passive: true });
         
             containerEl.addEventListener('touchmove', e => {
-                const ds = window._dragState;
-                if (!ds.active) {
-                    // Cancel long-press if user is scrolling
-                    if (Math.abs(e.touches[0].clientY - ds.startY) > 12) {
-                        clearTimeout(ds.timer);
-                    }
-                    return;
-                }
+                const sm = window._sortMode;
+                if (!sm.active || !sm.dragEl || sm.container !== containerEl) return;
                 e.preventDefault();
         
                 const touchY = e.touches[0].clientY;
-                const items  = [...containerEl.querySelectorAll('.' + ds.itemClass)];
+                const items  = [...containerEl.querySelectorAll('.' + sm.itemClass)];
+                let overIndex = sm.toIndex;
         
-                // Find which slot the finger is over
-                let overIndex = ds.toIndex;
                 items.forEach((el, i) => {
                     const rect = el.getBoundingClientRect();
                     if (touchY >= rect.top && touchY <= rect.bottom) overIndex = i;
                 });
         
-                if (overIndex !== ds.toIndex && overIndex !== -1) {
-                    // Move drag element in the DOM for live visual feedback
-                    if (overIndex < ds.toIndex) {
-                        containerEl.insertBefore(ds.dragEl, items[overIndex]);
-                    } else {
-                        const ref = items[overIndex].nextSibling;
-                        containerEl.insertBefore(ds.dragEl, ref || null);
-                    }
-                    ds.toIndex = overIndex;
+                if (overIndex !== sm.toIndex && overIndex >= 0) {
+                    const ref = overIndex < sm.toIndex
+                        ? items[overIndex]
+                        : items[overIndex].nextSibling;
+                    containerEl.insertBefore(sm.dragEl, ref || null);
+                    sm.toIndex = overIndex;
                 }
             }, { passive: false });
         
             const endDrag = () => {
-                clearTimeout(window._dragState.timer);
-                const ds = window._dragState;
-                if (!ds.active) return;
+                const sm = window._sortMode;
+                if (!sm.dragEl) return;
+                sm.dragEl.style.outline   = '';
+                sm.dragEl.style.boxShadow = '';
+                sm.dragEl.style.transform = '';
         
-                // Reset visuals
-                ds.dragEl.style.opacity   = '';
-                ds.dragEl.style.transform = '';
-                ds.dragEl.style.outline   = '';
-                ds.dragEl.style.zIndex    = '';
+                const from = sm.fromIndex;
+                const to   = sm.toIndex;
+                sm.dragEl  = null;
         
-                const from = ds.fromIndex;
-                const to   = ds.toIndex;
-                ds.active  = false;
-                ds.dragEl  = null;
-        
-                if (from !== to) onReorder(from, to);
+                if (from !== to) onReorder(from, to, false);
             };
         
-            containerEl.addEventListener('touchend',   endDrag, { passive: true });
+            containerEl.addEventListener('touchend',    endDrag, { passive: true });
             containerEl.addEventListener('touchcancel', endDrag, { passive: true });
         }
     
@@ -6901,12 +6956,22 @@ async function findNearbyStations(lat, lon) {
                 return renderMultiCardHTML(icao, cached);
             }).join('');
             // Enable drag reorder
-            initSortable(grid, 'multi-card', async (from, to) => {
+            initSortable(grid, 'multi-card', 'btnReorderDashboard', async (from, to, isSave) => {
+                if (isSave) {
+                    // Done pressed — read final order from DOM
+                    const items = [...grid.querySelectorAll('.multi-card')];
+                    const newOrder = items.map(el => el.dataset.icao).filter(Boolean);
+                    if (newOrder.length === multiAirports.length) {
+                        multiAirports = newOrder;
+                        await saveMultiAirports();
+                        showToast('✅ Order saved');
+                    }
+                    renderMultiDashboard(); // re-render to restore Done→Reorder btn state
+                    return;
+                }
+                // Live swap
                 const moved = multiAirports.splice(from, 1)[0];
                 multiAirports.splice(to, 0, moved);
-                await saveMultiAirports();
-                renderMultiDashboard();
-                showToast('✅ Order saved');
             });
             
         }
