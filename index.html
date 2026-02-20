@@ -2211,7 +2211,42 @@
             transition: opacity 0.2s;
         }
         .whatsnew-btn:active { opacity: 0.8; }
-            
+
+        /* ============================================================
+           COLLAPSIBLE HELP SECTIONS
+        ============================================================ */
+        .help-section { cursor: default; }
+        .help-section-title {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .help-chevron {
+            font-size: 11px;
+            color: var(--sub-text);
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+        .help-section.open .help-chevron {
+            transform: rotate(180deg);
+        }
+        .help-body {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+                        opacity   0.25s ease;
+            opacity: 0;
+        }
+        .help-section.open .help-body {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+
+        
     </style>
 </head>
 
@@ -2656,9 +2691,64 @@
          TAB: ATC
     ================================================================ -->
     <div id="tab-atc" class="view-section">
-        <div class="section-title" style="margin-top:0;">CRAFT Clearance Recorder</div>
-        <textarea id="craftPad" class="craft-pad"
-                  placeholder="C - Clearance Limit&#10;R - Route&#10;A - Altitude&#10;F - Frequency&#10;T - Transponder"></textarea>
+        <!-- PHONETIC ALPHABET -->
+        <div class="section-title" style="margin-top:0;">Phonetic Alphabet</div>
+        <div id="phoneticGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(62px,1fr)); gap:6px; margin-bottom:20px;"></div>
+        
+        <!-- SQUAWK CODES -->
+        <div class="section-title">Emergency Squawk Codes</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px;">
+            <div class="info-card" style="border-left:3px solid var(--danger);">
+                <div class="ic-lbl" style="color:var(--danger);">7700</div>
+                <div class="ic-val" style="font-size:13px;">General Emergency</div>
+            </div>
+            <div class="info-card" style="border-left:3px solid var(--warn);">
+                <div class="ic-lbl" style="color:var(--warn);">7600</div>
+                <div class="ic-val" style="font-size:13px;">Radio Failure</div>
+            </div>
+            <div class="info-card" style="border-left:3px solid var(--lifr);">
+                <div class="ic-lbl" style="color:var(--lifr);">7500</div>
+                <div class="ic-val" style="font-size:13px;">Hijacking</div>
+            </div>
+            <div class="info-card" style="border-left:3px solid var(--accent);">
+                <div class="ic-lbl" style="color:var(--accent);">1200</div>
+                <div class="ic-val" style="font-size:13px;">VFR (US)</div>
+            </div>
+            <div class="info-card" style="border-left:3px solid var(--success); grid-column: span 2;">
+                <div class="ic-lbl" style="color:var(--success);">2000</div>
+                <div class="ic-val" style="font-size:13px;">Uncontrolled / No ATC Instruction (Intl)</div>
+            </div>
+        </div>
+        
+        <!-- CLEARANCE READBACK REMINDER -->
+        <div class="section-title">Clearance Readback (CRAFT)</div>
+        <div class="info-card" style="margin-bottom:20px; border-left:3px solid var(--accent);">
+            <div style="display:flex; flex-direction:column; gap:9px; font-size:13px;">
+                <div style="display:flex; align-items:baseline; gap:10px;">
+                    <span style="font-family:'SF Mono',monospace; font-size:18px; font-weight:900; color:var(--accent); width:18px; flex-shrink:0;">C</span>
+                    <div><div style="font-weight:700; color:var(--text);">Clearance Limit</div><div style="font-size:11px; color:var(--sub-text);">Destination or fix (e.g. "cleared to RCSS")</div></div>
+                </div>
+                <div style="display:flex; align-items:baseline; gap:10px;">
+                    <span style="font-family:'SF Mono',monospace; font-size:18px; font-weight:900; color:var(--accent); width:18px; flex-shrink:0;">R</span>
+                    <div><div style="font-weight:700; color:var(--text);">Route</div><div style="font-size:11px; color:var(--sub-text);">SID, airway, or direct routing</div></div>
+                </div>
+                <div style="display:flex; align-items:baseline; gap:10px;">
+                    <span style="font-family:'SF Mono',monospace; font-size:18px; font-weight:900; color:var(--accent); width:18px; flex-shrink:0;">A</span>
+                    <div><div style="font-weight:700; color:var(--text);">Altitude</div><div style="font-size:11px; color:var(--sub-text);">Initial + cruise altitude / FL</div></div>
+                </div>
+                <div style="display:flex; align-items:baseline; gap:10px;">
+                    <span style="font-family:'SF Mono',monospace; font-size:18px; font-weight:900; color:var(--accent); width:18px; flex-shrink:0;">F</span>
+                    <div><div style="font-weight:700; color:var(--text);">Frequency</div><div style="font-size:11px; color:var(--sub-text);">Departure frequency</div></div>
+                </div>
+                <div style="display:flex; align-items:baseline; gap:10px;">
+                    <span style="font-family:'SF Mono',monospace; font-size:18px; font-weight:900; color:var(--accent); width:18px; flex-shrink:0;">T</span>
+                    <div><div style="font-weight:700; color:var(--text);">Transponder</div><div style="font-size:11px; color:var(--sub-text);">Squawk code assigned by ATC</div></div>
+                </div>
+            </div>
+            <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border); font-size:10px; color:#555;">
+                ✏️ Use paper or your EFB scratchpad for copying clearances — always read back critical items.
+            </div>
+        </div>
 
         <div class="info-card" style="margin-bottom:20px; margin-top:20px;">
             <div class="ic-lbl" style="margin-bottom:8px;" id="audioLabel">AUDIO STREAMS</div>
@@ -3487,6 +3577,39 @@
                     </div>
                 </div>`).join('');
         }
+
+        function initHelpAccordion() {
+            document.querySelectorAll('.help-section').forEach(section => {
+                const titleEl = section.querySelector('.help-section-title');
+                if (!titleEl) return;
+        
+                // Add chevron to title
+                const chevron = document.createElement('span');
+                chevron.className = 'help-chevron';
+                chevron.innerText = '▼';
+                titleEl.appendChild(chevron);
+        
+                // Wrap all siblings after the title in a .help-body div
+                const body = document.createElement('div');
+                body.className = 'help-body';
+                const children = [...section.children].slice(1); // everything after the title
+                children.forEach(el => body.appendChild(el));
+                section.appendChild(body);
+        
+                // Toggle on tap
+                titleEl.addEventListener('click', () => {
+                    const isOpen = section.classList.contains('open');
+                    // Close all
+                    document.querySelectorAll('.help-section.open').forEach(s => s.classList.remove('open'));
+                    // Open this one if it was closed
+                    if (!isOpen) section.classList.add('open');
+                });
+            });
+        
+            // Auto-open the What's New section on first load
+            const first = document.querySelector('#helpWhatsNewSection');
+            if (first) first.classList.add('open');
+        }
     
         // ================================================================
         // 1. INDEXEDDB LAYER
@@ -4019,12 +4142,6 @@
             await checkMultiDashboardEnabled();
             
 
-            const savedCraft = localStorage.getItem('efb_craft');
-            if (savedCraft) document.getElementById('craftPad').value = savedCraft;
-            document.getElementById('craftPad').addEventListener('input', (e) => {
-                localStorage.setItem('efb_craft', e.target.value);
-            });
-
             const savedDefault = await Storage.get('efb_default_station');
             const inputField   = document.getElementById('defaultIcaoInput');
              if (savedDefault) {
@@ -4052,6 +4169,8 @@
 
             setInterval(updateClock, 1000);
             setTimeout(() => { checkWhatsNew(); renderHelpWhatsNew(); }, 500);   // slight delay so launch screen clears first
+            initHelpAccordion();
+            renderPhoneticAlphabet();
         }
 
         // ================================================================
@@ -6844,6 +6963,44 @@ async function findNearbyStations(lat, lon) {
             const enabled = document.getElementById('toggleMultiDashboard')?.checked;
             setTab(enabled ? 'weather' : 'metar');
             showToast(`Loading ${icao}...`);
+        }
+
+        // ================================================================
+        // PHONETIC ALPHABET GRID
+        // ================================================================
+        function renderPhoneticAlphabet() {
+            const data = [
+                ['A','Alpha'],['B','Bravo'],['C','Charlie'],['D','Delta'],
+                ['E','Echo'],['F','Foxtrot'],['G','Golf'],['H','Hotel'],
+                ['I','India'],['J','Juliet'],['K','Kilo'],['L','Lima'],
+                ['M','Mike'],['N','November'],['O','Oscar'],['P','Papa'],
+                ['Q','Quebec'],['R','Romeo'],['S','Sierra'],['T','Tango'],
+                ['U','Uniform'],['V','Victor'],['W','Whiskey'],['X','X-ray'],
+                ['Y','Yankee'],['Z','Zulu']
+            ];
+        
+            const grid = document.getElementById('phoneticGrid');
+            if (!grid) return;
+        
+            grid.innerHTML = data.map(([letter, word]) => `
+                <div onclick="copyPhonetic('${word}')"
+                     style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px;
+                            padding:8px 4px; text-align:center; cursor:pointer; transition:background 0.15s;
+                            active:background:var(--accent);"
+                     ontouchstart="this.style.background='rgba(10,132,255,0.2)'"
+                     ontouchend="this.style.background=''">
+                    <div style="font-family:'SF Mono',monospace; font-size:16px; font-weight:900;
+                                color:var(--accent); line-height:1;">${letter}</div>
+                    <div style="font-size:9px; color:var(--sub-text); margin-top:3px;
+                                line-height:1.2; word-break:break-word;">${word}</div>
+                </div>`).join('');
+        }
+        
+        async function copyPhonetic(word) {
+            try {
+                await navigator.clipboard.writeText(word);
+                showToast(`📋 ${word}`);
+            } catch(e) { showToast(word); }
         }
     
     </script>
