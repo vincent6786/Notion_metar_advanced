@@ -4163,7 +4163,6 @@
             setInterval(updateClock, 1000);
             setTimeout(() => { checkWhatsNew(); renderHelpWhatsNew(); }, 500);   // slight delay so launch screen clears first
             initHelpAccordion();
-            renderPhoneticAlphabet();
         }
 
         // ================================================================
@@ -6996,43 +6995,7 @@ async function findNearbyStations(lat, lon) {
             showToast(`Loading ${icao}...`);
         }
 
-        // ================================================================
-        // PHONETIC ALPHABET GRID
-        // ================================================================
-        function renderPhoneticAlphabet() {
-            const data = [
-                ['A','Alpha'],['B','Bravo'],['C','Charlie'],['D','Delta'],
-                ['E','Echo'],['F','Foxtrot'],['G','Golf'],['H','Hotel'],
-                ['I','India'],['J','Juliet'],['K','Kilo'],['L','Lima'],
-                ['M','Mike'],['N','November'],['O','Oscar'],['P','Papa'],
-                ['Q','Quebec'],['R','Romeo'],['S','Sierra'],['T','Tango'],
-                ['U','Uniform'],['V','Victor'],['W','Whiskey'],['X','X-ray'],
-                ['Y','Yankee'],['Z','Zulu']
-            ];
-        
-            const grid = document.getElementById('phoneticGrid');
-            if (!grid) return;
-        
-            grid.innerHTML = data.map(([letter, word]) => `
-                <div onclick="copyPhonetic('${word}')"
-                     style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px;
-                            padding:8px 4px; text-align:center; cursor:pointer; transition:background 0.15s;
-                            active:background:var(--accent);"
-                     ontouchstart="this.style.background='rgba(10,132,255,0.2)'"
-                     ontouchend="this.style.background=''">
-                    <div style="font-family:'SF Mono',monospace; font-size:16px; font-weight:900;
-                                color:var(--accent); line-height:1;">${letter}</div>
-                    <div style="font-size:9px; color:var(--sub-text); margin-top:3px;
-                                line-height:1.2; word-break:break-word;">${word}</div>
-                </div>`).join('');
-        }
-        
-        async function copyPhonetic(word) {
-            try {
-                await navigator.clipboard.writeText(word);
-                showToast(`📋 ${word}`);
-            } catch(e) { showToast(word); }
-        }
+
     
     </script>
 </body>
