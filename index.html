@@ -6653,25 +6653,25 @@ async function findNearbyStations(lat, lon) {
         }
 
         // ================================================================
-        // SMOOTH SWIPE NAVIGATION (GPU-accelerated via transform)
+        // SMOOTH SWIPE NAVIGATION — FIXED (tabs stay intact, content-area only)
         // ================================================================
         (function () {
             if (!('ontouchstart' in window)) return;
         
             const state = {
-                tracking: false,
-                settled:  false,
-                startX: 0, startY: 0,
-                curX: 0,
+                tracking:  false,
+                settled:   false,
+                startX: 0, startY: 0, curX: 0,
                 fromEl: null, toEl: null,
                 fromTab: null, toTab: null,
-                dir: 0,           // +1 = going right (prev), -1 = going left (next)
-                W: 0,
+                dir: 0,          // +1 = going right (reveal prev), -1 = going left (reveal next)
+                W: 0,            // width of content area (not full viewport)
+                clip: null,      // the temporary clipping wrapper div
                 raf: null,
                 animating: false
             };
         
-            /* ── helpers ── */
+            /* ── tab order ── */
             function getOrder() {
                 const on = document.getElementById('toggleMultiDashboard')?.checked;
                 return on
@@ -6679,49 +6679,78 @@ async function findNearbyStations(lat, lon) {
                     : ['metar','taf','info','atc','world','tools','settings','help'];
             }
         
-            function prep(el, xPx) {
-                el.style.willChange     = 'transform';
-                el.style.position       = 'fixed';
-                el.style.top            = '0';
-                el.style.left           = '0';
-                el.style.width          = '100%';
-                el.style.height         = '100%';
-                el.style.overflowY      = 'auto';
-                el.style.background     = 'var(--bg)';
-                el.style.transition     = 'none';
-                el.style.transform      = `translateX(${xPx}px)`;
-                el.style.display        = 'block';
-                el.style.opacity        = '1';
-                el.style.zIndex         = xPx === 0 ? '10' : '9';
-                el.style.webkitOverflowScrolling = 'touch';
+            /* ── create a fixed clip container over the content area ── */
+            function createClip(rect) {
+                const d = document.createElement('div');
+                d.style.cssText = [
+                    'position:fixed',
+                    `top:${rect.top}px`,
+                    `left:${rect.left}px`,
+                    `width:${rect.width}px`,
+                    `height:${window.innerHeight - rect.top}px`,
+                    'overflow:hidden',
+                    'z-index:200',
+                    'background:var(--bg)',
+                    'pointer-events:auto'
+                ].join(';');
+                document.body.appendChild(d);
+                return d;
             }
         
-            function restore(el) {
+            /* ── move a panel into the clip wrapper and position it ── */
+            function prepInClip(el, xPx, clip) {
+                // remember original DOM position so we can put it back
+                el._sp = el.parentNode;
+                el._sn = el.nextSibling;
+                el._sh = el.classList.contains('hidden');
+        
+                el.classList.remove('hidden');
+                el.style.cssText = [
+                    'position:absolute',
+                    'top:0','left:0','width:100%','min-height:100%',
+                    'overflow-y:auto',
+                    'background:var(--bg)',
+                    'transition:none',
+                    `transform:translateX(${xPx}px)`,
+                    'display:block',
+                    'opacity:1',
+                    'will-change:transform',
+                    '-webkit-overflow-scrolling:touch'
+                ].join(';');
+        
+                clip.appendChild(el);
+            }
+        
+            /* ── restore a panel to its original DOM slot ── */
+            function restoreEl(el) {
+                if (!el._sp) return;
+                el._sp.insertBefore(el, el._sn || null);
+                if (el._sh) el.classList.add('hidden');
                 el.style.cssText = '';
+                delete el._sp; delete el._sn; delete el._sh;
             }
         
-        
+            /* ── remove clip, restore DOM, activate the winning tab ── */
             function commit(name) {
                 const destEl = document.getElementById('tab-' + name);
-            
-                // 1. Hold the destination visible during cleanup to prevent flash
-                if (destEl) {
-                    destEl.style.opacity   = '1';
-                    destEl.style.transform = 'translateX(0)';
-                    destEl.style.display   = 'block';
+        
+                // 1. Restore both panels to original DOM positions (removes absolute positioning)
+                if (state.fromEl) restoreEl(state.fromEl);
+                if (state.toEl)   restoreEl(state.toEl);
+        
+                // 2. Remove the clip overlay
+                if (state.clip && state.clip.parentNode) {
+                    state.clip.parentNode.removeChild(state.clip);
                 }
-            
-                // 2. Restore both panels (removes fixed positioning)
-                if (state.fromEl && state.fromEl !== destEl) restore(state.fromEl);
-                if (state.toEl   && state.toEl   !== destEl) restore(state.toEl);
-            
-                // 3. Apply the tab the same way clicking does (handles hidden class, etc.)
+                state.clip = null;
+        
+                // 3. Deactivate all sections
                 document.querySelectorAll('.view-section').forEach(el => {
-                    if (el !== destEl) {
-                        el.classList.remove('active');
-                        el.style.display = '';
-                    }
+                    el.classList.remove('active');
+                    el.style.display = '';
                 });
+        
+                // 4. Update tab bar highlight
                 document.querySelectorAll('.tab').forEach(t => {
                     t.classList.remove('active');
                     if (t.getAttribute('onclick')?.includes(`'${name}'`)) {
@@ -6729,51 +6758,46 @@ async function findNearbyStations(lat, lon) {
                         t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                     }
                 });
-            
-                // 4. Activate destination — suppress re-entry animations
+        
+                // 5. Activate destination (suppress re-entry slide animation)
                 if (destEl) {
                     destEl.classList.remove('hidden');
-                    destEl.classList.remove('active'); // force re-add for animation reset
-                    destEl.classList.add('swipe-committed');
-                    destEl.classList.add('active');
-                    destEl.style.opacity   = '';
-                    destEl.style.transform = '';
-                    destEl.style.display   = '';
+                    destEl.classList.add('swipe-committed', 'active');
                 }
-            
-                // 5. Tab-specific side effects
+        
+                // 6. Tab-specific side effects
                 if (name === 'world') updateClock();
                 if (name === 'taf'     && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
                 if (name === 'weather' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 50);
-            
-                // 6. Re-enable animations for future normal tab taps (after 1 frame)
+        
                 requestAnimationFrame(() => {
                     if (destEl) destEl.classList.remove('swipe-committed');
                 });
             }
         
+            /* ── RAF render: translate both panels ── */
             function renderFrame() {
                 if (!state.tracking) return;
-                const raw   = state.curX - state.startX;
+                const raw = state.curX - state.startX;
+                // Rubber-band resistance past 52% of width
                 const limit = state.W * 0.52;
-                let   tx    = raw;
+                let tx = raw;
                 if (Math.abs(raw) > limit) {
                     tx = Math.sign(raw) * (limit + (Math.abs(raw) - limit) * 0.10);
                 }
-        
                 state.fromEl.style.transform = `translateX(${tx}px)`;
                 state.toEl.style.transform   = `translateX(${(state.dir < 0 ? state.W : -state.W) + tx}px)`;
                 state.raf = null;
             }
         
-            /* ── touch events ── */
+            /* ─────────────────── TOUCH START ─────────────────── */
             document.addEventListener('touchstart', e => {
                 if (state.animating) return;
                 const t = e.target;
                 if (
-                    t.tagName === 'INPUT' || t.tagName === 'BUTTON' ||
-                    t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' ||
-                    t.closest('canvas') || t.closest('.modal-overlay') ||
+                    t.tagName === 'INPUT'    || t.tagName === 'BUTTON' ||
+                    t.tagName === 'SELECT'   || t.tagName === 'TEXTAREA' ||
+                    t.closest('canvas')      || t.closest('.modal-overlay') ||
                     t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
                     window._sortMode?.active
                 ) return;
@@ -6785,6 +6809,7 @@ async function findNearbyStations(lat, lon) {
                 state.settled  = false;
             }, { passive: true });
         
+            /* ─────────────────── TOUCH MOVE ─────────────────── */
             document.addEventListener('touchmove', e => {
                 if (state.animating) return;
         
@@ -6793,30 +6818,39 @@ async function findNearbyStations(lat, lon) {
                 const dx = x - state.startX;
                 const dy = y - state.startY;
         
-                /* wait until intent is clear */
+                /* wait until gesture intent is unambiguous */
                 if (!state.settled) {
                     if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-                    if (Math.abs(dy) > Math.abs(dx) * 0.85) return; // vertical — ignore
+                    if (Math.abs(dy) > Math.abs(dx) * 0.85)   return; // vertical scroll — ignore
+        
                     state.settled = true;
         
-                    /* resolve tabs */
-                    const order   = getOrder();
-                    state.fromTab = document.querySelector('.view-section.active')?.id.replace('tab-', '');
-                    const idx     = order.indexOf(state.fromTab);
+                    /* resolve which tabs are involved */
+                    const order    = getOrder();
+                    state.fromTab  = document.querySelector('.view-section.active')?.id.replace('tab-', '');
+                    const idx      = order.indexOf(state.fromTab);
                     if (idx === -1) return;
         
                     state.dir   = dx < 0 ? -1 : 1;
                     const nIdx  = (idx - state.dir + order.length) % order.length;
                     state.toTab = order[nIdx];
+        
                     state.fromEl = document.getElementById('tab-' + state.fromTab);
                     state.toEl   = document.getElementById('tab-' + state.toTab);
                     if (!state.fromEl || !state.toEl) return;
         
-                    state.W       = window.innerWidth;
-                    state.tracking = true;
+                    /* measure the content area (just the active section, not the whole page) */
+                    const rect = state.fromEl.getBoundingClientRect();
+                    state.W    = rect.width;
         
-                    prep(state.fromEl, 0);
-                    prep(state.toEl,   state.dir < 0 ? state.W : -state.W);
+                    /* create clip container exactly over the content area → tabs stay above/beside */
+                    state.clip = createClip(rect);
+        
+                    /* move both panels into the clip and set initial positions */
+                    prepInClip(state.fromEl, 0, state.clip);
+                    prepInClip(state.toEl, state.dir < 0 ? state.W : -state.W, state.clip);
+        
+                    state.tracking = true;
                 }
         
                 if (!state.tracking) return;
@@ -6827,6 +6861,7 @@ async function findNearbyStations(lat, lon) {
                 }
             }, { passive: true });
         
+            /* ─────────────────── TOUCH END ─────────────────── */
             document.addEventListener('touchend', e => {
                 if (!state.tracking) { state.settled = false; return; }
                 if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
@@ -6866,17 +6901,21 @@ async function findNearbyStations(lat, lon) {
         
             }, { passive: true });
         
+            /* ─────────────────── TOUCH CANCEL ─────────────────── */
             document.addEventListener('touchcancel', () => {
                 if (!state.tracking) return;
                 if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
+        
+                if (state.fromEl) restoreEl(state.fromEl);
+                if (state.toEl)   restoreEl(state.toEl);
+                if (state.clip?.parentNode) state.clip.parentNode.removeChild(state.clip);
+                state.clip = null;
+        
                 state.animating = false;
                 state.tracking  = false;
                 state.settled   = false;
-                if (state.fromEl) restore(state.fromEl);
-                if (state.toEl)   restore(state.toEl);
             }, { passive: true });
         })();
-
         // ================================================================
         // EDIT-MODE DRAG TO REORDER UTILITY
         // ================================================================
