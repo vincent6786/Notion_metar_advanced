@@ -5712,6 +5712,42 @@ async function findNearbyStations(lat, lon) {
                     if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
                 }
 
+        async function checkMultiDashboardEnabled() {
+                    const enabled = await Storage.get('efb_multi_dashboard_enabled', false);
+                    const toggle = document.getElementById('toggleMultiDashboard');
+                    if (toggle) toggle.checked = !!enabled;
+                    applyDashboardMode(!!enabled);
+                    if (enabled) {
+                        await loadMultiAirports();
+                        if (multiRefreshInterval) clearInterval(multiRefreshInterval);
+                        if (multiAirports.length > 0) {
+                            multiRefreshInterval = setInterval(refreshMultiData, 300000);
+                        }
+                    }
+                }
+        
+                async function toggleMultiDashboard() {
+                    const toggle = document.getElementById('toggleMultiDashboard');
+                    const enabled = toggle?.checked || false;
+                    await Storage.set('efb_multi_dashboard_enabled', enabled);
+                    applyDashboardMode(enabled);
+                    if (enabled) {
+                        setTab('dashboard');
+                        await loadMultiAirports();
+                        showToast('📊 Dashboard enabled');
+                        if (!multiRefreshInterval && multiAirports.length > 0) {
+                            multiRefreshInterval = setInterval(refreshMultiData, 300000);
+                        }
+                    } else {
+                        setTab('metar');
+                        if (multiRefreshInterval) {
+                            clearInterval(multiRefreshInterval);
+                            multiRefreshInterval = null;
+                        }
+                        showToast('Dashboard disabled');
+                    }
+                }
+    
         function applyDashboardMode(enabled) {
             const tabMetar     = document.getElementById('tabMetar');
             const tabTaf       = document.getElementById('tabTaf');
