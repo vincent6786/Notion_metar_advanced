@@ -6090,39 +6090,6 @@ async function findNearbyStations(lat, lon) {
         let multiDataCache = {};
         let multiRefreshInterval = null;
 
-        function toggleMultiDashboard() {
-            const enabled = document.getElementById('toggleMultiDashboard').checked;
-            const tabBtn = document.getElementById('tabMulti');
-            
-            if (enabled) {
-                tabBtn.style.display = 'block';
-                localStorage.setItem('efb_multi_dashboard', 'true');
-                showToast('✅ Multi-Airport Dashboard enabled');
-                loadMultiAirports();
-            } else {
-                tabBtn.style.display = 'none';
-                localStorage.setItem('efb_multi_dashboard', 'false');
-                showToast('Multi-Airport Dashboard disabled');
-                if (multiRefreshInterval) {
-                    clearInterval(multiRefreshInterval);
-                    multiRefreshInterval = null;
-                }
-            }
-        }
-
-        function checkMultiDashboardEnabled() {
-            const enabled = localStorage.getItem('efb_multi_dashboard') === 'true';
-            const toggle = document.getElementById('toggleMultiDashboard');
-            const tabBtn = document.getElementById('tabMulti');
-            
-            if (toggle) toggle.checked = enabled;
-            if (tabBtn) tabBtn.style.display = enabled ? 'block' : 'none';
-            
-            if (enabled) {
-                loadMultiAirports();
-            }
-        }
-
         async function loadMultiAirports() {
             // Try cloud first, then local
             const cloudData = await Storage.get('efb_multi_airports');
