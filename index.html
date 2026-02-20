@@ -3649,7 +3649,7 @@
             checkNightModeSaved();
             renderFavoritesSettings();
             renderHistory();
-            checkMultiDashboardEnabled();
+            await checkMultiDashboardEnabled();
             
 
             const savedCraft = localStorage.getItem('efb_craft');
@@ -5699,38 +5699,16 @@ async function findNearbyStations(lat, lon) {
                 el.style.display = '';
             });
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + name).classList.add('active');
+            const targetSection = document.getElementById('tab-' + name);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                targetSection.classList.remove('hidden');
+            }
             document.querySelectorAll('.tab').forEach(t => {
                 if (t.getAttribute('onclick')?.includes("'" + name + "'")) t.classList.add('active');
             });
             if (name === 'world') updateClock();
             if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
-        }
-
-        async function toggleMultiDashboard() {
-            const enabled = document.getElementById('toggleMultiDashboard').checked;
-            await Storage.set('efb_multi_dashboard', enabled);
-        
-            applyDashboardMode(enabled);
-        
-            if (enabled) {
-                showToast('✅ Dashboard & Weather tab enabled');
-                loadMultiAirports();
-            } else {
-                showToast('Dashboard disabled');
-                if (multiRefreshInterval) { clearInterval(multiRefreshInterval); multiRefreshInterval = null; }
-                // If on a now-hidden tab, go back to metar
-                const active = document.querySelector('.view-section.active');
-                if (active?.id === 'tab-dashboard' || active?.id === 'tab-weather') setTab('metar');
-            }
-        }
-
-        async function checkMultiDashboardEnabled() {
-            const enabled = await Storage.get('efb_multi_dashboard', false);
-            const toggle  = document.getElementById('toggleMultiDashboard');
-            if (toggle) toggle.checked = enabled;
-            applyDashboardMode(enabled);
-            if (enabled) loadMultiAirports();
         }
 
         function applyDashboardMode(enabled) {
