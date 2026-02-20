@@ -18,6 +18,13 @@
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
         }
+        /* Suppress re-entry animation after swipe commit */
+        .swipe-committed.view-section.active {
+            animation: none !important;
+        }
+        .swipe-committed.view-section.active > * {
+            animation: none !important;
+        }
         
         /* ============================================================
            1. CORE THEME & LAYOUT
@@ -6693,9 +6700,27 @@ async function findNearbyStations(lat, lon) {
                 el.style.cssText = '';
             }
         
-            function applyTab(name) {
+        
+            function commit(name) {
+                const destEl = document.getElementById('tab-' + name);
+            
+                // 1. Hold the destination visible during cleanup to prevent flash
+                if (destEl) {
+                    destEl.style.opacity   = '1';
+                    destEl.style.transform = 'translateX(0)';
+                    destEl.style.display   = 'block';
+                }
+            
+                // 2. Restore both panels (removes fixed positioning)
+                if (state.fromEl && state.fromEl !== destEl) restore(state.fromEl);
+                if (state.toEl   && state.toEl   !== destEl) restore(state.toEl);
+            
+                // 3. Apply the tab the same way clicking does (handles hidden class, etc.)
                 document.querySelectorAll('.view-section').forEach(el => {
-                    el.classList.remove('active');
+                    if (el !== destEl) {
+                        el.classList.remove('active');
+                        el.style.display = '';
+                    }
                 });
                 document.querySelectorAll('.tab').forEach(t => {
                     t.classList.remove('active');
@@ -6704,18 +6729,27 @@ async function findNearbyStations(lat, lon) {
                         t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                     }
                 });
-                const sec = document.getElementById('tab-' + name);
-                if (sec) sec.classList.add('active');
+            
+                // 4. Activate destination — suppress re-entry animations
+                if (destEl) {
+                    destEl.classList.remove('hidden');
+                    destEl.classList.remove('active'); // force re-add for animation reset
+                    destEl.classList.add('swipe-committed');
+                    destEl.classList.add('active');
+                    destEl.style.opacity   = '';
+                    destEl.style.transform = '';
+                    destEl.style.display   = '';
+                }
+            
+                // 5. Tab-specific side effects
                 if (name === 'world') updateClock();
                 if (name === 'taf'     && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
                 if (name === 'weather' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 50);
-            }
-        
-            function commit(name) {
-                /* clean up both panels, then do a normal setTab */
-                if (state.fromEl) restore(state.fromEl);
-                if (state.toEl)   restore(state.toEl);
-                applyTab(name);
+            
+                // 6. Re-enable animations for future normal tab taps (after 1 frame)
+                requestAnimationFrame(() => {
+                    if (destEl) destEl.classList.remove('swipe-committed');
+                });
             }
         
             function renderFrame() {
