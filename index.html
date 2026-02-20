@@ -3373,18 +3373,9 @@
              TAB: MULTI-AIRPORT DASHBOARD (Optional)
         ================================================================ -->
         <div id="tab-dashboard" class="view-section">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <div style="color:var(--sub-text);font-size:13px;line-height:1.5;">
-                    Track multiple airports at once. Tap to load · <b style="color:#555;">Long-press to reorder</b>
-                </div>
-                <button id="multiRefreshBtn" onclick="forceRefreshDashboard()"
-                        style="background:rgba(10,132,255,0.12); border:1px solid var(--accent); color:var(--accent);
-                               padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;
-                               display:flex; align-items:center; gap:5px; white-space:nowrap; flex-shrink:0; margin-left:10px;">
-                    ↻ Refresh
-                </button>
+            <div style="color:var(--sub-text);font-size:13px;margin-bottom:16px;line-height:1.5;">
+                Track multiple airports at once. Tap any card to load full details in other tabs.
             </div>
-            <div id="multiLastUpdated" style="font-size:10px; color:#555; margin-bottom:12px; text-align:right; height:14px;"></div>
             
             <div class="multi-add-form">
                 <input type="text" 
@@ -5710,7 +5701,6 @@ async function findNearbyStations(lat, lon) {
             // World clock updates (existing code)
             if (document.getElementById('tab-world').classList.contains('active')) {
                 const container = document.getElementById('worldContainer');
-                if (window._dragState?.active && window._dragState?.container === container) return; // pause during drag
                 container.innerHTML = '';
                 cityList.forEach((c, index) => {
                     const timeStr = now.toLocaleTimeString('en-GB', { timeZone: c.z, hour: '2-digit', minute: '2-digit', hour12: false });
@@ -5729,16 +5719,6 @@ async function findNearbyStations(lat, lon) {
                             <button class="clock-del-btn" onclick="removeCity(${index})">✕</button>
                         </div>`;
                     container.appendChild(card);
-            // Enable drag reorder on world clock container
-            const wc = document.getElementById('worldContainer');
-            if (wc) initSortable(wc, 'clock-card', async (from, to) => {
-                const moved = cityList.splice(from, 1)[0];
-                cityList.splice(to, 0, moved);
-                localStorage.setItem('efb_cities_v47', JSON.stringify(cityList));
-                if (shouldBackupCities()) await savecitiesToCloud();
-                updateClock();
-                showToast('✅ Order saved');
-                    
                 });
             }
         }
@@ -6534,106 +6514,6 @@ async function findNearbyStations(lat, lon) {
         }
 
         // ================================================================
-        // LONG-PRESS DRAG TO REORDER UTILITY
-        // ================================================================
-        window._dragState = {
-            active:    false,
-            timer:     null,
-            dragEl:    null,
-            fromIndex: -1,
-            toIndex:   -1,
-            startY:    0,
-            container: null,
-            itemClass: null
-        };
-        
-        function initSortable(containerEl, itemClass, onReorder) {
-            containerEl.addEventListener('touchstart', e => {
-                const item = e.target.closest('.' + itemClass);
-                if (!item || e.target.closest('button') || e.target.closest('a')) return;
-        
-                const ds = window._dragState;
-                ds.startY = e.touches[0].clientY;
-                ds.timer = setTimeout(() => {
-                    const items = [...containerEl.querySelectorAll('.' + itemClass)];
-                    const idx   = items.indexOf(item);
-                    if (idx === -1) return;
-        
-                    ds.active    = true;
-                    ds.dragEl    = item;
-                    ds.fromIndex = idx;
-                    ds.toIndex   = idx;
-                    ds.container = containerEl;
-                    ds.itemClass = itemClass;
-        
-                    // Visual: highlight drag item
-                    item.style.opacity   = '0.55';
-                    item.style.transform = 'scale(0.97)';
-                    item.style.outline   = '2px solid var(--accent)';
-                    item.style.zIndex    = '10';
-        
-                    if (navigator.vibrate) navigator.vibrate(40);
-                }, 480);
-        
-            }, { passive: true });
-        
-            containerEl.addEventListener('touchmove', e => {
-                const ds = window._dragState;
-                if (!ds.active) {
-                    // Cancel long-press if user is scrolling
-                    if (Math.abs(e.touches[0].clientY - ds.startY) > 12) {
-                        clearTimeout(ds.timer);
-                    }
-                    return;
-                }
-                e.preventDefault();
-        
-                const touchY = e.touches[0].clientY;
-                const items  = [...containerEl.querySelectorAll('.' + ds.itemClass)];
-        
-                // Find which slot the finger is over
-                let overIndex = ds.toIndex;
-                items.forEach((el, i) => {
-                    const rect = el.getBoundingClientRect();
-                    if (touchY >= rect.top && touchY <= rect.bottom) overIndex = i;
-                });
-        
-                if (overIndex !== ds.toIndex && overIndex !== -1) {
-                    // Move drag element in the DOM for live visual feedback
-                    if (overIndex < ds.toIndex) {
-                        containerEl.insertBefore(ds.dragEl, items[overIndex]);
-                    } else {
-                        const ref = items[overIndex].nextSibling;
-                        containerEl.insertBefore(ds.dragEl, ref || null);
-                    }
-                    ds.toIndex = overIndex;
-                }
-            }, { passive: false });
-        
-            const endDrag = () => {
-                clearTimeout(window._dragState.timer);
-                const ds = window._dragState;
-                if (!ds.active) return;
-        
-                // Reset visuals
-                ds.dragEl.style.opacity   = '';
-                ds.dragEl.style.transform = '';
-                ds.dragEl.style.outline   = '';
-                ds.dragEl.style.zIndex    = '';
-        
-                const from = ds.fromIndex;
-                const to   = ds.toIndex;
-                ds.active  = false;
-                ds.dragEl  = null;
-        
-                if (from !== to) onReorder(from, to);
-            };
-        
-            containerEl.addEventListener('touchend',   endDrag, { passive: true });
-            containerEl.addEventListener('touchcancel', endDrag, { passive: true });
-        }
-    
-        // ================================================================
         // 28. MULTI-AIRPORT DASHBOARD
         // ================================================================
         let multiAirports = [];
@@ -6725,36 +6605,11 @@ async function findNearbyStations(lat, lon) {
             }
         }
 
-        async function forceRefreshDashboard() {
-            const btn = document.getElementById('multiRefreshBtn');
-            if (btn) { btn.innerText = '⏳ Refreshing...'; btn.disabled = true; }
-            
-            // Clear cached METAR data for all tracked airports
-            multiAirports.forEach(icao => {
-                localStorage.removeItem(`cache_/api/weather?type=metar&station=${icao}`);
-            });
-            
-            await refreshMultiData();
-            
-            const now = new Date();
-            const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
-            const el = document.getElementById('multiLastUpdated');
-            if (el) el.innerText = `Last refreshed: ${timeStr}`;
-            
-            if (btn) { btn.innerHTML = '↻ Refresh'; btn.disabled = false; }
-            showToast('✅ Dashboard refreshed');
-        }
-    
         async function refreshMultiData() {
             console.log('[Multi] Refreshing all airports...');
             for (const icao of multiAirports) {
                 await fetchMultiAirportData(icao);
             }
-            // Update last-refreshed stamp
-            const now = new Date();
-            const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
-            const el = document.getElementById('multiLastUpdated');
-            if (el) el.innerText = `Auto-refreshed: ${timeStr}`;
         }
 
         function renderMultiDashboard() {
@@ -6780,15 +6635,6 @@ async function findNearbyStations(lat, lon) {
                 
                 return renderMultiCardHTML(icao, cached);
             }).join('');
-            // Enable drag reorder
-            initSortable(grid, 'multi-card', async (from, to) => {
-                const moved = multiAirports.splice(from, 1)[0];
-                multiAirports.splice(to, 0, moved);
-                await saveMultiAirports();
-                renderMultiDashboard();
-                showToast('✅ Order saved');
-            });
-            
         }
 
         function renderMultiCard(icao) {
