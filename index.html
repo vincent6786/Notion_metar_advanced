@@ -3796,12 +3796,22 @@
 
             const savedDefault = await Storage.get('efb_default_station');
             const inputField   = document.getElementById('defaultIcaoInput');
-            if (savedDefault) {
+             if (savedDefault) {
                 inputField.value = savedDefault;
                 document.getElementById('icao').value = savedDefault;
                 loadData();
+                const dashEnabled = await Storage.get('efb_multi_dashboard_enabled', false);
+                if (dashEnabled) {
+                    setTab('weather');
+                    switchWeatherPane('metar');
+                }
             } else {
                 document.getElementById('icao').value = '';
+                const dashEnabled = await Storage.get('efb_multi_dashboard_enabled', false);
+                if (dashEnabled) {
+                    setTab('weather');
+                    switchWeatherPane('metar');
+                }
             }
 
             const savedXW   = await Storage.get('efb_min_xw');
