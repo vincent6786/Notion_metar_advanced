@@ -4247,8 +4247,8 @@
             } catch(e) { console.error("Meteo Error:", e); loader.style.display = 'block'; loader.innerText = "⚠️ Model Data Unavailable"; }
         }
 
-        function drawMeteogram(h) {
-            const cvs = document.getElementById('meteoCanvas');
+        function drawMeteogram(h, canvasId = 'meteoCanvas') {
+            const cvs = document.getElementById(canvasId);
             const ctx = cvs.getContext('2d');
             const dpr  = window.devicePixelRatio || 1;
             const rect = cvs.getBoundingClientRect();
@@ -4303,10 +4303,15 @@
             ctx.fillStyle = 'rgba(10,132,255,0.2)'; ctx.fillRect(nowX - 14, padding.top - 18, 28, 14);
             ctx.fillStyle = '#0a84ff'; ctx.font = '700 9px "SF Mono",monospace'; ctx.textAlign = 'center'; ctx.fillText('NOW', nowX, padding.top - 7);
             ctx.restore();
-            if (window._meteoNowInterval) clearInterval(window._meteoNowInterval);
-            window._meteoNowInterval = setInterval(() => {
-                if (meteoDataCache) drawMeteogram(meteoDataCache);
-            }, 60000);
+            if (canvasId === 'meteoCanvas') {
+                if (window._meteoNowInterval) clearInterval(window._meteoNowInterval);
+                window._meteoNowInterval = setInterval(() => {
+                    if (meteoDataCache) {
+                        drawMeteogram(meteoDataCache, 'meteoCanvas');
+                        drawMeteogram(meteoDataCache, 'meteoCanvas2');
+                    }
+                }, 60000);
+            }
             // Lines
             const drawLine = (arr, color, width) => {
                 ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = 'round';
@@ -4338,26 +4343,8 @@
         // 16a. METAR TREND ANALYSIS
         // ================================================================
         function drawMeteogram2(h) {
-                    // Draw meteogram on the weather-tab duplicate canvas
-                    const cvs = document.getElementById('meteoCanvas2');
-                    if (!cvs) return;
-                    const ctx = cvs.getContext('2d');
-                    const dpr  = window.devicePixelRatio || 1;
-                    const rect = cvs.getBoundingClientRect();
-                    if (!rect.width) return; // canvas not visible yet, skip
-                    cvs.width  = rect.width * dpr; cvs.height = rect.height * dpr;
-                    ctx.scale(dpr, dpr);
-                    // Re-use the same drawing logic by temporarily swapping the canvas id
-                    const orig = document.getElementById('meteoCanvas');
-                    const origW = orig.width, origH = orig.height;
-                    // Draw fresh on canvas2 by duplicating the draw call
-                    // Simply call drawMeteogram but it targets meteoCanvas, so
-                    // we copy the imagedata after
-                    drawMeteogram(h);
-                    const imgData = orig.getContext('2d').getImageData(0, 0, orig.width, orig.height);
-                    cvs.width = orig.width; cvs.height = orig.height;
-                    cvs.getContext('2d').putImageData(imgData, 0, 0);
-                }
+            drawMeteogram(h, 'meteoCanvas2');
+        }
     
         function storeMetarForTrend(icao, metar) {
             try {
@@ -5161,9 +5148,10 @@ async function findNearbyStations(lat, lon) {
                 const expiryColor = remainMs < 1800000 ? 'var(--warn)' : 'var(--sub-text)';  // warn if <30min
                 
                 issuedEl.innerHTML = `
-                    <span>Issued: ${issuedStr}</span>
-                    <span style="color:${expiryColor};margin-left:12px;">⏱ ${timeLeftStr}</span>
+                    <span style="white-space:nowrap;">Issued: ${issuedStr}</span>
+                    <span style="color:${expiryColor};margin-left:8px;white-space:nowrap;">⏱ ${timeLeftStr}</span>
                 `;
+                issuedEl.style.cssText = 'display:flex;flex-wrap:nowrap;align-items:center;gap:0;overflow:hidden;min-width:0;';
             } else {
                 issuedEl.innerText = '--';
             }
@@ -5798,7 +5786,7 @@ async function findNearbyStations(lat, lon) {
                 tafPane.style.display   = '';
                 pillMetar?.classList.remove('active');
                 pillTaf?.classList.add('active');
-                if (meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, true), 50);
+                if (meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 50);
             } else {
                 tafPane.style.display   = 'none';
                 metarPane.style.display = '';
