@@ -1631,38 +1631,6 @@
                 margin-top: 10px;
             }
         
-            /* ── TAF pane inside Weather tab ── */
-            #weather-taf-pane {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                column-gap: 20px;
-                align-items: start;
-            }
-        
-            /* Meteogram header + canvas: left column, spans 2 rows */
-            #weather-taf-pane > div:first-child,       /* "24H Trend" header row */
-            #weather-taf-pane > .meteogram-container {
-                grid-column: 1;
-            }
-            #weather-taf-pane > div:first-child { grid-row: 1; }
-            #weather-taf-pane > .meteogram-container   { grid-row: 2; }
-        
-            /* TAF viz header + viz block: right column */
-            #weather-taf-pane > div:nth-child(3),      /* "Official Forecast" header row */
-            #weather-taf-pane > .taf-viz-container {
-                grid-column: 2;
-            }
-            #weather-taf-pane > div:nth-child(3) { grid-row: 1; }
-            #weather-taf-pane > .taf-viz-container    { grid-row: 2; }
-        
-            /* Raw TAF + NOTAMs: full width below */
-            #weather-taf-pane > .section-header-row,
-            #weather-taf-pane > .raw-text,
-            #weather-taf-pane > div:has(#notamList2),
-            #weather-taf-pane > #notamList2 {
-                grid-column: 1 / -1;
-            }
-        }
         
         /* ── 1100px+: widen wind column, 4-col metar grid ── */
         @media (min-width: 1100px) {
@@ -5391,17 +5359,30 @@ async function findNearbyStations(lat, lon) {
         }
 
         function showTafDetail(index, color) {
-            const f = tafDataCache[index], card = document.getElementById('tafDetail');
-            card.style.borderLeftColor = color; card.classList.remove('hidden');
+            const f = tafDataCache[index];
+            if (!f) return;
             const s = new Date(f.start_time.dt), e = new Date(f.end_time.dt);
-            document.getElementById('tdTime').innerText  = `${s.getUTCHours()}z ➔ ${e.getUTCHours()}z`;
-            document.getElementById('tdType').innerText  = f.type;
-            document.getElementById('tdWind').innerText  = `${f.wind_direction?.value || 'VRB'}° / ${f.wind_speed?.value || 0}kt`;
-            document.getElementById('tdVis').innerText   = f.visibility ? `${f.visibility.value} sm` : 'P6SM';
-            document.getElementById('tdWx').innerText    = f.wx_codes ? f.wx_codes.map(x => x.repr).join(' ') : 'NSW';
+            const timeStr  = `${s.getUTCHours()}z ➔ ${e.getUTCHours()}z`;
+            const windStr  = `${f.wind_direction?.value || 'VRB'}° / ${f.wind_speed?.value || 0}kt`;
+            const visStr   = f.visibility ? `${f.visibility.value} sm` : 'P6SM';
+            const wxStr    = f.wx_codes ? f.wx_codes.map(x => x.repr).join(' ') : 'NSW';
             let cStr = 'SKC';
             if (f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3, '0')}`).join(' ');
-            document.getElementById('tdCloud').innerText = cStr;
+        
+            // Update both the original and weather-tab duplicate
+            ['', '2'].forEach(suffix => {
+                const card = document.getElementById('tafDetail' + suffix);
+                if (!card) return;
+                card.style.borderLeftColor = color;
+                card.classList.remove('hidden');
+                const set = (id, val) => { const el = document.getElementById(id + suffix); if (el) el.innerText = val; };
+                set('tdTime',  timeStr);
+                set('tdType',  f.type);
+                set('tdWind',  windStr);
+                set('tdVis',   visStr);
+                set('tdWx',    wxStr);
+                set('tdCloud', cStr);
+            });
         }
 
         function updateTafSkyGradient(startT, endT) {
