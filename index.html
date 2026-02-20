@@ -4962,7 +4962,8 @@ async function findNearbyStations(lat, lon) {
         }
 
         function drawWindRose() {
-            const canvasId = document.getElementById('toggleMultiDashboard')?.checked ? 'windRose2' : 'windRose';
+            const weatherTabActive = document.getElementById('tab-weather')?.classList.contains('active');
+            const canvasId = weatherTabActive ? 'windRose2' : 'windRose';
             const canvas   = document.getElementById(canvasId);
             const ctx      = canvas.getContext('2d');
             const w = 140, h = 140, cx = 70, cy = 70, r = 54;
@@ -5694,22 +5695,22 @@ async function findNearbyStations(lat, lon) {
         function checkNightModeSaved() { if (localStorage.getItem('efb_night_mode') === 'true') toggleNightMode(); }
 
         function setTab(name) {
-            document.querySelectorAll('.view-section').forEach(el => {
-                el.classList.remove('active');
-                el.style.display = '';
-            });
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            const targetSection = document.getElementById('tab-' + name);
-            if (targetSection) {
-                targetSection.classList.add('active');
-                targetSection.classList.remove('hidden');
-            }
-            document.querySelectorAll('.tab').forEach(t => {
-                if (t.getAttribute('onclick')?.includes("'" + name + "'")) t.classList.add('active');
-            });
-            if (name === 'world') updateClock();
-            if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
-        }
+                    document.querySelectorAll('.view-section').forEach(el => {
+                        el.classList.remove('active');
+                        el.style.display = '';
+                    });
+                    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+                    const targetSection = document.getElementById('tab-' + name);
+                    if (targetSection) {
+                        targetSection.classList.remove('hidden');
+                        targetSection.classList.add('active');
+                    }
+                    document.querySelectorAll('.tab').forEach(t => {
+                        if (t.getAttribute('onclick')?.includes("'" + name + "'")) t.classList.add('active');
+                    });
+                    if (name === 'world') updateClock();
+                    if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
+                }
 
         function applyDashboardMode(enabled) {
             const tabMetar     = document.getElementById('tabMetar');
