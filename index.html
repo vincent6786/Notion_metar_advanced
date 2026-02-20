@@ -3124,7 +3124,43 @@
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
                 <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.0 · Cloud Edition · Quick reference for all features</div>
-                <!--Whats new update-->
+                
+                <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
+                <div class="help-section" id="helpWhatsNewSection">
+                    <div class="help-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>🆕 What's New</span>
+                        <span id="helpWhatsNewVersion" style="font-size:11px; background:rgba(10,132,255,0.15); border:1px solid rgba(10,132,255,0.4); color:var(--accent); padding:2px 8px; border-radius:10px; font-weight:700; letter-spacing:0.3px;"></span>
+                    </div>
+                    <div id="helpWhatsNewList"></div>
+                    <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border); font-size:11px; color:#555;">
+                        💡 This popup shows once on each update. You can always review it here.
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🌦 WEATHER Tab (Dashboard Mode)</div>
+                    <div class="help-item">
+                        <div class="help-q">What is the Weather Tab?</div>
+                        <div class="help-a">When Dashboard Mode is enabled in Settings, the separate METAR and TAF tabs are replaced by a single <b>Weather</b> tab. It combines both into one view, switchable via a pill toggle at the top.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">METAR / TAF Pill Toggle</div>
+                        <div class="help-a">Tap <b>METAR</b> or <b>TAF</b> on the pill at the top of the Weather tab to switch panes. All the same data is shown — wind rose, sky cover, gauges, meteogram, TAF timeline — just in one unified tab.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Smart Default Tab</div>
+                        <div class="help-a">When Dashboard Mode is on and a default airport is set, the app opens directly to the <b>Weather → METAR</b> pane on launch. No manual navigation needed.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">TAF Tap-to-Decode</div>
+                        <div class="help-a">In the Weather tab's TAF pane, tap any coloured forecast block on the timeline bar to expand the decoded detail card — showing wind, visibility, weather, and cloud for that period. Tap another block to switch periods.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Enabling / Disabling</div>
+                        <div class="help-a">Go to <b>Settings → Multi-Airport Dashboard</b> and toggle it on or off. When off, the original separate METAR and TAF tabs return.</div>
+                    </div>
+                </div>
+                
                 <div class="help-section">
                     <div class="help-section-title">🌤 METAR Tab</div>
                     <div class="help-item">
@@ -3301,6 +3337,10 @@
                         <div class="help-q">API Usage Monitor</div>
                         <div class="help-a">Admin-only view showing daily AVWX API call counts across all keys. Requires admin password. Useful for monitoring usage before plan limits are reached.</div>
                     </div>
+                    <div class="help-item">
+                        <div class="help-q">🆕 What's New Popup</div>
+                        <div class="help-a">On each app update, a popup shows once to highlight new features. Once dismissed it won't appear again for that version. You can always revisit the changelog here at the top of this Help tab.</div>
+                    </div>
                 </div>
                 
                 <div class="help-section">
@@ -3421,6 +3461,22 @@
         function closeWhatsNew() {
             localStorage.setItem('efb_seen_version', WHATS_NEW.version);
             document.getElementById('whatsNewModal').classList.remove('active');
+        }
+
+        function renderHelpWhatsNew() {
+            const versionEl = document.getElementById('helpWhatsNewVersion');
+            const listEl    = document.getElementById('helpWhatsNewList');
+            if (!versionEl || !listEl) return;
+        
+            versionEl.innerText = 'v' + WHATS_NEW.version;
+            listEl.innerHTML = WHATS_NEW.changes.map(c => `
+                <div class="help-item" style="display:flex; align-items:flex-start; gap:12px; background:rgba(255,255,255,0.03); border-radius:8px; padding:10px 12px; margin-bottom:6px;">
+                    <div style="font-size:20px; line-height:1; flex-shrink:0; margin-top:1px;">${c.icon}</div>
+                    <div>
+                        <div class="help-q" style="margin-bottom:3px;">${c.title}</div>
+                        <div class="help-a">${c.desc}</div>
+                    </div>
+                </div>`).join('');
         }
     
         // ================================================================
@@ -3986,7 +4042,7 @@
             if (savedCeil) document.getElementById('minCeil').value = savedCeil;
 
             setInterval(updateClock, 1000);
-            setTimeout(checkWhatsNew, 500);   // slight delay so launch screen clears first
+            setTimeout(() => { checkWhatsNew(); renderHelpWhatsNew(); }, 500);   // slight delay so launch screen clears first
         }
 
         // ================================================================
