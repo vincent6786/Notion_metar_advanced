@@ -1942,6 +1942,42 @@
         input:checked + .toggle-slider:before {
             transform: translateX(20px);
         }
+
+        /* ============================================================
+           WEATHER TAB PILL TOGGLE
+        ============================================================ */
+        .weather-pill-row {
+            display: flex;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 3px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border);
+        }
+        .pill-btn {
+            flex: 1;
+            padding: 9px 0;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--sub-text);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .pill-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(10,132,255,0.35);
+        }
+        body.cockpit-dark .pill-btn.active {
+            background: #ff0000;
+            box-shadow: none;
+        }
         
     </style>
 </head>
@@ -2022,23 +2058,27 @@
     <!-- ================================================================
          TABS
     ================================================================ -->
-    <div class="tabs">
-        <div class="tab active"   onclick="setTab('metar')">METAR</div>
-        <div class="tab"          onclick="setTab('taf')">TAF</div>
-        <div class="tab"          onclick="setTab('info')">INFO</div>
-        <div class="tab"          onclick="setTab('atc')">ATC</div>
-        <div class="tab"          onclick="setTab('world')">WORLD</div>
-        <div class="tab"          onclick="setTab('tools')">TOOLS</div>
-        <div class="tab"          onclick="setTab('settings')">SETTINGS</div>
-        <div class="tab"          onclick="setTab('help')">HELP</div>
-        <div id="tabMulti" class="tab" style="display:none;" onclick="setTab('multi')">MULTI</div>
+    <div class="tabs" id="mainTabs">
+        <!-- Default state (toggle OFF): METAR + TAF separate, no dashboard -->
+        <div id="tabMetar"     class="tab active" onclick="setTab('metar')">METAR</div>
+        <div id="tabTaf"       class="tab"        onclick="setTab('taf')">TAF</div>
+        <!-- Enhanced state (toggle ON): combined WEATHER + DASHBOARD -->
+        <div id="tabDashboard" class="tab hidden" onclick="setTab('dashboard')">DASHBOARD</div>
+        <div id="tabWeather"   class="tab hidden" onclick="setTab('weather')">WEATHER</div>
+        <!-- Always visible -->
+        <div class="tab" onclick="setTab('info')">INFO</div>
+        <div class="tab" onclick="setTab('atc')">ATC</div>
+        <div class="tab" onclick="setTab('world')">WORLD</div>
+        <div class="tab" onclick="setTab('tools')">TOOLS</div>
+        <div class="tab" onclick="setTab('settings')">SETTINGS</div>
+        <div class="tab" onclick="setTab('help')">HELP</div>
     </div>
 
     <!-- ================================================================
-         TAB: METAR
+         TAB: METAR (original, shown when toggle OFF)
     ================================================================ -->
     <div id="tab-metar" class="view-section active">
-
+    
         <!-- Wind Rose -->
         <div class="wind-vis-container">
             <canvas id="windRose" width="140" height="140" style="width:140px; height:140px;"></canvas>
@@ -2053,26 +2093,22 @@
                 </div>
             </div>
         </div>
-
+    
         <!-- AWOS Button (KMHR only) -->
         <button id="btnFetchLive" class="tool-btn hidden"
                 style="margin-top:10px; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;"
                 onclick="openAwosModal()">
             📡 Open Live Sensor View (KMHR)
         </button>
-
+    
         <!-- METAR Data Grid -->
         <div class="metar-grid">
-
-            <!-- Sky Visuals -->
             <div id="skyVisuals" class="sky-section">
                 <div class="sky-header">Sky Cover (AGL)</div>
                 <div id="skyLayersContainer">
                     <div class="sky-no-data">Scanning Sky...</div>
                 </div>
             </div>
-
-            <!-- Flight Rule Gauges -->
             <div class="fr-bar-container">
                 <div class="fr-header-row">
                     <div class="fr-header-row">
@@ -2111,8 +2147,6 @@
                 </div>
                 <div id="frMessage" class="fr-msg">--</div>
             </div>
-
-            <!-- Value Cards -->
             <div class="metar-card"><div class="m-label">WIND</div><div class="m-value" id="mWind">--</div></div>
             <div class="metar-card"><div class="m-label">VISIBILITY</div><div class="m-value" id="mVis">--</div></div>
             <div class="metar-card"><div class="m-label">CEILING</div><div class="m-value" id="mCeil">--</div></div>
@@ -2125,7 +2159,7 @@
                 </div>
             </div>
         </div>
-
+    
         <div class="section-header-row">
             <div class="section-title" style="margin:0;">RAW METAR</div>
             <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
@@ -2136,8 +2170,7 @@
             <span id="mSpread">Spread: --</span>
             <span id="mHumidity">RH: --%</span>
         </div>
-
-        <!-- Nearby Stations -->
+    
         <div id="nearbyContainer" class="nearby-container">
             <div class="nearby-header">NEARBY STATIONS</div>
             <div id="nearList" class="nearby-list">
@@ -2147,7 +2180,7 @@
     </div>
 
     <!-- ================================================================
-         TAB: TAF
+         TAB: TAF (original, shown when toggle OFF)
     ================================================================ -->
     <div id="tab-taf" class="view-section">
         <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px;">
@@ -2195,6 +2228,156 @@
         <div id="notamList" class="raw-text"
              style="max-height:300px; overflow-y:auto; font-size:11px; background:transparent; padding:0;">Loading...</div>
     </div>
+    
+    <!-- ================================================================
+         TAB: WEATHER (combined METAR+TAF, shown when toggle ON)
+    ================================================================ -->
+    <div id="tab-weather" class="view-section hidden">
+    
+        <!-- Pill toggle -->
+        <div class="weather-pill-row">
+            <button id="pillMetar" class="pill-btn active" onclick="switchWeatherPane('metar')">METAR</button>
+            <button id="pillTaf"   class="pill-btn"        onclick="switchWeatherPane('taf')">TAF</button>
+        </div>
+    
+        <!-- METAR pane -->
+        <div id="weather-metar-pane">
+            <div class="wind-vis-container">
+                <canvas id="windRose2" width="140" height="140" style="width:140px; height:140px;"></canvas>
+                <div class="wind-controls">
+                    <div class="m-label">Selected Runway</div>
+                    <select id="rwySelect2" class="stealth-select" onchange="drawWindRose()">
+                        <option value="">Loading...</option>
+                    </select>
+                    <div class="wind-stats">
+                        <div class="stat-row"><span class="info-label">Headwind</span> <span id="valHW2">--</span></div>
+                        <div class="stat-row"><span class="info-label">Crosswind</span> <span id="valXW2">--</span></div>
+                    </div>
+                </div>
+            </div>
+            <button id="btnFetchLive2" class="tool-btn hidden"
+                    style="margin-top:10px; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;"
+                    onclick="openAwosModal()">
+                📡 Open Live Sensor View (KMHR)
+            </button>
+            <div class="metar-grid">
+                <div id="skyVisuals2" class="sky-section">
+                    <div class="sky-header">Sky Cover (AGL)</div>
+                    <div id="skyLayersContainer2"><div class="sky-no-data">Scanning Sky...</div></div>
+                </div>
+                <div class="fr-bar-container">
+                    <div class="fr-header-row">
+                        <div class="fr-title">Flight Category Breakdown</div>
+                        <div onclick="toggleLegend(true)"
+                             style="cursor:pointer; background:rgba(255,255,255,0.1); border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--sub-text);">?</div>
+                    </div>
+                    <div class="fr-gauge-group">
+                        <div>
+                            <div class="fr-row-label">
+                                <span>Ceiling</span><span id="labelCeilVal2" class="fr-val-text">--</span>
+                            </div>
+                            <div class="fr-track-modern">
+                                <div class="fr-sec" style="width:25%"><span>LIFR</span></div>
+                                <div class="fr-sec" style="width:25%"><span>IFR</span></div>
+                                <div class="fr-sec" style="width:25%"><span>MVFR</span></div>
+                                <div class="fr-sec" style="width:25%; border:none;"><span>VFR</span></div>
+                                <div id="gaugeCeil2" class="fr-fill-bar" style="width:0%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="fr-row-label">
+                                <span>Visibility</span><span id="labelVisVal2" class="fr-val-text">--</span>
+                            </div>
+                            <div class="fr-track-modern">
+                                <div class="fr-sec" style="width:25%"><span>LIFR</span></div>
+                                <div class="fr-sec" style="width:25%"><span>IFR</span></div>
+                                <div class="fr-sec" style="width:25%"><span>MVFR</span></div>
+                                <div class="fr-sec" style="width:25%; border:none;"><span>VFR</span></div>
+                                <div id="gaugeVis2" class="fr-fill-bar" style="width:0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="frMessage2" class="fr-msg">--</div>
+                </div>
+                <div class="metar-card"><div class="m-label">WIND</div><div class="m-value" id="mWind2">--</div></div>
+                <div class="metar-card"><div class="m-label">VISIBILITY</div><div class="m-value" id="mVis2">--</div></div>
+                <div class="metar-card"><div class="m-label">CEILING</div><div class="m-value" id="mCeil2">--</div></div>
+                <div class="metar-card"><div class="m-label">ALTIMETER</div><div class="m-value" id="mAlt2">--</div></div>
+                <div class="metar-card full-width">
+                    <div class="m-label">TEMP / DEWPOINT</div>
+                    <div class="m-value">
+                        <span id="mTempC2">--</span>
+                        <span id="mTempF2" class="m-sub">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-header-row">
+                <div class="section-title" style="margin:0;">RAW METAR</div>
+                <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
+            </div>
+            <div class="raw-text" id="rawMetar2">Select an airport above.</div>
+            <div class="metar-footer">
+                <span id="mAge2">--</span>
+                <span id="mSpread2">Spread: --</span>
+                <span id="mHumidity2">RH: --%</span>
+            </div>
+            <div id="nearbyContainer2" class="nearby-container">
+                <div class="nearby-header">NEARBY STATIONS</div>
+                <div id="nearList2" class="nearby-list">
+                    <span style="color:var(--sub-text); font-size:12px;">--</span>
+                </div>
+            </div>
+        </div><!-- /weather-metar-pane -->
+    
+        <!-- TAF pane -->
+        <div id="weather-taf-pane" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px;">
+                <span>24H Trend (Open-Meteo)</span>
+                <span style="background:var(--warn); color:#000; padding:2px 6px; border-radius:4px; font-weight:800; font-size:10px;">⚠️ ADVISORY only</span>
+            </div>
+            <div class="meteogram-container">
+                <canvas id="meteoCanvas2" height="150"></canvas>
+                <div id="meteoLoading2" class="sky-no-data"
+                     style="position:absolute; top:50%; left:0; right:0; text-align:center;">Select Airport</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span>Official Forecast Visualization</span>
+                    <span onclick="toggleLegend(true)" style="cursor:pointer; opacity:0.6;">ⓘ</span>
+                </div>
+                <span id="tafIssued2">--</span>
+            </div>
+            <div class="taf-viz-container">
+                <div id="tafNeedle2" onclick="toggleTafNeedleTooltip()">
+                    <div id="tafNeedleTooltip2"></div>
+                </div>
+                <div id="tafBar2" class="taf-bar"></div>
+                <div id="tafSkyStrip2" class="taf-sky-strip"></div>
+                <div id="tafAxis2" class="taf-axis"></div>
+                <div id="tafDetail2" class="taf-detail-card hidden">
+                    <div class="td-header" style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                        <span id="tdTime2" style="font-weight:700;">--</span>
+                        <span id="tdType2" style="background:#444; padding:2px 6px; border-radius:4px; color:#fff;">--</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div><span class="m-label">WIND</span><div id="tdWind2" style="font-weight:600;">--</div></div>
+                        <div><span class="m-label">VISIBILITY</span><div id="tdVis2" style="font-weight:600;">--</div></div>
+                        <div><span class="m-label">WEATHER</span><div id="tdWx2" style="font-weight:600;">--</div></div>
+                        <div><span class="m-label">CLOUDS</span><div id="tdCloud2" style="font-weight:600;">--</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="section-header-row">
+                <div class="section-title" style="margin:0;">RAW TAF</div>
+                <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
+            </div>
+            <div class="raw-text" id="rawTaf2">--</div>
+            <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
+            <div id="notamList2" class="raw-text"
+                 style="max-height:300px; overflow-y:auto; font-size:11px; background:transparent; padding:0;">Loading...</div>
+        </div><!-- /weather-taf-pane -->
+    
+    </div><!-- /tab-weather -->
 
     <!-- ================================================================
          TAB: INFO
@@ -2915,7 +3098,7 @@
         <!-- ================================================================
              TAB: MULTI-AIRPORT DASHBOARD (Optional)
         ================================================================ -->
-         <div id="tab-multi" class="view-section">
+        <div id="tab-dashboard" class="view-section">
             <div style="color:var(--sub-text);font-size:13px;margin-bottom:16px;line-height:1.5;">
                 Track multiple airports at once. Tap any card to load full details in other tabs.
             </div>
@@ -4309,6 +4492,8 @@
             ageEl.innerText = `${minAgo}m ago`;
             ageEl.style.color      = minAgo > 60 ? 'var(--danger)' : 'var(--sub-text)';
             ageEl.style.fontWeight = minAgo > 60 ? '700' : '400';
+            mirrorToWeatherTab();
+
         }
 
         function renderSkyVisuals(m) {
@@ -4777,7 +4962,8 @@ async function findNearbyStations(lat, lon) {
         }
 
         function drawWindRose() {
-            const canvas   = document.getElementById('windRose');
+            const canvasId = document.getElementById('toggleMultiDashboard')?.checked ? 'windRose2' : 'windRose';
+            const canvas   = document.getElementById(canvasId);
             const ctx      = canvas.getContext('2d');
             const w = 140, h = 140, cx = 70, cy = 70, r = 54;
             const rwyIdent = document.getElementById('rwySelect').value;
@@ -4869,6 +5055,16 @@ async function findNearbyStations(lat, lon) {
             }
         }
 
+        function drawWindRoseOnCanvas(canvasId) {
+            const orig = document.getElementById('rwySelect');
+            const copy = document.getElementById('rwySelect2');
+            if (copy && orig) copy.value = orig.value;
+            const saved = document.getElementById('toggleMultiDashboard');
+            // Temporarily point drawWindRose to the right canvas
+            const temp = { checked: canvasId === 'windRose2' };
+            if (saved) { const prev = saved.checked; saved.checked = temp.checked; drawWindRose(); saved.checked = prev; }
+        }
+    
         function renderRunwaysComplex() {
             const container = document.getElementById('runwayListComplex');
             container.innerHTML = '';
@@ -4987,6 +5183,8 @@ async function findNearbyStations(lat, lon) {
                 }
             });
             if (stationSunTimes) updateTafSkyGradient(startT, endT);
+            mirrorToWeatherTab();
+
         }
 
         function toggleTafNeedleTooltip() {
@@ -5498,15 +5696,156 @@ async function findNearbyStations(lat, lon) {
         function setTab(name) {
             document.querySelectorAll('.view-section').forEach(el => {
                 el.classList.remove('active');
-                el.style.display = ''; // Clear any inline display:none
+                el.style.display = '';
             });
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + name).classList.add('active');
-            document.querySelectorAll('.tab').forEach(t => { if (t.getAttribute('onclick').includes(name)) t.classList.add('active'); });
+            document.querySelectorAll('.tab').forEach(t => {
+                if (t.getAttribute('onclick')?.includes("'" + name + "'")) t.classList.add('active');
+            });
             if (name === 'world') updateClock();
             if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
         }
 
+        async function toggleMultiDashboard() {
+            const enabled = document.getElementById('toggleMultiDashboard').checked;
+            await Storage.set('efb_multi_dashboard', enabled);
+        
+            applyDashboardMode(enabled);
+        
+            if (enabled) {
+                showToast('✅ Dashboard & Weather tab enabled');
+                loadMultiAirports();
+            } else {
+                showToast('Dashboard disabled');
+                if (multiRefreshInterval) { clearInterval(multiRefreshInterval); multiRefreshInterval = null; }
+                // If on a now-hidden tab, go back to metar
+                const active = document.querySelector('.view-section.active');
+                if (active?.id === 'tab-dashboard' || active?.id === 'tab-weather') setTab('metar');
+            }
+        }
+
+        async function checkMultiDashboardEnabled() {
+            const enabled = await Storage.get('efb_multi_dashboard', false);
+            const toggle  = document.getElementById('toggleMultiDashboard');
+            if (toggle) toggle.checked = enabled;
+            applyDashboardMode(enabled);
+            if (enabled) loadMultiAirports();
+        }
+
+        function applyDashboardMode(enabled) {
+            const tabMetar     = document.getElementById('tabMetar');
+            const tabTaf       = document.getElementById('tabTaf');
+            const tabDashboard = document.getElementById('tabDashboard');
+            const tabWeather   = document.getElementById('tabWeather');
+        
+            if (enabled) {
+                tabMetar?.classList.add('hidden');
+                tabTaf?.classList.add('hidden');
+                tabDashboard?.classList.remove('hidden');
+                tabWeather?.classList.remove('hidden');
+            } else {
+                tabMetar?.classList.remove('hidden');
+                tabTaf?.classList.remove('hidden');
+                tabDashboard?.classList.add('hidden');
+                tabWeather?.classList.add('hidden');
+            }
+        }
+        
+        function switchWeatherPane(pane) {
+            const metarPane = document.getElementById('weather-metar-pane');
+            const tafPane   = document.getElementById('weather-taf-pane');
+            const pillMetar = document.getElementById('pillMetar');
+            const pillTaf   = document.getElementById('pillTaf');
+            if (!metarPane || !tafPane) return;
+        
+            if (pane === 'taf') {
+                metarPane.style.display = 'none';
+                tafPane.style.display   = '';
+                pillMetar?.classList.remove('active');
+                pillTaf?.classList.add('active');
+                if (meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, true), 50);
+            } else {
+                tafPane.style.display   = 'none';
+                metarPane.style.display = '';
+                pillTaf?.classList.remove('active');
+                pillMetar?.classList.add('active');
+            }
+        }
+        
+        // Mirror all METAR/TAF render calls to the weather tab duplicates
+        function mirrorToWeatherTab(m) {
+            const enabled = document.getElementById('toggleMultiDashboard')?.checked;
+            if (!enabled) return;
+        
+            // Mirror simple text fields
+            const mirrors = [
+                ['mWind','mWind2'], ['mVis','mVis2'], ['mCeil','mCeil2'],
+                ['mAlt','mAlt2'], ['mTempC','mTempC2'], ['mTempF','mTempF2'],
+                ['mAge','mAge2'], ['mSpread','mSpread2'], ['mHumidity','mHumidity2'],
+                ['rawMetar','rawMetar2'], ['rawTaf','rawTaf2'],
+                ['frMessage','frMessage2'], ['labelCeilVal','labelCeilVal2'],
+                ['labelVisVal','labelVisVal2'], ['tafIssued','tafIssued2'],
+                ['notamList','notamList2']
+            ];
+            mirrors.forEach(([orig, copy]) => {
+                const o = document.getElementById(orig);
+                const c = document.getElementById(copy);
+                if (o && c) { c.innerHTML = o.innerHTML; c.style.cssText = o.style.cssText; }
+            });
+        
+            // Mirror gauge widths and colors
+            const gauges = [['gaugeCeil','gaugeCeil2'],['gaugeVis','gaugeVis2']];
+            gauges.forEach(([orig, copy]) => {
+                const o = document.getElementById(orig);
+                const c = document.getElementById(copy);
+                if (o && c) { c.style.width = o.style.width; c.style.backgroundColor = o.style.backgroundColor; }
+            });
+        
+            // Mirror sky layers
+            const sky1 = document.getElementById('skyLayersContainer');
+            const sky2 = document.getElementById('skyLayersContainer2');
+            if (sky1 && sky2) sky2.innerHTML = sky1.innerHTML;
+        
+            // Mirror nearby list
+            const n1 = document.getElementById('nearList');
+            const n2 = document.getElementById('nearList2');
+            if (n1 && n2) n2.innerHTML = n1.innerHTML;
+        
+            // Mirror runway select
+            const r1 = document.getElementById('rwySelect');
+            const r2 = document.getElementById('rwySelect2');
+            if (r1 && r2) { r2.innerHTML = r1.innerHTML; r2.value = r1.value; }
+        
+            // Mirror AWOS button
+            const b1 = document.getElementById('btnFetchLive');
+            const b2 = document.getElementById('btnFetchLive2');
+            if (b1 && b2) { b2.className = b1.className; }
+        
+            // Mirror TAF detail card
+            const tafFields = [['tdTime','tdTime2'],['tdType','tdType2'],
+                               ['tdWind','tdWind2'],['tdVis','tdVis2'],
+                               ['tdWx','tdWx2'],['tdCloud','tdCloud2'],
+                               ['tafBar','tafBar2'],['tafAxis','tafAxis2'],
+                               ['tafSkyStrip','tafSkyStrip2']];
+            tafFields.forEach(([orig, copy]) => {
+                const o = document.getElementById(orig);
+                const c = document.getElementById(copy);
+                if (o && c) { c.innerHTML = o.innerHTML; c.style.cssText = o.style.cssText; }
+            });
+        
+            // Mirror wind rose values
+            ['valHW','valXW'].forEach(id => {
+                const o = document.getElementById(id);
+                const c = document.getElementById(id + '2');
+                if (o && c) { c.innerHTML = o.innerHTML; c.style.color = o.style.color; }
+            });
+        
+            // Redraw wind rose on weather tab canvas
+            const r2sel = document.getElementById('rwySelect2');
+            if (r2sel) drawWindRoseOnCanvas('windRose2');
+        }
+    
         function updateHeaderCat(status, colorClass) {
             const badge = document.getElementById('headerCat');
             badge.innerText = status; badge.className = 'badge badge-cat ' + colorClass;
@@ -5696,9 +6035,9 @@ async function findNearbyStations(lat, lon) {
         let touchEndY = 0;
 
         function getTabOrder() {
-            const base = ['metar', 'taf', 'info', 'atc', 'world', 'tools', 'settings', 'help'];
-            if (localStorage.getItem('efb_multi_dashboard') === 'true') base.push('multi');
-            return base;
+            const enabled = document.getElementById('toggleMultiDashboard')?.checked;
+            if (enabled) return ['dashboard', 'weather', 'info', 'atc', 'world', 'tools', 'settings', 'help'];
+            return ['metar', 'taf', 'info', 'atc', 'world', 'tools', 'settings', 'help'];
         }
         function handleSwipe() {
             const swipeThreshold = 80;  // Minimum swipe distance
@@ -5972,7 +6311,8 @@ async function findNearbyStations(lat, lon) {
         function loadMultiAirport(icao) {
             document.getElementById('icao').value = icao;
             loadData();
-            setTab('metar');
+            const enabled = document.getElementById('toggleMultiDashboard')?.checked;
+            setTab(enabled ? 'weather' : 'metar');
             showToast(`Loading ${icao}...`);
         }
     
