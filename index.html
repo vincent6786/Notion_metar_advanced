@@ -11,6 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <style>
+        body { overflow-x: hidden; }
         /* ============================================================
            1. CORE THEME & LAYOUT
         ============================================================ */
@@ -6243,7 +6244,12 @@ async function findNearbyStations(lat, lon) {
                         targetSection.classList.add('active');
                     }
                     document.querySelectorAll('.tab').forEach(t => {
-                        if (t.getAttribute('onclick')?.includes("'" + name + "'")) t.classList.add('active');
+                        if (t.getAttribute('onclick')?.includes("'" + name + "'")) {
+                            t.classList.add('active');
+                            // ← ADD THIS: scroll tab pill into view on mobile
+                            t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }
+
                     });
                     if (name === 'world') updateClock();
                     if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
@@ -6632,28 +6638,201 @@ async function findNearbyStations(lat, lon) {
             }
         }
 
-        // Only enable swipe on touch devices
+        // ================================================================
+        // iOS-STYLE INTERACTIVE LIQUID SWIPE NAVIGATION
+        // ================================================================
+        const _sw = {
+            startX: 0, startY: 0, lastX: 0,
+            active: false, locked: false, direction: null,
+            fromTab: null, fromEl: null,
+            toTab: null,   toEl: null,
+            animating: false, rect: null
+        };
+        
+        function _swSetFixed(el, rect, xOffset) {
+            if (!el) return;
+            el.style.cssText = `
+                position: fixed !important;
+                top: ${rect.top}px;
+                left: ${rect.left + xOffset}px;
+                width: ${rect.width}px;
+                min-height: ${Math.max(rect.height, window.innerHeight - rect.top)}px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                z-index: 500;
+                background: var(--bg);
+                will-change: left;
+                transition: none;
+                display: block !important;
+                opacity: 1;
+                margin: 0;
+                padding-top: 12px;
+                padding-bottom: max(40px, env(safe-area-inset-bottom));
+            `;
+        }
+        
+        function _swClearFixed(el) {
+            if (!el) return;
+            el.style.cssText = '';
+        }
+        
         if ('ontouchstart' in window) {
+        
             document.addEventListener('touchstart', e => {
-                // Ignore if touching an input, button, or scrollable element
-                const target = e.target;
-                if (target.tagName === 'INPUT' || 
-                    target.tagName === 'BUTTON' || 
-                    target.tagName === 'SELECT' ||
-                    target.closest('.metar-grid') ||
-                    target.closest('.raw-text') ||
-                    target.closest('canvas')) {
-                    return;
-                }
-                
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
+                if (_sw.animating) return;
+                const t = e.target;
+                if (t.tagName === 'INPUT' || t.tagName === 'BUTTON' ||
+                    t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' ||
+                    t.closest('canvas') || t.closest('.modal-overlay') ||
+                    t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
+                    window._sortMode?.active) return;
+        
+                _sw.startX  = e.touches[0].clientX;
+                _sw.startY  = e.touches[0].clientY;
+                _sw.lastX   = _sw.startX;
+                _sw.active  = true;
+                _sw.locked  = false;
+                _sw.direction = null;
             }, { passive: true });
-
+        
+            document.addEventListener('touchmove', e => {
+                if (!_sw.active || _sw.animating) return;
+        
+                const x  = e.touches[0].clientX;
+                const y  = e.touches[0].clientY;
+                const dx = x - _sw.startX;
+                const dy = y - _sw.startY;
+                _sw.lastX = x;
+        
+                // Lock scroll direction on first real move
+                if (!_sw.locked) {
+                    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                    // If mostly vertical, cancel swipe
+                    if (Math.abs(dy) > Math.abs(dx) * 0.9) { _sw.active = false; return; }
+        
+                    _sw.locked    = true;
+                    _sw.direction = dx < 0 ? 'left' : 'right';
+        
+                    _sw.fromTab = document.querySelector('.view-section.active')?.id.replace('tab-', '');
+                    _sw.fromEl  = document.getElementById('tab-' + _sw.fromTab);
+                    if (!_sw.fromEl) { _sw.active = false; return; }
+        
+                    const order = getTabOrder();
+                    const idx   = order.indexOf(_sw.fromTab);
+                    if (idx === -1) { _sw.active = false; return; }
+        
+                    _sw.toTab = _sw.direction === 'left'
+                        ? order[(idx + 1) % order.length]
+                        : order[(idx - 1 + order.length) % order.length];
+                    _sw.toEl = document.getElementById('tab-' + _sw.toTab);
+        
+                    // Snapshot layout rect before going fixed
+                    _sw.rect = _sw.fromEl.getBoundingClientRect();
+                    const W  = _sw.rect.width;
+        
+                    _swSetFixed(_sw.fromEl, _sw.rect, 0);
+                    if (_sw.toEl) {
+                        _swSetFixed(_sw.toEl, _sw.rect, _sw.direction === 'left' ? W : -W);
+                    }
+                }
+        
+                if (!_sw.locked || !_sw.fromEl || !_sw.rect) return;
+        
+                const totalDx = x - _sw.startX;
+                const W = _sw.rect.width;
+        
+                // Rubber-band resistance past 55% of screen width
+                let offset = totalDx;
+                const limit = W * 0.55;
+                if (Math.abs(totalDx) > limit) {
+                    const excess = Math.abs(totalDx) - limit;
+                    offset = Math.sign(totalDx) * (limit + excess * 0.12);
+                }
+        
+                _sw.fromEl.style.left = (_sw.rect.left + offset) + 'px';
+                if (_sw.toEl) {
+                    const base = _sw.direction === 'left'
+                        ? _sw.rect.left + W
+                        : _sw.rect.left - W;
+                    _sw.toEl.style.left = (base + offset) + 'px';
+                }
+        
+            }, { passive: true });
+        
             document.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
+                if (!_sw.active || !_sw.locked) { _sw.active = false; return; }
+        
+                const totalDx  = _sw.lastX - _sw.startX;
+                const W        = _sw.rect.width;
+                const threshold = W * 0.28;
+                // Flick velocity: last delta before release
+                const velocity = e.changedTouches[0].clientX - _sw.lastX;
+        
+                const dirOk = (_sw.direction === 'left'  && totalDx < 0) ||
+                              (_sw.direction === 'right' && totalDx > 0);
+                const complete = dirOk && (Math.abs(totalDx) > threshold || Math.abs(velocity) > 5);
+        
+                _sw.animating = true;
+                const dur  = complete ? 270 : 210;
+                const ease = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        
+                if (complete) {
+                    const fromTarget = _sw.rect.left + (_sw.direction === 'left' ? -W : W);
+                    const toTarget   = _sw.rect.left;
+        
+                    _sw.fromEl.style.transition = `left ${dur}ms ${ease}`;
+                    _sw.fromEl.style.left = fromTarget + 'px';
+                    if (_sw.toEl) {
+                        _sw.toEl.style.transition = `left ${dur}ms ${ease}`;
+                        _sw.toEl.style.left = toTarget + 'px';
+                    }
+        
+                    setTimeout(() => {
+                        // Restore all panels, then activate the new one
+                        document.querySelectorAll('.view-section').forEach(el => {
+                            _swClearFixed(el);
+                            el.classList.remove('active');
+                            el.style.display = '';
+                        });
+                        if (_sw.toEl) _sw.toEl.classList.add('active');
+        
+                        // Update tab strip + scroll into view
+                        document.querySelectorAll('.tab').forEach(t => {
+                            t.classList.remove('active');
+                            if (t.getAttribute('onclick')?.includes("'" + _sw.toTab + "'")) {
+                                t.classList.add('active');
+                                t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                            }
+                        });
+        
+                        // Tab-specific side effects
+                        if (_sw.toTab === 'world') updateClock();
+                        if (_sw.toTab === 'taf'     && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
+                        if (_sw.toTab === 'weather' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 50);
+        
+                        _sw.animating = false;
+                        _sw.active    = false;
+                    }, dur);
+        
+                } else {
+                    // Snap back
+                    _sw.fromEl.style.transition = `left ${dur}ms ${ease}`;
+                    _sw.fromEl.style.left = _sw.rect.left + 'px';
+                    if (_sw.toEl) {
+                        const base = _sw.direction === 'left'
+                            ? _sw.rect.left + W
+                            : _sw.rect.left - W;
+                        _sw.toEl.style.transition = `left ${dur}ms ${ease}`;
+                        _sw.toEl.style.left = base + 'px';
+                    }
+        
+                    setTimeout(() => {
+                        _swClearFixed(_sw.fromEl);
+                        if (_sw.toEl) { _swClearFixed(_sw.toEl); _sw.toEl.style.display = ''; }
+                        _sw.animating = false;
+                        _sw.active    = false;
+                    }, dur);
+                }
             }, { passive: true });
         }
 
