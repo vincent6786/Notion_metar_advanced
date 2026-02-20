@@ -597,8 +597,7 @@
             border: 1px solid var(--border);
             overflow-x: auto;
         }
-        #meteoCanvas { width: 100%; height: 150px; display: block; }
-
+        #meteoCanvas, #meteoCanvas2 { width: 100%; height: 150px; display: block; }
         /* ============================================================
            15. WIND ROSE & VISIBILITY
         ============================================================ */
@@ -5323,7 +5322,7 @@ async function findNearbyStations(lat, lon) {
                 if (f.flight_rules === 'MVFR') col = 'var(--mvfr)';
                 if (f.flight_rules === 'IFR')  col = 'var(--danger)';
                 block.style.backgroundColor = col; block.innerText = f.type;
-                block.onclick = () => showTafDetail(index, col);
+                block.setAttribute('onclick', `showTafDetail(${index}, '${col}')`);
                 bar.appendChild(block);
                 if (index % 2 === 0) {
                     const s   = new Date(f.start_time.dt);
