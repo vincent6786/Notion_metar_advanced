@@ -1018,6 +1018,7 @@
             color: #555;
             padding: 10px;
             border-top: 1px solid #222;
+            order: 999;
         }
         .active-fuel {
             background: rgba(255, 255, 255, 0.15) !important;
@@ -4225,7 +4226,12 @@
                 if (data.hourly) {
                     meteoDataCache = data.hourly;
                     loader.style.display = 'none';
-                    setTimeout(() => drawMeteogram(meteoDataCache), 50);
+                    const loader2 = document.getElementById('meteoLoading2');
+                    if (loader2) loader2.style.display = 'none';
+                    setTimeout(() => {
+                        drawMeteogram(meteoDataCache);
+                        drawMeteogram2(meteoDataCache);
+                    }, 50);
                     const now = new Date();
                     const idx = now.getUTCHours();
                     const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
@@ -4331,6 +4337,28 @@
         // ================================================================
         // 16a. METAR TREND ANALYSIS
         // ================================================================
+        function drawMeteogram2(h) {
+                    // Draw meteogram on the weather-tab duplicate canvas
+                    const cvs = document.getElementById('meteoCanvas2');
+                    if (!cvs) return;
+                    const ctx = cvs.getContext('2d');
+                    const dpr  = window.devicePixelRatio || 1;
+                    const rect = cvs.getBoundingClientRect();
+                    if (!rect.width) return; // canvas not visible yet, skip
+                    cvs.width  = rect.width * dpr; cvs.height = rect.height * dpr;
+                    ctx.scale(dpr, dpr);
+                    // Re-use the same drawing logic by temporarily swapping the canvas id
+                    const orig = document.getElementById('meteoCanvas');
+                    const origW = orig.width, origH = orig.height;
+                    // Draw fresh on canvas2 by duplicating the draw call
+                    // Simply call drawMeteogram but it targets meteoCanvas, so
+                    // we copy the imagedata after
+                    drawMeteogram(h);
+                    const imgData = orig.getContext('2d').getImageData(0, 0, orig.width, orig.height);
+                    cvs.width = orig.width; cvs.height = orig.height;
+                    cvs.getContext('2d').putImageData(imgData, 0, 0);
+                }
+    
         function storeMetarForTrend(icao, metar) {
             try {
                 const key = `metar_history_${icao}`;
@@ -4869,16 +4897,7 @@ async function findNearbyStations(lat, lon) {
                             // ── ATIS/AWOS PHONES ──
                             if (phoneContainer) {
                                 // Hardcoded Taiwan ATIS phone numbers (most reliable)
-                                const twAtisPhones = {
-                                    RCTP: [{ type: 'ATIS',  phone: '+886-3-3984678', freq: '126.9 MHz' },
-                                           { type: 'ATIS D-ATIS', phone: '+886-3-3983870', freq: '' }],
-                                    RCSS: [{ type: 'ATIS',  phone: '+886-2-87913000', freq: '132.4 MHz' }],
-                                    RCKH: [{ type: 'ATIS',  phone: '+886-7-8057999', freq: '128.4 MHz' }],
-                                    RCMQ: [{ type: 'ATIS',  phone: '+886-4-26153366', freq: '126.4 MHz' }],
-                                    RCFN: [{ type: 'ATIS',  phone: '+886-89-462614', freq: '127.5 MHz' }],
-                                    RCBS: [{ type: 'ATIS',  phone: '+886-8-8622630', freq: '125.7 MHz' }],
-                                    RCKU: [{ type: 'ATIS',  phone: '+886-5-3620500', freq: '128.85 MHz' }],
-                                };
+                                const twAtisPhones = {};
             
                                 let phones = twAtisPhones[d.icao] || [];
             
