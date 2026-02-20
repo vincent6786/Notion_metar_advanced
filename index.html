@@ -2114,7 +2114,104 @@
             background: #ff0000;
             box-shadow: none;
         }
-        
+
+        /* ============================================================
+           WHATS NEW MODAL
+        ============================================================ */
+        .whatsnew-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 99998;
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .whatsnew-overlay.active { display: flex; }
+        .whatsnew-card {
+            background: #1c1c1e;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 28px 24px 20px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            animation: slideUpFade 0.4s cubic-bezier(0.2,0.8,0.2,1) both;
+        }
+        .whatsnew-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(10,132,255,0.15);
+            border: 1px solid rgba(10,132,255,0.4);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .whatsnew-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .whatsnew-sub {
+            font-size: 12px;
+            color: var(--sub-text);
+            margin-bottom: 20px;
+        }
+        .whatsnew-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .whatsnew-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        .whatsnew-icon {
+            font-size: 20px;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .whatsnew-item-text { flex: 1; }
+        .whatsnew-item-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+        .whatsnew-item-desc {
+            font-size: 11px;
+            color: var(--sub-text);
+            line-height: 1.5;
+        }
+        .whatsnew-btn {
+            width: 100%;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .whatsnew-btn:active { opacity: 0.8; }
+            
     </style>
 </head>
 
@@ -2145,7 +2242,8 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version">CLOUD EDITION · v5.0.3</div>
+        <div class="launch-version">CLOUD EDITION · v3.0</div> 
+        <!--What's new update>
     </div>
 
     <!-- ================================================================
@@ -3025,8 +3123,8 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v5.0.3 · Cloud Edition · Quick reference for all features</div>
-                
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.0 · Cloud Edition · Quick reference for all features</div>
+                <!--Whats new update-->
                 <div class="help-section">
                     <div class="help-section-title">🌤 METAR Tab</div>
                     <div class="help-item">
@@ -3253,10 +3351,78 @@
                 <div class="multi-loading">Add airports above to start tracking</div>
             </div>
         </div>
+
+        <!-- ================================================================
+             WHAT'S NEW MODAL
+        ================================================================ -->
+        <div id="whatsNewModal" class="whatsnew-overlay">
+            <div class="whatsnew-card">
+                <div class="whatsnew-badge">✦ What's New</div>
+                <div class="whatsnew-title">METAR GO</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.0</div>
+                <div class="whatsnew-list" id="whatsNewList"></div>
+                <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
+            </div>
+        </div>
     
 </body>
 
 <script>
+
+        // ================================================================
+        // WHAT'S NEW SYSTEM
+        // ================================================================
+        const WHATS_NEW = {
+            version: '3.0',                         // ← bump this on every update
+            title: 'METAR GO — Cloud Edition',
+            changes: [
+                {
+                    icon: '☁️',
+                    title: 'Weather Tab',
+                    desc: 'New combined METAR + TAF tab when Dashboard mode is enabled. Switch between views with the pill toggle.'
+                },
+                {
+                    icon: '📊',
+                    title: '24H Trend Meteogram',
+                    desc: 'Meteogram now renders correctly in the Weather tab even when the pane is hidden on load.'
+                },
+                {
+                    icon: '🛬',
+                    title: 'Smart Default Tab',
+                    desc: 'App now opens directly to Weather/METAR when Dashboard mode is on.'
+                },
+                {
+                    icon: '📋',
+                    title: 'TAF Tap-to-Decode Fixed',
+                    desc: 'Tapping a forecast block in the Weather tab now correctly expands the decoded detail card.'
+                }
+            ]
+        };
+        
+        function checkWhatsNew() {
+            const seenVersion = localStorage.getItem('efb_seen_version');
+            if (seenVersion === WHATS_NEW.version) return;   // already seen this version
+        
+            // Populate content
+            document.getElementById('whatsNewVersion').innerText = WHATS_NEW.version;
+            const list = document.getElementById('whatsNewList');
+            list.innerHTML = WHATS_NEW.changes.map(c => `
+                <div class="whatsnew-item">
+                    <div class="whatsnew-icon">${c.icon}</div>
+                    <div class="whatsnew-item-text">
+                        <div class="whatsnew-item-title">${c.title}</div>
+                        <div class="whatsnew-item-desc">${c.desc}</div>
+                    </div>
+                </div>`).join('');
+        
+            document.getElementById('whatsNewModal').classList.add('active');
+        }
+        
+        function closeWhatsNew() {
+            localStorage.setItem('efb_seen_version', WHATS_NEW.version);
+            document.getElementById('whatsNewModal').classList.remove('active');
+        }
+    
         // ================================================================
         // 1. INDEXEDDB LAYER
         // ================================================================
@@ -3820,6 +3986,7 @@
             if (savedCeil) document.getElementById('minCeil').value = savedCeil;
 
             setInterval(updateClock, 1000);
+            setTimeout(checkWhatsNew, 500);   // slight delay so launch screen clears first
         }
 
         // ================================================================
