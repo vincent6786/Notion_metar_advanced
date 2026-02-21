@@ -3639,6 +3639,58 @@
          MODALS
     ================================================================ -->
 
+    <!-- ================================================================
+         WELCOME OVERLAY (shown until default airport is set)
+    ================================================================ -->
+    <div id="welcomeOverlay" class="hidden"
+         style="position:fixed;left:0;right:0;bottom:0;
+                z-index:500;
+                background:rgba(0,0,0,0.88);
+                backdrop-filter:blur(24px);
+                -webkit-backdrop-filter:blur(24px);
+                display:flex;flex-direction:column;
+                align-items:center;justify-content:center;
+                padding:40px 28px;
+                text-align:center;
+                transition:opacity 0.4s ease;">
+    
+        <div style="font-size:56px;margin-bottom:16px;line-height:1;">✈️</div>
+        <div style="font-size:22px;font-weight:800;color:#fff;
+                    margin-bottom:8px;letter-spacing:0.3px;">
+            Welcome to METAR GO
+        </div>
+        <div style="font-size:13px;color:#8e8e93;margin-bottom:28px;
+                    line-height:1.8;max-width:270px;">
+            Set a <b style="color:#fff;">Default Airport</b> to unlock the app.<br>
+            It will load automatically on every launch.
+        </div>
+    
+        <div style="display:flex;flex-direction:column;gap:12px;
+                    width:100%;max-width:280px;">
+    
+            <button onclick="closeOnboardingAndGo('settings','defaultIcaoInput');dismissWelcomeOverlay();"
+                    style="background:var(--accent);border:none;color:#fff;
+                           padding:15px 24px;border-radius:13px;
+                           font-size:15px;font-weight:800;cursor:pointer;
+                           box-shadow:0 4px 20px rgba(10,132,255,0.45);
+                           transition:opacity 0.2s;">
+                🏠 Set Default Airport →
+            </button>
+    
+            <div style="font-size:11px;color:#3a3a3a;margin-top:2px;">
+                Or search any ICAO code in the bar above
+            </div>
+    
+            <button onclick="dismissWelcomeOverlay()"
+                    style="background:transparent;border:1px solid #2a2a2a;
+                           color:#444;padding:11px 24px;border-radius:10px;
+                           font-size:13px;cursor:pointer;margin-top:2px;
+                           transition:border-color 0.2s,color 0.2s;">
+                Skip — browse without saving
+            </button>
+        </div>
+    </div>
+    
     <!-- NEARBY AIRPORT PREVIEW MODAL -->
     <div id="nearbyModal" class="modal-overlay" onclick="closeNearbyModal()">
         <div class="info-card" style="margin:auto; width:92%; max-width:360px; border:1px solid var(--border); border-radius:16px; padding:0; overflow:hidden;"
@@ -4759,28 +4811,13 @@
                 loadPreferredRunwaySettings(savedDefault); 
                 loadData();   // data loads into whichever tab is already showing
                 } else {
-                document.getElementById('icao').value = '';
-                // Welcome prompt for new users with no default airport
-                const welcomeHtml = `
-                    <div style="text-align:center;padding:24px 10px;">
-                        <div style="font-size:36px;margin-bottom:12px;">✈️</div>
-                        <div style="font-weight:800;color:var(--text);font-size:16px;margin-bottom:8px;">Welcome to METAR GO</div>
-                        <div style="font-size:12px;color:var(--sub-text);margin-bottom:20px;line-height:1.7;">
-                            Set a <b style="color:var(--text);">Default Airport</b> so the app loads<br>your home base automatically on every launch.
-                        </div>
-                        <button onclick="closeOnboardingAndGo('settings','defaultIcaoInput')"
-                                style="background:var(--accent);border:none;color:#fff;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
-                            🏠 Set Default Airport →
-                        </button>
-                        <div style="margin-top:14px;font-size:11px;color:#444;">
-                            Or search any ICAO code above to get started
-                        </div>
-                    </div>`;
-                document.getElementById('rawMetar').innerHTML = welcomeHtml;
-                const rm2 = document.getElementById('rawMetar2');
-                if (rm2) rm2.innerHTML = welcomeHtml;  // mirror to weather tab
-                showOnboarding();
-            }
+                    document.getElementById('icao').value = '';
+                    // Show the full-tab overlay instead of inline welcome
+                    if (!sessionStorage.getItem('welcome_dismissed')) {
+                        setTimeout(showWelcomeOverlay, 350); // slight delay so tabs render first
+                    }
+                    showOnboarding();
+                }
                 
 
             const savedXW   = await Storage.get('efb_min_xw');
@@ -4839,6 +4876,7 @@
                 await Storage.set('efb_default_station', val);
                 msg.innerText = "✅ Saved!"; msg.style.color = "var(--success)";
                 showToast(`✅ Default airport set to ${val}`);
+                dismissWelcomeOverlay();
                 if (document.getElementById('icao').value === "") { document.getElementById('icao').value = val; loadData(); }
                 // Load runway options for the new default airport
                 loadPreferredRunwaySettings(val);
@@ -5154,6 +5192,7 @@
             const icao = icaoVal.toUpperCase();
             addToHistory(icao);
             document.getElementById('icao').blur();
+            dismissWelcomeOverlay(); 
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
             
@@ -7396,6 +7435,42 @@ async function findNearbyStations(lat, lon) {
                 if (el) el.innerText = timeZ;
             });
         }
+
+        // ================================================================
+        // WELCOME OVERLAY
+        // ================================================================
+        function showWelcomeOverlay() {
+            const overlay = document.getElementById('welcomeOverlay');
+            if (!overlay) return;
+        
+            // Position top flush with the bottom of the tabs bar
+            const tabs = document.querySelector('.tabs');
+            if (tabs) {
+                overlay.style.top = tabs.getBoundingClientRect().bottom + 'px';
+            } else {
+                overlay.style.top = '108px';
+            }
+            overlay.classList.remove('hidden');
+            overlay.style.opacity = '0';
+            requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+        }
+        
+        function dismissWelcomeOverlay() {
+            const overlay = document.getElementById('welcomeOverlay');
+            if (!overlay) return;
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.classList.add('hidden'), 400);
+            // Remember so it doesn't reappear on tab switches
+            sessionStorage.setItem('welcome_dismissed', '1');
+        }
+        
+        // Reposition on resize (e.g. device rotation)
+        window.addEventListener('resize', () => {
+            const overlay = document.getElementById('welcomeOverlay');
+            if (!overlay || overlay.classList.contains('hidden')) return;
+            const tabs = document.querySelector('.tabs');
+            if (tabs) overlay.style.top = tabs.getBoundingClientRect().bottom + 'px';
+        });
     
         // ================================================================
         // 26. TOAST & OFFLINE BANNER
