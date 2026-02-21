@@ -3293,6 +3293,19 @@
             <div id="saveMsg" style="font-size:12px; color:var(--success); margin-top:8px; height:14px;"></div>
         </div>
 
+        <!-- Preferred Runway (appears after default airport is set) -->
+        <div id="prefRunwaySection" class="hidden">
+            <div class="info-card" style="margin-top:8px; border-left: 3px solid var(--accent);">
+                <div class="conv-lbl" style="margin-bottom:6px;">Preferred Runway for <span id="prefRunwayIcaoLabel" style="color:var(--accent); font-weight:800;"></span></div>
+                <select id="prefRunwaySelect" class="stealth-select" onchange="savePreferredRunway()">
+                    <option value="">🔀 Auto — Best for wind</option>
+                </select>
+                <div style="font-size:11px; color:var(--sub-text); margin-top:8px; line-height:1.6;">
+                    Overrides auto wind-selection on the METAR tab. Set to <b style="color:var(--text);">Auto</b> to always pick the headwind-optimal runway.
+                </div>
+            </div>
+        </div>
+        
         <!-- Visuals -->
         <div class="section-title">Visuals</div>
         <button id="btnNightMode" class="atc-btn" onclick="toggleNightMode()"
@@ -4307,6 +4320,7 @@
             if (savedDefault) {
                 inputField.value = savedDefault;
                 document.getElementById('icao').value = savedDefault;
+                loadPreferredRunwaySettings(savedDefault); 
                 loadData();   // data loads into whichever tab is already showing
                 } else {
                 document.getElementById('icao').value = '';
@@ -4390,10 +4404,56 @@
                 msg.innerText = "✅ Saved!"; msg.style.color = "var(--success)";
                 showToast(`✅ Default airport set to ${val}`);
                 if (document.getElementById('icao').value === "") { document.getElementById('icao').value = val; loadData(); }
+                // Load runway options for the new default airport
+                loadPreferredRunwaySettings(val);
             } else { msg.innerText = "⚠️ Invalid ICAO"; msg.style.color = "var(--warn)"; }
             setTimeout(() => { msg.innerText = ""; }, 3000);
         }
 
+        async function loadPreferredRunwaySettings(icao) {
+            if (!icao) return;
+            const section  = document.getElementById('prefRunwaySection');
+            const sel      = document.getElementById('prefRunwaySelect');
+            const label    = document.getElementById('prefRunwayIcaoLabel');
+            if (!section || !sel) return;
+        
+            if (label) label.innerText = icao;
+        
+            try {
+                const data    = await secureFetch(`/api/weather?type=station&station=${icao}`);
+                const runways = data?.runways || [];
+        
+                if (runways.length === 0) { section.classList.add('hidden'); return; }
+        
+                const savedPref = await Storage.get(`efb_pref_rwy_${icao}`) || '';
+        
+                sel.innerHTML = '<option value="">🔀 Auto — Best for wind</option>';
+                runways.forEach(r => {
+                    [r.ident1, r.ident2].forEach(ident => {
+                        const opt = document.createElement('option');
+                        opt.value   = ident;
+                        opt.text    = `RWY ${ident}`;
+                        opt.selected = (ident === savedPref);
+                        sel.appendChild(opt);
+                    });
+                });
+        
+                section.classList.remove('hidden');
+            } catch(e) {
+                section.classList.add('hidden');
+            }
+        }
+        
+        async function savePreferredRunway() {
+            const icao = document.getElementById('defaultIcaoInput').value.trim().toUpperCase();
+            const sel  = document.getElementById('prefRunwaySelect');
+            if (!icao || !sel) return;
+        
+            const val = sel.value;
+            await Storage.set(`efb_pref_rwy_${icao}`, val);
+            showToast(val ? `✅ RWY ${val} set as preferred for ${icao}` : `✅ ${icao} will auto-select best runway`);
+        }
+    
         async function resetApp() {
             const mode = localStorage.getItem('efb_storage_mode');
             let message = "Reset all local settings?\n\n";
@@ -5622,9 +5682,11 @@ async function findNearbyStations(lat, lon) {
         function setupRunwaySelect() {
             const sel = document.getElementById('rwySelect');
             sel.innerHTML = '';
-            const mv = stationData.magnetic_variation || 0;
-            const windMag = currentWind.dir - mv;
+            const mv      = stationData.magnetic_variation || 0;
+            const safeDir = (currentWind.dir === 'VRB') ? 0 : currentWind.dir;
+            const windMag = safeDir - mv;
             let bestRwy = null, maxHW = -999;
+        
             (stationData.runways || []).forEach(r => {
                 sel.add(new Option(`RWY ${r.ident1}`, r.ident1));
                 sel.add(new Option(`RWY ${r.ident2}`, r.ident2));
@@ -5632,8 +5694,21 @@ async function findNearbyStations(lat, lon) {
                 const hw1 = Math.cos((windMag - h1) * (Math.PI / 180)) * currentWind.spd;
                 if (hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
             });
-            if (bestRwy) sel.value = bestRwy;
-            else if (stationData.runways.length > 0) sel.value = stationData.runways[0].ident1;
+        
+            // Check for saved preferred runway for this airport
+            const icao    = document.getElementById('icao').value.toUpperCase();
+            const rawPref = localStorage.getItem(`efb_pref_rwy_${icao}`);
+            let savedPref = null;
+            try { savedPref = rawPref ? JSON.parse(rawPref) : null; } catch(e) {}
+        
+            if (savedPref && sel.querySelector(`option[value="${savedPref}"]`)) {
+                sel.value = savedPref;
+            } else if (bestRwy) {
+                sel.value = bestRwy;
+            } else if (stationData.runways?.length > 0) {
+                sel.value = stationData.runways[0].ident1;
+            }
+        
             drawWindRose();
             renderRunwaysComplex();
         }
@@ -6403,7 +6478,7 @@ async function findNearbyStations(lat, lon) {
             const btn    = document.getElementById('btnNightMode');
             btn.innerHTML = isDark ? "<span>⚪ Day Mode</span>" : "<span>🔴 Cockpit Night Mode</span>";
             btn.style.borderColor = isDark ? "#fff" : "var(--danger)";
-            localStorage.setItem('efb_night_mode', isDark ? 'true' : 'false');
+            Storage.set('efb_night_mode', isDark ? 'true' : 'false');
             if (document.getElementById('rwySelect').value) drawWindRose();
         }
 
