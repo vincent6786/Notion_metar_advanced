@@ -4447,10 +4447,40 @@
             const icao = document.getElementById('defaultIcaoInput').value.trim().toUpperCase();
             const sel  = document.getElementById('prefRunwaySelect');
             if (!icao || !sel) return;
-        
             const val = sel.value;
             await Storage.set(`efb_pref_rwy_${icao}`, val);
             showToast(val ? `✅ RWY ${val} set as preferred for ${icao}` : `✅ ${icao} will auto-select best runway`);
+        
+            // If this airport is currently loaded, instantly apply to METAR tab
+            const currentIcao = document.getElementById('icao').value.trim().toUpperCase();
+            if (currentIcao === icao && stationData) {
+                // Apply to both rwySelect (main) and rwySelect2 (weather tab)
+                ['rwySelect', 'rwySelect2'].forEach(id => {
+                    const rwyEl = document.getElementById(id);
+                    if (!rwyEl) return;
+                    if (val && rwyEl.querySelector(`option[value="${val}"]`)) {
+                        rwyEl.value = val;
+                    } else if (!val) {
+                        // Auto — recalculate best runway for wind
+                        const mv      = stationData.magnetic_variation || 0;
+                        const safeDir = (currentWind.dir === 'VRB') ? 0 : currentWind.dir;
+                        const windMag = safeDir - mv;
+                        let bestRwy = null, maxHW = -999;
+                        (stationData.runways || []).forEach(r => {
+                            const h1  = parseInt(r.ident1.replace(/\D/g, '')) * 10;
+                            const hw1 = Math.cos((windMag - h1) * (Math.PI / 180)) * currentWind.spd;
+                            if (hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
+                        });
+                        if (bestRwy && rwyEl.querySelector(`option[value="${bestRwy}"]`)) {
+                            rwyEl.value = bestRwy;
+                        }
+                    }
+                });
+                // Redraw wind rose and runway components with new selection
+                drawWindRose();
+                renderRunwaysComplex();
+                checkMins();
+            }
         }
     
         async function resetApp() {
