@@ -3287,7 +3287,8 @@
             <div class="conv-lbl">Default Airport (ICAO)</div>
             <div class="conv-row" style="margin-bottom:0;">
                 <input type="text" id="defaultIcaoInput" class="conv-inp" placeholder="e.g. RCTP"
-                       style="text-transform:uppercase;" maxlength="4">
+                       style="text-transform:uppercase;" maxlength="4"
+                       oninput="if(this.value.length===4) loadPreferredRunwaySettings(this.value.toUpperCase())">
                 <button class="tool-btn" style="width:auto; margin:0;" onclick="saveDefaultStation()">Save</button>
             </div>
             <div id="saveMsg" style="font-size:12px; color:var(--success); margin-top:8px; height:14px;"></div>
@@ -3879,7 +3880,7 @@
                 return false;
             }
         }
-
+        
         async function deleteCloudProfile() {
             const pin = localStorage.getItem('efb_cloud_pin');
             if (!pin) return;
@@ -3888,15 +3889,13 @@
                 const res = await fetch(`/api/settings?pin=${pin}`, { method: 'DELETE' });
                 if (res.ok) {
                     showToast('🗑️ Cloud backup deleted');
-                    // Clear storage mode so the setup screen shows on reload
-                    localStorage.removeItem('efb_storage_mode');
-                    localStorage.removeItem('efb_cloud_pin');
-                    await EFB_DB.delete('_efb_storage_mode');
-                    await EFB_DB.delete('_efb_cloud_pin');
-                    setTimeout(() => {
-                        showToast('Returning to setup...');
-                        setTimeout(() => location.reload(), 800);
-                    }, 600);
+                    localStorage.clear();
+                    await new Promise((resolve) => {
+                        const req = indexedDB.deleteDatabase('efb_storage_v1');
+                        req.onsuccess = resolve; req.onerror = resolve;
+                    });
+                    showToast('Returning to setup...');
+                    setTimeout(() => location.reload(), 800);
                 } else { showToast('⚠️ Delete failed. Try again.'); }
             } catch(e) { showToast('⚠️ No connection. Try again.'); }
         }
@@ -4463,16 +4462,11 @@
                 message += "\nThis cannot be undone.";
             }
             if (!confirm(message)) return;
-        
-            // Clear cloud pin from memory before wiping localStorage
-            const hadCloud = mode === 'cloud';
-        
             localStorage.clear();
             await new Promise((resolve) => {
                 const req = indexedDB.deleteDatabase('efb_storage_v1');
                 req.onsuccess = resolve; req.onerror = resolve;
             });
-        
             showToast('🗑️ App reset — returning to setup...');
             setTimeout(() => location.reload(), 1000);
         }
