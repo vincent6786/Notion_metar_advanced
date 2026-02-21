@@ -4206,16 +4206,26 @@
             try {
                 const res = await fetch(`/api/settings?pin=${pin}`, { method: 'DELETE' });
                 if (res.ok) {
-                    showToast('🗑️ Cloud backup deleted');
-                    localStorage.clear();
-                    await new Promise((resolve) => {
-                        const req = indexedDB.deleteDatabase('efb_storage_v1');
-                        req.onsuccess = resolve; req.onerror = resolve;
-                    });
-                    showToast('Returning to setup...');
-                    setTimeout(() => location.reload(), 800);
-                } else { showToast('⚠️ Delete failed. Try again.'); }
-            } catch(e) { showToast('⚠️ No connection. Try again.'); }
+                    // Strip cloud credentials only — keep all local data
+                    localStorage.removeItem('efb_cloud_pin');
+                    localStorage.removeItem('efb_worldclock_backup');
+                    localStorage.removeItem('efb_worldclock_backup_asked');
+                    await EFB_DB.delete('_efb_cloud_pin');
+        
+                    // Switch storage mode to local (no setup screen, stays in app)
+                    await Storage.setMode('local');
+                    Storage.mode = 'local';
+        
+                    // Refresh Settings UI to show new mode
+                    renderStorageModeUI();
+        
+                    showToast('🗑️ Cloud backup deleted — now running locally');
+                } else {
+                    showToast('⚠️ Delete failed. Try again.');
+                }
+            } catch(e) {
+                showToast('⚠️ No connection. Try again.');
+            }
         }
 
         // ================================================================
@@ -4919,13 +4929,26 @@
                 message += "\nThis cannot be undone.";
             }
             if (!confirm(message)) return;
+        
+            // 1. Clear localStorage first
             localStorage.clear();
+        
+            // 2. Close open IndexedDB connection BEFORE deleting — otherwise delete is blocked
+            if (EFB_DB.db) {
+                EFB_DB.db.close();
+                EFB_DB.db = null;
+            }
+        
+            // 3. Delete IndexedDB — handle blocked event so it doesn't silently fail
             await new Promise((resolve) => {
                 const req = indexedDB.deleteDatabase('efb_storage_v1');
-                req.onsuccess = resolve; req.onerror = resolve;
+                req.onsuccess  = () => { console.log('[Reset] IndexedDB deleted ✅'); resolve(); };
+                req.onerror    = () => { console.warn('[Reset] IndexedDB delete error');   resolve(); };
+                req.onblocked  = () => { console.warn('[Reset] IndexedDB delete blocked'); resolve(); };
             });
+        
             showToast('🗑️ App reset — returning to setup...');
-            setTimeout(() => location.reload(), 1000);
+            setTimeout(() => location.reload(), 800);
         }
 
         function renderHistory() {
