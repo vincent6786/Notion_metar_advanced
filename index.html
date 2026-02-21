@@ -2281,6 +2281,29 @@
 
 <body>
 
+<script>
+(function() {
+    try {
+        const dashEnabled = JSON.parse(localStorage.getItem('efb_multi_dashboard_enabled'));
+        if (dashEnabled) {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('tabMetar')?.classList.add('hidden');
+                document.getElementById('tabTaf')?.classList.add('hidden');
+                document.getElementById('tabDashboard')?.classList.remove('hidden');
+                document.getElementById('tabWeather')?.classList.remove('hidden');
+                document.getElementById('tab-metar')?.classList.remove('active');
+                const weatherEl = document.getElementById('tab-weather');
+                if (weatherEl) {
+                    weatherEl.classList.remove('hidden');
+                    weatherEl.classList.add('active');
+                }
+            }, { once: true });
+        }
+    } catch(e) {}
+})();
+</script>
+    
+
     <!-- ================================================================
          LAUNCH SCREEN
     ================================================================ -->
@@ -4152,22 +4175,21 @@
 
             const savedDefault = await Storage.get('efb_default_station');
             const inputField   = document.getElementById('defaultIcaoInput');
-             if (savedDefault) {
+            const dashEnabled  = await Storage.get('efb_multi_dashboard_enabled', false);
+    
+            // ── Apply correct starting tab BEFORE loading data ──
+            // This prevents any flash of the METAR tab when dashboard mode is on
+            if (dashEnabled) {
+                setTab('weather');
+                switchWeatherPane('metar');
+            }
+    
+            if (savedDefault) {
                 inputField.value = savedDefault;
                 document.getElementById('icao').value = savedDefault;
-                loadData();
-                const dashEnabled = await Storage.get('efb_multi_dashboard_enabled', false);
-                if (dashEnabled) {
-                    setTab('weather');
-                    switchWeatherPane('metar');
-                }
+                loadData();   // data loads into whichever tab is already showing
             } else {
                 document.getElementById('icao').value = '';
-                const dashEnabled = await Storage.get('efb_multi_dashboard_enabled', false);
-                if (dashEnabled) {
-                    setTab('weather');
-                    switchWeatherPane('metar');
-                }
             }
 
             const savedXW   = await Storage.get('efb_min_xw');
