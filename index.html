@@ -4456,17 +4456,24 @@
     
         async function resetApp() {
             const mode = localStorage.getItem('efb_storage_mode');
-            let message = "Reset all local settings?\n\n";
+            let message = "⚠️ Factory Reset App?\n\nThis will:\n• Clear all local settings\n• Remove saved airports & preferences\n• Return to the initial setup screen\n";
             if (mode === 'cloud') {
-                message += "✅ Your Cloud Backup is NOT affected.\nYou can restore it anytime with your Backup Code.\n\nTo also delete cloud data, go to\nSettings → Delete Cloud Backup Data first.";
-            } else { message += "⚠️ This cannot be undone."; }
+                message += "\n☁️ Your Cloud Backup is NOT deleted.\nYou can restore it with your Backup Code on the next setup screen.";
+            } else {
+                message += "\nThis cannot be undone.";
+            }
             if (!confirm(message)) return;
+        
+            // Clear cloud pin from memory before wiping localStorage
+            const hadCloud = mode === 'cloud';
+        
             localStorage.clear();
             await new Promise((resolve) => {
                 const req = indexedDB.deleteDatabase('efb_storage_v1');
                 req.onsuccess = resolve; req.onerror = resolve;
             });
-            showToast('🗑️ App reset complete');
+        
+            showToast('🗑️ App reset — returning to setup...');
             setTimeout(() => location.reload(), 1000);
         }
 
