@@ -2256,7 +2256,7 @@
             opacity: 0;
         }
         .help-section.open .help-body {
-            max-height: 2000px;
+            max-height: 5000px;
             opacity: 1;
         }
         /* ── Drag handle ── */
@@ -2955,7 +2955,70 @@
                         <div class="help-a">When no connection is available, the app automatically serves the last cached data and shows an <span style="color:var(--warn);font-weight:700;">⚡ OFFLINE MODE</span> banner with the cache age. Tap the banner to retry when back online.</div>
                     </div>
                 </div>
-        
+
+                <div class="help-section">
+                    <div class="help-section-title">📡 Data Sources &amp; Decoding Reference</div>
+                    <div class="help-item">
+                        <div class="help-q">AVWX API — Primary Weather Source</div>
+                        <div class="help-a">All METAR, TAF, and station data is fetched from <b><a href="https://avwx.rest" target="_blank" style="color:var(--accent);text-decoration:none;">avwx.rest</a></b>. Requests are load-balanced across multiple API keys and cached for 10 minutes to conserve quota. AVWX aggregates data from official national meteorological services worldwide.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">aviationweather.gov — NOTAMs &amp; Airport Data</div>
+                        <div class="help-a">NOTAMs and supplementary airport frequencies/phones are sourced from <b><a href="https://aviationweather.gov" target="_blank" style="color:var(--accent);text-decoration:none;">aviationweather.gov</a></b>, the FAA/NOAA public API. NOTAM data is cached for 10 minutes. This is an official U.S. government source.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Open-Meteo — 24h Meteogram &amp; Upper-Level Winds</div>
+                        <div class="help-a">The meteogram chart and upper-level wind data (925/850/700 hPa) use <b><a href="https://open-meteo.com" target="_blank" style="color:var(--accent);text-decoration:none;">open-meteo.com</a></b>, an open-source NWP model aggregator. This data is <b style="color:var(--warn);">advisory only</b> — it is a numerical weather prediction model, not an official aviation forecast.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Flight Rules (VFR / MVFR / IFR / LIFR)</div>
+                        <div class="help-a">Calculated using ICAO/FAA standard thresholds:<br>
+                            <b>VFR</b> — Ceiling &gt; 3000 ft <i>and</i> Visibility &gt; 5 sm<br>
+                            <b>MVFR</b> — Ceiling 1000–3000 ft <i>or</i> Vis 3–5 sm<br>
+                            <b>IFR</b> — Ceiling &lt; 1000 ft <i>or</i> Vis &lt; 3 sm<br>
+                            <b>LIFR</b> — Ceiling &lt; 500 ft <i>or</i> Vis &lt; 1 sm
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Sky Cover Codes</div>
+                        <div class="help-a">
+                            <b>SKC / CLR</b> — Sky Clear (0 oktas)<br>
+                            <b>FEW</b> — Few clouds (1–2 oktas)<br>
+                            <b>SCT</b> — Scattered (3–4 oktas)<br>
+                            <b>BKN</b> — Broken — <i>ceiling layer</i> (5–7 oktas)<br>
+                            <b>OVC</b> — Overcast — <i>ceiling layer</i> (8 oktas)<br>
+                            <b>VV</b> — Vertical Visibility (sky obscured — ceiling layer)<br>
+                            Altitudes are reported in hundreds of feet AGL (e.g. BKN025 = 2500 ft).
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Weather Phenomena Codes</div>
+                        <div class="help-a">
+                            Common codes: <b>TS</b> Thunderstorm · <b>RA</b> Rain · <b>SN</b> Snow · <b>FG</b> Fog · <b>BR</b> Mist · <b>HZ</b> Haze · <b>DZ</b> Drizzle · <b>GR</b> Hail · <b>SQ</b> Squall · <b>FC</b> Funnel Cloud<br>
+                            Intensity prefixes: <b>−</b> Light · (none) Moderate · <b>+</b> Heavy<br>
+                            Descriptors: <b>SH</b> Showers · <b>FZ</b> Freezing · <b>BL</b> Blowing · <b>DR</b> Drifting · <b>MI</b> Shallow · <b>BC</b> Patches
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Wind Component Calculation</div>
+                        <div class="help-a">Headwind and crosswind are computed trigonometrically using the difference between the magnetic wind direction and the runway heading. Magnetic variation is sourced from the AVWX station record.<br>
+                            <b>Headwind</b> = Wind Speed × cos(Δ heading)<br>
+                            <b>Crosswind</b> = Wind Speed × sin(Δ heading)
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">ATC Audio — Taiwan (TWATC.net)</div>
+                        <div class="help-a">In-app live audio streams for <b>RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN</b> are provided by <b><a href="https://twatc.net" target="_blank" style="color:var(--accent);text-decoration:none;">TWATC.net</a></b>, a Taiwan-based ATC audio streaming service. Streams include ATIS and area scanner feeds.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">ATC Audio — Global (LiveATC.net)</div>
+                        <div class="help-a">For all other airports, METAR GO links to <b><a href="https://www.liveatc.net" target="_blank" style="color:var(--accent);text-decoration:none;">LiveATC.net</a></b>, which provides ATC audio streams for hundreds of airports worldwide. The button auto-searches by your current ICAO code.</div>
+                    </div>
+                    <div style="margin-top:14px;padding:10px 12px;background:rgba(255,159,10,0.08);border:1px solid rgba(255,159,10,0.25);border-radius:8px;font-size:11px;color:var(--sub-text);line-height:1.6;">
+                        ⚠️ <b style="color:var(--warn);">Disclaimer:</b> All data is for reference only. Always verify with official sources before flight. METAR GO is not certified for operational use and does not replace official pre-flight briefings.
+                    </div>
+                </div>
+                
             </div>
 
         <!-- ================================================================
@@ -3438,7 +3501,7 @@
     ================================================================ -->
     <div id="storageSetup" class="setup-overlay" style="display:none;">
         <div style="font-size:40px; margin-bottom:12px;">✈️</div>
-        <div style="font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; text-align:center;">METAR GO</div>
+        <div style="font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; text-align:center;">METAR PLUS</div>
         <div style="font-size:13px; color:#8e8e93; margin-bottom:32px; text-align:center; max-width:280px; line-height:1.6;">
             Choose how to save your airport preferences.
         </div>
@@ -3539,6 +3602,44 @@
                 <div class="whatsnew-sub" id="whatsNewVersion">Version 3.1.2</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
+            </div>
+        </div>
+
+        <!-- ================================================================
+             FIRST-USE ONBOARDING MODAL
+        ================================================================ -->
+        <div id="onboardingModal" class="whatsnew-overlay">
+            <div class="whatsnew-card">
+                <div class="whatsnew-badge">✈️ Welcome</div>
+                <div class="whatsnew-title">Let's Get Set Up</div>
+                <div class="whatsnew-sub">Take 30 seconds to personalise METAR GO</div>
+                <div class="whatsnew-list">
+                    <div class="whatsnew-item" style="cursor:pointer;" onclick="closeOnboardingAndGo('settings','defaultIcaoInput')">
+                        <div class="whatsnew-icon">🏠</div>
+                        <div class="whatsnew-item-text">
+                            <div class="whatsnew-item-title">Set a Default Airport</div>
+                            <div class="whatsnew-item-desc">The app will load your home airport automatically on every launch.</div>
+                        </div>
+                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">›</div>
+                    </div>
+                    <div class="whatsnew-item" style="cursor:pointer;" onclick="closeOnboardingAndGo('settings','favInput')">
+                        <div class="whatsnew-icon">★</div>
+                        <div class="whatsnew-item-text">
+                            <div class="whatsnew-item-title">Add Favourite Airports</div>
+                            <div class="whatsnew-item-desc">Pin your frequent airports as gold chips above the search bar for one-tap access.</div>
+                        </div>
+                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">›</div>
+                    </div>
+                    <div class="whatsnew-item" style="cursor:pointer;" onclick="closeOnboardingAndGo('settings','toggleMultiDashboard')">
+                        <div class="whatsnew-icon">📊</div>
+                        <div class="whatsnew-item-text">
+                            <div class="whatsnew-item-title">Try Dashboard Mode</div>
+                            <div class="whatsnew-item-desc">Track up to 8 airports at once with combined METAR + TAF view. Toggle it in Settings.</div>
+                        </div>
+                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">›</div>
+                    </div>
+                </div>
+                <button class="whatsnew-btn" onclick="dismissOnboarding()">Skip — I'll set up later</button>
             </div>
         </div>
     
@@ -3774,9 +3875,15 @@
                 const res = await fetch(`/api/settings?pin=${pin}`, { method: 'DELETE' });
                 if (res.ok) {
                     showToast('🗑️ Cloud backup deleted');
-                    updateSyncStatus('--', '#555');
-                    const el = document.getElementById('lastSyncTime');
-                    if (el) el.innerText = '--';
+                    // Clear storage mode so the setup screen shows on reload
+                    localStorage.removeItem('efb_storage_mode');
+                    localStorage.removeItem('efb_cloud_pin');
+                    await EFB_DB.delete('_efb_storage_mode');
+                    await EFB_DB.delete('_efb_cloud_pin');
+                    setTimeout(() => {
+                        showToast('Returning to setup...');
+                        setTimeout(() => location.reload(), 800);
+                    }, 600);
                 } else { showToast('⚠️ Delete failed. Try again.'); }
             } catch(e) { showToast('⚠️ No connection. Try again.'); }
         }
@@ -3904,6 +4011,7 @@
                 renderStorageModeUI();
                 showToast('📱 Saved to this device only');
                 initApp();
+                showOnboarding();
                 return;
             }
             document.getElementById('storageSetup').style.display = 'none';
@@ -4040,9 +4148,9 @@
             const restored = await cloudRestoreAll();
             document.getElementById('pinSetup').style.display    = 'none';
             document.getElementById('storageSetup').style.display = 'none';
-            renderStorageModeUI();
             showToast(restored ? '☁️ Backup restored successfully!' : '✅ Cloud Backup activated!');
             initApp();
+            if (!restored) showOnboarding();
         }
 
         // ================================================================
@@ -4200,9 +4308,30 @@
                 inputField.value = savedDefault;
                 document.getElementById('icao').value = savedDefault;
                 loadData();   // data loads into whichever tab is already showing
-            } else {
+                } else {
                 document.getElementById('icao').value = '';
+                // Welcome prompt for new users with no default airport
+                const welcomeHtml = `
+                    <div style="text-align:center;padding:24px 10px;">
+                        <div style="font-size:36px;margin-bottom:12px;">✈️</div>
+                        <div style="font-weight:800;color:var(--text);font-size:16px;margin-bottom:8px;">Welcome to METAR GO</div>
+                        <div style="font-size:12px;color:var(--sub-text);margin-bottom:20px;line-height:1.7;">
+                            Set a <b style="color:var(--text);">Default Airport</b> so the app loads<br>your home base automatically on every launch.
+                        </div>
+                        <button onclick="closeOnboardingAndGo('settings','defaultIcaoInput')"
+                                style="background:var(--accent);border:none;color:#fff;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+                            🏠 Set Default Airport →
+                        </button>
+                        <div style="margin-top:14px;font-size:11px;color:#444;">
+                            Or search any ICAO code above to get started
+                        </div>
+                    </div>`;
+                document.getElementById('rawMetar').innerHTML = welcomeHtml;
+                const rm2 = document.getElementById('rawMetar2');
+                if (rm2) rm2.innerHTML = welcomeHtml;  // mirror to weather tab
+                showOnboarding();
             }
+                
 
             const savedXW   = await Storage.get('efb_min_xw');
             const savedCeil = await Storage.get('efb_min_ceil');
@@ -7297,6 +7426,37 @@ async function findNearbyStations(lat, lon) {
             showToast(`Loading ${icao}...`);
         }
 
+// ================================================================
+        // FIRST-USE ONBOARDING
+        // ================================================================
+        function showOnboarding() {
+            if (localStorage.getItem('efb_onboarded')) return;
+            setTimeout(() => {
+                document.getElementById('onboardingModal')?.classList.add('active');
+            }, 700);
+        }
+
+        function dismissOnboarding() {
+            localStorage.setItem('efb_onboarded', 'true');
+            document.getElementById('onboardingModal')?.classList.remove('active');
+        }
+
+        function closeOnboardingAndGo(tab, targetId) {
+            dismissOnboarding();
+            setTab(tab);
+            setTimeout(() => {
+                const el = document.getElementById(targetId);
+                if (!el) return;
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.focus?.();
+                // Brief blue glow to highlight the target element
+                const prev = el.style.boxShadow;
+                el.style.transition = 'box-shadow 0.3s';
+                el.style.boxShadow = '0 0 0 3px var(--accent)';
+                setTimeout(() => { el.style.boxShadow = prev; }, 2200);
+            }, 350);
+        }
+    
 
     
     </script>
