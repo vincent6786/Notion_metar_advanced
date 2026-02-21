@@ -5444,7 +5444,17 @@
                 ]},
                 RCFN: { label: "RCFN LIVE STREAMS", streams: [
                     { type: "ATIS", src: "https://stream.twatc.net/RCFN_ATIS", color: "var(--accent)" }
+                ]},
+                KMHR: { label: "KMHR LIVE STREAMS", streams: [
+                    { type: "ATC SCANNER", src: "https://s1-bos.liveatc.net/kmhr?nocache=2026022115205826873", color: "var(--success)" }
+                ]},
+                KJKF: { label: "KMHR LIVE STREAMS", streams: [
+                    { type: "ATC SCANNER", src: "https://s1-bos.liveatc.net/kjfk_arinc?nocache=2026022115281622601", color: "var(--success)" }
                 ]}
+                // K: { label: "KMHR LIVE STREAMS", streams: [
+                //     { type: "ATC SCANNER", src: "https://s1-bos.liveatc.net/kjfk_arinc?nocache=2026022115281622601", color: "var(--success)" }
+                // ]},
+                
             };
 
             const cfg = streamConfigs[icao];
