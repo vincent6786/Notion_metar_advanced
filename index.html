@@ -2274,6 +2274,15 @@
             opacity: 0.5;
         }
 
+        /* Global spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================================
+           UNIT PREFERENCE PILL TOGGLES
+        ============================================================ */
+        
         /* ============================================================
            UNIT PREFERENCE PILL TOGGLES
         ============================================================ */
@@ -2442,7 +2451,7 @@
         <button id="btnFetchLive" class="tool-btn hidden"
                 style="margin-top:10px; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;"
                 onclick="openAwosModal()">
-            📡 Open Live Sensor View (KMHR)
+            📡 Open Live Sensor View AWOS (KMHR)
         </button>
     
         <!-- METAR Data Grid -->
@@ -2521,6 +2530,23 @@
                 <span style="color:var(--sub-text); font-size:12px;">--</span>
             </div>
         </div>
+        <div id="metarSourceFooter" class="hidden"
+             style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+                    gap:6px;margin-top:12px;padding:8px 4px;
+                    border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
+            <span>📡 DATA</span>
+            <span style="color:#222;">·</span>
+            <a href="https://avwx.rest" target="_blank"
+               style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
+            <span style="color:#222;">·</span>
+            <a href="https://aviationweather.gov" target="_blank"
+               style="color:#555;text-decoration:none;font-weight:700;">aviationweather.gov</a>
+            <span style="color:#222;">·</span>
+            <a href="https://open-meteo.com" target="_blank"
+               style="color:#555;text-decoration:none;font-weight:700;">Open-Meteo</a>
+            <span style="color:#222;">·</span>
+            <span id="metarSourceTime" style="color:#333;font-family:'SF Mono',monospace;">--:--Z</span>
+        </div>
     </div>
 
     <!-- ================================================================
@@ -2571,6 +2597,22 @@
         <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
         <div id="notamList" class="raw-text"
              style="max-height:300px; overflow-y:auto; font-size:11px; background:transparent; padding:0;">Loading...</div>
+            <div id="tafSourceFooter" class="hidden"
+         style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+                gap:6px;margin-top:12px;padding:8px 4px;
+                border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
+        <span>📡 DATA</span>
+        <span style="color:#222;">·</span>
+        <a href="https://avwx.rest" target="_blank"
+           style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
+        <span style="color:#222;">·</span>
+        <a href="https://aviationweather.gov" target="_blank"
+           style="color:#555;text-decoration:none;font-weight:700;">aviationweather.gov (NOTAMs)</a>
+        <span style="color:#222;">·</span>
+        <a href="https://open-meteo.com" target="_blank"
+           style="color:#555;text-decoration:none;font-weight:700;">Open-Meteo</a>
+        <span id="tafSourceTime" style="color:#333;font-family:'SF Mono',monospace;margin-left:2px;">--:--Z</span>
+    </div>
     </div>
     
     <!-- ================================================================
@@ -2719,6 +2761,39 @@
             <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
             <div id="notamList2" class="raw-text"
                  style="max-height:300px; overflow-y:auto; font-size:11px; background:transparent; padding:0;">Loading...</div>
+                <!-- Source footer - weather tab metar pane (add after nearby container) -->
+            <div id="weatherMetarSourceFooter" class="hidden"
+                 style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+                        gap:6px;margin-top:12px;padding:8px 4px;
+                        border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
+                <span>📡 DATA</span>
+                <span style="color:#222;">·</span>
+                <a href="https://avwx.rest" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
+                <span style="color:#222;">·</span>
+                <a href="https://aviationweather.gov" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">aviationweather.gov</a>
+                <span style="color:#222;">·</span>
+                <a href="https://open-meteo.com" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">Open-Meteo</a>
+            </div>
+        
+            <!-- Source footer - weather tab TAF pane (add after notamList2) -->
+            <div id="weatherTafSourceFooter" class="hidden"
+                 style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+                        gap:6px;margin-top:12px;padding:8px 4px;
+                        border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
+                <span>📡 DATA</span>
+                <span style="color:#222;">·</span>
+                <a href="https://avwx.rest" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
+                <span style="color:#222;">·</span>
+                <a href="https://aviationweather.gov" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">aviationweather.gov (NOTAMs)</a>
+                <span style="color:#222;">·</span>
+                <a href="https://open-meteo.com" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">Open-Meteo</a>
+            </div>
         </div><!-- /weather-taf-pane -->
     
     </div><!-- /tab-weather -->
@@ -3035,6 +3110,16 @@
                         <div class="help-a">In-app live audio streams for <b>RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN</b> are provided by <b><a href="https://twatc.net" target="_blank" style="color:var(--accent);text-decoration:none;">TWATC.net</a></b>, a Taiwan-based ATC audio streaming service. Streams include ATIS and area scanner feeds.</div>
                     </div>
                     <div class="help-item">
+                        <div class="help-q">US Airport Resources (AirNav, iFlightPlanner, 1800wxbrief)</div>
+                        <div class="help-a">
+                            When a US airport is loaded, three additional resource links appear in the ATC tab under the External Resources section.<br><br>
+                            <b>AirNav</b> — <a href="https://www.airnav.com" target="_blank" style="color:var(--accent);text-decoration:none;">airnav.com</a> — Comprehensive airport directory with frequencies, fuel, services, and runway data for US airports.<br><br>
+                            <b>iFlightPlanner</b> — <a href="https://www.iflightplanner.com" target="_blank" style="color:var(--accent);text-decoration:none;">iflightplanner.com</a> — Opens in-app with three tabs: <b>Airport</b> (info & diagram), <b>VFR Sectional</b> (interactive chart), and <b>IFR Low</b> (enroute chart centred on the airport).<br><br>
+                            <b>1800wxbrief / FlightService</b> — <a href="https://www.1800wxbrief.com" target="_blank" style="color:var(--accent);text-decoration:none;">1800wxbrief.com</a> — Official FAA Flight Service Station briefing portal. Links directly to the airport info page for standard weather briefings and NOTAMs.<br><br>
+                            All three links update automatically when you search a different US airport.
+                        </div>
+                    </div>
+                    <div class="help-item">
                         <div class="help-q">ATC Audio — Global (LiveATC.net)</div>
                         <div class="help-a">For all other airports, METAR GO links to <b><a href="https://www.liveatc.net" target="_blank" style="color:var(--accent);text-decoration:none;">LiveATC.net</a></b>, which provides ATC audio streams for hundreds of airports worldwide. The button auto-searches by your current ICAO code.</div>
                     </div>
@@ -3140,6 +3225,59 @@
         <a id="btnMetarTaf" href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
         <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span></a>
         <a id="btnLiveAtc" href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
+
+        <!-- US AIRPORT RESOURCES — hidden until a US airport is loaded -->
+        <div id="usAirportLinks" class="hidden">
+            <div class="section-title" style="margin-top:24px;">US Airport Resources</div>
+
+            <!-- AirNav -->
+            <div class="atc-btn" style="cursor:pointer;margin-bottom:10px;"
+                 onclick="openUsLink('airnav')">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;background:linear-gradient(135deg,#e84c0e,#c23d0a);
+                                border-radius:8px;display:flex;align-items:center;justify-content:center;
+                                font-size:16px;flex-shrink:0;">🧭</div>
+                    <div>
+                        <div style="font-weight:700;font-size:14px;">AirNav</div>
+                        <div style="font-size:11px;color:var(--sub-text);">Frequencies · Services · Fuel</div>
+                    </div>
+                </div>
+                <span style="color:var(--sub-text);">↗</span>
+            </div>
+
+            <!-- iFlightPlanner (3-tab in-app) -->
+            <div class="atc-btn" style="cursor:pointer;margin-bottom:10px;"
+                 onclick="openUsLink('iflightplanner')">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;
+                                background:linear-gradient(135deg,#1a7fc1,#0d5a8a);
+                                border-radius:8px;display:flex;align-items:center;justify-content:center;
+                                font-size:16px;flex-shrink:0;">✈️</div>
+                    <div>
+                        <div style="font-weight:700;font-size:14px;">iFlightPlanner</div>
+                        <div style="font-size:11px;color:var(--sub-text);">Airport · VFR Sectional · IFR Low</div>
+                    </div>
+                </div>
+                <span style="color:var(--sub-text);">↗</span>
+            </div>
+
+            <!-- 1800wxbrief / FlightService -->
+            <div class="atc-btn" style="cursor:pointer;margin-bottom:10px;"
+                 onclick="openUsLink('flightservice')">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;
+                                background:linear-gradient(135deg,#1e3a8a,#1e40af);
+                                border-radius:8px;display:flex;align-items:center;justify-content:center;
+                                font-size:15px;flex-shrink:0;">FS</div>
+                    <div>
+                        <div style="font-weight:700;font-size:14px;">FlightService (1800wxbrief)</div>
+                        <div style="font-size:11px;color:var(--sub-text);">FAA briefing portal · Airport info</div>
+                    </div>
+                </div>
+                <span style="color:var(--sub-text);">↗</span>
+            </div>
+        </div>
+        
         
                 <!-- EMERGENCY SQUAWK CODES -->
                 <div class="section-title" style="margin-top:24px;">Emergency Squawk Codes</div>
@@ -3737,6 +3875,94 @@
                     </div>
                 </div>
                 <button class="whatsnew-btn" onclick="dismissOnboarding()">Skip — I'll set up later</button>
+            </div>
+        </div>
+
+        <!-- ================================================================
+             US AIRPORT IN-APP BROWSER MODAL
+        ================================================================ -->
+        <div id="usLinkModal" class="modal-overlay" style="padding:0;align-items:stretch;">
+    
+            <!-- Outer shell mimics native app chrome -->
+            <div style="display:flex;flex-direction:column;width:100%;height:100%;
+                        background:#000;
+                        padding-top:max(env(safe-area-inset-top),12px);">
+    
+                <!-- ── Title bar ── -->
+                <div style="display:flex;align-items:center;justify-content:space-between;
+                            padding:10px 16px 8px;gap:12px;border-bottom:1px solid #1a1a1a;">
+                    <div id="usLinkModalTitle"
+                         style="font-size:15px;font-weight:800;color:#fff;letter-spacing:0.3px;
+                                flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        AirNav
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                        <button id="usLinkOpenExternal"
+                                style="background:rgba(10,132,255,0.12);border:1px solid var(--accent);
+                                       color:var(--accent);padding:5px 12px;border-radius:8px;
+                                       font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                            Open ↗
+                        </button>
+                        <button onclick="closeUsLinkModal()"
+                                style="background:#222;border:1px solid #444;color:#aaa;
+                                       padding:5px 14px;border-radius:8px;font-size:13px;
+                                       font-weight:700;cursor:pointer;">
+                            Done
+                        </button>
+                    </div>
+                </div>
+    
+                <!-- ── iFlightPlanner sub-tabs (hidden for AirNav / FlightService) ── -->
+                <div id="iflightplannerTabs"
+                     style="display:none;background:#111;border-bottom:1px solid #1a1a1a;
+                            padding:8px 12px 0;">
+                    <div style="display:flex;background:#1c1c1e;border-radius:10px;padding:3px;gap:2px;
+                                border:1px solid #2a2a2a;">
+                        <button id="iFPTabAirport"
+                                onclick="switchIFPTab('airport')"
+                                style="flex:1;padding:8px 0;border:none;border-radius:8px;
+                                       font-size:12px;font-weight:700;cursor:pointer;
+                                       background:var(--accent);color:#fff;
+                                       transition:background 0.2s,color 0.2s;">
+                            Airport
+                        </button>
+                        <button id="iFPTabVFR"
+                                onclick="switchIFPTab('vfr')"
+                                style="flex:1;padding:8px 0;border:none;border-radius:8px;
+                                       font-size:12px;font-weight:700;cursor:pointer;
+                                       background:transparent;color:var(--sub-text);
+                                       transition:background 0.2s,color 0.2s;">
+                            VFR Sectional
+                        </button>
+                        <button id="iFPTabIFR"
+                                onclick="switchIFPTab('ifr')"
+                                style="flex:1;padding:8px 0;border:none;border-radius:8px;
+                                       font-size:12px;font-weight:700;cursor:pointer;
+                                       background:transparent;color:var(--sub-text);
+                                       transition:background 0.2s,color 0.2s;">
+                            IFR Low
+                        </button>
+                    </div>
+                </div>
+    
+                <!-- ── Loading indicator ── -->
+                <div id="usLinkLoader"
+                     style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                            display:flex;flex-direction:column;align-items:center;gap:14px;
+                            pointer-events:none;z-index:5;">
+                    <div style="width:36px;height:36px;border:3px solid #222;
+                                border-top-color:var(--accent);border-radius:50%;
+                                animation:spin 0.9s linear infinite;"></div>
+                    <div style="font-size:12px;color:#555;">Loading...</div>
+                </div>
+    
+                <!-- ── iframe ── -->
+                <iframe id="usLinkFrame"
+                        style="flex:1;width:100%;border:none;background:#fff;"
+                        onload="document.getElementById('usLinkLoader').style.display='none';"
+                        onerror="document.getElementById('usLinkLoader').style.display='none';">
+                </iframe>
+    
             </div>
         </div>
     
@@ -4978,6 +5204,8 @@
                         document.getElementById('notamList').innerHTML = 
                             '<div style="color:#555;font-style:italic;padding:8px;">No NOTAMs available.</div>';
                     }
+                    showSourceFooters();   
+                    updateUSAirportLinks(icao);
                 });
 
             } catch(e) {
@@ -5157,6 +5385,7 @@
                 label.innerText = "AUDIO STREAMS";
                 container.innerHTML = `<div style="color:var(--sub-text);font-size:13px;text-align:center;padding:10px 0;">No direct in-app stream available for ${icao}.<br><span style="font-size:11px;color:#555;">Use the LiveATC button below.</span></div>`;
             }
+            updateUSAirportLinks(icao); 
         }
 
         // ================================================================
@@ -6934,6 +7163,153 @@ async function findNearbyStations(lat, lon) {
             setTimeout(() => { document.getElementById('awosFrame').srcdoc = ''; }, 300);
         }
 
+        /* ── Detect US airport & derive local code ── */
+        function isUSAirport(icao) {
+            // US airports typically begin with K, P (Pacific), or have country US
+            if (!icao) return false;
+            if (stationData?.country === 'US') return true;
+            return /^K[A-Z0-9]{3}$/i.test(icao) ||
+                   /^P[A,F,G,H,J,K,L,M,O][A-Z0-9]{2}$/i.test(icao); // Alaska/Pacific prefixes
+        }
+        
+        function getLocalCode(icao, iata) {
+            // For standard K airports: KMHR → MHR
+            if (icao && icao.length === 4 && icao[0].toUpperCase() === 'K') {
+                return icao.slice(1).toUpperCase();
+            }
+            // Fallback to IATA, then ICAO
+            return (iata || icao || '').toUpperCase();
+        }
+        
+        /* ── Build URLs for current airport ── */
+        function getUSLinks() {
+            const icao  = (document.getElementById('icao').value || '').trim().toUpperCase();
+            const iata  = stationData?.iata || '';
+            const local = getLocalCode(icao, iata);
+        
+            return {
+                airnav:        `https://www.airnav.com/airport/${local}`,
+                ifpAirport:    `https://www.iflightplanner.com/Airports/${icao}`,
+                ifpVFR:        `https://www.iflightplanner.com/AviationCharts/?Map=Sectional&L=${local}&MPA=AeroWeather`,
+                ifpIFR:        `https://www.iflightplanner.com/AviationCharts/?Map=IFRLOW&L=${local}&MPA=AeroWeather`,
+                flightservice: `https://www.1800wxbrief.com/Website/AirportInfo?idFromMenu=${local}`
+            };
+        }
+        
+        /* ── Track current modal type for Open ↗ button ── */
+        let _usLinkType = null;
+        let _ifpActiveTab = 'airport';
+        
+        function openUsLink(type) {
+            _usLinkType  = type;
+            _ifpActiveTab = 'airport';
+        
+            const modal   = document.getElementById('usLinkModal');
+            const frame   = document.getElementById('usLinkFrame');
+            const loader  = document.getElementById('usLinkLoader');
+            const tabs    = document.getElementById('iflightplannerTabs');
+            const title   = document.getElementById('usLinkModalTitle');
+            const openBtn = document.getElementById('usLinkOpenExternal');
+        
+            const links = getUSLinks();
+        
+            // Reset loader
+            loader.style.display = 'flex';
+            frame.src = 'about:blank';
+        
+            if (type === 'iflightplanner') {
+                tabs.style.display = 'block';
+                title.innerText    = 'iFlightPlanner';
+                frame.src          = links.ifpAirport;
+                openBtn.onclick    = () => window.open(links.ifpAirport, '_blank');
+                // Reset tab pill styles
+                switchIFPTab('airport', false); // false = don't reload (we just set src above)
+            } else if (type === 'airnav') {
+                tabs.style.display = 'none';
+                title.innerText    = 'AirNav';
+                frame.src          = links.airnav;
+                openBtn.onclick    = () => window.open(links.airnav, '_blank');
+            } else if (type === 'flightservice') {
+                tabs.style.display = 'none';
+                title.innerText    = 'FlightService (1800wxbrief)';
+                frame.src          = links.flightservice;
+                openBtn.onclick    = () => window.open(links.flightservice, '_blank');
+            }
+        
+            modal.classList.add('active');
+        }
+        
+        function switchIFPTab(tab, loadFrame = true) {
+            _ifpActiveTab = tab;
+            const links   = getUSLinks();
+            const openBtn = document.getElementById('usLinkOpenExternal');
+        
+            // Tab pill styles
+            const tabIds = { airport: 'iFPTabAirport', vfr: 'iFPTabVFR', ifr: 'iFPTabIFR' };
+            Object.entries(tabIds).forEach(([key, id]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const active = key === tab;
+                el.style.background = active ? 'var(--accent)' : 'transparent';
+                el.style.color      = active ? '#fff' : 'var(--sub-text)';
+            });
+        
+            const urlMap = {
+                airport: links.ifpAirport,
+                vfr:     links.ifpVFR,
+                ifr:     links.ifpIFR
+            };
+            const url = urlMap[tab] || links.ifpAirport;
+            openBtn.onclick = () => window.open(url, '_blank');
+        
+            if (loadFrame) {
+                document.getElementById('usLinkLoader').style.display = 'flex';
+                document.getElementById('usLinkFrame').src = url;
+            }
+        }
+        
+        function closeUsLinkModal() {
+            document.getElementById('usLinkModal').classList.remove('active');
+            // Blank the frame so audio/video stops
+            setTimeout(() => {
+                document.getElementById('usLinkFrame').src = 'about:blank';
+            }, 250);
+        }
+        
+        
+        /* ── Show/hide US airport section in ATC tab ── */
+        function updateUSAirportLinks(icao) {
+            const section = document.getElementById('usAirportLinks');
+            if (!section) return;
+            if (isUSAirport(icao)) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+        
+        
+        /* ── Show source footers and stamp fetch time ── */
+        function showSourceFooters() {
+            const icao = (document.getElementById('icao').value || '').trim().toUpperCase();
+            if (!icao) return;
+        
+            const now    = new Date();
+            const timeZ  = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
+        
+            ['metarSourceFooter','tafSourceFooter',
+             'weatherMetarSourceFooter','weatherTafSourceFooter'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
+            });
+        
+            const timeEls = ['metarSourceTime','tafSourceTime'];
+            timeEls.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = timeZ;
+            });
+        }
+    
         // ================================================================
         // 26. TOAST & OFFLINE BANNER
         // ================================================================
@@ -7785,25 +8161,30 @@ async function findNearbyStations(lat, lon) {
          * Priority: LIFR > IFR > MVFR > VFR
          * Falls back to 'VFR' (green) if TAF not available or unparseable.
          */
-        function tafWorstRules(icao) {
+        function tafRulesSummary(icao) {
             const cacheKey = `cache_/api/weather?type=taf&station=${icao}`;
+            const priority = { LIFR: 4, IFR: 3, MVFR: 2, VFR: 1 };
             try {
                 const raw = localStorage.getItem(cacheKey);
-                if (!raw) return 'VFR';
+                if (!raw) return { initial: null, worst: null };
                 const taf = JSON.parse(raw);
-                const forecasts = taf?.data?.forecast || [];
+                const forecasts = (taf?.data?.forecast || []).filter(f => f.flight_rules);
         
-                const priority = { LIFR: 4, IFR: 3, MVFR: 2, VFR: 1 };
-                let worst = 'VFR';
+                if (forecasts.length === 0) return { initial: null, worst: null };
+        
+                const initial = forecasts[0].flight_rules;
+                let worst = initial;
+        
                 for (const f of forecasts) {
                     const rules = f.flight_rules || 'VFR';
                     if ((priority[rules] || 0) > (priority[worst] || 0)) {
                         worst = rules;
                     }
                 }
-                return worst;
+        
+                return { initial, worst };
             } catch(e) {
-                return 'VFR';
+                return { initial: null, worst: null };
             }
         }
     
@@ -7938,10 +8319,43 @@ async function findNearbyStations(lat, lon) {
                             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
                                 ${badge(rules, rulesBg, rulesColor)}
                                 ${hasTaf ? (() => {
-                                    const tafRules  = tafWorstRules(icao);
-                                    const tafBg     = { VFR:'var(--success)', MVFR:'var(--mvfr)', IFR:'var(--danger)', LIFR:'var(--lifr)' }[tafRules] || '#32d74b';
-                                    const tafColor  = tafRules === 'VFR' ? '#000' : '#fff';
-                                    return badge('TAF', tafBg, tafColor);
+                                    const { initial, worst } = tafRulesSummary(icao);
+                                    if (!initial) return '';
+                                
+                                    const bgMap    = { VFR: 'var(--success)', MVFR: 'var(--mvfr)', IFR: 'var(--danger)', LIFR: 'var(--lifr)' };
+                                    const colorMap = { VFR: '#000', MVFR: '#fff', IFR: '#fff', LIFR: '#fff' };
+                                
+                                    const initBg    = bgMap[initial]  || '#555';
+                                    const initColor = colorMap[initial] || '#fff';
+                                
+                                    // Single pill — same initial and worst condition
+                                    if (initial === worst) {
+                                        return `
+                                            <div style="display:flex;border-radius:5px;overflow:hidden;width:44px;
+                                                        font-size:11px;font-weight:900;letter-spacing:0.4px;">
+                                                <div style="flex:1;background:${initBg};color:${initColor};
+                                                            text-align:center;padding:3px 0;">TAF</div>
+                                            </div>`;
+                                    }
+                                
+                                    // Split pill — show initial | worst
+                                    const worstBg    = bgMap[worst]  || '#555';
+                                    const worstColor = colorMap[worst] || '#fff';
+                                
+                                    return `
+                                        <div title="TAF: ${initial} initially → ${worst} worst"
+                                             style="display:flex;border-radius:5px;overflow:hidden;
+                                                    font-size:9px;font-weight:900;letter-spacing:0.2px;width:58px;">
+                                            <div style="flex:1;background:${initBg};color:${initColor};
+                                                        text-align:center;padding:3px 2px;line-height:1.2;">
+                                                ${initial}
+                                            </div>
+                                            <div style="width:1px;background:rgba(0,0,0,0.3);"></div>
+                                            <div style="flex:1;background:${worstBg};color:${worstColor};
+                                                        text-align:center;padding:3px 2px;line-height:1.2;">
+                                                ${worst}
+                                            </div>
+                                        </div>`;
                                 })() : ''}
                                 ${isAuto ? badge('AUTO', '#555', '#ccc')   : ''}
                             </div>
