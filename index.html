@@ -6653,26 +6653,25 @@ async function findNearbyStations(lat, lon) {
         }
 
         // ================================================================
-        // SMOOTH SWIPE NAVIGATION — v2 (no bounce, locked axes)
+        // SMOOTH SWIPE NAVIGATION — v3 (no DOM reparenting, no flicker)
         // ================================================================
         (function () {
             if (!('ontouchstart' in window)) return;
         
             const state = {
-                tracking:   false,  // actively panning a swipe
-                settled:    false,  // intent has been determined (horiz vs vert)
-                isHoriz:    false,  // true = horizontal swipe, false = vertical scroll
+                tracking:  false,
+                settled:   false,
+                isHoriz:   false,
                 startX: 0, startY: 0, curX: 0,
                 fromEl: null, toEl: null,
+                toWasHidden: false,
                 fromTab: null, toTab: null,
                 dir: 0,
                 W: 0,
-                clip: null,
                 raf: null,
                 animating: false
             };
         
-            /* ── tab order ── */
             function getOrder() {
                 const on = document.getElementById('toggleMultiDashboard')?.checked;
                 return on
@@ -6680,62 +6679,64 @@ async function findNearbyStations(lat, lon) {
                     : ['metar','taf','info','atc','world','tools','settings','help'];
             }
         
-            /* ── create a fixed clip container over the content area only ── */
-            function createClip(rect) {
-                const d = document.createElement('div');
-                d.style.cssText = [
-                    'position:fixed',
-                    `top:${rect.top}px`,
-                    `left:${rect.left}px`,
-                    `width:${rect.width}px`,
-                    `height:${window.innerHeight - rect.top}px`,
-                    'overflow:hidden',
-                    'z-index:200',
-                    'background:var(--bg)',
-                    'pointer-events:auto'
-                ].join(';');
-                document.body.appendChild(d);
-                return d;
+            // Freeze an element visually at its current position using fixed layout.
+            // The element stays in the DOM — no reparenting, no reflow.
+            function freezeAtRect(el, rect) {
+                el.style.cssText = `
+                    position: fixed !important;
+                    top:    ${rect.top}px !important;
+                    left:   ${rect.left}px !important;
+                    width:  ${rect.width}px !important;
+                    height: ${window.innerHeight - rect.top}px !important;
+                    overflow-y: auto;
+                    background: var(--bg);
+                    z-index: 200;
+                    will-change: transform;
+                    transition: none;
+                    transform: translateX(0);
+                    margin: 0;
+                    -webkit-overflow-scrolling: touch;
+                `;
             }
         
-            /* ── move a panel into the clip wrapper ── */
-            function prepInClip(el, xPx, clip) {
-                el._sp = el.parentNode;
-                el._sn = el.nextSibling;
-                el._sh = el.classList.contains('hidden');
-        
+            // Park the incoming panel off-screen (same rect, different translateX).
+            function parkOffscreen(el, rect, dir) {
+                // Apply positioning while hidden so it paints in the right spot on reveal
+                el.style.cssText = `
+                    position: fixed !important;
+                    top:    ${rect.top}px !important;
+                    left:   ${rect.left}px !important;
+                    width:  ${rect.width}px !important;
+                    height: ${window.innerHeight - rect.top}px !important;
+                    overflow-y: auto;
+                    background: var(--bg);
+                    z-index: 199;
+                    will-change: transform;
+                    transition: none;
+                    display: block !important;
+                    transform: translateX(${dir < 0 ? rect.width : -rect.width}px);
+                    margin: 0;
+                    -webkit-overflow-scrolling: touch;
+                `;
                 el.classList.remove('hidden');
-                el.style.cssText = [
-                    'position:absolute',
-                    'top:0','left:0','width:100%','min-height:100%',
-                    'overflow-y:auto',
-                    'background:var(--bg)',
-                    'transition:none',
-                    `transform:translateX(${xPx}px)`,
-                    'display:block',
-                    'opacity:1',
-                    'will-change:transform',
-                    '-webkit-overflow-scrolling:touch'
-                ].join(';');
-        
-                clip.appendChild(el);
             }
         
-            /* ── restore a panel to its original DOM slot ── */
-            function restoreEl(el) {
-                if (!el._sp) return;
-                el._sp.insertBefore(el, el._sn || null);
-                if (el._sh) el.classList.add('hidden');
+            // Fully reset an element's inline styles back to CSS-class-driven defaults
+            function resetEl(el) {
                 el.style.cssText = '';
-                delete el._sp; delete el._sn; delete el._sh;
             }
         
-            /* ── finish: remove clip, restore DOM, activate winner ── */
+            function unlockScroll() {
+                document.body.style.overflowY = '';
+                document.body.style.touchAction = '';
+            }
+        
+            // Activate the winning tab cleanly after animation completes
             function commit(name) {
-                if (state.fromEl) restoreEl(state.fromEl);
-                if (state.toEl)   restoreEl(state.toEl);
-                if (state.clip?.parentNode) state.clip.parentNode.removeChild(state.clip);
-                state.clip = null;
+                resetEl(state.fromEl);
+                resetEl(state.toEl);
+                if (state.toWasHidden) state.toEl.classList.add('hidden');
+                unlockScroll();
         
                 document.querySelectorAll('.view-section').forEach(el => {
                     el.classList.remove('active');
@@ -6762,14 +6763,13 @@ async function findNearbyStations(lat, lon) {
                 requestAnimationFrame(() => destEl?.classList.remove('swipe-committed'));
             }
         
-            /* ── RAF: translate both panels during drag ── */
             function renderFrame() {
                 if (!state.tracking) return;
                 const raw   = state.curX - state.startX;
-                const limit = state.W * 0.52;
-                // Rubber-band resistance only — no overshoot/bounce
+                const limit = state.W * 0.5;
+                // Gentle rubber-band resistance at the edges — no snap/overshoot
                 const tx = Math.abs(raw) > limit
-                    ? Math.sign(raw) * (limit + (Math.abs(raw) - limit) * 0.08)
+                    ? Math.sign(raw) * (limit + (Math.abs(raw) - limit) * 0.07)
                     : raw;
         
                 state.fromEl.style.transform = `translateX(${tx}px)`;
@@ -6777,45 +6777,12 @@ async function findNearbyStations(lat, lon) {
                 state.raf = null;
             }
         
-            /* ── cancel: snap everything back cleanly, no spring ── */
-            function cancelSwipe() {
-                if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
-        
-                if (state.tracking) {
-                    // Snap back without bounce
-                    const dur = 180;
-                    const ease = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // smooth ease-out, no overshoot
-                    state.fromEl.style.transition = `transform ${dur}ms ${ease}`;
-                    state.toEl.style.transition   = `transform ${dur}ms ${ease}`;
-                    state.fromEl.style.transform  = 'translateX(0)';
-                    state.toEl.style.transform    = `translateX(${state.dir < 0 ? state.W : -state.W}px)`;
-        
-                    state.animating = true;
-                    setTimeout(() => {
-                        state.animating = false;
-                        if (state.fromEl) restoreEl(state.fromEl);
-                        if (state.toEl)   restoreEl(state.toEl);
-                        if (state.clip?.parentNode) state.clip.parentNode.removeChild(state.clip);
-                        state.clip = null;
-                    }, dur + 16);
-                } else {
-                    if (state.fromEl) restoreEl(state.fromEl);
-                    if (state.toEl)   restoreEl(state.toEl);
-                    if (state.clip?.parentNode) state.clip.parentNode.removeChild(state.clip);
-                    state.clip = null;
-                }
-        
-                state.tracking = false;
-                state.settled  = false;
-                state.isHoriz  = false;
-            }
-        
-            /* ─────────────────── TOUCH START ─────────────────── */
+            /* ─────────────── TOUCH START ─────────────── */
             document.addEventListener('touchstart', e => {
                 if (state.animating) return;
                 const t = e.target;
                 if (
-                    t.tagName === 'INPUT'    || t.tagName === 'BUTTON' ||
+                    t.tagName === 'INPUT'    || t.tagName === 'BUTTON'   ||
                     t.tagName === 'SELECT'   || t.tagName === 'TEXTAREA' ||
                     t.closest('canvas')      || t.closest('.modal-overlay') ||
                     t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
@@ -6830,8 +6797,8 @@ async function findNearbyStations(lat, lon) {
                 state.isHoriz  = false;
             }, { passive: true });
         
-            /* ─────────────────── TOUCH MOVE ─────────────────── */
-            // Must be non-passive so we can preventDefault() to lock scroll during horiz swipe
+            /* ─────────────── TOUCH MOVE ─────────────── */
+            // non-passive so we can preventDefault for horizontal swipes
             document.addEventListener('touchmove', e => {
                 if (state.animating) return;
         
@@ -6840,19 +6807,18 @@ async function findNearbyStations(lat, lon) {
                 const dx = x - state.startX;
                 const dy = y - state.startY;
         
-                /* ── determine intent once we have enough movement ── */
+                /* ── Determine intent on first meaningful movement ── */
                 if (!state.settled) {
                     if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-        
                     state.settled = true;
         
+                    // Clearly vertical → release to native scroll, never come back
                     if (Math.abs(dy) > Math.abs(dx) * 0.9) {
-                        // Clearly vertical — let the browser handle native scroll, don't intercept
                         state.isHoriz = false;
                         return;
                     }
         
-                    // Horizontal swipe — set up panels
+                    // Horizontal swipe confirmed
                     state.isHoriz = true;
         
                     const order    = getOrder();
@@ -6860,35 +6826,43 @@ async function findNearbyStations(lat, lon) {
                     const idx      = order.indexOf(state.fromTab);
                     if (idx === -1) { state.isHoriz = false; return; }
         
-                    state.dir   = dx < 0 ? -1 : 1;
-                    const nIdx  = (idx - state.dir + order.length) % order.length;
-                    state.toTab = order[nIdx];
+                    state.dir      = dx < 0 ? -1 : 1;
+                    const nIdx     = (idx - state.dir + order.length) % order.length;
+                    state.toTab    = order[nIdx];
         
-                    state.fromEl = document.getElementById('tab-' + state.fromTab);
-                    state.toEl   = document.getElementById('tab-' + state.toTab);
+                    state.fromEl   = document.getElementById('tab-' + state.fromTab);
+                    state.toEl     = document.getElementById('tab-' + state.toTab);
                     if (!state.fromEl || !state.toEl) { state.isHoriz = false; return; }
         
+                    state.toWasHidden = state.toEl.classList.contains('hidden');
+        
+                    // Measure content rect BEFORE touching any styles
                     const rect = state.fromEl.getBoundingClientRect();
                     state.W    = rect.width;
-                    state.clip = createClip(rect);
-                    prepInClip(state.fromEl, 0, state.clip);
-                    prepInClip(state.toEl, state.dir < 0 ? state.W : -state.W, state.clip);
+        
+                    // Lock body scroll so page can't drift during horizontal animation
+                    document.body.style.overflowY   = 'hidden';
+                    document.body.style.touchAction = 'none';
+        
+                    // Freeze from-panel in place; park to-panel off screen — NO DOM reparenting
+                    freezeAtRect(state.fromEl, rect);
+                    parkOffscreen(state.toEl, rect, state.dir);
         
                     state.tracking = true;
                 }
         
-                // Vertical scroll — don't interfere at all
+                // Vertical scroll — let browser handle it natively
                 if (!state.isHoriz) return;
         
-                // Horizontal swipe — lock vertical scroll
+                // Horizontal — suppress native scroll/rubber-band
                 e.preventDefault();
         
                 state.curX = x;
                 if (!state.raf) state.raf = requestAnimationFrame(renderFrame);
         
-            }, { passive: false }); // ← non-passive so preventDefault works
+            }, { passive: false });
         
-            /* ─────────────────── TOUCH END ─────────────────── */
+            /* ─────────────── TOUCH END ─────────────── */
             document.addEventListener('touchend', e => {
                 if (!state.tracking) {
                     state.settled = false;
@@ -6910,15 +6884,13 @@ async function findNearbyStations(lat, lon) {
                 state.settled   = false;
                 state.isHoriz   = false;
         
-                // Duration scales with how far the user dragged (feels natural, not mechanical)
+                // Duration proportional to remaining distance — feels snappy, not mechanical
                 const dur = complete
                     ? Math.max(180, 260 - traveled * 0.35)
-                    : Math.max(140, 190 - traveled * 0.4);
+                    : Math.max(130, 190 - traveled * 0.4);
         
-                // Smooth ease-out only — NO overshoot/spring on either commit or cancel
-                const ease = complete
-                    ? 'cubic-bezier(0.22, 1, 0.36, 1)'       // fast start, graceful settle
-                    : 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // clean snap-back, no bounce
+                // Pure ease-out: fast start, graceful stop — zero overshoot on both paths
+                const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
         
                 const fromTarget = complete ? (state.dir < 0 ? -state.W : state.W) : 0;
                 const toTarget   = complete ? 0 : (state.dir < 0 ? state.W : -state.W);
@@ -6935,9 +6907,20 @@ async function findNearbyStations(lat, lon) {
         
             }, { passive: true });
         
-            /* ─────────────────── TOUCH CANCEL ─────────────────── */
+            /* ─────────────── TOUCH CANCEL ─────────────── */
             document.addEventListener('touchcancel', () => {
-                cancelSwipe();
+                if (!state.tracking) return;
+                if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
+        
+                resetEl(state.fromEl);
+                resetEl(state.toEl);
+                if (state.toWasHidden) state.toEl.classList.add('hidden');
+                unlockScroll();
+        
+                state.animating = false;
+                state.tracking  = false;
+                state.settled   = false;
+                state.isHoriz   = false;
             }, { passive: true });
         
         })();
