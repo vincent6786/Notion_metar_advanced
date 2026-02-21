@@ -2274,6 +2274,30 @@
             opacity: 0.5;
         }
 
+        /* ============================================================
+           UNIT PREFERENCE PILL TOGGLES
+        ============================================================ */
+        .unit-pill {
+            background: transparent;
+            border: none;
+            color: var(--sub-text);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            white-space: nowrap;
+        }
+        .unit-pill.active-unit {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(10,132,255,0.35);
+        }
+        body.cockpit-dark .unit-pill.active-unit {
+            background: #ff0000;
+            box-shadow: none;
+        }
         
     </style>
 </head>
@@ -3329,6 +3353,54 @@
             </div>
         </div>
 
+        <!-- ── UNIT PREFERENCES (always visible) ── -->
+        <div class="section-title">Unit Preferences</div>
+        <div class="info-card" style="display:flex;flex-direction:column;gap:14px;">
+        
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Visibility</div>
+                    <div style="font-size:12px;color:var(--sub-text);">Statute miles or kilometres</div>
+                </div>
+                <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);">
+                    <button id="unitVisSm" class="unit-pill active-unit" onclick="setVisUnit('sm')">sm</button>
+                    <button id="unitVisKm" class="unit-pill"             onclick="setVisUnit('km')">km</button>
+                </div>
+            </div>
+        
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Temperature</div>
+                    <div style="font-size:12px;color:var(--sub-text);">Celsius or Fahrenheit</div>
+                </div>
+                <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);">
+                    <button id="unitTempC" class="unit-pill active-unit" onclick="setTempUnit('c')">°C</button>
+                    <button id="unitTempF" class="unit-pill"             onclick="setTempUnit('f')">°F</button>
+                </div>
+            </div>
+        
+        </div>
+        
+        <!-- ── DASHBOARD CARD STYLE (only visible when Dashboard Mode is ON) ── -->
+        <div id="dashCardStyleSection" class="hidden">
+            <div class="section-title">Dashboard Card Style</div>
+            <div class="info-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">Card View</div>
+                        <div style="font-size:12px;color:var(--sub-text);line-height:1.5;">
+                            Raw — compact METAR string<br>
+                            Detailed — decoded weather card
+                        </div>
+                    </div>
+                    <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);flex-shrink:0;margin-left:12px;">
+                        <button id="cardStyleRaw"      class="unit-pill active-unit" onclick="setDashCardStyle('raw')">Raw</button>
+                        <button id="cardStyleDetailed" class="unit-pill"             onclick="setDashCardStyle('detailed')">Detailed</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- API Usage Monitor -->
         <div class="section-title">API Usage Monitor</div>
         <div class="info-card" onclick="openApiStatsModal()" style="cursor:pointer;">
@@ -4282,6 +4354,87 @@
         const CLOUD_ICON_PATH = "M25 15C25 10.58 21.42 7 17 7C16.5 7 16 7.05 15.54 7.15C14.73 4.19 12.06 2 9 2C5.13 2 2 5.13 2 9C2 9.17 2 9.35 2.03 9.5C0.84 10.19 0 11.5 0 13C0 15.21 1.79 17 4 17H25C27.76 17 30 14.76 30 12C30 9.24 27.76 7 25 7V15Z";
 
         // ================================================================
+        // UNIT PREFERENCES & DASHBOARD CARD STYLE
+        // ================================================================
+        
+        function getVisUnit()      { return localStorage.getItem('efb_vis_unit')        || 'sm'; }
+        function getTempUnit()     { return localStorage.getItem('efb_temp_unit')       || 'c';  }
+        function getDashCardStyle(){ return localStorage.getItem('efb_dash_card_style') || 'raw'; }
+        
+        /** Format visibility value (in SM) according to user's unit preference */
+        function formatVisDisplay(smValue) {
+            if (smValue == null) return '--';
+            const unit = getVisUnit();
+            if (unit === 'km') {
+                const km = smValue * 1.60934;
+                if (km >= 16) return '10 km or more';
+                return `${km.toFixed(1)} km`;
+            }
+            // Statute miles
+            if (smValue >= 10) return 'P6SM';
+            return `${smValue} sm`;
+        }
+        
+        /** Format Celsius temperature according to user's unit preference */
+        function formatTempDisplay(celsius) {
+            if (celsius == null) return '--';
+            if (getTempUnit() === 'f') return `${Math.round(celsius * 1.8 + 32)}°F`;
+            return `${celsius}°C`;
+        }
+        
+        /** Decode cloud array to human-readable string (most significant layer) */
+        function decodeCloudLayer(clouds) {
+            if (!clouds || clouds.length === 0) return 'clear';
+            const typeMap = {
+                SKC: 'sky clear',    CLR: 'clear',            FEW: 'few clouds',
+                SCT: 'scattered clouds', BKN: 'broken clouds', OVC: 'overcast',
+                VV:  'vertical visibility'
+            };
+            // Prefer ceiling layer (BKN/OVC/VV), fallback to topmost
+            const ceiling = clouds.find(c => ['BKN','OVC','VV'].includes(c.type));
+            const layer   = ceiling || clouds[clouds.length - 1];
+            const altFt   = (layer.altitude * 100).toLocaleString();
+            return `${typeMap[layer.type] || layer.type} at ${altFt} ft`;
+        }
+        
+        /** Set visibility unit and refresh dashboard */
+        function setVisUnit(unit) {
+            localStorage.setItem('efb_vis_unit', unit);
+            document.getElementById('unitVisSm')?.classList.toggle('active-unit', unit === 'sm');
+            document.getElementById('unitVisKm')?.classList.toggle('active-unit', unit === 'km');
+            if (multiAirports.length > 0) renderMultiDashboard();
+        }
+        
+        /** Set temperature unit and refresh dashboard */
+        function setTempUnit(unit) {
+            localStorage.setItem('efb_temp_unit', unit);
+            document.getElementById('unitTempC')?.classList.toggle('active-unit', unit === 'c');
+            document.getElementById('unitTempF')?.classList.toggle('active-unit', unit === 'f');
+            if (multiAirports.length > 0) renderMultiDashboard();
+        }
+        
+        /** Set dashboard card style and refresh */
+        function setDashCardStyle(style) {
+            localStorage.setItem('efb_dash_card_style', style);
+            document.getElementById('cardStyleRaw')?.classList.toggle('active-unit',      style === 'raw');
+            document.getElementById('cardStyleDetailed')?.classList.toggle('active-unit', style === 'detailed');
+            renderMultiDashboard();
+        }
+        
+        /** Apply saved unit preferences to the Settings UI toggles */
+        function loadUnitPreferences() {
+            const vis  = getVisUnit();
+            const temp = getTempUnit();
+            const card = getDashCardStyle();
+            document.getElementById('unitVisSm')?.classList.toggle('active-unit', vis  === 'sm');
+            document.getElementById('unitVisKm')?.classList.toggle('active-unit', vis  === 'km');
+            document.getElementById('unitTempC')?.classList.toggle('active-unit', temp === 'c');
+            document.getElementById('unitTempF')?.classList.toggle('active-unit', temp === 'f');
+            document.getElementById('cardStyleRaw')?.classList.toggle('active-unit',      card === 'raw');
+            document.getElementById('cardStyleDetailed')?.classList.toggle('active-unit', card === 'detailed');
+        }
+    
+        // ================================================================
         // 7. INITIALIZATION
         // ================================================================
         function toggleLegend(show) {
@@ -4303,7 +4456,8 @@
             renderFavoritesSettings();
             renderHistory();
             await checkMultiDashboardEnabled();
-            
+            loadUnitPreferences();
+
 
             const savedDefault = await Storage.get('efb_default_station');
             const inputField   = document.getElementById('defaultIcaoInput');
@@ -6599,6 +6753,14 @@ async function findNearbyStations(lat, lon) {
                 tabDashboard?.classList.add('hidden');
                 tabWeather?.classList.add('hidden');
             }
+            // ── NEW: show/hide Dashboard Card Style section in Settings ──
+            const cardSection = document.getElementById('dashCardStyleSection');
+            if (cardSection) {
+                enabled
+                    ? cardSection.classList.remove('hidden')
+                    : cardSection.classList.add('hidden');
+            }
+            
         }
         
         function switchWeatherPane(pane) {
@@ -7397,11 +7559,33 @@ async function findNearbyStations(lat, lon) {
 
         async function fetchMultiAirportData(icao) {
             try {
-                const metar = await secureFetch(`/api/weather?type=metar&station=${icao}`);
-                if (metar && !metar.error) {
+                // Fetch METAR + Station in parallel (secureFetch caches both for 10 min)
+                const [metarRes, stationRes] = await Promise.allSettled([
+                    secureFetch(`/api/weather?type=metar&station=${icao}`),
+                    secureFetch(`/api/weather?type=station&station=${icao}`)
+                ]);
+        
+                // Check TAF existence from cache first — avoid burning extra API quota
+                const tafCacheKey = `cache_/api/weather?type=taf&station=${icao}`;
+                const tafCached   = localStorage.getItem(tafCacheKey);
+                let hasTaf = false;
+                if (tafCached) {
+                    try { hasTaf = !!(JSON.parse(tafCached).data?.raw); } catch(e) {}
+                } else {
+                    // No cache hit — do one TAF fetch and cache it
+                    try {
+                        const taf = await secureFetch(`/api/weather?type=taf&station=${icao}`);
+                        hasTaf = !!(taf?.raw && !taf?.error);
+                    } catch(e) { hasTaf = false; }
+                }
+        
+                if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
+                    const station = stationRes.status === 'fulfilled' ? stationRes.value : null;
                     multiDataCache[icao] = {
-                        metar: metar,
-                        fetchTime: Date.now()
+                        metar:       metarRes.value,
+                        hasTaf,
+                        stationName: station?.name || icao,
+                        fetchTime:   Date.now()
                     };
                     renderMultiCard(icao);
                 }
@@ -7498,23 +7682,20 @@ async function findNearbyStations(lat, lon) {
             }
         }
 
+        // Router — picks raw or detailed based on user preference
         function renderMultiCardHTML(icao, cached) {
-            const m = cached.metar;
-            const rules = m.flight_rules || 'UNKN';
-            const rulesColor = {
-                VFR: 'var(--success)',
-                MVFR: 'var(--mvfr)',
-                IFR: 'var(--danger)',
-                LIFR: 'var(--lifr)'
-            }[rules] || '#555';
-            const rulesBg = {
-                VFR: 'var(--success)',
-                MVFR: 'var(--mvfr)',
-                IFR: 'var(--danger)',
-                LIFR: 'var(--lifr)'
-            }[rules] || '#555';
+            return getDashCardStyle() === 'detailed'
+                ? renderDetailedCardHTML(icao, cached)
+                : renderRawCardHTML(icao, cached);
+        }
         
-            const ageMin = Math.floor((Date.now() - new Date(m.time.dt)) / 60000);
+        // ── RAW view (original compact METAR string card) ──
+        function renderRawCardHTML(icao, cached) {
+            const m        = cached.metar;
+            const rules    = m.flight_rules || 'UNKN';
+            const rulesBg  = { VFR:'var(--success)', MVFR:'var(--mvfr)', IFR:'var(--danger)', LIFR:'var(--lifr)' }[rules] || '#555';
+            const rulesColor = rules === 'VFR' ? '#000' : '#fff';
+            const ageMin   = Math.floor((Date.now() - new Date(m.time.dt)) / 60000);
             const ageColor = ageMin > 60 ? 'var(--danger)' : 'var(--sub-text)';
             const rawMetar = m.raw || 'No raw data';
         
@@ -7523,12 +7704,129 @@ async function findNearbyStations(lat, lon) {
                     <div class="multi-header">
                         <div style="display:flex;align-items:center;gap:10px;">
                             <div class="multi-icao">${icao}</div>
-                            <div style="background:${rulesBg};color:${rules==='VFR'?'#000':'#fff'};font-size:11px;font-weight:900;padding:3px 9px;border-radius:5px;letter-spacing:0.5px;">${rules}</div>
+                            <div style="background:${rulesBg};color:${rulesColor};font-size:11px;font-weight:900;padding:3px 9px;border-radius:5px;letter-spacing:0.5px;">${rules}</div>
                         </div>
-                        <div class="multi-remove" onclick="event.stopPropagation(); removeMultiAirport('${icao}')">×</div>
+                        <div class="multi-remove" onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
                     </div>
-                    <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:10px 10px 8px;font-family:'SF Mono',monospace;font-size:12px;color:#e0e0e0;line-height:1.6;word-break:break-all;white-space:pre-wrap;margin-top:6px;">${formatRawMetar(rawMetar)}</div>
+                    <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:10px;font-family:'SF Mono',monospace;font-size:12px;color:#e0e0e0;line-height:1.6;word-break:break-all;white-space:pre-wrap;margin-top:6px;">${formatRawMetar(rawMetar)}</div>
                     <div class="multi-age" style="color:${ageColor};margin-top:6px;">${ageMin > 60 ? '⚠️ ' : ''}${ageMin}m ago · Tap to load full data</div>
+                </div>`;
+        }
+        
+        // ── DETAILED view (Windy-style decoded card) ──
+        function renderDetailedCardHTML(icao, cached) {
+            const m         = cached.metar;
+            const rules     = m.flight_rules || 'UNKN';
+            const rulesBg   = { VFR:'var(--success)', MVFR:'var(--mvfr)', IFR:'var(--danger)', LIFR:'var(--lifr)' }[rules] || '#555';
+            const rulesColor = rules === 'VFR' ? '#000' : '#fff';
+            const ageMin    = Math.floor((Date.now() - new Date(m.time.dt)) / 60000);
+            const ageColor  = ageMin > 60 ? 'var(--danger)' : 'var(--success)';
+        
+            // ── Wind ──
+            const isVrb     = m.wind_direction?.repr === 'VRB';
+            const windDirRaw = isVrb ? 0 : (m.wind_direction?.value ?? 0);
+            const windSpd   = m.wind_speed?.value ?? 0;
+            const windGust  = m.wind_gust?.value;
+            const windDirStr = (windSpd === 0) ? 'CALM'
+                             : isVrb         ? 'VRB'
+                             : String(windDirRaw).padStart(3,'0') + '°';
+            const arrowColor = isVrb ? '#ff9f0a' : '#ff453a';
+        
+            // ── Visibility ──
+            const vis = formatVisDisplay(m.visibility?.value);
+        
+            // ── Clouds ──
+            const cloudStr = decodeCloudLayer(m.clouds);
+        
+            // ── Temp / Dew / RH ──
+            const temp    = m.temperature?.value;
+            const dew     = m.dewpoint?.value;
+            const tempStr = formatTempDisplay(temp);
+            const dewStr  = formatTempDisplay(dew);
+            let rh = '--';
+            if (temp != null && dew != null) {
+                rh = Math.round(
+                    100 * Math.exp((17.625*dew)/(243.04+dew))
+                        / Math.exp((17.625*temp)/(243.04+temp))
+                );
+            }
+        
+            // ── QNH — always show both hPa and inHg ──
+            const altVal = m.altimeter?.value;
+            let qnhHpa = '--', qnhInhg = '--';
+            if (altVal) {
+                if (altVal < 200) {           // source is inHg
+                    qnhInhg = `A${altVal.toFixed(2)}`;
+                    qnhHpa  = `Q${Math.round(altVal * 33.8639)}`;
+                } else {                      // source is hPa
+                    qnhHpa  = `Q${altVal}`;
+                    qnhInhg = `A${(altVal * 0.02953).toFixed(2)}`;
+                }
+            }
+        
+            // ── Badges ──
+            const isAuto  = !!(m.raw?.includes(' AUTO ') || m.raw?.startsWith('AUTO'));
+            const hasTaf  = cached.hasTaf;
+            const name    = cached.stationName || icao;
+        
+            return `
+                <div class="multi-card" data-icao="${icao}" onclick="loadMultiAirport('${icao}')" style="padding:14px 16px;">
+        
+                    <!-- Header: Airport name + ICAO + badges -->
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                        <div style="flex:1;min-width:0;padding-right:10px;">
+                            <div style="font-size:16px;font-weight:800;color:#fff;
+                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <div style="font-size:15px;font-weight:900;font-family:'SF Mono',monospace;color:#fff;letter-spacing:1px;">${icao}</div>
+                                <div class="multi-remove" onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
+                            </div>
+                            <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                                <div style="background:${rulesBg};color:${rulesColor};font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;letter-spacing:0.5px;">${rules}</div>
+                                ${hasTaf  ? `<div style="background:#32d74b;color:#000;font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;">TAF</div>`  : ''}
+                                ${isAuto  ? `<div style="background:#555;color:#ccc;font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;">AUTO</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Wind + Temp row -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            ${windSpd > 0 ? `
+                            <svg width="20" height="20" viewBox="0 0 20 20" style="flex-shrink:0;transform:rotate(${windDirRaw}deg);">
+                                <polygon points="10,1 5,17 10,13 15,17" fill="${arrowColor}"/>
+                            </svg>` : ''}
+                            <div>
+                                <span style="font-size:22px;font-weight:800;color:#fff;">${windDirStr}</span>
+                                ${windSpd > 0 ? `
+                                <span style="font-size:20px;font-weight:700;color:#fff;margin-left:5px;">${windSpd}</span>
+                                <span style="font-size:12px;color:var(--sub-text);"> kt</span>
+                                ${windGust ? `<span style="font-size:14px;font-weight:800;color:var(--danger);margin-left:4px;">G${windGust}</span>` : ''}
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:22px;font-weight:700;color:#fff;">${tempStr}</div>
+                            <div style="font-size:12px;color:var(--sub-text);">${dewStr} · ${rh !== '--' ? rh + '%' : '--'}</div>
+                        </div>
+                    </div>
+        
+                    <!-- Visibility + cloud layer -->
+                    <div style="margin-bottom:10px;font-size:13px;color:#ccc;line-height:1.7;">
+                        <div>${vis}</div>
+                        <div>${cloudStr}</div>
+                    </div>
+        
+                    <!-- QNH + age footer -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;
+                                border-top:1px solid var(--border);padding-top:8px;">
+                        <div style="font-size:12px;color:var(--sub-text);font-family:'SF Mono',monospace;">
+                            ${qnhHpa} <span style="color:#555;">/ </span>${qnhInhg}
+                        </div>
+                        <div style="font-size:13px;font-weight:700;color:${ageColor};">${ageMin} min</div>
+                    </div>
                 </div>`;
         }
 
