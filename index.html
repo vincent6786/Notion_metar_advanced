@@ -3378,7 +3378,18 @@
                     <button id="unitTempF" class="unit-pill"             onclick="setTempUnit('f')">°F</button>
                 </div>
             </div>
-        
+
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Pressure</div>
+                    <div style="font-size:12px;color:var(--sub-text);">Hectopascals or inches of mercury</div>
+                </div>
+                <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);">
+                    <button id="unitPressHpa"  class="unit-pill active-unit" onclick="setPressUnit('hpa')">hPa</button>
+                    <button id="unitPressInhg" class="unit-pill"             onclick="setPressUnit('inhg')">inHg</button>
+                </div>
+            </div>
+            
         </div>
         
         <!-- ── DASHBOARD CARD STYLE (only visible when Dashboard Mode is ON) ── -->
@@ -4412,7 +4423,31 @@
             document.getElementById('unitTempF')?.classList.toggle('active-unit', unit === 'f');
             if (multiAirports.length > 0) renderMultiDashboard();
         }
+
+        function getPressUnit() { return localStorage.getItem('efb_press_unit') || 'hpa'; }
         
+        function formatPressDisplay(altimeterValue) {
+            if (!altimeterValue) return '--';
+            let hpa, inhg;
+            if (altimeterValue < 200) {          // value is inHg
+                inhg = altimeterValue;
+                hpa  = Math.round(altimeterValue * 33.8639);
+            } else {                             // value is hPa
+                hpa  = altimeterValue;
+                inhg = (altimeterValue * 0.02953).toFixed(2);
+            }
+            return getPressUnit() === 'inhg'
+                ? `${parseFloat(inhg).toFixed(2)} inHg`
+                : `${hpa} hPa`;
+        }
+        
+        function setPressUnit(unit) {
+            localStorage.setItem('efb_press_unit', unit);
+            document.getElementById('unitPressHpa')?.classList.toggle('active-unit',  unit === 'hpa');
+            document.getElementById('unitPressInhg')?.classList.toggle('active-unit', unit === 'inhg');
+            if (multiAirports.length > 0) renderMultiDashboard();
+        }
+    
         /** Set dashboard card style and refresh */
         function setDashCardStyle(style) {
             localStorage.setItem('efb_dash_card_style', style);
@@ -4423,13 +4458,16 @@
         
         /** Apply saved unit preferences to the Settings UI toggles */
         function loadUnitPreferences() {
-            const vis  = getVisUnit();
-            const temp = getTempUnit();
-            const card = getDashCardStyle();
-            document.getElementById('unitVisSm')?.classList.toggle('active-unit', vis  === 'sm');
-            document.getElementById('unitVisKm')?.classList.toggle('active-unit', vis  === 'km');
-            document.getElementById('unitTempC')?.classList.toggle('active-unit', temp === 'c');
-            document.getElementById('unitTempF')?.classList.toggle('active-unit', temp === 'f');
+            const vis   = getVisUnit();
+            const temp  = getTempUnit();
+            const press = getPressUnit();
+            const card  = getDashCardStyle();
+            document.getElementById('unitVisSm')?.classList.toggle('active-unit',    vis   === 'sm');
+            document.getElementById('unitVisKm')?.classList.toggle('active-unit',    vis   === 'km');
+            document.getElementById('unitTempC')?.classList.toggle('active-unit',    temp  === 'c');
+            document.getElementById('unitTempF')?.classList.toggle('active-unit',    temp  === 'f');
+            document.getElementById('unitPressHpa')?.classList.toggle('active-unit', press === 'hpa');
+            document.getElementById('unitPressInhg')?.classList.toggle('active-unit',press === 'inhg');
             document.getElementById('cardStyleRaw')?.classList.toggle('active-unit',      card === 'raw');
             document.getElementById('cardStyleDetailed')?.classList.toggle('active-unit', card === 'detailed');
         }
@@ -7704,7 +7742,13 @@ async function findNearbyStations(lat, lon) {
                 <div class="multi-card" data-icao="${icao}" onclick="loadMultiAirport('${icao}')">
                     <div class="multi-header">
                         <div style="display:flex;align-items:center;gap:10px;">
-                            <div class="multi-icao">${icao}</div>
+                            <div style="display:flex;align-items:baseline;gap:5px;">
+                                <div class="multi-icao">${icao}</div>
+                                ${cached.stationIata
+                                    ? `<div style="font-size:11px;font-weight:600;color:var(--sub-text);
+                                                   font-family:'SF Mono',monospace;">${cached.stationIata}</div>`
+                                    : ''}
+                            </div>
                             <div style="background:${rulesBg};color:${rulesColor};font-size:11px;font-weight:900;padding:3px 9px;border-radius:5px;letter-spacing:0.5px;">${rules}</div>
                         </div>
                         <div class="multi-remove" onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
@@ -7724,20 +7768,17 @@ async function findNearbyStations(lat, lon) {
             const ageLabel   = ageMin > 60 ? 'expired' : `${ageMin} min`;
         
             // ── Wind ──
-            const isVrb     = m.wind_direction?.repr === 'VRB';
+            const isVrb      = m.wind_direction?.repr === 'VRB';
             const windDirRaw = isVrb ? 0 : (m.wind_direction?.value ?? 0);
-            const windSpd   = m.wind_speed?.value ?? 0;
-            const windGust  = m.wind_gust?.value;
-            const isCalm    = windSpd === 0;
+            const windSpd    = m.wind_speed?.value ?? 0;
+            const windGust   = m.wind_gust?.value;
+            const isCalm     = windSpd === 0;
             const windDirStr = isCalm ? 'CALM' : isVrb ? 'VRB' : String(windDirRaw).padStart(3,'0') + '°';
-        
-            // Arrow points TOWARD the direction wind is coming FROM
-            // windDirRaw = direction wind comes from → add 180° so tip faces the source
-            const arrowRotation = (windDirRaw + 180) % 360;
+            const arrowRot   = (windDirRaw + 180) % 360;   // points toward source
         
             const arrowSvg = (!isCalm && !isVrb) ? `
-                <svg width="18" height="18" viewBox="0 0 20 20"
-                     style="flex-shrink:0;transform:rotate(${arrowRotation}deg);margin-right:5px;margin-top:3px;">
+                <svg width="16" height="16" viewBox="0 0 20 20"
+                     style="flex-shrink:0;transform:rotate(${arrowRot}deg);margin-right:4px;margin-top:2px;">
                     <polygon points="10,1 5,17 10,13 15,17" fill="#ff453a"/>
                 </svg>` : '';
         
@@ -7760,105 +7801,98 @@ async function findNearbyStations(lat, lon) {
                 );
             }
         
-            // ── QNH — always hPa + trend placeholder ──
-            const altVal = m.altimeter?.value;
-            let qnhHpa = '--';
-            if (altVal) {
-                qnhHpa = altVal < 200
-                    ? `${Math.round(altVal * 33.8639)} hPa`
-                    : `${altVal} hPa`;
-            }
+            // ── Pressure ──
+            const pressStr = formatPressDisplay(m.altimeter?.value);
         
-            // ── Identifiers ──
+            // ── Badges & metadata ──
             const isAuto = !!(m.raw?.includes(' AUTO ') || m.raw?.startsWith('AUTO'));
             const hasTaf = cached.hasTaf;
             const name   = cached.stationName || icao;
             const iata   = cached.stationIata || '';
         
-            // ── Badge builder ──
             const badge = (label, bg, color) =>
                 `<div style="background:${bg};color:${color};
                              font-size:11px;font-weight:900;
-                             padding:3px 9px;border-radius:5px;
+                             padding:3px 0;border-radius:5px;
                              letter-spacing:0.4px;text-align:center;
-                             min-width:44px;">${label}</div>`;
+                             width:44px;">${label}</div>`;
         
             return `
                 <div class="multi-card" data-icao="${icao}"
                      onclick="loadMultiAirport('${icao}')"
-                     style="padding:12px 14px;display:flex;gap:12px;align-items:stretch;">
+                     style="padding:12px 14px;">
         
-                    <!-- ══════════════════════════════════
-                         LEFT COLUMN — name + weather data
-                         ══════════════════════════════════ -->
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;">
+                    <!-- ═══════════════════════════════════════════════════
+                         TOP ROW: Airport name (left) · ICAO + delete (right)
+                         ═══════════════════════════════════════════════════ -->
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;
+                                margin-bottom:10px;gap:8px;">
         
-                        <!-- Airport name (+ IATA if known) -->
-                        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
-                            <div style="font-size:15px;font-weight:800;color:#fff;
-                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-                                        max-width:100%;">${name}</div>
-                            ${iata ? `<div style="font-size:12px;font-weight:700;color:var(--sub-text);">${iata}</div>` : ''}
-                        </div>
-        
-                        <!-- Wind: arrow + direction + speed -->
-                        <div style="display:flex;align-items:flex-start;">
-                            ${arrowSvg}
-                            <div>
-                                <span style="font-size:18px;font-weight:800;color:#fff;">${windDirStr}</span>
-                                ${!isCalm ? `
-                                <span style="font-size:16px;font-weight:700;color:#fff;margin-left:4px;">${windSpd}</span>
-                                <span style="font-size:11px;color:var(--sub-text);"> kt</span>
-                                ${windGust
-                                    ? `<span style="font-size:12px;font-weight:800;color:var(--danger);margin-left:3px;">G${windGust}</span>`
-                                    : ''}` : ''}
+                        <!-- Airport name — scales font to fit, IATA dimmed after -->
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:14px;font-weight:800;color:#fff;
+                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                ${name}${iata ? `<span style="font-size:11px;font-weight:600;
+                                                               color:var(--sub-text);margin-left:6px;">${iata}</span>` : ''}
                             </div>
                         </div>
         
-                        <!-- Visibility -->
-                        <div style="font-size:13px;color:#ccc;">${vis}</div>
-        
-                        <!-- Cloud layer -->
-                        <div style="font-size:13px;color:#ccc;">${cloudStr}</div>
-        
-                    </div>
-        
-                    <!-- ══════════════════════════════════
-                         RIGHT COLUMN — ICAO · badges · wx
-                         ══════════════════════════════════ -->
-                    <div style="display:flex;flex-direction:column;align-items:flex-end;
-                                justify-content:space-between;flex-shrink:0;gap:5px;">
-        
-                        <!-- ICAO + delete button -->
-                        <div style="display:flex;align-items:center;gap:6px;">
-                            <div style="font-size:15px;font-weight:900;font-family:'SF Mono',monospace;
+                        <!-- ICAO + delete -->
+                        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                            <div style="font-size:14px;font-weight:900;font-family:'SF Mono',monospace;
                                         color:#fff;letter-spacing:1px;">${icao}</div>
                             <div class="multi-remove"
                                  onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
                         </div>
+                    </div>
         
-                        <!-- Stacked badges: VFR → TAF → AUTO -->
-                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                            ${badge(rules, rulesBg, rulesColor)}
-                            ${hasTaf ? badge('TAF', '#32d74b', '#000') : ''}
-                            ${isAuto ? badge('AUTO', '#555', '#ccc') : ''}
+                    <!-- ═══════════════════════════════════════════════════
+                         MAIN ROW: Left column (weather) · Right column (split)
+                         ═══════════════════════════════════════════════════ -->
+                    <div style="display:flex;gap:8px;">
+        
+                        <!-- LEFT: wind · vis · clouds -->
+                        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+        
+                            <div style="display:flex;align-items:flex-start;">
+                                ${arrowSvg}
+                                <div>
+                                    <span style="font-size:17px;font-weight:800;color:#fff;">${windDirStr}</span>
+                                    ${!isCalm ? `
+                                    <span style="font-size:15px;font-weight:700;color:#fff;margin-left:4px;">${windSpd}</span>
+                                    <span style="font-size:11px;color:var(--sub-text);"> kt</span>
+                                    ${windGust
+                                        ? `<span style="font-size:12px;font-weight:800;
+                                                      color:var(--danger);margin-left:3px;">G${windGust}</span>`
+                                        : ''}
+                                    ` : ''}
+                                </div>
+                            </div>
+        
+                            <div style="font-size:12px;color:#bbb;margin-top:2px;">${vis}</div>
+                            <div style="font-size:12px;color:#bbb;">${cloudStr}</div>
+        
                         </div>
         
-                        <!-- Temp -->
-                        <div style="font-size:20px;font-weight:700;color:#fff;text-align:right;">${tempStr}</div>
+                        <!-- RIGHT: two sub-columns -->
+                        <div style="display:flex;gap:10px;align-items:flex-start;flex-shrink:0;">
         
-                        <!-- Dew + RH -->
-                        <div style="font-size:12px;color:var(--sub-text);text-align:right;">${dewStr} ${rh !== '--' ? rh + '%' : ''}</div>
+                            <!-- RIGHT-LEFT sub-column: numbers stacked -->
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                                <div style="font-size:19px;font-weight:700;color:#fff;line-height:1;">${tempStr}</div>
+                                <div style="font-size:11px;color:var(--sub-text);">${dewStr} ${rh !== '--' ? rh+'%' : ''}</div>
+                                <div style="font-size:11px;color:var(--sub-text);font-family:'SF Mono',monospace;">${pressStr}</div>
+                                <div style="font-size:13px;font-weight:800;color:${ageColor};margin-top:2px;">${ageLabel}</div>
+                            </div>
         
-                        <!-- QNH -->
-                        <div style="font-size:12px;color:var(--sub-text);font-family:'SF Mono',monospace;
-                                    text-align:right;">${qnhHpa}</div>
+                            <!-- RIGHT-RIGHT sub-column: badges only -->
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                                ${badge(rules, rulesBg, rulesColor)}
+                                ${hasTaf ? badge('TAF', '#32d74b', '#000') : ''}
+                                ${isAuto ? badge('AUTO', '#555', '#ccc')   : ''}
+                            </div>
         
-                        <!-- Age label -->
-                        <div style="font-size:13px;font-weight:800;color:${ageColor};text-align:right;">
-                            ${ageLabel}
                         </div>
-        
                     </div>
         
                 </div>`;
