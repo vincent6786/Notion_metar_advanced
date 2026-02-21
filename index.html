@@ -7585,6 +7585,7 @@ async function findNearbyStations(lat, lon) {
                         metar:       metarRes.value,
                         hasTaf,
                         stationName: station?.name || icao,
+                        stationIata: station?.iata || '', 
                         fetchTime:   Date.now()
                     };
                     renderMultiCard(icao);
@@ -7713,24 +7714,32 @@ async function findNearbyStations(lat, lon) {
                 </div>`;
         }
         
-        // ── DETAILED view (Windy-style decoded card) ──
         function renderDetailedCardHTML(icao, cached) {
-            const m         = cached.metar;
-            const rules     = m.flight_rules || 'UNKN';
-            const rulesBg   = { VFR:'var(--success)', MVFR:'var(--mvfr)', IFR:'var(--danger)', LIFR:'var(--lifr)' }[rules] || '#555';
+            const m          = cached.metar;
+            const rules      = m.flight_rules || 'UNKN';
+            const rulesBg    = { VFR:'var(--success)', MVFR:'var(--mvfr)', IFR:'var(--danger)', LIFR:'var(--lifr)' }[rules] || '#555';
             const rulesColor = rules === 'VFR' ? '#000' : '#fff';
-            const ageMin    = Math.floor((Date.now() - new Date(m.time.dt)) / 60000);
-            const ageColor  = ageMin > 60 ? 'var(--danger)' : 'var(--success)';
+            const ageMin     = Math.floor((Date.now() - new Date(m.time.dt)) / 60000);
+            const ageColor   = ageMin > 60 ? 'var(--danger)' : 'var(--success)';
+            const ageLabel   = ageMin > 60 ? 'expired' : `${ageMin} min`;
         
             // ── Wind ──
             const isVrb     = m.wind_direction?.repr === 'VRB';
             const windDirRaw = isVrb ? 0 : (m.wind_direction?.value ?? 0);
             const windSpd   = m.wind_speed?.value ?? 0;
             const windGust  = m.wind_gust?.value;
-            const windDirStr = (windSpd === 0) ? 'CALM'
-                             : isVrb         ? 'VRB'
-                             : String(windDirRaw).padStart(3,'0') + '°';
-            const arrowColor = isVrb ? '#ff9f0a' : '#ff453a';
+            const isCalm    = windSpd === 0;
+            const windDirStr = isCalm ? 'CALM' : isVrb ? 'VRB' : String(windDirRaw).padStart(3,'0') + '°';
+        
+            // Arrow points TOWARD the direction wind is coming FROM
+            // windDirRaw = direction wind comes from → add 180° so tip faces the source
+            const arrowRotation = (windDirRaw + 180) % 360;
+        
+            const arrowSvg = (!isCalm && !isVrb) ? `
+                <svg width="18" height="18" viewBox="0 0 20 20"
+                     style="flex-shrink:0;transform:rotate(${arrowRotation}deg);margin-right:5px;margin-top:3px;">
+                    <polygon points="10,1 5,17 10,13 15,17" fill="#ff453a"/>
+                </svg>` : '';
         
             // ── Visibility ──
             const vis = formatVisDisplay(m.visibility?.value);
@@ -7746,90 +7755,114 @@ async function findNearbyStations(lat, lon) {
             let rh = '--';
             if (temp != null && dew != null) {
                 rh = Math.round(
-                    100 * Math.exp((17.625*dew)/(243.04+dew))
-                        / Math.exp((17.625*temp)/(243.04+temp))
+                    100 * Math.exp((17.625 * dew) / (243.04 + dew))
+                        / Math.exp((17.625 * temp) / (243.04 + temp))
                 );
             }
         
-            // ── QNH — always show both hPa and inHg ──
+            // ── QNH — always hPa + trend placeholder ──
             const altVal = m.altimeter?.value;
-            let qnhHpa = '--', qnhInhg = '--';
+            let qnhHpa = '--';
             if (altVal) {
-                if (altVal < 200) {           // source is inHg
-                    qnhInhg = `A${altVal.toFixed(2)}`;
-                    qnhHpa  = `Q${Math.round(altVal * 33.8639)}`;
-                } else {                      // source is hPa
-                    qnhHpa  = `Q${altVal}`;
-                    qnhInhg = `A${(altVal * 0.02953).toFixed(2)}`;
-                }
+                qnhHpa = altVal < 200
+                    ? `${Math.round(altVal * 33.8639)} hPa`
+                    : `${altVal} hPa`;
             }
         
-            // ── Badges ──
-            const isAuto  = !!(m.raw?.includes(' AUTO ') || m.raw?.startsWith('AUTO'));
-            const hasTaf  = cached.hasTaf;
-            const name    = cached.stationName || icao;
+            // ── Identifiers ──
+            const isAuto = !!(m.raw?.includes(' AUTO ') || m.raw?.startsWith('AUTO'));
+            const hasTaf = cached.hasTaf;
+            const name   = cached.stationName || icao;
+            const iata   = cached.stationIata || '';
+        
+            // ── Badge builder ──
+            const badge = (label, bg, color) =>
+                `<div style="background:${bg};color:${color};
+                             font-size:11px;font-weight:900;
+                             padding:3px 9px;border-radius:5px;
+                             letter-spacing:0.4px;text-align:center;
+                             min-width:44px;">${label}</div>`;
         
             return `
-                <div class="multi-card" data-icao="${icao}" onclick="loadMultiAirport('${icao}')" style="padding:14px 16px;">
+                <div class="multi-card" data-icao="${icao}"
+                     onclick="loadMultiAirport('${icao}')"
+                     style="padding:12px 14px;display:flex;gap:12px;align-items:stretch;">
         
-                    <!-- Header: Airport name + ICAO + badges -->
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-                        <div style="flex:1;min-width:0;padding-right:10px;">
-                            <div style="font-size:16px;font-weight:800;color:#fff;
-                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
-                        </div>
-                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <div style="font-size:15px;font-weight:900;font-family:'SF Mono',monospace;color:#fff;letter-spacing:1px;">${icao}</div>
-                                <div class="multi-remove" onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
-                            </div>
-                            <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
-                                <div style="background:${rulesBg};color:${rulesColor};font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;letter-spacing:0.5px;">${rules}</div>
-                                ${hasTaf  ? `<div style="background:#32d74b;color:#000;font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;">TAF</div>`  : ''}
-                                ${isAuto  ? `<div style="background:#555;color:#ccc;font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;">AUTO</div>` : ''}
-                            </div>
-                        </div>
-                    </div>
+                    <!-- ══════════════════════════════════
+                         LEFT COLUMN — name + weather data
+                         ══════════════════════════════════ -->
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;">
         
-                    <!-- Wind + Temp row -->
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            ${windSpd > 0 ? `
-                            <svg width="20" height="20" viewBox="0 0 20 20" style="flex-shrink:0;transform:rotate(${windDirRaw}deg);">
-                                <polygon points="10,1 5,17 10,13 15,17" fill="${arrowColor}"/>
-                            </svg>` : ''}
+                        <!-- Airport name (+ IATA if known) -->
+                        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+                            <div style="font-size:15px;font-weight:800;color:#fff;
+                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+                                        max-width:100%;">${name}</div>
+                            ${iata ? `<div style="font-size:12px;font-weight:700;color:var(--sub-text);">${iata}</div>` : ''}
+                        </div>
+        
+                        <!-- Wind: arrow + direction + speed -->
+                        <div style="display:flex;align-items:flex-start;">
+                            ${arrowSvg}
                             <div>
-                                <span style="font-size:22px;font-weight:800;color:#fff;">${windDirStr}</span>
-                                ${windSpd > 0 ? `
-                                <span style="font-size:20px;font-weight:700;color:#fff;margin-left:5px;">${windSpd}</span>
-                                <span style="font-size:12px;color:var(--sub-text);"> kt</span>
-                                ${windGust ? `<span style="font-size:14px;font-weight:800;color:var(--danger);margin-left:4px;">G${windGust}</span>` : ''}
-                                ` : ''}
+                                <span style="font-size:18px;font-weight:800;color:#fff;">${windDirStr}</span>
+                                ${!isCalm ? `
+                                <span style="font-size:16px;font-weight:700;color:#fff;margin-left:4px;">${windSpd}</span>
+                                <span style="font-size:11px;color:var(--sub-text);"> kt</span>
+                                ${windGust
+                                    ? `<span style="font-size:12px;font-weight:800;color:var(--danger);margin-left:3px;">G${windGust}</span>`
+                                    : ''}` : ''}
                             </div>
                         </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:22px;font-weight:700;color:#fff;">${tempStr}</div>
-                            <div style="font-size:12px;color:var(--sub-text);">${dewStr} · ${rh !== '--' ? rh + '%' : '--'}</div>
-                        </div>
+        
+                        <!-- Visibility -->
+                        <div style="font-size:13px;color:#ccc;">${vis}</div>
+        
+                        <!-- Cloud layer -->
+                        <div style="font-size:13px;color:#ccc;">${cloudStr}</div>
+        
                     </div>
         
-                    <!-- Visibility + cloud layer -->
-                    <div style="margin-bottom:10px;font-size:13px;color:#ccc;line-height:1.7;">
-                        <div>${vis}</div>
-                        <div>${cloudStr}</div>
+                    <!-- ══════════════════════════════════
+                         RIGHT COLUMN — ICAO · badges · wx
+                         ══════════════════════════════════ -->
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;
+                                justify-content:space-between;flex-shrink:0;gap:5px;">
+        
+                        <!-- ICAO + delete button -->
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <div style="font-size:15px;font-weight:900;font-family:'SF Mono',monospace;
+                                        color:#fff;letter-spacing:1px;">${icao}</div>
+                            <div class="multi-remove"
+                                 onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
+                        </div>
+        
+                        <!-- Stacked badges: VFR → TAF → AUTO -->
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                            ${badge(rules, rulesBg, rulesColor)}
+                            ${hasTaf ? badge('TAF', '#32d74b', '#000') : ''}
+                            ${isAuto ? badge('AUTO', '#555', '#ccc') : ''}
+                        </div>
+        
+                        <!-- Temp -->
+                        <div style="font-size:20px;font-weight:700;color:#fff;text-align:right;">${tempStr}</div>
+        
+                        <!-- Dew + RH -->
+                        <div style="font-size:12px;color:var(--sub-text);text-align:right;">${dewStr} ${rh !== '--' ? rh + '%' : ''}</div>
+        
+                        <!-- QNH -->
+                        <div style="font-size:12px;color:var(--sub-text);font-family:'SF Mono',monospace;
+                                    text-align:right;">${qnhHpa}</div>
+        
+                        <!-- Age label -->
+                        <div style="font-size:13px;font-weight:800;color:${ageColor};text-align:right;">
+                            ${ageLabel}
+                        </div>
+        
                     </div>
         
-                    <!-- QNH + age footer -->
-                    <div style="display:flex;justify-content:space-between;align-items:center;
-                                border-top:1px solid var(--border);padding-top:8px;">
-                        <div style="font-size:12px;color:var(--sub-text);font-family:'SF Mono',monospace;">
-                            ${qnhHpa} <span style="color:#555;">/ </span>${qnhInhg}
-                        </div>
-                        <div style="font-size:13px;font-weight:700;color:${ageColor};">${ageMin} min</div>
-                    </div>
                 </div>`;
         }
-
         function loadMultiAirport(icao) {
             document.getElementById('icao').value = icao;
             loadData();
