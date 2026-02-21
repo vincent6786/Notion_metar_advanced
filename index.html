@@ -2352,7 +2352,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version">CLOUD EDITION · v3.1.4</div> 
+        <div class="launch-version">CLOUD EDITION · v3.2.4</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -2729,7 +2729,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.1.4 · Cloud Edition · Quick reference for all features</div>
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.2.4 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -3696,7 +3696,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.1.4</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.2.4</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -3748,7 +3748,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.1.4',                         // ← bump this on every update
+            version: '3.2.4',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -7728,7 +7728,28 @@ async function findNearbyStations(lat, lon) {
                 ? renderDetailedCardHTML(icao, cached)
                 : renderRawCardHTML(icao, cached);
         }
-        
+
+        function renderEmptyState(tabId) {
+            const el = document.getElementById(tabId);
+            if (!el) return;
+            el.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                            min-height:55vh;text-align:center;padding:32px 24px;gap:20px;">
+                    <div style="font-size:52px;opacity:0.25;">✈️</div>
+                    <div style="font-size:18px;font-weight:800;color:#fff;opacity:0.6;">No airport selected</div>
+                    <div style="font-size:14px;color:var(--sub-text);line-height:1.7;max-width:260px;">
+                        Search for an airport above, or add one to your<br>favourites to get started.
+                    </div>
+                    <button onclick="document.getElementById('searchInput')?.focus()"
+                            style="margin-top:8px;background:var(--accent);color:#fff;
+                                   border:none;border-radius:10px;padding:11px 28px;
+                                   font-size:15px;font-weight:700;cursor:pointer;
+                                   box-shadow:0 2px 12px rgba(10,132,255,0.35);">
+                        Search Airport
+                    </button>
+                </div>`;
+        }
+    
         // ── RAW view (original compact METAR string card) ──
         function renderRawCardHTML(icao, cached) {
             const m        = cached.metar;
@@ -7758,7 +7779,34 @@ async function findNearbyStations(lat, lon) {
                     <div class="multi-age" style="color:${ageColor};margin-top:6px;">${ageMin > 60 ? '⚠️ ' : ''}${ageMin}m ago · Tap to load full data</div>
                 </div>`;
         }
+
+        /**
+         * Returns the worst flight category found in a cached TAF string.
+         * Priority: LIFR > IFR > MVFR > VFR
+         * Falls back to 'VFR' (green) if TAF not available or unparseable.
+         */
+        function tafWorstRules(icao) {
+            const cacheKey = `cache_/api/weather?type=taf&station=${icao}`;
+            try {
+                const raw = localStorage.getItem(cacheKey);
+                if (!raw) return 'VFR';
+                const taf = JSON.parse(raw);
+                const forecasts = taf?.data?.forecast || [];
         
+                const priority = { LIFR: 4, IFR: 3, MVFR: 2, VFR: 1 };
+                let worst = 'VFR';
+                for (const f of forecasts) {
+                    const rules = f.flight_rules || 'VFR';
+                    if ((priority[rules] || 0) > (priority[worst] || 0)) {
+                        worst = rules;
+                    }
+                }
+                return worst;
+            } catch(e) {
+                return 'VFR';
+            }
+        }
+    
         function renderDetailedCardHTML(icao, cached) {
             const m          = cached.metar;
             const rules      = m.flight_rules || 'UNKN';
@@ -7889,7 +7937,12 @@ async function findNearbyStations(lat, lon) {
                             <!-- RIGHT-RIGHT sub-column: badges only -->
                             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
                                 ${badge(rules, rulesBg, rulesColor)}
-                                ${hasTaf ? badge('TAF', '#32d74b', '#000') : ''}
+                                ${hasTaf ? (() => {
+                                    const tafRules  = tafWorstRules(icao);
+                                    const tafBg     = { VFR:'var(--success)', MVFR:'var(--mvfr)', IFR:'var(--danger)', LIFR:'var(--lifr)' }[tafRules] || '#32d74b';
+                                    const tafColor  = tafRules === 'VFR' ? '#000' : '#fff';
+                                    return badge('TAF', tafBg, tafColor);
+                                })() : ''}
                                 ${isAuto ? badge('AUTO', '#555', '#ccc')   : ''}
                             </div>
         
@@ -7935,6 +7988,27 @@ async function findNearbyStations(lat, lon) {
                 el.style.boxShadow = '0 0 0 3px var(--accent)';
                 setTimeout(() => { el.style.boxShadow = prev; }, 2200);
             }, 350);
+        }
+        // First use 
+        function renderEmptyState(tabId) {
+            const el = document.getElementById(tabId);
+            if (!el) return;
+            el.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                            min-height:55vh;text-align:center;padding:32px 24px;gap:20px;">
+                    <div style="font-size:52px;opacity:0.25;">✈️</div>
+                    <div style="font-size:18px;font-weight:800;color:#fff;opacity:0.6;">No airport selected</div>
+                    <div style="font-size:14px;color:var(--sub-text);line-height:1.7;max-width:260px;">
+                        Search for an airport above, or add one to your<br>favourites to get started.
+                    </div>
+                    <button onclick="document.getElementById('searchInput')?.focus()"
+                            style="margin-top:8px;background:var(--accent);color:#fff;
+                                   border:none;border-radius:10px;padding:11px 28px;
+                                   font-size:15px;font-weight:700;cursor:pointer;
+                                   box-shadow:0 2px 12px rgba(10,132,255,0.35);">
+                        Search Airport
+                    </button>
+                </div>`;
         }
     
 
