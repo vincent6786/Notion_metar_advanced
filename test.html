@@ -2361,7 +2361,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version">CLOUD EDITION · v3.2.4</div> 
+        <div class="launch-version">CLOUD EDITION · v3.2.5</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -2804,7 +2804,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.2.4 · Cloud Edition · Quick reference for all features</div>
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.2.5 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -3222,9 +3222,18 @@
             </div>
         </div>
         <div class="section-title">EXTERNAL RESOURCES</div>
-        <a id="btnMetarTaf" href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
-        <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span></a>
-        <a id="btnLiveAtc" href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
+        <div id="btnMetarTaf" class="atc-btn" style="cursor:pointer;"
+             onclick="openInAppBrowser('https://metar-taf.com/', 'Metar-Taf.com')">
+            <span>☁️ Metar-Taf.com</span><span>↗</span>
+        </div>
+        <div class="atc-btn" style="cursor:pointer;"
+             onclick="openInAppBrowser('https://beta.twatc.net/', 'Taiwan Virtual ATC')">
+            <span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span>
+        </div>
+        <div id="btnLiveAtc" class="atc-btn" style="cursor:pointer;"
+             onclick="openInAppBrowser('https://www.liveatc.net/', 'LiveATC.net')">
+            <span>📡 LiveATC.net</span><span>↗</span>
+        </div>
 
         <!-- US AIRPORT RESOURCES — hidden until a US airport is loaded -->
         <div id="usAirportLinks" class="hidden">
@@ -3630,6 +3639,58 @@
          MODALS
     ================================================================ -->
 
+    <!-- ================================================================
+         WELCOME OVERLAY (shown until default airport is set)
+    ================================================================ -->
+    <div id="welcomeOverlay" class="hidden"
+         style="position:fixed;left:0;right:0;bottom:0;
+                z-index:500;
+                background:rgba(0,0,0,0.88);
+                backdrop-filter:blur(24px);
+                -webkit-backdrop-filter:blur(24px);
+                display:flex;flex-direction:column;
+                align-items:center;justify-content:center;
+                padding:40px 28px;
+                text-align:center;
+                transition:opacity 0.4s ease;">
+    
+        <div style="font-size:56px;margin-bottom:16px;line-height:1;">✈️</div>
+        <div style="font-size:22px;font-weight:800;color:#fff;
+                    margin-bottom:8px;letter-spacing:0.3px;">
+            Welcome to METAR GO
+        </div>
+        <div style="font-size:13px;color:#8e8e93;margin-bottom:28px;
+                    line-height:1.8;max-width:270px;">
+            Set a <b style="color:#fff;">Default Airport</b> to unlock the app.<br>
+            It will load automatically on every launch.
+        </div>
+    
+        <div style="display:flex;flex-direction:column;gap:12px;
+                    width:100%;max-width:280px;">
+    
+            <button onclick="closeOnboardingAndGo('settings','defaultIcaoInput');dismissWelcomeOverlay();"
+                    style="background:var(--accent);border:none;color:#fff;
+                           padding:15px 24px;border-radius:13px;
+                           font-size:15px;font-weight:800;cursor:pointer;
+                           box-shadow:0 4px 20px rgba(10,132,255,0.45);
+                           transition:opacity 0.2s;">
+                🏠 Set Default Airport →
+            </button>
+    
+            <div style="font-size:11px;color:#3a3a3a;margin-top:2px;">
+                Or search any ICAO code in the bar above
+            </div>
+    
+            <button onclick="dismissWelcomeOverlay()"
+                    style="background:transparent;border:1px solid #2a2a2a;
+                           color:#444;padding:11px 24px;border-radius:10px;
+                           font-size:13px;cursor:pointer;margin-top:2px;
+                           transition:border-color 0.2s,color 0.2s;">
+                Skip — browse without saving
+            </button>
+        </div>
+    </div>
+    
     <!-- NEARBY AIRPORT PREVIEW MODAL -->
     <div id="nearbyModal" class="modal-overlay" onclick="closeNearbyModal()">
         <div class="info-card" style="margin:auto; width:92%; max-width:360px; border:1px solid var(--border); border-radius:16px; padding:0; overflow:hidden;"
@@ -3736,7 +3797,7 @@
     ================================================================ -->
     <div id="storageSetup" class="setup-overlay" style="display:none;">
         <div style="font-size:40px; margin-bottom:12px;">✈️</div>
-        <div style="font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; text-align:center;">METAR PLUS</div>
+        <div style="font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; text-align:center;">METAR GO</div>
         <div style="font-size:13px; color:#8e8e93; margin-bottom:32px; text-align:center; max-width:280px; line-height:1.6;">
             Choose how to save your airport preferences.
         </div>
@@ -3834,7 +3895,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.2.4</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.2.5</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -3974,18 +4035,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.2.4',                         // ← bump this on every update
+            version: '3.2.5',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
-                    icon: '☁️',
+                    icon: '📱',
                     title: 'Dashboard mode!',
                     desc: 'Toggle in the settings~ New combined METAR + TAF tab when enabled. Switch between views with the pill toggle.'
                 },
                 {
-                    icon: '👆',
-                    title: 'Smoother Swipe Navigation',
-                    desc: 'Left/right swipe between tabs is now fluid and flicker-free. The tab bar stays fixed while only the content slides. Vertical scrolling and horizontal swiping no longer conflict.'
+                    icon: '‼️',
+                    title: 'US only update!',
+                    desc: 'US airport will have external sources at ATC tab'
                 },
                 {
                     icon: '📊',
@@ -4197,16 +4258,26 @@
             try {
                 const res = await fetch(`/api/settings?pin=${pin}`, { method: 'DELETE' });
                 if (res.ok) {
-                    showToast('🗑️ Cloud backup deleted');
-                    localStorage.clear();
-                    await new Promise((resolve) => {
-                        const req = indexedDB.deleteDatabase('efb_storage_v1');
-                        req.onsuccess = resolve; req.onerror = resolve;
-                    });
-                    showToast('Returning to setup...');
-                    setTimeout(() => location.reload(), 800);
-                } else { showToast('⚠️ Delete failed. Try again.'); }
-            } catch(e) { showToast('⚠️ No connection. Try again.'); }
+                    // Strip cloud credentials only — keep all local data
+                    localStorage.removeItem('efb_cloud_pin');
+                    localStorage.removeItem('efb_worldclock_backup');
+                    localStorage.removeItem('efb_worldclock_backup_asked');
+                    await EFB_DB.delete('_efb_cloud_pin');
+        
+                    // Switch storage mode to local (no setup screen, stays in app)
+                    await Storage.setMode('local');
+                    Storage.mode = 'local';
+        
+                    // Refresh Settings UI to show new mode
+                    renderStorageModeUI();
+        
+                    showToast('🗑️ Cloud backup deleted — now running locally');
+                } else {
+                    showToast('⚠️ Delete failed. Try again.');
+                }
+            } catch(e) {
+                showToast('⚠️ No connection. Try again.');
+            }
         }
 
         // ================================================================
@@ -4740,28 +4811,13 @@
                 loadPreferredRunwaySettings(savedDefault); 
                 loadData();   // data loads into whichever tab is already showing
                 } else {
-                document.getElementById('icao').value = '';
-                // Welcome prompt for new users with no default airport
-                const welcomeHtml = `
-                    <div style="text-align:center;padding:24px 10px;">
-                        <div style="font-size:36px;margin-bottom:12px;">✈️</div>
-                        <div style="font-weight:800;color:var(--text);font-size:16px;margin-bottom:8px;">Welcome to METAR GO</div>
-                        <div style="font-size:12px;color:var(--sub-text);margin-bottom:20px;line-height:1.7;">
-                            Set a <b style="color:var(--text);">Default Airport</b> so the app loads<br>your home base automatically on every launch.
-                        </div>
-                        <button onclick="closeOnboardingAndGo('settings','defaultIcaoInput')"
-                                style="background:var(--accent);border:none;color:#fff;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
-                            🏠 Set Default Airport →
-                        </button>
-                        <div style="margin-top:14px;font-size:11px;color:#444;">
-                            Or search any ICAO code above to get started
-                        </div>
-                    </div>`;
-                document.getElementById('rawMetar').innerHTML = welcomeHtml;
-                const rm2 = document.getElementById('rawMetar2');
-                if (rm2) rm2.innerHTML = welcomeHtml;  // mirror to weather tab
-                showOnboarding();
-            }
+                    document.getElementById('icao').value = '';
+                    // Show the full-tab overlay instead of inline welcome
+                    if (!sessionStorage.getItem('welcome_dismissed')) {
+                        setTimeout(showWelcomeOverlay, 350); // slight delay so tabs render first
+                    }
+                    showOnboarding();
+                }
                 
 
             const savedXW   = await Storage.get('efb_min_xw');
@@ -4820,6 +4876,7 @@
                 await Storage.set('efb_default_station', val);
                 msg.innerText = "✅ Saved!"; msg.style.color = "var(--success)";
                 showToast(`✅ Default airport set to ${val}`);
+                dismissWelcomeOverlay();
                 if (document.getElementById('icao').value === "") { document.getElementById('icao').value = val; loadData(); }
                 // Load runway options for the new default airport
                 loadPreferredRunwaySettings(val);
@@ -4910,13 +4967,26 @@
                 message += "\nThis cannot be undone.";
             }
             if (!confirm(message)) return;
+        
+            // 1. Clear localStorage first
             localStorage.clear();
+        
+            // 2. Close open IndexedDB connection BEFORE deleting — otherwise delete is blocked
+            if (EFB_DB.db) {
+                EFB_DB.db.close();
+                EFB_DB.db = null;
+            }
+        
+            // 3. Delete IndexedDB — handle blocked event so it doesn't silently fail
             await new Promise((resolve) => {
                 const req = indexedDB.deleteDatabase('efb_storage_v1');
-                req.onsuccess = resolve; req.onerror = resolve;
+                req.onsuccess  = () => { console.log('[Reset] IndexedDB deleted ✅'); resolve(); };
+                req.onerror    = () => { console.warn('[Reset] IndexedDB delete error');   resolve(); };
+                req.onblocked  = () => { console.warn('[Reset] IndexedDB delete blocked'); resolve(); };
             });
+        
             showToast('🗑️ App reset — returning to setup...');
-            setTimeout(() => location.reload(), 1000);
+            setTimeout(() => location.reload(), 800);
         }
 
         function renderHistory() {
@@ -5122,6 +5192,7 @@
             const icao = icaoVal.toUpperCase();
             addToHistory(icao);
             document.getElementById('icao').blur();
+            dismissWelcomeOverlay(); 
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
             
@@ -5334,15 +5405,21 @@
             const label       = document.getElementById('audioLabel');
             const liveAtcBtn  = document.getElementById('btnLiveAtc');
             if (liveAtcBtn) {
-                liveAtcBtn.href = `https://www.liveatc.net/search/?icao=${icao}`;
-                liveAtcBtn.innerHTML = `<span>📡 LiveATC (${icao})</span><span>↗</span>`;
+                liveAtcBtn.onclick = () => openInAppBrowser(
+                    `https://www.liveatc.net/search/?icao=${icao}`,
+                    `LiveATC (${icao})`
+                );
+                liveAtcBtn.querySelector('span').innerText = `📡 LiveATC (${icao})`;
             }
 
             // Update Metar-Taf link with current airport
             const metarTafBtn = document.getElementById('btnMetarTaf');
             if (metarTafBtn) {
-                metarTafBtn.href = `https://metar-taf.com/?hl=${icao}`;
-                metarTafBtn.innerHTML = `<span>☁️ Metar-Taf.com (${icao})</span><span>↗</span>`;
+                metarTafBtn.onclick = () => openInAppBrowser(
+                    `https://metar-taf.com/?hl=${icao}`,
+                    `Metar-Taf (${icao})`
+                );
+                metarTafBtn.querySelector('span').innerText = `☁️ Metar-Taf.com (${icao})`;
             }
 
             // Stream configs: [ICAO, labelText, streams[]]
@@ -7199,7 +7276,29 @@ async function findNearbyStations(lat, lon) {
         /* ── Track current modal type for Open ↗ button ── */
         let _usLinkType = null;
         let _ifpActiveTab = 'airport';
+
+        function openInAppBrowser(url, title) {
+            const modal   = document.getElementById('usLinkModal');
+            const frame   = document.getElementById('usLinkFrame');
+            const loader  = document.getElementById('usLinkLoader');
+            const tabs    = document.getElementById('iflightplannerTabs');
+            const titleEl = document.getElementById('usLinkModalTitle');
+            const openBtn = document.getElementById('usLinkOpenExternal');
         
+            _usLinkType = 'generic';
+            tabs.style.display   = 'none';
+            titleEl.innerText    = title;
+            loader.style.display = 'flex';
+            frame.src            = 'about:blank';
+        
+            openBtn.onclick = () => window.open(url, '_blank');
+        
+            // Small delay so 'about:blank' clears the previous page visually
+            setTimeout(() => { frame.src = url; }, 80);
+        
+            modal.classList.add('active');
+        }
+    
         function openUsLink(type) {
             _usLinkType  = type;
             _ifpActiveTab = 'airport';
@@ -7225,15 +7324,42 @@ async function findNearbyStations(lat, lon) {
                 // Reset tab pill styles
                 switchIFPTab('airport', false); // false = don't reload (we just set src above)
             } else if (type === 'airnav') {
-                tabs.style.display = 'none';
-                title.innerText    = 'AirNav';
-                frame.src          = links.airnav;
-                openBtn.onclick    = () => window.open(links.airnav, '_blank');
+                openInAppBrowser(links.airnav, 'AirNav');
+                return; // openInAppBrowser handles modal.classList.add itself
             } else if (type === 'flightservice') {
+                // 1800wxbrief blocks iframes — show a friendly fallback instead
                 tabs.style.display = 'none';
                 title.innerText    = 'FlightService (1800wxbrief)';
-                frame.src          = links.flightservice;
                 openBtn.onclick    = () => window.open(links.flightservice, '_blank');
+                loader.style.display = 'none';
+                frame.srcdoc = `
+                    <html>
+                    <body style="margin:0;background:#000;display:flex;flex-direction:column;
+                                 align-items:center;justify-content:center;height:100vh;
+                                 font-family:-apple-system,sans-serif;text-align:center;padding:30px;
+                                 box-sizing:border-box;">
+                        <div style="font-size:48px;margin-bottom:16px;">🛡️</div>
+                        <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:10px;">
+                            Cannot display in-app
+                        </div>
+                        <div style="font-size:13px;color:#8e8e93;line-height:1.7;max-width:280px;
+                                    margin-bottom:28px;">
+                            1800wxbrief.com blocks embedded viewing for security reasons.
+                            Tap the button below to open it in your browser.
+                        </div>
+                        <a href="${links.flightservice}" target="_blank"
+                           style="background:#0a84ff;color:#fff;padding:13px 28px;
+                                  border-radius:12px;text-decoration:none;
+                                  font-size:15px;font-weight:800;display:inline-block;">
+                            Open FlightService ↗
+                        </a>
+                        <div style="margin-top:16px;font-size:11px;color:#444;">
+                            ${links.flightservice}
+                        </div>
+                    </body>
+                    </html>`;
+                modal.classList.add('active');
+                return;
             }
         
             modal.classList.add('active');
@@ -7309,6 +7435,42 @@ async function findNearbyStations(lat, lon) {
                 if (el) el.innerText = timeZ;
             });
         }
+
+        // ================================================================
+        // WELCOME OVERLAY
+        // ================================================================
+        function showWelcomeOverlay() {
+            const overlay = document.getElementById('welcomeOverlay');
+            if (!overlay) return;
+        
+            // Position top flush with the bottom of the tabs bar
+            const tabs = document.querySelector('.tabs');
+            if (tabs) {
+                overlay.style.top = tabs.getBoundingClientRect().bottom + 'px';
+            } else {
+                overlay.style.top = '108px';
+            }
+            overlay.classList.remove('hidden');
+            overlay.style.opacity = '0';
+            requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+        }
+        
+        function dismissWelcomeOverlay() {
+            const overlay = document.getElementById('welcomeOverlay');
+            if (!overlay) return;
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.classList.add('hidden'), 400);
+            // Remember so it doesn't reappear on tab switches
+            sessionStorage.setItem('welcome_dismissed', '1');
+        }
+        
+        // Reposition on resize (e.g. device rotation)
+        window.addEventListener('resize', () => {
+            const overlay = document.getElementById('welcomeOverlay');
+            if (!overlay || overlay.classList.contains('hidden')) return;
+            const tabs = document.querySelector('.tabs');
+            if (tabs) overlay.style.top = tabs.getBoundingClientRect().bottom + 'px';
+        });
     
         // ================================================================
         // 26. TOAST & OFFLINE BANNER
