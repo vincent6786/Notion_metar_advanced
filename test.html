@@ -2328,7 +2328,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version">CLOUD EDITION · v3.1.2</div> 
+        <div class="launch-version">CLOUD EDITION · v3.1.3</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -2705,7 +2705,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.1.2 · Cloud Edition · Quick reference for all features</div>
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.1.3 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -3287,12 +3287,26 @@
             <div class="conv-lbl">Default Airport (ICAO)</div>
             <div class="conv-row" style="margin-bottom:0;">
                 <input type="text" id="defaultIcaoInput" class="conv-inp" placeholder="e.g. RCTP"
-                       style="text-transform:uppercase;" maxlength="4">
+                       style="text-transform:uppercase;" maxlength="4"
+                       oninput="if(this.value.length===4) loadPreferredRunwaySettings(this.value.toUpperCase())">
                 <button class="tool-btn" style="width:auto; margin:0;" onclick="saveDefaultStation()">Save</button>
             </div>
             <div id="saveMsg" style="font-size:12px; color:var(--success); margin-top:8px; height:14px;"></div>
         </div>
 
+        <!-- Preferred Runway (appears after default airport is set) -->
+        <div id="prefRunwaySection" class="hidden">
+            <div class="info-card" style="margin-top:8px; border-left: 3px solid var(--accent);">
+                <div class="conv-lbl" style="margin-bottom:6px;">Preferred Runway for <span id="prefRunwayIcaoLabel" style="color:var(--accent); font-weight:800;"></span></div>
+                <select id="prefRunwaySelect" class="stealth-select" onchange="savePreferredRunway()">
+                    <option value="">🔀 Auto — Best for wind</option>
+                </select>
+                <div style="font-size:11px; color:var(--sub-text); margin-top:8px; line-height:1.6;">
+                    Overrides auto wind-selection on the METAR tab. Set to <b style="color:var(--text);">Auto</b> to always pick the headwind-optimal runway.
+                </div>
+            </div>
+        </div>
+        
         <!-- Visuals -->
         <div class="section-title">Visuals</div>
         <button id="btnNightMode" class="atc-btn" onclick="toggleNightMode()"
@@ -3599,7 +3613,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.1.2</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.1.3</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -3651,7 +3665,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.1.2',                         // ← bump this on every update
+            version: '3.1.3',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -3663,17 +3677,17 @@
                     icon: '👆',
                     title: 'Smoother Swipe Navigation',
                     desc: 'Left/right swipe between tabs is now fluid and flicker-free. The tab bar stays fixed while only the content slides. Vertical scrolling and horizontal swiping no longer conflict.'
+                },
+                {
+                    icon: '📊',
+                    title: 'Data sources updated',
+                    desc: 'See more in the Help section~'
+                },
+                {
+                    icon: '🛬',
+                    title: 'prefered runway~',
+                    desc: 'When setting default airport, you can either select auto or rwy needed!'
                 }
-                // {
-                //     icon: '📊',
-                //     title: '24H Trend Meteogram',
-                //     desc: 'Meteogram now renders correctly in the Weather tab even when the pane is hidden on load.'
-                // },
-                // {
-                //     icon: '🛬',
-                //     title: 'Smart Default Tab',
-                //     desc: 'App now opens directly to Weather/METAR when Dashboard mode is on.'
-                // },
                 // {
                 //     icon: '📋',
                 //     title: 'TAF Tap-to-Decode Fixed',
@@ -3866,7 +3880,7 @@
                 return false;
             }
         }
-
+        
         async function deleteCloudProfile() {
             const pin = localStorage.getItem('efb_cloud_pin');
             if (!pin) return;
@@ -3875,15 +3889,13 @@
                 const res = await fetch(`/api/settings?pin=${pin}`, { method: 'DELETE' });
                 if (res.ok) {
                     showToast('🗑️ Cloud backup deleted');
-                    // Clear storage mode so the setup screen shows on reload
-                    localStorage.removeItem('efb_storage_mode');
-                    localStorage.removeItem('efb_cloud_pin');
-                    await EFB_DB.delete('_efb_storage_mode');
-                    await EFB_DB.delete('_efb_cloud_pin');
-                    setTimeout(() => {
-                        showToast('Returning to setup...');
-                        setTimeout(() => location.reload(), 800);
-                    }, 600);
+                    localStorage.clear();
+                    await new Promise((resolve) => {
+                        const req = indexedDB.deleteDatabase('efb_storage_v1');
+                        req.onsuccess = resolve; req.onerror = resolve;
+                    });
+                    showToast('Returning to setup...');
+                    setTimeout(() => location.reload(), 800);
                 } else { showToast('⚠️ Delete failed. Try again.'); }
             } catch(e) { showToast('⚠️ No connection. Try again.'); }
         }
@@ -4307,6 +4319,7 @@
             if (savedDefault) {
                 inputField.value = savedDefault;
                 document.getElementById('icao').value = savedDefault;
+                loadPreferredRunwaySettings(savedDefault); 
                 loadData();   // data loads into whichever tab is already showing
                 } else {
                 document.getElementById('icao').value = '';
@@ -4390,23 +4403,101 @@
                 msg.innerText = "✅ Saved!"; msg.style.color = "var(--success)";
                 showToast(`✅ Default airport set to ${val}`);
                 if (document.getElementById('icao').value === "") { document.getElementById('icao').value = val; loadData(); }
+                // Load runway options for the new default airport
+                loadPreferredRunwaySettings(val);
             } else { msg.innerText = "⚠️ Invalid ICAO"; msg.style.color = "var(--warn)"; }
             setTimeout(() => { msg.innerText = ""; }, 3000);
         }
 
+        async function loadPreferredRunwaySettings(icao) {
+            if (!icao) return;
+            const section  = document.getElementById('prefRunwaySection');
+            const sel      = document.getElementById('prefRunwaySelect');
+            const label    = document.getElementById('prefRunwayIcaoLabel');
+            if (!section || !sel) return;
+        
+            if (label) label.innerText = icao;
+        
+            try {
+                const data    = await secureFetch(`/api/weather?type=station&station=${icao}`);
+                const runways = data?.runways || [];
+        
+                if (runways.length === 0) { section.classList.add('hidden'); return; }
+        
+                const savedPref = await Storage.get(`efb_pref_rwy_${icao}`) || '';
+        
+                sel.innerHTML = '<option value="">🔀 Auto — Best for wind</option>';
+                runways.forEach(r => {
+                    [r.ident1, r.ident2].forEach(ident => {
+                        const opt = document.createElement('option');
+                        opt.value   = ident;
+                        opt.text    = `RWY ${ident}`;
+                        opt.selected = (ident === savedPref);
+                        sel.appendChild(opt);
+                    });
+                });
+        
+                section.classList.remove('hidden');
+            } catch(e) {
+                section.classList.add('hidden');
+            }
+        }
+        
+        async function savePreferredRunway() {
+            const icao = document.getElementById('defaultIcaoInput').value.trim().toUpperCase();
+            const sel  = document.getElementById('prefRunwaySelect');
+            if (!icao || !sel) return;
+            const val = sel.value;
+            await Storage.set(`efb_pref_rwy_${icao}`, val);
+            showToast(val ? `✅ RWY ${val} set as preferred for ${icao}` : `✅ ${icao} will auto-select best runway`);
+        
+            // If this airport is currently loaded, instantly apply to METAR tab
+            const currentIcao = document.getElementById('icao').value.trim().toUpperCase();
+            if (currentIcao === icao && stationData) {
+                // Apply to both rwySelect (main) and rwySelect2 (weather tab)
+                ['rwySelect', 'rwySelect2'].forEach(id => {
+                    const rwyEl = document.getElementById(id);
+                    if (!rwyEl) return;
+                    if (val && rwyEl.querySelector(`option[value="${val}"]`)) {
+                        rwyEl.value = val;
+                    } else if (!val) {
+                        // Auto — recalculate best runway for wind
+                        const mv      = stationData.magnetic_variation || 0;
+                        const safeDir = (currentWind.dir === 'VRB') ? 0 : currentWind.dir;
+                        const windMag = safeDir - mv;
+                        let bestRwy = null, maxHW = -999;
+                        (stationData.runways || []).forEach(r => {
+                            const h1  = parseInt(r.ident1.replace(/\D/g, '')) * 10;
+                            const hw1 = Math.cos((windMag - h1) * (Math.PI / 180)) * currentWind.spd;
+                            if (hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
+                        });
+                        if (bestRwy && rwyEl.querySelector(`option[value="${bestRwy}"]`)) {
+                            rwyEl.value = bestRwy;
+                        }
+                    }
+                });
+                // Redraw wind rose and runway components with new selection
+                drawWindRose();
+                renderRunwaysComplex();
+                checkMins();
+            }
+        }
+    
         async function resetApp() {
             const mode = localStorage.getItem('efb_storage_mode');
-            let message = "Reset all local settings?\n\n";
+            let message = "⚠️ Factory Reset App?\n\nThis will:\n• Clear all local settings\n• Remove saved airports & preferences\n• Return to the initial setup screen\n";
             if (mode === 'cloud') {
-                message += "✅ Your Cloud Backup is NOT affected.\nYou can restore it anytime with your Backup Code.\n\nTo also delete cloud data, go to\nSettings → Delete Cloud Backup Data first.";
-            } else { message += "⚠️ This cannot be undone."; }
+                message += "\n☁️ Your Cloud Backup is NOT deleted.\nYou can restore it with your Backup Code on the next setup screen.";
+            } else {
+                message += "\nThis cannot be undone.";
+            }
             if (!confirm(message)) return;
             localStorage.clear();
             await new Promise((resolve) => {
                 const req = indexedDB.deleteDatabase('efb_storage_v1');
                 req.onsuccess = resolve; req.onerror = resolve;
             });
-            showToast('🗑️ App reset complete');
+            showToast('🗑️ App reset — returning to setup...');
             setTimeout(() => location.reload(), 1000);
         }
 
@@ -5622,9 +5713,11 @@ async function findNearbyStations(lat, lon) {
         function setupRunwaySelect() {
             const sel = document.getElementById('rwySelect');
             sel.innerHTML = '';
-            const mv = stationData.magnetic_variation || 0;
-            const windMag = currentWind.dir - mv;
+            const mv      = stationData.magnetic_variation || 0;
+            const safeDir = (currentWind.dir === 'VRB') ? 0 : currentWind.dir;
+            const windMag = safeDir - mv;
             let bestRwy = null, maxHW = -999;
+        
             (stationData.runways || []).forEach(r => {
                 sel.add(new Option(`RWY ${r.ident1}`, r.ident1));
                 sel.add(new Option(`RWY ${r.ident2}`, r.ident2));
@@ -5632,8 +5725,21 @@ async function findNearbyStations(lat, lon) {
                 const hw1 = Math.cos((windMag - h1) * (Math.PI / 180)) * currentWind.spd;
                 if (hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
             });
-            if (bestRwy) sel.value = bestRwy;
-            else if (stationData.runways.length > 0) sel.value = stationData.runways[0].ident1;
+        
+            // Check for saved preferred runway for this airport
+            const icao    = document.getElementById('icao').value.toUpperCase();
+            const rawPref = localStorage.getItem(`efb_pref_rwy_${icao}`);
+            let savedPref = null;
+            try { savedPref = rawPref ? JSON.parse(rawPref) : null; } catch(e) {}
+        
+            if (savedPref && sel.querySelector(`option[value="${savedPref}"]`)) {
+                sel.value = savedPref;
+            } else if (bestRwy) {
+                sel.value = bestRwy;
+            } else if (stationData.runways?.length > 0) {
+                sel.value = stationData.runways[0].ident1;
+            }
+        
             drawWindRose();
             renderRunwaysComplex();
         }
@@ -6403,7 +6509,7 @@ async function findNearbyStations(lat, lon) {
             const btn    = document.getElementById('btnNightMode');
             btn.innerHTML = isDark ? "<span>⚪ Day Mode</span>" : "<span>🔴 Cockpit Night Mode</span>";
             btn.style.borderColor = isDark ? "#fff" : "var(--danger)";
-            localStorage.setItem('efb_night_mode', isDark ? 'true' : 'false');
+            Storage.set('efb_night_mode', isDark ? 'true' : 'false');
             if (document.getElementById('rwySelect').value) drawWindRose();
         }
 
@@ -6446,27 +6552,35 @@ async function findNearbyStations(lat, lon) {
                     }
                 }
         
-                async function toggleMultiDashboard() {
-                    const toggle = document.getElementById('toggleMultiDashboard');
-                    const enabled = toggle?.checked || false;
-                    await Storage.set('efb_multi_dashboard_enabled', enabled);
-                    applyDashboardMode(enabled);
-                    if (enabled) {
-                        setTab('dashboard');
-                        await loadMultiAirports();
-                        showToast('📊 Dashboard enabled');
-                        if (!multiRefreshInterval && multiAirports.length > 0) {
-                            multiRefreshInterval = setInterval(refreshMultiData, 300000);
-                        }
-                    } else {
-                        setTab('metar');
-                        if (multiRefreshInterval) {
-                            clearInterval(multiRefreshInterval);
-                            multiRefreshInterval = null;
-                        }
-                        showToast('Dashboard disabled');
-                    }
+        async function toggleMultiDashboard() {
+            const toggle  = document.getElementById('toggleMultiDashboard');
+            const enabled = toggle?.checked || false;
+            await Storage.set('efb_multi_dashboard_enabled', enabled);
+            applyDashboardMode(enabled);
+            if (enabled) {
+                setTab('dashboard');
+                await loadMultiAirports();
+                showToast('📊 Dashboard enabled');
+                if (!multiRefreshInterval && multiAirports.length > 0) {
+                    multiRefreshInterval = setInterval(refreshMultiData, 300000);
                 }
+            } else {
+                setTab('metar');
+                if (multiRefreshInterval) {
+                    clearInterval(multiRefreshInterval);
+                    multiRefreshInterval = null;
+                }
+                showToast('Dashboard disabled');
+            }
+        
+            // Redraw wind rose onto the correct canvas after tab switch settles
+            if (stationData) {
+                setTimeout(() => {
+                    drawWindRose();
+                    renderRunwaysComplex();
+                }, 100);
+            }
+        }
     
         function applyDashboardMode(enabled) {
             const tabMetar     = document.getElementById('tabMetar');
