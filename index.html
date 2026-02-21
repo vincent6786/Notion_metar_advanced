@@ -3222,9 +3222,18 @@
             </div>
         </div>
         <div class="section-title">EXTERNAL RESOURCES</div>
-        <a id="btnMetarTaf" href="https://metar-taf.com/" target="_blank" class="atc-btn"><span>☁️ Metar-Taf.com</span><span>↗</span></a>
-        <a href="https://beta.twatc.net/" target="_blank" class="atc-btn"><span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span></a>
-        <a id="btnLiveAtc" href="https://www.liveatc.net/" target="_blank" class="atc-btn"><span>📡 LiveATC.net</span><span>↗</span></a>
+        <div id="btnMetarTaf" class="atc-btn" style="cursor:pointer;"
+             onclick="openInAppBrowser('https://metar-taf.com/', 'Metar-Taf.com')">
+            <span>☁️ Metar-Taf.com</span><span>↗</span>
+        </div>
+        <div class="atc-btn" style="cursor:pointer;"
+             onclick="openInAppBrowser('https://beta.twatc.net/', 'Taiwan Virtual ATC')">
+            <span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span>
+        </div>
+        <div id="btnLiveAtc" class="atc-btn" style="cursor:pointer;"
+             onclick="openInAppBrowser('https://www.liveatc.net/', 'LiveATC.net')">
+            <span>📡 LiveATC.net</span><span>↗</span>
+        </div>
 
         <!-- US AIRPORT RESOURCES — hidden until a US airport is loaded -->
         <div id="usAirportLinks" class="hidden">
@@ -5333,16 +5342,23 @@
             const container   = document.getElementById('audioPlayerTarget');
             const label       = document.getElementById('audioLabel');
             const liveAtcBtn  = document.getElementById('btnLiveAtc');
+            const liveAtcBtn = document.getElementById('btnLiveAtc');
             if (liveAtcBtn) {
-                liveAtcBtn.href = `https://www.liveatc.net/search/?icao=${icao}`;
-                liveAtcBtn.innerHTML = `<span>📡 LiveATC (${icao})</span><span>↗</span>`;
+                liveAtcBtn.onclick = () => openInAppBrowser(
+                    `https://www.liveatc.net/search/?icao=${icao}`,
+                    `LiveATC (${icao})`
+                );
+                liveAtcBtn.querySelector('span').innerText = `📡 LiveATC (${icao})`;
             }
 
             // Update Metar-Taf link with current airport
             const metarTafBtn = document.getElementById('btnMetarTaf');
             if (metarTafBtn) {
-                metarTafBtn.href = `https://metar-taf.com/?hl=${icao}`;
-                metarTafBtn.innerHTML = `<span>☁️ Metar-Taf.com (${icao})</span><span>↗</span>`;
+                metarTafBtn.onclick = () => openInAppBrowser(
+                    `https://metar-taf.com/?hl=${icao}`,
+                    `Metar-Taf (${icao})`
+                );
+                metarTafBtn.querySelector('span').innerText = `☁️ Metar-Taf.com (${icao})`;
             }
 
             // Stream configs: [ICAO, labelText, streams[]]
@@ -7199,7 +7215,29 @@ async function findNearbyStations(lat, lon) {
         /* ── Track current modal type for Open ↗ button ── */
         let _usLinkType = null;
         let _ifpActiveTab = 'airport';
+
+        function openInAppBrowser(url, title) {
+            const modal   = document.getElementById('usLinkModal');
+            const frame   = document.getElementById('usLinkFrame');
+            const loader  = document.getElementById('usLinkLoader');
+            const tabs    = document.getElementById('iflightplannerTabs');
+            const titleEl = document.getElementById('usLinkModalTitle');
+            const openBtn = document.getElementById('usLinkOpenExternal');
         
+            _usLinkType = 'generic';
+            tabs.style.display   = 'none';
+            titleEl.innerText    = title;
+            loader.style.display = 'flex';
+            frame.src            = 'about:blank';
+        
+            openBtn.onclick = () => window.open(url, '_blank');
+        
+            // Small delay so 'about:blank' clears the previous page visually
+            setTimeout(() => { frame.src = url; }, 80);
+        
+            modal.classList.add('active');
+        }
+    
         function openUsLink(type) {
             _usLinkType  = type;
             _ifpActiveTab = 'airport';
@@ -7225,15 +7263,42 @@ async function findNearbyStations(lat, lon) {
                 // Reset tab pill styles
                 switchIFPTab('airport', false); // false = don't reload (we just set src above)
             } else if (type === 'airnav') {
-                tabs.style.display = 'none';
-                title.innerText    = 'AirNav';
-                frame.src          = links.airnav;
-                openBtn.onclick    = () => window.open(links.airnav, '_blank');
+                openInAppBrowser(links.airnav, 'AirNav');
+                return; // openInAppBrowser handles modal.classList.add itself
             } else if (type === 'flightservice') {
+                // 1800wxbrief blocks iframes — show a friendly fallback instead
                 tabs.style.display = 'none';
                 title.innerText    = 'FlightService (1800wxbrief)';
-                frame.src          = links.flightservice;
                 openBtn.onclick    = () => window.open(links.flightservice, '_blank');
+                loader.style.display = 'none';
+                frame.srcdoc = `
+                    <html>
+                    <body style="margin:0;background:#000;display:flex;flex-direction:column;
+                                 align-items:center;justify-content:center;height:100vh;
+                                 font-family:-apple-system,sans-serif;text-align:center;padding:30px;
+                                 box-sizing:border-box;">
+                        <div style="font-size:48px;margin-bottom:16px;">🛡️</div>
+                        <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:10px;">
+                            Cannot display in-app
+                        </div>
+                        <div style="font-size:13px;color:#8e8e93;line-height:1.7;max-width:280px;
+                                    margin-bottom:28px;">
+                            1800wxbrief.com blocks embedded viewing for security reasons.
+                            Tap the button below to open it in your browser.
+                        </div>
+                        <a href="${links.flightservice}" target="_blank"
+                           style="background:#0a84ff;color:#fff;padding:13px 28px;
+                                  border-radius:12px;text-decoration:none;
+                                  font-size:15px;font-weight:800;display:inline-block;">
+                            Open FlightService ↗
+                        </a>
+                        <div style="margin-top:16px;font-size:11px;color:#444;">
+                            ${links.flightservice}
+                        </div>
+                    </body>
+                    </html>`;
+                modal.classList.add('active');
+                return;
             }
         
             modal.classList.add('active');
