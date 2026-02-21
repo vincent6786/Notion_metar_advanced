@@ -5448,7 +5448,7 @@
                 KMHR: { label: "KMHR LIVE STREAMS", streams: [
                     { type: "ATC SCANNER", src: "https://s1-bos.liveatc.net/kmhr?nocache=2026022115205826873", color: "var(--success)" }
                 ]},
-                KJKF: { label: "KMHR LIVE STREAMS", streams: [
+                KJKF: { label: "KJFK LIVE STREAMS", streams: [
                     { type: "ATIS",        src: "https://s1-fmt2.liveatc.net/kjfk_atis?nocache=2026022115325833903",  color: "var(--accent)" },
                     { type: "ATC SCANNER", src: "https://s1-bos.liveatc.net/kjfk_arinc?nocache=2026022115281622601", color: "var(--success)" }
                 ]}
@@ -5468,7 +5468,7 @@
                             <source src="${s.src}" type="audio/mpeg">
                         </audio>
                     </div>`).join('') +
-                    `<div style="font-size:10px;color:#555;margin-top:8px;text-align:right;">Source: TWATC.net</div>`;
+                    `<div style="font-size:10px;color:#555;margin-top:8px;text-align:right;">Source: TWATC.net & LiveATC</div>`;
             } else {
                 label.innerText = "AUDIO STREAMS";
                 container.innerHTML = `<div style="color:var(--sub-text);font-size:13px;text-align:center;padding:10px 0;">No direct in-app stream available for ${icao}.<br><span style="font-size:11px;color:#555;">Use the LiveATC button below.</span></div>`;
