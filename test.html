@@ -11,6 +11,21 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <style>
+        body { overflow-x: hidden; }
+        
+        /* Swipe panels */
+        .view-section {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        /* Suppress re-entry animation after swipe commit */
+        .swipe-committed.view-section.active {
+            animation: none !important;
+        }
+        .swipe-committed.view-section.active > * {
+            animation: none !important;
+        }
+        
         /* ============================================================
            1. CORE THEME & LAYOUT
         ============================================================ */
@@ -1315,7 +1330,7 @@
         .help-section-title {
             font-size: 13px;
             font-weight: 800;
-            color: var(--accent);
+            color: var(--text);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 10px;
@@ -2266,6 +2281,29 @@
 
 <body>
 
+<script>
+(function() {
+    try {
+        const dashEnabled = JSON.parse(localStorage.getItem('efb_multi_dashboard_enabled'));
+        if (dashEnabled) {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('tabMetar')?.classList.add('hidden');
+                document.getElementById('tabTaf')?.classList.add('hidden');
+                document.getElementById('tabDashboard')?.classList.remove('hidden');
+                document.getElementById('tabWeather')?.classList.remove('hidden');
+                document.getElementById('tab-metar')?.classList.remove('active');
+                const weatherEl = document.getElementById('tab-weather');
+                if (weatherEl) {
+                    weatherEl.classList.remove('hidden');
+                    weatherEl.classList.add('active');
+                }
+            }, { once: true });
+        }
+    } catch(e) {}
+})();
+</script>
+    
+
     <!-- ================================================================
          LAUNCH SCREEN
     ================================================================ -->
@@ -2290,7 +2328,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version">CLOUD EDITION · v3.1</div> 
+        <div class="launch-version">CLOUD EDITION · v3.1.2</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -2667,7 +2705,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.0 · Cloud Edition · Quick reference for all features</div>
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.1.2 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -2903,7 +2941,14 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">Swipe Navigation</div>
-                        <div class="help-a">On touch devices, swipe left/right anywhere on screen to move between tabs in order. Swiping is intentionally disabled on inputs, buttons, the canvas, and scrollable card areas to avoid conflicts.</div>
+                        <div class="help-a">
+                            Swipe <b>left</b> to go to the next tab, <b>right</b> to go back.
+                            The tab bar and top bar stay fixed — only the content area slides.<br><br>
+                            The gesture engine automatically distinguishes horizontal swipes from vertical scrolling:
+                            once it detects you're swiping sideways, it locks scroll for a clean animation with no page drift.
+                            A short flick works too — you don't need to drag the full way across.<br><br>
+                            Swiping is intentionally ignored on inputs, buttons, the canvas, modals, and the reorder-drag handle.
+                        </div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Offline Mode</div>
@@ -3491,7 +3536,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.1</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.1.2</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -3505,13 +3550,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.1',                         // ← bump this on every update
+            version: '3.1.2',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
                     icon: '☁️',
                     title: 'Dashboard mode!',
                     desc: 'Toggle in the settings~ New combined METAR + TAF tab when Dashboard mode is enabled. Switch between views with the pill toggle.'
+                },
+                {
+                    icon: '👆',
+                    title: 'Smoother Swipe Navigation',
+                    desc: 'Left/right swipe between tabs is now fluid and flicker-free. The tab bar stays fixed while only the content slides. Vertical scrolling and horizontal swiping no longer conflict.'
                 }
                 // {
                 //     icon: '📊',
@@ -4137,22 +4187,21 @@
 
             const savedDefault = await Storage.get('efb_default_station');
             const inputField   = document.getElementById('defaultIcaoInput');
-             if (savedDefault) {
+            const dashEnabled  = await Storage.get('efb_multi_dashboard_enabled', false);
+    
+            // ── Apply correct starting tab BEFORE loading data ──
+            // This prevents any flash of the METAR tab when dashboard mode is on
+            if (dashEnabled) {
+                setTab('weather');
+                switchWeatherPane('metar');
+            }
+    
+            if (savedDefault) {
                 inputField.value = savedDefault;
                 document.getElementById('icao').value = savedDefault;
-                loadData();
-                const dashEnabled = await Storage.get('efb_multi_dashboard_enabled', false);
-                if (dashEnabled) {
-                    setTab('weather');
-                    switchWeatherPane('metar');
-                }
+                loadData();   // data loads into whichever tab is already showing
             } else {
                 document.getElementById('icao').value = '';
-                const dashEnabled = await Storage.get('efb_multi_dashboard_enabled', false);
-                if (dashEnabled) {
-                    setTab('weather');
-                    switchWeatherPane('metar');
-                }
             }
 
             const savedXW   = await Storage.get('efb_min_xw');
@@ -6243,7 +6292,12 @@ async function findNearbyStations(lat, lon) {
                         targetSection.classList.add('active');
                     }
                     document.querySelectorAll('.tab').forEach(t => {
-                        if (t.getAttribute('onclick')?.includes("'" + name + "'")) t.classList.add('active');
+                        if (t.getAttribute('onclick')?.includes("'" + name + "'")) {
+                            t.classList.add('active');
+                            // ← ADD THIS: scroll tab pill into view on mobile
+                            t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }
+
                     });
                     if (name === 'world') updateClock();
                     if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
@@ -6632,31 +6686,279 @@ async function findNearbyStations(lat, lon) {
             }
         }
 
-        // Only enable swipe on touch devices
-        if ('ontouchstart' in window) {
+        // ================================================================
+        // SMOOTH SWIPE NAVIGATION — v3 (no DOM reparenting, no flicker)
+        // ================================================================
+        (function () {
+            if (!('ontouchstart' in window)) return;
+        
+            const state = {
+                tracking:  false,
+                settled:   false,
+                isHoriz:   false,
+                startX: 0, startY: 0, curX: 0,
+                fromEl: null, toEl: null,
+                toWasHidden: false,
+                fromTab: null, toTab: null,
+                dir: 0,
+                W: 0,
+                raf: null,
+                animating: false
+            };
+        
+            function getOrder() {
+                const on = document.getElementById('toggleMultiDashboard')?.checked;
+                return on
+                    ? ['dashboard','weather','info','atc','world','tools','settings','help']
+                    : ['metar','taf','info','atc','world','tools','settings','help'];
+            }
+        
+            // Freeze an element visually at its current position using fixed layout.
+            // The element stays in the DOM — no reparenting, no reflow.
+            function freezeAtRect(el, rect) {
+                el.style.cssText = `
+                    position: fixed !important;
+                    top:    ${rect.top}px !important;
+                    left:   ${rect.left}px !important;
+                    width:  ${rect.width}px !important;
+                    height: ${window.innerHeight - rect.top}px !important;
+                    overflow-y: auto;
+                    background: var(--bg);
+                    z-index: 200;
+                    will-change: transform;
+                    transition: none;
+                    transform: translateX(0);
+                    margin: 0;
+                    -webkit-overflow-scrolling: touch;
+                `;
+            }
+        
+            // Park the incoming panel off-screen (same rect, different translateX).
+            function parkOffscreen(el, rect, dir) {
+                // Apply positioning while hidden so it paints in the right spot on reveal
+                el.style.cssText = `
+                    position: fixed !important;
+                    top:    ${rect.top}px !important;
+                    left:   ${rect.left}px !important;
+                    width:  ${rect.width}px !important;
+                    height: ${window.innerHeight - rect.top}px !important;
+                    overflow-y: auto;
+                    background: var(--bg);
+                    z-index: 199;
+                    will-change: transform;
+                    transition: none;
+                    display: block !important;
+                    transform: translateX(${dir < 0 ? rect.width : -rect.width}px);
+                    margin: 0;
+                    -webkit-overflow-scrolling: touch;
+                `;
+                el.classList.remove('hidden');
+            }
+        
+            // Fully reset an element's inline styles back to CSS-class-driven defaults
+            function resetEl(el) {
+                el.style.cssText = '';
+            }
+        
+            function unlockScroll() {
+                document.body.style.overflowY = '';
+                document.body.style.touchAction = '';
+            }
+        
+            // Activate the winning tab cleanly after animation completes
+            function commit(name) {
+                resetEl(state.fromEl);
+                resetEl(state.toEl);
+                if (state.toWasHidden) state.toEl.classList.add('hidden');
+                unlockScroll();
+        
+                document.querySelectorAll('.view-section').forEach(el => {
+                    el.classList.remove('active');
+                    el.style.display = '';
+                });
+                document.querySelectorAll('.tab').forEach(t => {
+                    t.classList.remove('active');
+                    if (t.getAttribute('onclick')?.includes(`'${name}'`)) {
+                        t.classList.add('active');
+                        t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                });
+        
+                const destEl = document.getElementById('tab-' + name);
+                if (destEl) {
+                    destEl.classList.remove('hidden');
+                    destEl.classList.add('swipe-committed', 'active');
+                }
+        
+                if (name === 'world')   updateClock();
+                if (name === 'taf'     && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
+                if (name === 'weather' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 50);
+        
+                requestAnimationFrame(() => destEl?.classList.remove('swipe-committed'));
+            }
+        
+            function renderFrame() {
+                if (!state.tracking) return;
+                const raw   = state.curX - state.startX;
+                const limit = state.W * 0.5;
+                // Gentle rubber-band resistance at the edges — no snap/overshoot
+                const tx = Math.abs(raw) > limit
+                    ? Math.sign(raw) * (limit + (Math.abs(raw) - limit) * 0.07)
+                    : raw;
+        
+                state.fromEl.style.transform = `translateX(${tx}px)`;
+                state.toEl.style.transform   = `translateX(${(state.dir < 0 ? state.W : -state.W) + tx}px)`;
+                state.raf = null;
+            }
+        
+            /* ─────────────── TOUCH START ─────────────── */
             document.addEventListener('touchstart', e => {
-                // Ignore if touching an input, button, or scrollable element
-                const target = e.target;
-                if (target.tagName === 'INPUT' || 
-                    target.tagName === 'BUTTON' || 
-                    target.tagName === 'SELECT' ||
-                    target.closest('.metar-grid') ||
-                    target.closest('.raw-text') ||
-                    target.closest('canvas')) {
+                if (state.animating) return;
+                const t = e.target;
+                if (
+                    t.tagName === 'INPUT'    || t.tagName === 'BUTTON'   ||
+                    t.tagName === 'SELECT'   || t.tagName === 'TEXTAREA' ||
+                    t.closest('canvas')      || t.closest('.modal-overlay') ||
+                    t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
+                    window._sortMode?.active
+                ) return;
+        
+                state.startX   = e.touches[0].clientX;
+                state.startY   = e.touches[0].clientY;
+                state.curX     = state.startX;
+                state.tracking = false;
+                state.settled  = false;
+                state.isHoriz  = false;
+            }, { passive: true });
+        
+            /* ─────────────── TOUCH MOVE ─────────────── */
+            // non-passive so we can preventDefault for horizontal swipes
+            document.addEventListener('touchmove', e => {
+                if (state.animating) return;
+        
+                const x  = e.touches[0].clientX;
+                const y  = e.touches[0].clientY;
+                const dx = x - state.startX;
+                const dy = y - state.startY;
+        
+                /* ── Determine intent on first meaningful movement ── */
+                if (!state.settled) {
+                    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+                    state.settled = true;
+        
+                    // Clearly vertical → release to native scroll, never come back
+                    if (Math.abs(dy) > Math.abs(dx) * 0.9) {
+                        state.isHoriz = false;
+                        return;
+                    }
+        
+                    // Horizontal swipe confirmed
+                    state.isHoriz = true;
+        
+                    const order    = getOrder();
+                    state.fromTab  = document.querySelector('.view-section.active')?.id.replace('tab-', '');
+                    const idx      = order.indexOf(state.fromTab);
+                    if (idx === -1) { state.isHoriz = false; return; }
+        
+                    state.dir      = dx < 0 ? -1 : 1;
+                    const nIdx     = (idx - state.dir + order.length) % order.length;
+                    state.toTab    = order[nIdx];
+        
+                    state.fromEl   = document.getElementById('tab-' + state.fromTab);
+                    state.toEl     = document.getElementById('tab-' + state.toTab);
+                    if (!state.fromEl || !state.toEl) { state.isHoriz = false; return; }
+        
+                    state.toWasHidden = state.toEl.classList.contains('hidden');
+        
+                    // Measure content rect BEFORE touching any styles
+                    const rect = state.fromEl.getBoundingClientRect();
+                    state.W    = rect.width;
+        
+                    // Lock body scroll so page can't drift during horizontal animation
+                    document.body.style.overflowY   = 'hidden';
+                    document.body.style.touchAction = 'none';
+        
+                    // Freeze from-panel in place; park to-panel off screen — NO DOM reparenting
+                    freezeAtRect(state.fromEl, rect);
+                    parkOffscreen(state.toEl, rect, state.dir);
+        
+                    state.tracking = true;
+                }
+        
+                // Vertical scroll — let browser handle it natively
+                if (!state.isHoriz) return;
+        
+                // Horizontal — suppress native scroll/rubber-band
+                e.preventDefault();
+        
+                state.curX = x;
+                if (!state.raf) state.raf = requestAnimationFrame(renderFrame);
+        
+            }, { passive: false });
+        
+            /* ─────────────── TOUCH END ─────────────── */
+            document.addEventListener('touchend', e => {
+                if (!state.tracking) {
+                    state.settled = false;
+                    state.isHoriz = false;
                     return;
                 }
-                
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
+                if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
+        
+                const dx       = state.curX - state.startX;
+                const velX     = e.changedTouches[0].clientX - state.curX;
+                const traveled = Math.abs(dx);
+                const flick    = Math.abs(velX) > 4;
+                const enough   = traveled > state.W * 0.28;
+                const correct  = Math.sign(dx) === state.dir;
+                const complete = correct && (enough || flick);
+        
+                state.animating = true;
+                state.tracking  = false;
+                state.settled   = false;
+                state.isHoriz   = false;
+        
+                // Duration proportional to remaining distance — feels snappy, not mechanical
+                const dur = complete
+                    ? Math.max(180, 260 - traveled * 0.35)
+                    : Math.max(130, 190 - traveled * 0.4);
+        
+                // Pure ease-out: fast start, graceful stop — zero overshoot on both paths
+                const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
+        
+                const fromTarget = complete ? (state.dir < 0 ? -state.W : state.W) : 0;
+                const toTarget   = complete ? 0 : (state.dir < 0 ? state.W : -state.W);
+        
+                state.fromEl.style.transition = `transform ${dur}ms ${ease}`;
+                state.toEl.style.transition   = `transform ${dur}ms ${ease}`;
+                state.fromEl.style.transform  = `translateX(${fromTarget}px)`;
+                state.toEl.style.transform    = `translateX(${toTarget}px)`;
+        
+                setTimeout(() => {
+                    state.animating = false;
+                    commit(complete ? state.toTab : state.fromTab);
+                }, dur + 16);
+        
             }, { passive: true });
-
-            document.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
+        
+            /* ─────────────── TOUCH CANCEL ─────────────── */
+            document.addEventListener('touchcancel', () => {
+                if (!state.tracking) return;
+                if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
+        
+                resetEl(state.fromEl);
+                resetEl(state.toEl);
+                if (state.toWasHidden) state.toEl.classList.add('hidden');
+                unlockScroll();
+        
+                state.animating = false;
+                state.tracking  = false;
+                state.settled   = false;
+                state.isHoriz   = false;
             }, { passive: true });
-        }
-
+        
+        })();
+    
         // ================================================================
         // EDIT-MODE DRAG TO REORDER UTILITY
         // ================================================================
