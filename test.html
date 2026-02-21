@@ -2442,7 +2442,7 @@
         <button id="btnFetchLive" class="tool-btn hidden"
                 style="margin-top:10px; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;"
                 onclick="openAwosModal()">
-            📡 Open Live Sensor View (KMHR)
+            📡 Open Live Sensor View AWOS (KMHR)
         </button>
     
         <!-- METAR Data Grid -->
@@ -7785,25 +7785,30 @@ async function findNearbyStations(lat, lon) {
          * Priority: LIFR > IFR > MVFR > VFR
          * Falls back to 'VFR' (green) if TAF not available or unparseable.
          */
-        function tafWorstRules(icao) {
+        function tafRulesSummary(icao) {
             const cacheKey = `cache_/api/weather?type=taf&station=${icao}`;
+            const priority = { LIFR: 4, IFR: 3, MVFR: 2, VFR: 1 };
             try {
                 const raw = localStorage.getItem(cacheKey);
-                if (!raw) return 'VFR';
+                if (!raw) return { initial: null, worst: null };
                 const taf = JSON.parse(raw);
-                const forecasts = taf?.data?.forecast || [];
+                const forecasts = (taf?.data?.forecast || []).filter(f => f.flight_rules);
         
-                const priority = { LIFR: 4, IFR: 3, MVFR: 2, VFR: 1 };
-                let worst = 'VFR';
+                if (forecasts.length === 0) return { initial: null, worst: null };
+        
+                const initial = forecasts[0].flight_rules;
+                let worst = initial;
+        
                 for (const f of forecasts) {
                     const rules = f.flight_rules || 'VFR';
                     if ((priority[rules] || 0) > (priority[worst] || 0)) {
                         worst = rules;
                     }
                 }
-                return worst;
+        
+                return { initial, worst };
             } catch(e) {
-                return 'VFR';
+                return { initial: null, worst: null };
             }
         }
     
@@ -7938,10 +7943,43 @@ async function findNearbyStations(lat, lon) {
                             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
                                 ${badge(rules, rulesBg, rulesColor)}
                                 ${hasTaf ? (() => {
-                                    const tafRules  = tafWorstRules(icao);
-                                    const tafBg     = { VFR:'var(--success)', MVFR:'var(--mvfr)', IFR:'var(--danger)', LIFR:'var(--lifr)' }[tafRules] || '#32d74b';
-                                    const tafColor  = tafRules === 'VFR' ? '#000' : '#fff';
-                                    return badge('TAF', tafBg, tafColor);
+                                    const { initial, worst } = tafRulesSummary(icao);
+                                    if (!initial) return '';
+                                
+                                    const bgMap    = { VFR: 'var(--success)', MVFR: 'var(--mvfr)', IFR: 'var(--danger)', LIFR: 'var(--lifr)' };
+                                    const colorMap = { VFR: '#000', MVFR: '#fff', IFR: '#fff', LIFR: '#fff' };
+                                
+                                    const initBg    = bgMap[initial]  || '#555';
+                                    const initColor = colorMap[initial] || '#fff';
+                                
+                                    // Single pill — same initial and worst condition
+                                    if (initial === worst) {
+                                        return `
+                                            <div style="display:flex;border-radius:5px;overflow:hidden;width:44px;
+                                                        font-size:11px;font-weight:900;letter-spacing:0.4px;">
+                                                <div style="flex:1;background:${initBg};color:${initColor};
+                                                            text-align:center;padding:3px 0;">TAF</div>
+                                            </div>`;
+                                    }
+                                
+                                    // Split pill — show initial | worst
+                                    const worstBg    = bgMap[worst]  || '#555';
+                                    const worstColor = colorMap[worst] || '#fff';
+                                
+                                    return `
+                                        <div title="TAF: ${initial} initially → ${worst} worst"
+                                             style="display:flex;border-radius:5px;overflow:hidden;
+                                                    font-size:9px;font-weight:900;letter-spacing:0.2px;width:58px;">
+                                            <div style="flex:1;background:${initBg};color:${initColor};
+                                                        text-align:center;padding:3px 2px;line-height:1.2;">
+                                                ${initial}
+                                            </div>
+                                            <div style="width:1px;background:rgba(0,0,0,0.3);"></div>
+                                            <div style="flex:1;background:${worstBg};color:${worstColor};
+                                                        text-align:center;padding:3px 2px;line-height:1.2;">
+                                                ${worst}
+                                            </div>
+                                        </div>`;
                                 })() : ''}
                                 ${isAuto ? badge('AUTO', '#555', '#ccc')   : ''}
                             </div>
