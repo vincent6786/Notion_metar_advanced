@@ -6552,27 +6552,35 @@ async function findNearbyStations(lat, lon) {
                     }
                 }
         
-                async function toggleMultiDashboard() {
-                    const toggle = document.getElementById('toggleMultiDashboard');
-                    const enabled = toggle?.checked || false;
-                    await Storage.set('efb_multi_dashboard_enabled', enabled);
-                    applyDashboardMode(enabled);
-                    if (enabled) {
-                        setTab('dashboard');
-                        await loadMultiAirports();
-                        showToast('📊 Dashboard enabled');
-                        if (!multiRefreshInterval && multiAirports.length > 0) {
-                            multiRefreshInterval = setInterval(refreshMultiData, 300000);
-                        }
-                    } else {
-                        setTab('metar');
-                        if (multiRefreshInterval) {
-                            clearInterval(multiRefreshInterval);
-                            multiRefreshInterval = null;
-                        }
-                        showToast('Dashboard disabled');
-                    }
+        async function toggleMultiDashboard() {
+            const toggle  = document.getElementById('toggleMultiDashboard');
+            const enabled = toggle?.checked || false;
+            await Storage.set('efb_multi_dashboard_enabled', enabled);
+            applyDashboardMode(enabled);
+            if (enabled) {
+                setTab('dashboard');
+                await loadMultiAirports();
+                showToast('📊 Dashboard enabled');
+                if (!multiRefreshInterval && multiAirports.length > 0) {
+                    multiRefreshInterval = setInterval(refreshMultiData, 300000);
                 }
+            } else {
+                setTab('metar');
+                if (multiRefreshInterval) {
+                    clearInterval(multiRefreshInterval);
+                    multiRefreshInterval = null;
+                }
+                showToast('Dashboard disabled');
+            }
+        
+            // Redraw wind rose onto the correct canvas after tab switch settles
+            if (stationData) {
+                setTimeout(() => {
+                    drawWindRose();
+                    renderRunwaysComplex();
+                }, 100);
+            }
+        }
     
         function applyDashboardMode(enabled) {
             const tabMetar     = document.getElementById('tabMetar');
