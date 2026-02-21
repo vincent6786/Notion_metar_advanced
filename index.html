@@ -2256,7 +2256,7 @@
             opacity: 0;
         }
         .help-section.open .help-body {
-            max-height: 2000px;
+            max-height: 5000px;
             opacity: 1;
         }
         /* ── Drag handle ── */
@@ -3875,9 +3875,15 @@
                 const res = await fetch(`/api/settings?pin=${pin}`, { method: 'DELETE' });
                 if (res.ok) {
                     showToast('🗑️ Cloud backup deleted');
-                    updateSyncStatus('--', '#555');
-                    const el = document.getElementById('lastSyncTime');
-                    if (el) el.innerText = '--';
+                    // Clear storage mode so the setup screen shows on reload
+                    localStorage.removeItem('efb_storage_mode');
+                    localStorage.removeItem('efb_cloud_pin');
+                    await EFB_DB.delete('_efb_storage_mode');
+                    await EFB_DB.delete('_efb_cloud_pin');
+                    setTimeout(() => {
+                        showToast('Returning to setup...');
+                        setTimeout(() => location.reload(), 800);
+                    }, 600);
                 } else { showToast('⚠️ Delete failed. Try again.'); }
             } catch(e) { showToast('⚠️ No connection. Try again.'); }
         }
@@ -4302,9 +4308,30 @@
                 inputField.value = savedDefault;
                 document.getElementById('icao').value = savedDefault;
                 loadData();   // data loads into whichever tab is already showing
-            } else {
+                } else {
                 document.getElementById('icao').value = '';
+                // Welcome prompt for new users with no default airport
+                const welcomeHtml = `
+                    <div style="text-align:center;padding:24px 10px;">
+                        <div style="font-size:36px;margin-bottom:12px;">✈️</div>
+                        <div style="font-weight:800;color:var(--text);font-size:16px;margin-bottom:8px;">Welcome to METAR GO</div>
+                        <div style="font-size:12px;color:var(--sub-text);margin-bottom:20px;line-height:1.7;">
+                            Set a <b style="color:var(--text);">Default Airport</b> so the app loads<br>your home base automatically on every launch.
+                        </div>
+                        <button onclick="closeOnboardingAndGo('settings','defaultIcaoInput')"
+                                style="background:var(--accent);border:none;color:#fff;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+                            🏠 Set Default Airport →
+                        </button>
+                        <div style="margin-top:14px;font-size:11px;color:#444;">
+                            Or search any ICAO code above to get started
+                        </div>
+                    </div>`;
+                document.getElementById('rawMetar').innerHTML = welcomeHtml;
+                const rm2 = document.getElementById('rawMetar2');
+                if (rm2) rm2.innerHTML = welcomeHtml;  // mirror to weather tab
+                showOnboarding();
             }
+                
 
             const savedXW   = await Storage.get('efb_min_xw');
             const savedCeil = await Storage.get('efb_min_ceil');
