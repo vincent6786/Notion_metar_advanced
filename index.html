@@ -3223,7 +3223,7 @@
         </div>
         <div class="section-title">EXTERNAL RESOURCES</div>
         <div id="btnMetarTaf" class="atc-btn" style="cursor:pointer;"
-             onclick="openInAppBrowser('https://metar-taf.com/', 'Metar-Taf.com')">
+             onclick="window.open('https://metar-taf.com/', '_blank')">
             <span>☁️ Metar-Taf.com</span><span>↗</span>
         </div>
         <div class="atc-btn" style="cursor:pointer;"
@@ -3231,7 +3231,7 @@
             <span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span>
         </div>
         <div id="btnLiveAtc" class="atc-btn" style="cursor:pointer;"
-             onclick="openInAppBrowser('https://www.liveatc.net/', 'LiveATC.net')">
+             onclick="window.open('https://www.liveatc.net/', '_blank')">
             <span>📡 LiveATC.net</span><span>↗</span>
         </div>
 
@@ -5403,11 +5403,11 @@
         function updateAudioSection(icao) {
             const container   = document.getElementById('audioPlayerTarget');
             const label       = document.getElementById('audioLabel');
-            const liveAtcBtn  = document.getElementById('btnLiveAtc');
+            const liveAtcBtn = document.getElementById('btnLiveAtc');
             if (liveAtcBtn) {
-                liveAtcBtn.onclick = () => openInAppBrowser(
+                liveAtcBtn.onclick = () => window.open(
                     `https://www.liveatc.net/search/?icao=${icao}`,
-                    `LiveATC (${icao})`
+                    '_blank'
                 );
                 liveAtcBtn.querySelector('span').innerText = `📡 LiveATC (${icao})`;
             }
@@ -5415,9 +5415,9 @@
             // Update Metar-Taf link with current airport
             const metarTafBtn = document.getElementById('btnMetarTaf');
             if (metarTafBtn) {
-                metarTafBtn.onclick = () => openInAppBrowser(
-                    `https://metar-taf.com/?hl=${icao}`,
-                    `Metar-Taf (${icao})`
+                metarTafBtn.onclick = () => window.open(
+                    `https://metar-taf.com/${icao}`,
+                    '_blank'
                 );
                 metarTafBtn.querySelector('span').innerText = `☁️ Metar-Taf.com (${icao})`;
             }
