@@ -6653,20 +6653,21 @@ async function findNearbyStations(lat, lon) {
         }
 
         // ================================================================
-        // SMOOTH SWIPE NAVIGATION — FIXED (tabs stay intact, content-area only)
+        // SMOOTH SWIPE NAVIGATION — v2 (no bounce, locked axes)
         // ================================================================
         (function () {
             if (!('ontouchstart' in window)) return;
         
             const state = {
-                tracking:  false,
-                settled:   false,
+                tracking:   false,  // actively panning a swipe
+                settled:    false,  // intent has been determined (horiz vs vert)
+                isHoriz:    false,  // true = horizontal swipe, false = vertical scroll
                 startX: 0, startY: 0, curX: 0,
                 fromEl: null, toEl: null,
                 fromTab: null, toTab: null,
-                dir: 0,          // +1 = going right (reveal prev), -1 = going left (reveal next)
-                W: 0,            // width of content area (not full viewport)
-                clip: null,      // the temporary clipping wrapper div
+                dir: 0,
+                W: 0,
+                clip: null,
                 raf: null,
                 animating: false
             };
@@ -6679,7 +6680,7 @@ async function findNearbyStations(lat, lon) {
                     : ['metar','taf','info','atc','world','tools','settings','help'];
             }
         
-            /* ── create a fixed clip container over the content area ── */
+            /* ── create a fixed clip container over the content area only ── */
             function createClip(rect) {
                 const d = document.createElement('div');
                 d.style.cssText = [
@@ -6697,9 +6698,8 @@ async function findNearbyStations(lat, lon) {
                 return d;
             }
         
-            /* ── move a panel into the clip wrapper and position it ── */
+            /* ── move a panel into the clip wrapper ── */
             function prepInClip(el, xPx, clip) {
-                // remember original DOM position so we can put it back
                 el._sp = el.parentNode;
                 el._sn = el.nextSibling;
                 el._sh = el.classList.contains('hidden');
@@ -6730,27 +6730,17 @@ async function findNearbyStations(lat, lon) {
                 delete el._sp; delete el._sn; delete el._sh;
             }
         
-            /* ── remove clip, restore DOM, activate the winning tab ── */
+            /* ── finish: remove clip, restore DOM, activate winner ── */
             function commit(name) {
-                const destEl = document.getElementById('tab-' + name);
-        
-                // 1. Restore both panels to original DOM positions (removes absolute positioning)
                 if (state.fromEl) restoreEl(state.fromEl);
                 if (state.toEl)   restoreEl(state.toEl);
-        
-                // 2. Remove the clip overlay
-                if (state.clip && state.clip.parentNode) {
-                    state.clip.parentNode.removeChild(state.clip);
-                }
+                if (state.clip?.parentNode) state.clip.parentNode.removeChild(state.clip);
                 state.clip = null;
         
-                // 3. Deactivate all sections
                 document.querySelectorAll('.view-section').forEach(el => {
                     el.classList.remove('active');
                     el.style.display = '';
                 });
-        
-                // 4. Update tab bar highlight
                 document.querySelectorAll('.tab').forEach(t => {
                     t.classList.remove('active');
                     if (t.getAttribute('onclick')?.includes(`'${name}'`)) {
@@ -6759,35 +6749,65 @@ async function findNearbyStations(lat, lon) {
                     }
                 });
         
-                // 5. Activate destination (suppress re-entry slide animation)
+                const destEl = document.getElementById('tab-' + name);
                 if (destEl) {
                     destEl.classList.remove('hidden');
                     destEl.classList.add('swipe-committed', 'active');
                 }
         
-                // 6. Tab-specific side effects
-                if (name === 'world') updateClock();
+                if (name === 'world')   updateClock();
                 if (name === 'taf'     && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
                 if (name === 'weather' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 50);
         
-                requestAnimationFrame(() => {
-                    if (destEl) destEl.classList.remove('swipe-committed');
-                });
+                requestAnimationFrame(() => destEl?.classList.remove('swipe-committed'));
             }
         
-            /* ── RAF render: translate both panels ── */
+            /* ── RAF: translate both panels during drag ── */
             function renderFrame() {
                 if (!state.tracking) return;
-                const raw = state.curX - state.startX;
-                // Rubber-band resistance past 52% of width
+                const raw   = state.curX - state.startX;
                 const limit = state.W * 0.52;
-                let tx = raw;
-                if (Math.abs(raw) > limit) {
-                    tx = Math.sign(raw) * (limit + (Math.abs(raw) - limit) * 0.10);
-                }
+                // Rubber-band resistance only — no overshoot/bounce
+                const tx = Math.abs(raw) > limit
+                    ? Math.sign(raw) * (limit + (Math.abs(raw) - limit) * 0.08)
+                    : raw;
+        
                 state.fromEl.style.transform = `translateX(${tx}px)`;
                 state.toEl.style.transform   = `translateX(${(state.dir < 0 ? state.W : -state.W) + tx}px)`;
                 state.raf = null;
+            }
+        
+            /* ── cancel: snap everything back cleanly, no spring ── */
+            function cancelSwipe() {
+                if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
+        
+                if (state.tracking) {
+                    // Snap back without bounce
+                    const dur = 180;
+                    const ease = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // smooth ease-out, no overshoot
+                    state.fromEl.style.transition = `transform ${dur}ms ${ease}`;
+                    state.toEl.style.transition   = `transform ${dur}ms ${ease}`;
+                    state.fromEl.style.transform  = 'translateX(0)';
+                    state.toEl.style.transform    = `translateX(${state.dir < 0 ? state.W : -state.W}px)`;
+        
+                    state.animating = true;
+                    setTimeout(() => {
+                        state.animating = false;
+                        if (state.fromEl) restoreEl(state.fromEl);
+                        if (state.toEl)   restoreEl(state.toEl);
+                        if (state.clip?.parentNode) state.clip.parentNode.removeChild(state.clip);
+                        state.clip = null;
+                    }, dur + 16);
+                } else {
+                    if (state.fromEl) restoreEl(state.fromEl);
+                    if (state.toEl)   restoreEl(state.toEl);
+                    if (state.clip?.parentNode) state.clip.parentNode.removeChild(state.clip);
+                    state.clip = null;
+                }
+        
+                state.tracking = false;
+                state.settled  = false;
+                state.isHoriz  = false;
             }
         
             /* ─────────────────── TOUCH START ─────────────────── */
@@ -6807,9 +6827,11 @@ async function findNearbyStations(lat, lon) {
                 state.curX     = state.startX;
                 state.tracking = false;
                 state.settled  = false;
+                state.isHoriz  = false;
             }, { passive: true });
         
             /* ─────────────────── TOUCH MOVE ─────────────────── */
+            // Must be non-passive so we can preventDefault() to lock scroll during horiz swipe
             document.addEventListener('touchmove', e => {
                 if (state.animating) return;
         
@@ -6818,18 +6840,25 @@ async function findNearbyStations(lat, lon) {
                 const dx = x - state.startX;
                 const dy = y - state.startY;
         
-                /* wait until gesture intent is unambiguous */
+                /* ── determine intent once we have enough movement ── */
                 if (!state.settled) {
-                    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-                    if (Math.abs(dy) > Math.abs(dx) * 0.85)   return; // vertical scroll — ignore
+                    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
         
                     state.settled = true;
         
-                    /* resolve which tabs are involved */
+                    if (Math.abs(dy) > Math.abs(dx) * 0.9) {
+                        // Clearly vertical — let the browser handle native scroll, don't intercept
+                        state.isHoriz = false;
+                        return;
+                    }
+        
+                    // Horizontal swipe — set up panels
+                    state.isHoriz = true;
+        
                     const order    = getOrder();
                     state.fromTab  = document.querySelector('.view-section.active')?.id.replace('tab-', '');
                     const idx      = order.indexOf(state.fromTab);
-                    if (idx === -1) return;
+                    if (idx === -1) { state.isHoriz = false; return; }
         
                     state.dir   = dx < 0 ? -1 : 1;
                     const nIdx  = (idx - state.dir + order.length) % order.length;
@@ -6837,57 +6866,62 @@ async function findNearbyStations(lat, lon) {
         
                     state.fromEl = document.getElementById('tab-' + state.fromTab);
                     state.toEl   = document.getElementById('tab-' + state.toTab);
-                    if (!state.fromEl || !state.toEl) return;
+                    if (!state.fromEl || !state.toEl) { state.isHoriz = false; return; }
         
-                    /* measure the content area (just the active section, not the whole page) */
                     const rect = state.fromEl.getBoundingClientRect();
                     state.W    = rect.width;
-        
-                    /* create clip container exactly over the content area → tabs stay above/beside */
                     state.clip = createClip(rect);
-        
-                    /* move both panels into the clip and set initial positions */
                     prepInClip(state.fromEl, 0, state.clip);
                     prepInClip(state.toEl, state.dir < 0 ? state.W : -state.W, state.clip);
         
                     state.tracking = true;
                 }
         
-                if (!state.tracking) return;
-                state.curX = x;
+                // Vertical scroll — don't interfere at all
+                if (!state.isHoriz) return;
         
-                if (!state.raf) {
-                    state.raf = requestAnimationFrame(renderFrame);
-                }
-            }, { passive: true });
+                // Horizontal swipe — lock vertical scroll
+                e.preventDefault();
+        
+                state.curX = x;
+                if (!state.raf) state.raf = requestAnimationFrame(renderFrame);
+        
+            }, { passive: false }); // ← non-passive so preventDefault works
         
             /* ─────────────────── TOUCH END ─────────────────── */
             document.addEventListener('touchend', e => {
-                if (!state.tracking) { state.settled = false; return; }
+                if (!state.tracking) {
+                    state.settled = false;
+                    state.isHoriz = false;
+                    return;
+                }
                 if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
         
                 const dx       = state.curX - state.startX;
                 const velX     = e.changedTouches[0].clientX - state.curX;
                 const traveled = Math.abs(dx);
-                const flick    = Math.abs(velX) > 3;
-                const enough   = traveled > state.W * 0.25;
+                const flick    = Math.abs(velX) > 4;
+                const enough   = traveled > state.W * 0.28;
                 const correct  = Math.sign(dx) === state.dir;
-        
                 const complete = correct && (enough || flick);
-                const dur      = complete
-                    ? Math.max(160, 280 - traveled * 0.4)
-                    : Math.max(120, 200 - traveled * 0.5);
-        
-                const easeOut  = 'cubic-bezier(0.22, 1, 0.36, 1)';
-                const snapBack = 'cubic-bezier(0.34, 1.26, 0.64, 1)'; // slight spring on cancel
         
                 state.animating = true;
                 state.tracking  = false;
                 state.settled   = false;
+                state.isHoriz   = false;
+        
+                // Duration scales with how far the user dragged (feels natural, not mechanical)
+                const dur = complete
+                    ? Math.max(180, 260 - traveled * 0.35)
+                    : Math.max(140, 190 - traveled * 0.4);
+        
+                // Smooth ease-out only — NO overshoot/spring on either commit or cancel
+                const ease = complete
+                    ? 'cubic-bezier(0.22, 1, 0.36, 1)'       // fast start, graceful settle
+                    : 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // clean snap-back, no bounce
         
                 const fromTarget = complete ? (state.dir < 0 ? -state.W : state.W) : 0;
                 const toTarget   = complete ? 0 : (state.dir < 0 ? state.W : -state.W);
-                const ease       = complete ? easeOut : snapBack;
         
                 state.fromEl.style.transition = `transform ${dur}ms ${ease}`;
                 state.toEl.style.transition   = `transform ${dur}ms ${ease}`;
@@ -6903,19 +6937,11 @@ async function findNearbyStations(lat, lon) {
         
             /* ─────────────────── TOUCH CANCEL ─────────────────── */
             document.addEventListener('touchcancel', () => {
-                if (!state.tracking) return;
-                if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
-        
-                if (state.fromEl) restoreEl(state.fromEl);
-                if (state.toEl)   restoreEl(state.toEl);
-                if (state.clip?.parentNode) state.clip.parentNode.removeChild(state.clip);
-                state.clip = null;
-        
-                state.animating = false;
-                state.tracking  = false;
-                state.settled   = false;
+                cancelSwipe();
             }, { passive: true });
+        
         })();
+    
         // ================================================================
         // EDIT-MODE DRAG TO REORDER UTILITY
         // ================================================================
