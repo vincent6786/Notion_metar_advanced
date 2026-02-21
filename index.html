@@ -2941,7 +2941,14 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">Swipe Navigation</div>
-                        <div class="help-a">On touch devices, swipe left/right anywhere on screen to move between tabs in order. Swiping is intentionally disabled on inputs, buttons, the canvas, and scrollable card areas to avoid conflicts.</div>
+                        <div class="help-a">
+                            Swipe <b>left</b> to go to the next tab, <b>right</b> to go back.
+                            The tab bar and top bar stay fixed — only the content area slides.<br><br>
+                            The gesture engine automatically distinguishes horizontal swipes from vertical scrolling:
+                            once it detects you're swiping sideways, it locks scroll for a clean animation with no page drift.
+                            A short flick works too — you don't need to drag the full way across.<br><br>
+                            Swiping is intentionally ignored on inputs, buttons, the canvas, modals, and the reorder-drag handle.
+                        </div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Offline Mode</div>
@@ -3543,13 +3550,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.1',                         // ← bump this on every update
+            version: '3.1.2',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
                     icon: '☁️',
                     title: 'Dashboard mode!',
                     desc: 'Toggle in the settings~ New combined METAR + TAF tab when Dashboard mode is enabled. Switch between views with the pill toggle.'
+                },
+                {
+                    icon: '👆',
+                    title: 'Smoother Swipe Navigation',
+                    desc: 'Left/right swipe between tabs is now fluid and flicker-free. The tab bar stays fixed while only the content slides. Vertical scrolling and horizontal swiping no longer conflict.'
                 }
                 // {
                 //     icon: '📊',
