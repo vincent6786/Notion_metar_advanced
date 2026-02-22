@@ -1686,91 +1686,47 @@
 
         /* ── 1100px+: Desktop ── */
         @media (min-width: 1100px) {
-
             body {
                 padding: 20px 40px;
                 grid-template-columns: 152px 1fr;
                 column-gap: 28px;
             }
-
             .tab { font-size: 12px; padding: 11px 15px; }
-
-            /* Wider wind rose column */
-            #tab-metar {
-                grid-template-columns: 240px 1fr;
-                column-gap: 20px;
-            }
-
-            #tab-metar > .wind-vis-container {
-                padding: 18px 16px 14px;
-            }
-
-            #tab-metar #windRose {
-                width: 160px !important;
-                height: 160px !important;
-            }
-
-            /* Keep 2-col for metar-grid panel (sky+fr side by side looks better) */
-            #tab-metar > .metar-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            /* Value cards: 4 per row on wide screens inside the 2-col grid
-               we can bump to a 4-col layout here since the right panel is wide */
-            #tab-metar > .metar-grid {
-                grid-template-columns: 1fr 1fr 1fr 1fr;
-            }
-            /* Sky and FR still span 2 cols each → side by side in 4-col */
+            #tab-metar { grid-template-columns: 240px 1fr; column-gap: 20px; }
+            #tab-metar > .wind-vis-container { padding: 18px 16px 14px; }
+            #tab-metar #windRose { width: 160px !important; height: 160px !important; }
+            #tab-metar > .metar-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
             #tab-metar .sky-section      { grid-column: span 2 !important; }
             #tab-metar .fr-bar-container { grid-column: span 2 !important; }
-            /* Value cards: 1 col each (4 per row) */
-            #tab-metar .metar-card { grid-column: span 1; }
-            /* Temp/dewpoint: span 4 */
+            #tab-metar .metar-card       { grid-column: span 1; }
             #tab-metar .metar-card.full-width { grid-column: span 4 !important; }
-
-            /* Taller meteogram */
             #meteoCanvas { height: 200px; }
-
-            /* Nearby buttons larger */
             .nearby-btn { padding: 8px 14px; font-size: 13px; }
-
-            /* Other tab grids */
             .info-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            /* Weather tab mirror */
+            #weather-metar-pane { grid-template-columns: 240px 1fr; column-gap: 20px; }
+            #weather-metar-pane #windRose2 { width: 160px !important; height: 160px !important; }
+            #weather-metar-pane > .wind-vis-container { padding: 18px 16px 14px; }
+            #weather-metar-pane > .metar-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            #weather-metar-pane .sky-section      { grid-column: span 2 !important; }
+            #weather-metar-pane .fr-bar-container { grid-column: span 2 !important; }
+            #weather-metar-pane .metar-card       { grid-column: span 1; }
+            #weather-metar-pane .metar-card.full-width { grid-column: span 4 !important; }
         }
-
-
+        
         /* ── 1400px+: Wide desktop ── */
         @media (min-width: 1400px) {
-
-            body {
-                max-width: 1440px;
-                padding: 24px 48px;
-                grid-template-columns: 160px 1fr;
-            }
-
+            body { max-width: 1440px; padding: 24px 48px; grid-template-columns: 160px 1fr; }
             .tab { font-size: 12px; padding: 12px 18px; }
-
-            #tab-metar {
-                grid-template-columns: 260px 1fr;
-            }
-
-            #tab-metar > .wind-vis-container {
-                padding: 20px 18px 16px;
-            }
-
-            #tab-metar #windRose {
-                width: 170px !important;
-                height: 170px !important;
-            }
-
-            /* 5-col metar-grid: sky(2)+fr(2)+extra, then 4+1 value cards */
-            #tab-metar > .metar-grid {
-                grid-template-columns: 1fr 1fr 1fr 1fr;
-            }
-
+            #tab-metar { grid-template-columns: 260px 1fr; }
+            #tab-metar > .wind-vis-container { padding: 20px 18px 16px; }
+            #tab-metar #windRose { width: 170px !important; height: 170px !important; }
+            #tab-metar > .metar-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
             .info-grid { grid-template-columns: repeat(5, 1fr); }
+            #weather-metar-pane { grid-template-columns: 260px 1fr; }
+            #weather-metar-pane #windRose2 { width: 170px !important; height: 170px !important; }
+            #weather-metar-pane > .wind-vis-container { padding: 20px 18px 16px; }
         }
-
         /* ============================================================
            29. SKELETON LOADING SCREENS
         ============================================================ */
@@ -4907,6 +4863,7 @@
                     const ageMin = Math.round((Date.now() - cachedObj.ts) / 60000);
                     console.warn(`[Offline] Serving stale cache for ${endpoint} (${ageMin}m old)`);
                     showOfflineBanner(cachedObj.ts);
+                    if (typeof showSourceFooters === 'function') showSourceFooters();
                     return cachedObj.data;
                 }
                 // No cache at all — throw so the caller can show an error
@@ -5187,43 +5144,71 @@
         // 11b. LOADING SKELETONS
         // ================================================================
         function showLoadingSkeletons() {
+            // Mirror IDs for weather tab (suffix '2')
+            const pairs = [
+                ['rawMetar', 'rawMetar2'],
+                ['skyLayersContainer', 'skyLayersContainer2'],
+            ];
+        
             // Raw METAR skeleton
-            document.getElementById('rawMetar').innerHTML = `
-                <div class="skeleton" style="height:80px;"></div>`;
-            
-            // Sky section skeleton
-            document.getElementById('skyLayersContainer').innerHTML = `
-                <div class="skeleton-text" style="width:70%;"></div>
-                <div class="skeleton-text" style="width:85%;margin-top:8px;"></div>
-                <div class="skeleton-text" style="width:60%;margin-top:8px;"></div>`;
-            
-            // Flight rule bars skeleton
-            document.getElementById('labelCeilVal').innerText = '--';
-            document.getElementById('labelVisVal').innerText = '--';
-            document.getElementById('gaugeCeil').style.width = '0%';
-            document.getElementById('gaugeVis').style.width = '0%';
-            document.getElementById('frMessage').innerText = 'Analyzing conditions...';
-            
-            // Value cards skeleton
-            const cardIds = ['mWind', 'mVis', 'mCeil', 'mAlt', 'mTempC'];
-            cardIds.forEach(id => {
+            ['rawMetar', 'rawMetar2'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.innerHTML = '<div class="skeleton" style="height:18px;width:70%;"></div>';
+                if (el) el.innerHTML = `<div class="skeleton" style="height:80px;"></div>`;
             });
-            
+        
+            // Sky section skeleton
+            ['skyLayersContainer', 'skyLayersContainer2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = `
+                    <div class="skeleton-text" style="width:70%;"></div>
+                    <div class="skeleton-text" style="width:85%;margin-top:8px;"></div>
+                    <div class="skeleton-text" style="width:60%;margin-top:8px;"></div>`;
+            });
+        
+            // Flight rule bars skeleton
+            ['', '2'].forEach(sfx => {
+                const lc = document.getElementById('labelCeilVal' + sfx);
+                const lv = document.getElementById('labelVisVal'  + sfx);
+                const gc = document.getElementById('gaugeCeil'    + sfx);
+                const gv = document.getElementById('gaugeVis'     + sfx);
+                const fm = document.getElementById('frMessage'    + sfx);
+                if (lc) lc.innerText = '--';
+                if (lv) lv.innerText = '--';
+                if (gc) gc.style.width = '0%';
+                if (gv) gv.style.width = '0%';
+                if (fm) fm.innerText = 'Analyzing conditions...';
+            });
+        
+            // Value cards skeleton
+            ['mWind','mVis','mCeil','mAlt','mTempC'].forEach(base => {
+                [base, base + '2'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = '<div class="skeleton" style="height:18px;width:70%;"></div>';
+                });
+            });
+        
             // TAF skeleton
-            document.getElementById('rawTaf').innerText = 'Loading forecast...';
-            document.getElementById('tafBar').innerHTML = `
-                <div class="skeleton" style="height:40px;flex:1;margin-right:4px;"></div>
-                <div class="skeleton" style="height:40px;flex:1;margin-right:4px;"></div>
-                <div class="skeleton" style="height:40px;flex:1;"></div>`;
-            
+            ['rawTaf', 'rawTaf2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = 'Loading forecast...';
+            });
+            ['tafBar', 'tafBar2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = `
+                    <div class="skeleton" style="height:40px;flex:1;margin-right:4px;"></div>
+                    <div class="skeleton" style="height:40px;flex:1;margin-right:4px;"></div>
+                    <div class="skeleton" style="height:40px;flex:1;"></div>`;
+            });
+        
             // NOTAM skeleton
-            document.getElementById('notamList').innerHTML = `
-                <div class="skeleton-card">
-                    <div class="skeleton-text" style="width:90%;"></div>
-                    <div class="skeleton-text" style="width:75%;"></div>
-                </div>`;
+            ['notamList', 'notamList2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = `
+                    <div class="skeleton-card">
+                        <div class="skeleton-text" style="width:90%;"></div>
+                        <div class="skeleton-text" style="width:75%;"></div>
+                    </div>`;
+            });
         }
     
 // ================================================================
@@ -5238,6 +5223,12 @@
                     if (key.startsWith('cache_')) localStorage.removeItem(key);
                 });
                 console.log('[Force Refresh] API cache cleared');
+            }
+
+            // Reset meteogram interval so new airport gets a fresh timer
+            if (window._meteoNowInterval) {
+                clearInterval(window._meteoNowInterval);
+                window._meteoNowInterval = null;
             }
             
             const icao = icaoVal.toUpperCase();
@@ -5522,7 +5513,6 @@
                 label.innerText = "AUDIO STREAMS";
                 container.innerHTML = `<div style="color:var(--sub-text);font-size:13px;text-align:center;padding:10px 0;">No direct in-app stream available for ${icao}.<br><span style="font-size:11px;color:#555;">Use the LiveATC button below.</span></div>`;
             }
-            updateUSAirportLinks(icao); 
         }
 
         // ================================================================
@@ -5652,8 +5642,7 @@
             ctx.fillStyle = 'rgba(10,132,255,0.2)'; ctx.fillRect(nowX - 14, padding.top - 18, 28, 14);
             ctx.fillStyle = '#0a84ff'; ctx.font = '700 9px "SF Mono",monospace'; ctx.textAlign = 'center'; ctx.fillText('NOW', nowX, padding.top - 7);
             ctx.restore();
-            if (canvasId === 'meteoCanvas') {           // only register once
-                if (window._meteoNowInterval) clearInterval(window._meteoNowInterval);
+            if (!window._meteoNowInterval) {
                 window._meteoNowInterval = setInterval(() => {
                     if (meteoDataCache) {
                         drawMeteogram(meteoDataCache, 'meteoCanvas');
@@ -6329,6 +6318,12 @@ async function findNearbyStations(lat, lon) {
         
             drawWindRose();
             renderRunwaysComplex();
+            // Sync rwySelect2 (Weather tab) to match rwySelect
+            const sel2 = document.getElementById('rwySelect2');
+            if (sel2) {
+                sel2.innerHTML = sel.innerHTML;
+                sel2.value     = sel.value;
+            }
         }
 
         function drawWindRose() {
@@ -7218,7 +7213,7 @@ async function findNearbyStations(lat, lon) {
         }
         
         // Mirror all METAR/TAF render calls to the weather tab duplicates
-        function mirrorToWeatherTab(m) {
+        function mirrorToWeatherTab() {
             const enabled = document.getElementById('toggleMultiDashboard')?.checked;
             if (!enabled) return;
         
@@ -8693,27 +8688,6 @@ async function findNearbyStations(lat, lon) {
                 el.style.boxShadow = '0 0 0 3px var(--accent)';
                 setTimeout(() => { el.style.boxShadow = prev; }, 2200);
             }, 350);
-        }
-        // First use 
-        function renderEmptyState(tabId) {
-            const el = document.getElementById(tabId);
-            if (!el) return;
-            el.innerHTML = `
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-                            min-height:55vh;text-align:center;padding:32px 24px;gap:20px;">
-                    <div style="font-size:52px;opacity:0.25;">✈️</div>
-                    <div style="font-size:18px;font-weight:800;color:#fff;opacity:0.6;">No airport selected</div>
-                    <div style="font-size:14px;color:var(--sub-text);line-height:1.7;max-width:260px;">
-                        Search for an airport above, or add one to your<br>favourites to get started.
-                    </div>
-                    <button onclick="document.getElementById('searchInput')?.focus()"
-                            style="margin-top:8px;background:var(--accent);color:#fff;
-                                   border:none;border-radius:10px;padding:11px 28px;
-                                   font-size:15px;font-weight:700;cursor:pointer;
-                                   box-shadow:0 2px 12px rgba(10,132,255,0.35);">
-                        Search Airport
-                    </button>
-                </div>`;
         }
     
 
