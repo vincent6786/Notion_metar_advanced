@@ -4049,8 +4049,8 @@
                                color:#fff;padding:14px;border-radius:12px;
                                font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;
                                display:flex;align-items:center;justify-content:space-between;">
-                    <span>📻 Open in LiveATC App</span>
-                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">Downloads if not installed</span>
+                    <span>📻 Open / Get LiveATC App</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">App Store</span>
                 </button>
         
                 <!-- Open in Browser -->
@@ -5540,19 +5540,8 @@
         
         function openLiveAtcApp() {
             closeLiveAtcChoice();
-        
-            // Try to open the app
-            window.location.href = 'liveatc://';
-        
-            // After 1.5s, if app didn't open, go to App Store
-            const fallback = setTimeout(() => {
-                window.location.href = 'https://apps.apple.com/app/id317809458';
-            }, 1500);
-        
-            // App opened successfully — page loses focus, cancel the fallback
-            window.addEventListener('blur', () => {
-                clearTimeout(fallback);
-            }, { once: true });
+            // App Store shows "Open" if installed, "Get" if not — no custom scheme needed
+            window.location.href = 'https://apps.apple.com/app/id317809458';
         }
         
         function openLiveAtcBrowser() {
