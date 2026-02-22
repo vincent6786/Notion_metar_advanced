@@ -7669,15 +7669,40 @@ async function findNearbyStations(lat, lon) {
         // ================================================================
         // 27. LAUNCH ANIMATION & STARTUP
         // ================================================================
-        function runLaunchAnimation() {
-            return new Promise((resolve) => {
-                const screen = document.getElementById('launchScreen');
-                if (!screen) { resolve(); return; }
+        async function runLaunchAnimation() {
+          return new Promise((resolve) => {
+            const screen = document.getElementById('launchScreen');
+            if (!screen) { resolve(); return; }
+        
+            // ── Fetch maintenance status in parallel with the animation ──
+            const statusPromise = fetch('/api/status')
+              .then(r => r.json())
+              .catch(() => ({ maintenance: false }));  // fail open — show app
+        
+            setTimeout(async () => {
+              screen.classList.add('fade-out');
+        
+              // Wait for both the fade AND the status check
+              const [, status] = await Promise.all([
+                new Promise(r => setTimeout(r, 800)),  // fade duration
+                statusPromise
+              ]);
+        
+              screen.style.display = 'none';
+        
+              if (status.maintenance) {
+                // Fade body to black, then redirect — feels intentional
+                document.body.style.transition = 'opacity 0.4s ease';
+                document.body.style.opacity = '0';
                 setTimeout(() => {
-                    screen.classList.add('fade-out');
-                    setTimeout(() => { screen.style.display = 'none'; resolve(); }, 800);
-                }, 3600);
-            });
+                  window.location.replace('/maintenance.html');
+                }, 400);
+                return;  // don't resolve — navigation is happening
+              }
+        
+              resolve();
+            }, 3600);  // matches your existing animation duration
+          });
         }
 
         async function checkCodeAvailability(code) {
