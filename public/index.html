@@ -3114,9 +3114,13 @@
                 <input type="text" 
                        id="multiAddInput" 
                        class="multi-add-input" 
-                       placeholder="Enter ICAO/IATA (e.g. KJFK/JFK)" 
+                       placeholder="ICAO or IATA (e.g. KJFK / JFK)" 
                        maxlength="4"
-                       onkeypress="if(event.key==='Enter') addMultiAirport()">
+                       onkeypress="if(event.key==='Enter') addMultiAirport()"
+                       autocapitalize="characters"
+                       autocomplete="off"
+                       autocorrect="off"
+                       spellcheck="false">
                 <button class="multi-add-btn" onclick="addMultiAirport()">+ Add</button>
             </div>
             
@@ -8221,32 +8225,69 @@ async function findNearbyStations(lat, lon) {
 
         async function addMultiAirport() {
             const input = document.getElementById('multiAddInput');
-            const icao = input.value.trim().toUpperCase();
-            
-            if (!icao || icao.length !== 4) {
-                showToast('⚠️ Enter a valid 4-letter ICAO code');
+            const raw   = input.value.trim().toUpperCase();
+
+            if (!raw || raw.length < 3 || raw.length > 4) {
+                showToast('⚠️ Enter a 3-letter IATA or 4-letter ICAO code');
                 return;
             }
-            
-            if (multiAirports.includes(icao)) {
-                showToast('⚠️ Already tracking ' + icao);
-                return;
-            }
-            
+
             if (multiAirports.length >= 8) {
                 showToast('⚠️ Maximum 8 airports');
                 return;
             }
-            
-            multiAirports.push(icao);
-            saveMultiAirports();
-            input.value = '';
-            
-            renderMultiDashboard();
-            fetchMultiAirportData(icao);
-            
-            if (!multiRefreshInterval) {
-                multiRefreshInterval = setInterval(refreshMultiData, 300000);
+
+            const addBtn = document.querySelector('.multi-add-btn');
+            if (addBtn) { addBtn.innerText = '⏳'; addBtn.disabled = true; }
+
+            let icao = raw;
+
+            try {
+                // If 3 letters, treat as IATA and resolve to ICAO via search
+                if (raw.length === 3) {
+                    const res = await secureFetch(`/api/weather?type=search&station=${raw}`);
+
+                    // Handle both array and object-with-numeric-keys responses
+                    let station = null;
+                    if (Array.isArray(res)) {
+                        station = res[0] || null;
+                    } else if (res && typeof res === 'object') {
+                        const items = Object.values(res).filter(
+                            item => item && typeof item === 'object' && item.icao
+                        );
+                        station = items[0] || null;
+                    }
+
+                    if (!station?.icao) {
+                        showToast(`❌ Could not find airport for "${raw}"`);
+                        return;
+                    }
+
+                    icao = station.icao.toUpperCase();
+                    showToast(`🔍 ${raw} → ${icao}`);
+                }
+
+                if (multiAirports.includes(icao)) {
+                    showToast(`⚠️ Already tracking ${icao}`);
+                    return;
+                }
+
+                multiAirports.push(icao);
+                saveMultiAirports();
+                input.value = '';
+
+                renderMultiDashboard();
+                fetchMultiAirportData(icao);
+
+                if (!multiRefreshInterval) {
+                    multiRefreshInterval = setInterval(refreshMultiData, 300000);
+                }
+
+            } catch(e) {
+                console.error('[addMultiAirport] Error:', e);
+                showToast(`❌ Failed to resolve "${raw}" — check connection`);
+            } finally {
+                if (addBtn) { addBtn.innerText = '+ Add'; addBtn.disabled = false; }
             }
         }
 
