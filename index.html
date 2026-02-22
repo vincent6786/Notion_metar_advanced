@@ -2392,7 +2392,7 @@
             <span id="zuluTimeMain" class="badge-time-main">--:--Z</span>
             <span id="zuluTimeOffset" class="badge-time-offset">UTC</span>
         </div>
-        <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
+        <button id="btnSkyVector" class="icon-btn" onclick="openSkyVector()" title="SkyVector Charts">🗺️</button>
     </div>
 
     <!-- Quick-select / Recent History -->
@@ -4044,14 +4044,23 @@
                 </div>
 
                 <!-- "Open app" button -->
-                <button onclick="openLiveAtcApp()"
+                <!-- <button onclick="openLiveAtcApp()"
                         style="width:100%;background:#1a3a5c;border:1px solid #0a84ff;
                                color:#fff;padding:14px;border-radius:12px;
                                font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;
                                display:flex;align-items:center;justify-content:space-between;">
                     <span>📻 Open / Get LiveATC App</span>
                     <span style="font-size:11px;color:rgba(255,255,255,0.5);">App Store</span>
+                </button> -->
+                <button onclick="openLiveAtcInApp()"
+                        style="width:100%;background:rgba(10,132,255,0.15);border:1px solid var(--accent);
+                               color:#fff;padding:14px;border-radius:12px;
+                               font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;
+                               display:flex;align-items:center;justify-content:space-between;">
+                    <span>🖥️ Open In-App</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">In-App Browser</span>
                 </button>
+                
         
                 <!-- Open in Browser -->
                 <button onclick="openLiveAtcBrowser()"
@@ -5240,7 +5249,7 @@
             addToHistory(icao);
             document.getElementById('icao').blur();
             dismissWelcomeOverlay(); 
-            document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
+            window._skyVectorUrl = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
             
             // Show skeletons immediately for instant feedback
@@ -5459,7 +5468,7 @@
             // Update Metar-Taf link with current airport
             const metarTafBtn = document.getElementById('btnMetarTaf');
             if (metarTafBtn) {
-                metarTafBtn.onclick = () => openExternal(`https://metar-taf.com/${icao}`);
+                metarTafBtn.onclick = () => openInAppBrowser(`https://metar-taf.com/${icao}`, `Metar-Taf.com (${icao})`);
                 metarTafBtn.querySelector('span').innerText = `☁️ Metar-Taf.com (${icao})`;
             }
 
@@ -8681,7 +8690,69 @@ async function findNearbyStations(lat, lon) {
                 </div>`;
         }
     
+        // ================================================================
+        // IN-APP IFRAME OPENERS — SkyVector · LiveATC
+        // ================================================================
 
+        /**
+         * Opens SkyVector airport charts in the in-app browser modal.
+         * URL is set in window._skyVectorUrl when loadData() runs.
+         */
+        function openSkyVector() {
+            const url = window._skyVectorUrl || 'https://skyvector.com';
+            openInAppBrowser(url, 'SkyVector Charts');
+        }
+
+        /**
+         * Opens LiveATC search page in-app.
+         * Called from the LiveATC choice modal "Open In-App" button.
+         */
+        function openLiveAtcInApp() {
+            closeLiveAtcChoice();
+            const icao = _liveAtcCurrentIcao || '';
+            const url  = `https://www.liveatc.net/search/?icao=${icao}`;
+
+            // LiveATC blocks iframes via X-Frame-Options.
+            // We show it inside the modal with a friendly fallback page
+            // so the user gets the "Open ↗" button to escape to browser.
+            const modal   = document.getElementById('usLinkModal');
+            const frame   = document.getElementById('usLinkFrame');
+            const loader  = document.getElementById('usLinkLoader');
+            const tabs    = document.getElementById('iflightplannerTabs');
+            const titleEl = document.getElementById('usLinkModalTitle');
+            const openBtn = document.getElementById('usLinkOpenExternal');
+
+            tabs.style.display = 'none';
+            titleEl.innerText  = `LiveATC${icao ? ' — ' + icao : ''}`;
+            loader.style.display = 'none';
+            openBtn.onclick = () => window.open(url, '_blank');
+
+            // Show a helpful embedded page since LiveATC blocks iframes
+            frame.srcdoc = `
+                <html>
+                <body style="margin:0;background:#0d1117;display:flex;flex-direction:column;
+                             align-items:center;justify-content:center;height:100vh;
+                             font-family:-apple-system,sans-serif;text-align:center;padding:32px;
+                             box-sizing:border-box;color:#e6edf3;">
+                    <div style="font-size:52px;margin-bottom:16px;">📻</div>
+                    <div style="font-size:19px;font-weight:800;margin-bottom:10px;">LiveATC${icao ? ' — ' + icao : ''}</div>
+                    <div style="font-size:13px;color:#8b949e;line-height:1.7;max-width:280px;margin-bottom:28px;">
+                        LiveATC restricts in-app embedding for licensing reasons.<br>
+                        Tap below to open the live ATC stream page in your browser.
+                    </div>
+                    <a href="${url}" target="_blank"
+                       style="background:#0a84ff;color:#fff;padding:14px 32px;
+                              border-radius:13px;text-decoration:none;
+                              font-size:16px;font-weight:800;display:inline-block;
+                              box-shadow:0 4px 20px rgba(10,132,255,0.45);">
+                        Open LiveATC ↗
+                    </a>
+                    <div style="margin-top:16px;font-size:11px;color:#444;">${url}</div>
+                </body>
+                </html>`;
+
+            modal.classList.add('active');
+        }
     
     </script>
 </body>
