@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
-const MAINTENANCE    = process.env.MAINTENANCE_MODE === 'true';
 const BYPASS_KEY     = process.env.MAINTENANCE_BYPASS_KEY || 'admin';
 const BYPASS_COOKIE  = 'efb_bypass';
 
 export function middleware(request) {
+  const MAINTENANCE    = process.env.MAINTENANCE_MODE === 'true';
   const { pathname, searchParams } = request.nextUrl;
 
   // ── Step 1: Activate bypass via ?bypass=yourkey ──
