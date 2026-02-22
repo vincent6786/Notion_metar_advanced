@@ -2392,7 +2392,7 @@
             <span id="zuluTimeMain" class="badge-time-main">--:--Z</span>
             <span id="zuluTimeOffset" class="badge-time-offset">UTC</span>
         </div>
-        <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
+        <button id="linkSkyVector" onclick="openSkyVector()" class="icon-btn" title="Charts">🗺️</button>
     </div>
 
     <!-- Quick-select / Recent History -->
@@ -5243,7 +5243,7 @@
             addToHistory(icao);
             document.getElementById('icao').blur();
             dismissWelcomeOverlay(); 
-            document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
+            window._skyVectorIcao = icao;
             updateHeaderCat('Loading', '');
             
             // Show skeletons immediately for instant feedback
@@ -5550,6 +5550,14 @@
         function openLiveAtcBrowser() {
             closeLiveAtcChoice();
             openExternal(`https://www.liveatc.net/search/?icao=${_liveAtcCurrentIcao}`);
+        }
+
+        function openSkyVector() {
+            const icao = window._skyVectorIcao || document.getElementById('icao').value.trim().toUpperCase();
+            const url  = icao
+                ? `https://skyvector.com/airport/${icao}`
+                : 'https://skyvector.com/';
+            openInAppBrowser(url, icao ? `SkyVector — ${icao}` : 'SkyVector');
         }
     
         // ================================================================
