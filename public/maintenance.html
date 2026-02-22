@@ -395,6 +395,53 @@
 
         <div class="live-clock" id="liveClock">--:--:-- Z</div>
 
+        <!-- Admin Bypass Panel (hidden) -->
+        <div id="adminPanel" style="
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 40px;
+        ">
+            <div style="font-family:'Space Mono',monospace;font-size:11px;color:#555;letter-spacing:2px;">ADMIN ACCESS</div>
+            <input id="adminInput" type="password" placeholder="Enter passcode"
+                style="
+                    background: #111;
+                    border: 1px solid #333;
+                    color: #fff;
+                    padding: 12px 20px;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    text-align: center;
+                    letter-spacing: 4px;
+                    outline: none;
+                    width: 220px;
+                ">
+            <div id="adminError" style="display:none; color:#ff453a; font-size:12px; font-weight:700;">
+                ❌ Incorrect passcode
+            </div>
+            <button onclick="checkAdminCode()" style="
+                background: #0a84ff;
+                border: none;
+                color: #fff;
+                padding: 10px 32px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 700;
+                cursor: pointer;
+            ">Unlock →</button>
+            <button onclick="document.getElementById('adminPanel').style.display='none'"
+                style="background:transparent;border:none;color:#555;font-size:12px;cursor:pointer;">
+                Cancel
+            </button>
+        </div>
+        
     </div>
 
     <script>
@@ -427,6 +474,49 @@
 
         // Auto-refresh every 60s to catch when maintenance ends
         setTimeout(() => location.reload(), 60000);
+
+        // ── ADMIN BYPASS ──
+        let tapCount = 0;
+        let tapTimer = null;
+        
+        document.querySelector('.aircraft-icon').addEventListener('click', () => {
+            tapCount++;
+            clearTimeout(tapTimer);
+        
+            if (tapCount >= 5) {
+                tapCount = 0;
+                document.getElementById('adminPanel').style.display = 'flex';
+                document.getElementById('adminInput').focus();
+                return;
+            }
+        
+            tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+        });
+        
+        function checkAdminCode() {
+            const input = document.getElementById('adminInput').value;
+            const ADMIN_CODE = 'YOUR_SECRET_CODE';  // ← change this
+        
+            if (input === ADMIN_CODE) {
+                document.body.style.transition = 'opacity 0.4s ease';
+                document.body.style.opacity = '0';
+                setTimeout(() => {
+                    window.location.replace('/index.html');
+                }, 400);
+            } else {
+                document.getElementById('adminError').style.display = 'block';
+                document.getElementById('adminInput').value = '';
+                setTimeout(() => {
+                    document.getElementById('adminError').style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        document.getElementById('adminInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkAdminCode();
+        });
+        
+        
     </script>
 </body>
 </html>
