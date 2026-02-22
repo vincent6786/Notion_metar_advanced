@@ -2834,6 +2834,14 @@
                         <div class="help-q">📋 Copy Button</div>
                         <div class="help-a">Copies the raw METAR string to your clipboard for pasting into flight planning tools or dispatch messages.</div>
                     </div>
+                    <div class="help-item">
+                        <div class="help-q">🕐 Time Badge (top right)</div>
+                        <div class="help-a">The clock badge in the top bar always shows <b>Zulu (UTC)</b> time. Tap it to toggle to <b>local airport time</b> — the offset (e.g. UTC+8) is shown underneath. This requires an airport to be loaded and Open-Meteo data to be available. It is separate from the sunrise/sunset time toggle in the Info tab.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">☁️ Sky Cover Visualization</div>
+                        <div class="help-a">The animated cloud icons in the Sky Cover card scale with actual coverage — <b>FEW</b> shows 2 icons, <b>SCT</b> shows 4, <b>BKN</b> shows 7, and <b>OVC</b> fills the row with 8. Layers are sorted highest to lowest. Only <b>BKN, OVC, and VV</b> (vertical visibility) count as ceiling layers for flight rules calculation.</div>
+                    </div>
                 </div>
                 
                 <div class="help-section">
@@ -2902,6 +2910,17 @@
                         <div class="help-q">External Links</div>
                         <div class="help-a">Metar-Taf.com and LiveATC.net links auto-update to your currently loaded airport's ICAO code.</div>
                     </div>
+                    <div class="help-item">
+                        <div class="help-q">🚨 Emergency Squawk Codes</div>
+                        <div class="help-a">A quick-reference card is always visible at the bottom of the ATC tab:<br><br>
+                            <b style="color:#ff453a;">7700</b> — General Emergency<br>
+                            <b style="color:#ff9f0a;">7600</b> — Radio Failure (NORDO)<br>
+                            <b style="color:#bf5af2;">7500</b> — Unlawful Interference / Hijacking<br>
+                            <b style="color:#0a84ff;">1200</b> — VFR flight (United States)<br>
+                            <b style="color:#32d74b;">2000</b> — Uncontrolled / no ATC instruction (International)<br><br>
+                            These codes are displayed at all times — no airport needs to be loaded.
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="help-section">
@@ -2939,6 +2958,10 @@
                         <div class="help-a">Go to <b>Settings → Multi-Airport Dashboard</b> and toggle it on. The MULTI tab appears in the navigation. Track up to 8 airports at once.</div>
                     </div>
                     <div class="help-item">
+                        <div class="help-q">Adding Airports (ICAO or IATA)</div>
+                        <div class="help-a">Type either a <b>4-letter ICAO code</b> (e.g. KJFK) or a <b>3-letter IATA code</b> (e.g. JFK) into the add field and tap <b>+ Add</b>. When an IATA code is entered the app automatically resolves it to the correct ICAO code and shows a brief confirmation toast (e.g. <b>🔍 JFK → KJFK</b>). Both code types work identically once added.</div>
+                    </div>
+                    <div class="help-item">
                         <div class="help-q">Cards</div>
                         <div class="help-a">Each card shows the raw METAR with colour-coded flight category and data age. Tap any card to load that airport's full data across all other tabs. The × button removes an airport from the dashboard.</div>
                     </div>
@@ -2963,6 +2986,19 @@
                         <div class="help-a">Loaded automatically every time the app opens. Set it once in Settings and the app always starts at your home airport.</div>
                     </div>
                     <div class="help-item">
+                        <div class="help-q">Preferred Runway</div>
+                        <div class="help-a">After saving a Default Airport, a <b>Preferred Runway</b> selector appears beneath it. Choose a specific runway (e.g. RWY 05L) to lock the wind rose and runway component display to that runway on every launch — useful if your home airport has a noise-preferred or one-way runway. Set it to <b>Auto</b> to always have the app pick the optimal headwind runway from current METAR winds.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">📐 Unit Preferences</div>
+                        <div class="help-a">Found in <b>Settings → Unit Preferences</b>. Three independent toggles:<br><br>
+                            <b>Visibility</b> — switch between <b>statute miles (sm)</b> and <b>kilometres (km)</b>. Affects the Dashboard card and all visibility displays.<br><br>
+                            <b>Temperature</b> — switch between <b>°C</b> and <b>°F</b>. Affects Dashboard cards and the temp/dewpoint display.<br><br>
+                            <b>Pressure</b> — switch between <b>hPa</b> and <b>inHg</b>. Affects the altimeter/QNH display across all tabs.<br><br>
+                            Preferences are saved automatically and persist between sessions.
+                        </div>
+                    </div>
+                    <div class="help-item">
                         <div class="help-q">🔴 Cockpit Night Mode</div>
                         <div class="help-a">Switches all UI colours to red-on-black to preserve night vision in dark cockpit environments. Tap again (shows "Day Mode") to return to normal. Setting persists between sessions.</div>
                     </div>
@@ -2973,6 +3009,13 @@
                     <div class="help-item">
                         <div class="help-q">API Usage Monitor</div>
                         <div class="help-a">Admin-only view showing daily AVWX API call counts across all keys. Requires admin password. Useful for monitoring usage before plan limits are reached.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Dashboard Card Style (Raw vs Detailed)</div>
+                        <div class="help-a">Visible in Settings only when Dashboard Mode is enabled. Controls how each airport card is displayed in the Dashboard tab:<br><br>
+                            <b>Raw</b> — shows the full METAR string with colour-highlighted gusts, low visibility, and weather phenomena. Best for experienced users who read raw METARs directly.<br><br>
+                            <b>Detailed</b> — decodes the METAR into a structured card showing wind direction arrow, speed, gust, visibility, cloud layer, temperature, dewpoint, RH, pressure, and data age. Also shows a TAF condition badge (initial → worst category) if a TAF is available. Best for quick at-a-glance status across multiple airports.
+                        </div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">🆕 What's New Popup</div>
@@ -4064,10 +4107,15 @@
                     desc: 'See more in the Help section~'
                 },
                 {
-                    icon: '🛬',
-                    title: 'Prefered runway~',
-                    desc: 'When setting default airport, you can either select auto or rwy needed!'
+                    icon: '🔤',
+                    title: 'IATA codes in Dashboard',
+                    desc: 'Add airports by IATA code (e.g. JFK) — auto-resolves to ICAO.'
                 },
+                // {
+                //     icon: '🛬',
+                //     title: 'Prefered runway~',
+                //     desc: 'When setting default airport, you can either select auto or rwy needed!'
+                // },
                 {
                     icon: '📋',
                     title: 'Raw data switch in Dashborad',
