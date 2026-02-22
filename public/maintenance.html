@@ -514,6 +514,7 @@
             document.body.style.transition = 'opacity 0.4s ease';
             document.body.style.opacity = '0';
             setTimeout(() => {
+              sessionStorage.setItem('admin_bypass', 'true');
               window.location.replace('/index.html');
             }, 400);
           } else {
