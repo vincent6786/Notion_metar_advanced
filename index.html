@@ -4042,7 +4042,18 @@
                     <div style="font-size:11px;color:var(--sub-text);margin-top:4px;" 
                          id="liveAtcChoiceIcao"></div>
                 </div>
-        
+
+                <!-- ADD THIS BUTTON ABOVE IT: -->
+                <button onclick="openLiveAtcApp()"
+                        style="width:100%;background:#1a3a5c;border:1px solid #0a84ff;
+                               color:#fff;padding:14px;border-radius:12px;
+                               font-size:14px;font-weight:700;cursor:pointer;
+                               margin-bottom:10px;display:flex;align-items:center;
+                               justify-content:space-between;">
+                    <span>📻 Get LiveATC App</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">Opens App Store</span>
+                </button>
+                
                 <!-- Open in LiveATC App -->
                 <button onclick="openLiveAtcApp()"
                         style="width:100%;background:#1a3a5c;border:1px solid #0a84ff;
@@ -5486,26 +5497,6 @@
                 ]},
                 RCFN: { label: "RCFN LIVE STREAMS", streams: [
                     { type: "ATIS", src: "https://stream.twatc.net/RCFN_ATIS", color: "var(--accent)" }
-                ]},
-                // In your streamConfigs, change to this pattern:
-                KMHR: { label: "KMHR LIVE STREAMS", streams: [
-                    { 
-                        type: "ATC SCANNER", 
-                        src: `https://s1-fmt2.liveatc.net/kmhr?nocache=${Date.now()}`, 
-                        color: "var(--success)" 
-                    }
-                ]},
-                KJFK: { label: "KJFK LIVE STREAMS", streams: [
-                    { 
-                        type: "ATIS",        
-                        src: `https://s1-fmt2.liveatc.net/kjfk_atis?nocache=${Date.now()}`,  
-                        color: "var(--accent)" 
-                    },
-                    { 
-                        type: "ATC SCANNER", 
-                        src: `https://s1-bos.liveatc.net/kjfk9_s?nocache=${Date.now()}`, 
-                        color: "var(--success)" 
-                    }
                 ]}
                 
             };
@@ -5561,18 +5552,15 @@
         
         function openLiveAtcApp() {
             closeLiveAtcChoice();
-            const icao = _liveAtcCurrentIcao;
-            // Try LiveATC app deep link — falls back to App Store if not installed
-            const appUrl     = `liveatc://search?icao=${icao}`;
-            const appStoreUrl = 'https://apps.apple.com/app/liveatc-air-radio/id317810789';
-        
-            // Attempt to open app, if it fails after 1.5s open App Store
-            openExternal(appUrl);
+            
+            // Best guess at URL scheme — if app is installed this opens it
+            // If not, falls back to App Store after 1.5s
+            openExternal('liveatc://');
+            
             const fallbackTimer = setTimeout(() => {
-                openExternal(appStoreUrl);
+                openExternal('https://apps.apple.com/app/liveatc-air-radio/id317809458');
             }, 1500);
-        
-            // If app opened successfully, page will blur — cancel the fallback
+            
             window.addEventListener('blur', () => {
                 clearTimeout(fallbackTimer);
             }, { once: true });
