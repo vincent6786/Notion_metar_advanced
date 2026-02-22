@@ -4050,17 +4050,7 @@
                                font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;
                                display:flex;align-items:center;justify-content:space-between;">
                     <span>📻 Open in LiveATC App</span>
-                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">If already installed</span>
-                </button>
-                
-                <!-- "Get app" button -->
-                <button onclick="getLiveAtcApp()"
-                        style="width:100%;background:#1c1c1e;border:1px solid #38383a;
-                               color:#fff;padding:14px;border-radius:12px;
-                               font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;
-                               display:flex;align-items:center;justify-content:space-between;">
-                    <span>⬇️ Get LiveATC App</span>
-                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">Opens App Store</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">Downloads if not installed</span>
                 </button>
         
                 <!-- Open in Browser -->
@@ -5550,17 +5540,18 @@
         
         function openLiveAtcApp() {
             closeLiveAtcChoice();
-            
-            // Best guess at URL scheme — if app is installed this opens it
-            // If not, falls back to App Store after 1.5s
-            openExternal('liveatc://');
-            
-            const fallbackTimer = setTimeout(() => {
-                openExternal('https://apps.apple.com/app/liveatc-air-radio/id317809458');
+        
+            // Try to open the app
+            window.location.href = 'liveatc://';
+        
+            // After 1.5s, if app didn't open, go to App Store
+            const fallback = setTimeout(() => {
+                window.location.href = 'https://apps.apple.com/tw/app/liveatc-air-radio/id317809458?l=en-GB';
             }, 1500);
-            
+        
+            // App opened successfully — page loses focus, cancel the fallback
             window.addEventListener('blur', () => {
-                clearTimeout(fallbackTimer);
+                clearTimeout(fallback);
             }, { once: true });
         }
         
