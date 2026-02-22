@@ -12,3 +12,9 @@ export default function handler(req, res) {
     maintenance: process.env.MAINTENANCE_MODE === 'true' && !hasBypass
   });
 }
+export default function handler(req, res) {
+  res.json({
+    maintenance_raw: process.env.MAINTENANCE_MODE,
+    maintenance_type: typeof process.env.MAINTENANCE_MODE
+  });
+}
