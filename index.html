@@ -3231,7 +3231,7 @@
             <span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span>
         </div>
         <div id="btnLiveAtc" class="atc-btn" style="cursor:pointer;"
-             onclick="openExternal('https://www.liveatc.net/')">
+             onclick="showLiveAtcChoice(document.getElementById('icao').value.toUpperCase() || '')">
             <span>📡 LiveATC.net</span><span>↗</span>
         </div>
 
@@ -4024,6 +4024,54 @@
                         onerror="document.getElementById('usLinkLoader').style.display='none';">
                 </iframe>
     
+            </div>
+        </div>
+
+        <!-- LiveATC Open Options Modal -->
+        <div id="liveAtcChoiceModal" 
+             style="display:none;position:fixed;bottom:0;left:0;right:0;
+                    background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);
+                    z-index:3000;align-items:flex-end;justify-content:center;">
+            <div style="background:#1c1c1e;border:1px solid #38383a;
+                        border-radius:20px 20px 0 0;padding:20px;width:100%;
+                        max-width:500px;margin:0 auto;
+                        padding-bottom:max(20px, env(safe-area-inset-bottom));">
+                
+                <div style="text-align:center;margin-bottom:16px;">
+                    <div style="font-size:13px;font-weight:700;color:#fff;">Open LiveATC</div>
+                    <div style="font-size:11px;color:var(--sub-text);margin-top:4px;" 
+                         id="liveAtcChoiceIcao"></div>
+                </div>
+        
+                <!-- Open in LiveATC App -->
+                <button onclick="openLiveAtcApp()"
+                        style="width:100%;background:#1a3a5c;border:1px solid #0a84ff;
+                               color:#fff;padding:14px;border-radius:12px;
+                               font-size:14px;font-weight:700;cursor:pointer;
+                               margin-bottom:10px;display:flex;align-items:center;
+                               justify-content:space-between;">
+                    <span>📻 Open in LiveATC App</span>
+                    <span style="font-size:11px;color:var(--sub-text);">Requires app installed</span>
+                </button>
+        
+                <!-- Open in Browser -->
+                <button onclick="openLiveAtcBrowser()"
+                        style="width:100%;background:#1c1c1e;border:1px solid #38383a;
+                               color:#fff;padding:14px;border-radius:12px;
+                               font-size:14px;font-weight:700;cursor:pointer;
+                               margin-bottom:10px;display:flex;align-items:center;
+                               justify-content:space-between;">
+                    <span>🌐 Open in Browser</span>
+                    <span style="font-size:11px;color:var(--sub-text);">Safari / Chrome</span>
+                </button>
+        
+                <!-- Cancel -->
+                <button onclick="closeLiveAtcChoice()"
+                        style="width:100%;background:transparent;border:none;
+                               color:var(--sub-text);padding:12px;
+                               font-size:14px;cursor:pointer;">
+                    Cancel
+                </button>
             </div>
         </div>
     
@@ -5405,7 +5453,7 @@
             const label       = document.getElementById('audioLabel');
             const liveAtcBtn = document.getElementById('btnLiveAtc');
             if (liveAtcBtn) {
-                liveAtcBtn.onclick = () => openExternal(`https://www.liveatc.net/search/?icao=${icao}`);
+                liveAtcBtn.onclick = () => showLiveAtcChoice(icao);
                 liveAtcBtn.querySelector('span').innerText = `📡 LiveATC (${icao})`;
             }
 
@@ -5468,9 +5516,23 @@
                 container.innerHTML = cfg.streams.map(s => `
                     <div style="margin-bottom:12px;">
                         <div class="m-label" style="color:${s.color};">${s.type}</div>
-                        <audio controls style="width:100%;height:32px;border-radius:16px;">
+                        <audio controls 
+                               style="width:100%;height:32px;border-radius:16px;"
+                               onerror="this.style.display='none';
+                                        this.nextElementSibling.style.display='flex';">
                             <source src="${s.src}" type="audio/mpeg">
                         </audio>
+                        <div style="display:none;font-size:11px;color:var(--warn);
+                                    padding:8px 10px;background:rgba(255,159,10,0.08);
+                                    border-radius:8px;border:1px solid rgba(255,159,10,0.25);
+                                    align-items:center;justify-content:space-between;gap:8px;">
+                            <span>⚠️ Feed currently offline</span>
+                            <span style="color:var(--accent);cursor:pointer;font-weight:700;
+                                         white-space:nowrap;"
+                                  onclick="openExternal('https://www.liveatc.net/search/?icao=${icao}')">
+                                Try LiveATC ↗
+                            </span>
+                        </div>
                     </div>`).join('') +
                     `<div style="font-size:10px;color:#555;margin-top:8px;text-align:right;">Source: TWATC.net & LiveATC</div>`;
             } else {
@@ -5480,6 +5542,47 @@
             updateUSAirportLinks(icao); 
         }
 
+        // ================================================================
+        // LIVEATC CHOICE HANDLER
+        // ================================================================
+        let _liveAtcCurrentIcao = '';
+        
+        function showLiveAtcChoice(icao) {
+            _liveAtcCurrentIcao = icao || '';
+            const modal  = document.getElementById('liveAtcChoiceModal');
+            const label  = document.getElementById('liveAtcChoiceIcao');
+            if (label) label.innerText = icao ? `Airport: ${icao}` : '';
+            modal.style.display = 'flex';
+        }
+        
+        function closeLiveAtcChoice() {
+            document.getElementById('liveAtcChoiceModal').style.display = 'none';
+        }
+        
+        function openLiveAtcApp() {
+            closeLiveAtcChoice();
+            const icao = _liveAtcCurrentIcao;
+            // Try LiveATC app deep link — falls back to App Store if not installed
+            const appUrl     = `liveatc://search?icao=${icao}`;
+            const appStoreUrl = 'https://apps.apple.com/app/liveatc-air-radio/id317810789';
+        
+            // Attempt to open app, if it fails after 1.5s open App Store
+            openExternal(appUrl);
+            const fallbackTimer = setTimeout(() => {
+                openExternal(appStoreUrl);
+            }, 1500);
+        
+            // If app opened successfully, page will blur — cancel the fallback
+            window.addEventListener('blur', () => {
+                clearTimeout(fallbackTimer);
+            }, { once: true });
+        }
+        
+        function openLiveAtcBrowser() {
+            closeLiveAtcChoice();
+            openExternal(`https://www.liveatc.net/search/?icao=${_liveAtcCurrentIcao}`);
+        }
+    
         // ================================================================
         // 15. METEOGRAM
         // ================================================================
