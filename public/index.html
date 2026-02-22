@@ -7675,34 +7675,39 @@ async function findNearbyStations(lat, lon) {
             const screen = document.getElementById('launchScreen');
             if (!screen) { resolve(); return; }
         
-            // ── Fetch maintenance status in parallel with the animation ──
+            // ── Check admin bypass FIRST before fetching status ──
+            if (sessionStorage.getItem('admin_bypass') === 'true') {
+              console.log('[Admin] Bypass active — skipping maintenance check');
+            }
+        
             const statusPromise = fetch('/api/status')
               .then(r => r.json())
-              .catch(() => ({ maintenance: false }));  // fail open — show app
+              .catch(() => ({ maintenance: false }));
         
             setTimeout(async () => {
               screen.classList.add('fade-out');
         
-              // Wait for both the fade AND the status check
               const [, status] = await Promise.all([
-                new Promise(r => setTimeout(r, 800)),  // fade duration
+                new Promise(r => setTimeout(r, 800)),
                 statusPromise
               ]);
         
               screen.style.display = 'none';
         
-              if (status.maintenance) {
-                // Fade body to black, then redirect — feels intentional
+              // ── Skip redirect if admin bypassed ──
+              const adminBypassed = sessionStorage.getItem('admin_bypass') === 'true';
+        
+              if (status.maintenance && !adminBypassed) {
                 document.body.style.transition = 'opacity 0.4s ease';
                 document.body.style.opacity = '0';
                 setTimeout(() => {
                   window.location.replace('/maintenance.html');
                 }, 400);
-                return;  // don't resolve — navigation is happening
+                return;
               }
         
               resolve();
-            }, 3600);  // matches your existing animation duration
+            }, 3600);
           });
         }
 
