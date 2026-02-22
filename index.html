@@ -5439,22 +5439,23 @@
                 RCFN: { label: "RCFN LIVE STREAMS", streams: [
                     { type: "ATIS", src: "https://stream.twatc.net/RCFN_ATIS", color: "var(--accent)" }
                 ]},
+                // In your streamConfigs, change to this pattern:
                 KMHR: { label: "KMHR LIVE STREAMS", streams: [
                     { 
                         type: "ATC SCANNER", 
-                        src: "/api/stream?url=https://s1-bos.liveatc.net/kmhr", 
+                        src: `https://s1-bos.liveatc.net/kmhr?nocache=${Date.now()}`, 
                         color: "var(--success)" 
                     }
                 ]},
                 KJFK: { label: "KJFK LIVE STREAMS", streams: [
                     { 
                         type: "ATIS",        
-                        src: "/api/stream?url=https://s1-fmt2.liveatc.net/kjfk_atis",  
+                        src: `https://s1-fmt2.liveatc.net/kjfk_atis?nocache=${Date.now()}`,  
                         color: "var(--accent)" 
                     },
                     { 
                         type: "ATC SCANNER", 
-                        src: "/api/stream?url=https://s1-bos.liveatc.net/kjfk_arinc", 
+                        src: `https://s1-bos.liveatc.net/kjfk_arinc?nocache=${Date.now()}`, 
                         color: "var(--success)" 
                     }
                 ]}
