@@ -493,23 +493,37 @@
             tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
         });
         
-        function checkAdminCode() {
-            const input = document.getElementById('adminInput').value;
-            const ADMIN_CODE = 'YOUR_SECRET_CODE';  // ← change this
+        // ── Fetch admin code from API on load ──
+        let _adminCode = null;
         
-            if (input === ADMIN_CODE) {
-                document.body.style.transition = 'opacity 0.4s ease';
-                document.body.style.opacity = '0';
-                setTimeout(() => {
-                    window.location.replace('/index.html');
-                }, 400);
-            } else {
-                document.getElementById('adminError').style.display = 'block';
-                document.getElementById('adminInput').value = '';
-                setTimeout(() => {
-                    document.getElementById('adminError').style.display = 'none';
-                }, 2000);
-            }
+        fetch('/api/status')
+          .then(r => r.json())
+          .then(data => { _adminCode = data.adminCode; })
+          .catch(() => {});
+        
+        function checkAdminCode() {
+          const input = document.getElementById('adminInput').value;
+        
+          if (!_adminCode) {
+            document.getElementById('adminError').innerText = '⚠️ Could not load passcode';
+            document.getElementById('adminError').style.display = 'block';
+            return;
+          }
+        
+          if (input === _adminCode) {
+            document.body.style.transition = 'opacity 0.4s ease';
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+              window.location.replace('/index.html');
+            }, 400);
+          } else {
+            document.getElementById('adminError').innerText = '❌ Incorrect passcode';
+            document.getElementById('adminError').style.display = 'block';
+            document.getElementById('adminInput').value = '';
+            setTimeout(() => {
+              document.getElementById('adminError').style.display = 'none';
+            }, 2000);
+          }
         }
         
         document.getElementById('adminInput').addEventListener('keydown', (e) => {
