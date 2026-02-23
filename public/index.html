@@ -2669,8 +2669,26 @@
                     <span style="color:var(--sub-text); font-size:12px;">--</span>
                 </div>
             </div>
+        </div>
+        <!-- /weather-metar-pane -->
+
+        <div id="weatherMetarSourceFooter" class="hidden"
+                 style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+                        gap:6px;margin-top:12px;padding:8px 4px;
+                        border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
+                <span>📡 DATA</span>
+                <span style="color:#222;">·</span>
+                <a href="https://avwx.rest" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
+                <span style="color:#222;">·</span>
+                <a href="https://aviationweather.gov" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">aviationweather.gov</a>
+                <span style="color:#222;">·</span>
+                <a href="https://open-meteo.com" target="_blank"
+                   style="color:#555;text-decoration:none;font-weight:700;">Open-Meteo</a>
+            </div>
         </div><!-- /weather-metar-pane -->
-    
+        
         <!-- TAF pane -->
         <div id="weather-taf-pane" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px;">
@@ -2717,22 +2735,6 @@
             <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
             <div id="notamList2" class="raw-text"
                  style="max-height:300px; overflow-y:auto; font-size:11px; background:transparent; padding:0;">Loading...</div>
-                <!-- Source footer - weather tab metar pane (add after nearby container) -->
-            <div id="weatherMetarSourceFooter" class="hidden"
-                 style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
-                        gap:6px;margin-top:12px;padding:8px 4px;
-                        border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
-                <span>📡 DATA</span>
-                <span style="color:#222;">·</span>
-                <a href="https://avwx.rest" target="_blank"
-                   style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
-                <span style="color:#222;">·</span>
-                <a href="https://aviationweather.gov" target="_blank"
-                   style="color:#555;text-decoration:none;font-weight:700;">aviationweather.gov</a>
-                <span style="color:#222;">·</span>
-                <a href="https://open-meteo.com" target="_blank"
-                   style="color:#555;text-decoration:none;font-weight:700;">Open-Meteo</a>
-            </div>
         
             <!-- Source footer - weather tab TAF pane (add after notamList2) -->
             <div id="weatherTafSourceFooter" class="hidden"
@@ -4889,7 +4891,16 @@
             if (savedCeil) document.getElementById('minCeil').value = savedCeil;
 
             setInterval(updateClock, 1000);
-            setTimeout(() => { checkWhatsNew(); renderHelpWhatsNew(); }, 500);   // slight delay so launch screen clears first
+            setTimeout(() => { checkWhatsNew(); renderHelpWhatsNew(); }, 500);
+
+            // Auto-refresh METAR every 10 minutes if an airport is loaded
+            setInterval(() => {
+                const icao = document.getElementById('icao').value.trim();
+                if (icao) {
+                    console.log('[Auto-refresh] Refreshing METAR for', icao);
+                    loadData();
+                }
+            }, 600000);
             initHelpAccordion();
         }
 
@@ -4902,7 +4913,7 @@
             const cachedObj = cached ? (() => { try { return JSON.parse(cached); } catch(e) { return null; } })() : null;
 
             // Fresh cache (< 10 min) → return immediately
-            if (cachedObj && Date.now() - cachedObj.ts < 600000) {
+            if (cachedObj && Date.now() - cachedObj.ts < 300000) {
                 return cachedObj.data;
             }
 
@@ -5278,7 +5289,10 @@
                 Object.keys(localStorage).forEach(key => {
                     if (key.startsWith('cache_')) localStorage.removeItem(key);
                 });
-                console.log('[Force Refresh] API cache cleared');
+                // Also clear FAA NOTAM cache which uses a different key prefix
+                const icaoVal = document.getElementById('icao').value.trim().toUpperCase();
+                if (icaoVal) localStorage.removeItem(`cache_faa_notam_${icaoVal}`);
+                console.log('[Force Refresh] All caches cleared');
             }
 
             // Reset meteogram interval so new airport gets a fresh timer
