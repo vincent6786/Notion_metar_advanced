@@ -6427,7 +6427,6 @@
             const canvas   = document.getElementById(canvasId);
             const ctx      = canvas.getContext('2d');
             const w = 140, h = 140, cx = 70, cy = 70, r = 54;
-            const weatherTabActive = document.getElementById('tab-weather')?.classList.contains('active');
             const rwyIdent = weatherTabActive
                 ? (document.getElementById('rwySelect2').value || document.getElementById('rwySelect').value)
                 : document.getElementById('rwySelect').value;
