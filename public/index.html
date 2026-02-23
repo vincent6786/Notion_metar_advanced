@@ -2393,7 +2393,7 @@
             <canvas id="windRose" width="140" height="140" style="width:140px; height:140px;"></canvas>
             <div class="wind-controls">
                 <div class="m-label">Selected Runway</div>
-                <select id="rwySelect" class="stealth-select" onchange="drawWindRose()">
+                    <select id="rwySelect" class="stealth-select" onchange="syncRwySelect('rwySelect'); drawWindRose(); renderRunwaysComplex(); checkMins();">
                     <option value="">Loading...</option>
                 </select>
                 <div class="wind-stats">
@@ -2588,7 +2588,7 @@
                 <canvas id="windRose2" width="140" height="140" style="width:140px; height:140px;"></canvas>
                 <div class="wind-controls">
                     <div class="m-label">Selected Runway</div>
-                    <select id="rwySelect2" class="stealth-select" onchange="drawWindRose()">
+                        <select id="rwySelect2" class="stealth-select" onchange="syncRwySelect('rwySelect2'); drawWindRose(); renderRunwaysComplex(); checkMins();">
                         <option value="">Loading...</option>
                     </select>
                     <div class="wind-stats">
@@ -6411,14 +6411,26 @@
             }
         }
 
+        function syncRwySelect(changedId) {
+            const otherId = changedId === 'rwySelect' ? 'rwySelect2' : 'rwySelect';
+            const changed = document.getElementById(changedId);
+            const other   = document.getElementById(otherId);
+            if (changed && other && other.querySelector(`option[value="${changed.value}"]`)) {
+                other.value = changed.value;
+            }
+        }
+    
+
         function drawWindRose() {
             const weatherTabActive = document.getElementById('tab-weather')?.classList.contains('active');
             const canvasId = weatherTabActive ? 'windRose2' : 'windRose';
             const canvas   = document.getElementById(canvasId);
             const ctx      = canvas.getContext('2d');
             const w = 140, h = 140, cx = 70, cy = 70, r = 54;
-            const rwyIdent = document.getElementById('rwySelect').value;
-
+            const weatherTabActive = document.getElementById('tab-weather')?.classList.contains('active');
+            const rwyIdent = weatherTabActive
+                ? (document.getElementById('rwySelect2').value || document.getElementById('rwySelect').value)
+                : document.getElementById('rwySelect').value;
             // Color palette
             const cyanBlue  = '#00d2ff';
             const northRed  = '#ff3333';
