@@ -2317,7 +2317,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version">CLOUD EDITION · v3.2.8</div> 
+        <div class="launch-version">CLOUD EDITION · v3.2.9</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -2471,7 +2471,16 @@
     
         <div class="section-header-row">
             <div class="section-title" style="margin:0;">RAW METAR</div>
-            <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <button class="copy-btn"
+                        onclick="openDecodedMetar()"
+                        style="background:rgba(50,215,75,0.1);
+                               border-color:var(--success);
+                               color:var(--success);">
+                    🔍 Decode
+                </button>
+                <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
+            </div>
         </div>
         <div class="raw-text" id="rawMetar">Select an airport above.</div>
         <div class="metar-footer">
@@ -2547,7 +2556,16 @@
         </div>
         <div class="section-header-row">
             <div class="section-title" style="margin:0;">RAW TAF</div>
-            <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <button class="copy-btn"
+                        onclick="openDecodedMetar()"
+                        style="background:rgba(50,215,75,0.1);
+                               border-color:var(--success);
+                               color:var(--success);">
+                    🔍 Decode
+                </button>
+                <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
+            </div>
         </div>
         <div class="raw-text" id="rawTaf">--</div>
         <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
@@ -2655,7 +2673,16 @@
             </div>
             <div class="section-header-row">
                 <div class="section-title" style="margin:0;">RAW METAR</div>
-                <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button class="copy-btn"
+                            onclick="openDecodedMetar()"
+                            style="background:rgba(50,215,75,0.1);
+                                   border-color:var(--success);
+                                   color:var(--success);">
+                        🔍 Decode
+                    </button>
+                    <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
+                </div>
             </div>
             <div class="raw-text" id="rawMetar2">Select an airport above.</div>
             <div class="metar-footer">
@@ -2729,7 +2756,16 @@
             </div>
             <div class="section-header-row">
                 <div class="section-title" style="margin:0;">RAW TAF</div>
-                <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button class="copy-btn"
+                            onclick="openDecodedMetar()"
+                            style="background:rgba(50,215,75,0.1);
+                                   border-color:var(--success);
+                                   color:var(--success);">
+                        🔍 Decode
+                    </button>
+                    <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
+                </div>
             </div>
             <div class="raw-text" id="rawTaf2">--</div>
             <div style="margin-top:20px; font-weight:700; color:var(--sub-text);">NOTAMs</div>
@@ -2764,7 +2800,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.2.8 · Cloud Edition · Quick reference for all features</div>
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.2.9 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -3902,7 +3938,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.2.8</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.2.9</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -4092,7 +4128,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.2.8',                         // ← bump this on every update
+            version: '3.2.9',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -4102,14 +4138,14 @@
                 },
                 {
                     icon: '‼️',
-                    title: 'US only update!',
-                    desc: 'US airport will have external sources at ATC tab'
+                    title: 'Decode updated',
+                    desc: 'RAW METAR and TAF decode'
                 },
-                {
-                    icon: '📊',
-                    title: 'Data sources updated',
-                    desc: 'See more in the Help section~'
-                },
+                // {
+                //     icon: '📊',
+                //     title: 'Data sources updated',
+                //     desc: 'See more in the Help section~'
+                // },
                 {
                     icon: '🔤',
                     title: 'IATA codes in Dashboard',
@@ -5305,6 +5341,7 @@
             
             const icao = icaoVal.toUpperCase();
             addToHistory(icao);
+            localStorage.setItem('efb_last_load_ts', Date.now());
             document.getElementById('icao').blur();
             dismissWelcomeOverlay(); 
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
@@ -7729,9 +7766,34 @@
         });
         window.addEventListener('offline', () => { showOfflineBanner(Date.now()); });
 
+        // ── AUTO-REFRESH ON APP REOPEN ──────────────────────────────────────────
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible') return;
+            const icao = document.getElementById('icao').value.trim();
+            if (!icao) return;
+            const lastLoad = parseInt(localStorage.getItem('efb_last_load_ts') || '0');
+            const elapsed  = Date.now() - lastLoad;
+            const FIVE_MIN = 5 * 60 * 1000;
+            if (elapsed > FIVE_MIN) {
+                console.log(`[Reopen] ${Math.round(elapsed/60000)}m elapsed — auto-refreshing ${icao}`);
+                showToast(`↻ Refreshing ${icao}…`);
+                loadData();
+            }
+        });
+    
         // ================================================================
         // 26b. CLIPBOARD FUNCTIONS
         // ================================================================
+        // ── DECODED METAR VIEWER ──────────────────────────────────────────────────
+        function openDecodedMetar() {
+            const icao = document.getElementById('icao').value.trim().toUpperCase();
+            if (!icao) { showToast('⚠️ Load an airport first'); return; }
+        
+            // e6bx.com includes decoded METAR + TAF with plain-English explanations
+            const url = `https://e6bx.com/weather/${icao}/?hoursBeforeNow=0&includeTaf=1&showDecoded=1`;
+            openInAppBrowser(url, `Decoded Weather · ${icao}`);
+        }
+    
         async function copyMetar() {
             const element = document.getElementById('rawMetar');
             const text = element.innerText?.trim();
