@@ -2687,7 +2687,7 @@
                 <a href="https://open-meteo.com" target="_blank"
                    style="color:#555;text-decoration:none;font-weight:700;">Open-Meteo</a>
             </div>
-        </div><!-- /weather-metar-pane -->
+        </div>
         
         <!-- TAF pane -->
         <div id="weather-taf-pane" style="display:none;">
@@ -5338,7 +5338,7 @@
                 
                 // Process results as they arrive
                 weatherPromises.then(([metarRes, tafRes, notamRes]) => {
-                    
+                    try {
                     // METAR
                     if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
                         const m = metarRes.value;
@@ -5389,7 +5389,11 @@
                     }
                     showSourceFooters();   
                     updateUSAirportLinks(icao);
-                });
+                    } catch(renderErr) {
+                        console.error('[loadData] Render error:', renderErr);
+                        showToast('⚠️ Data loaded but render failed — check console');
+                    }
+                });;
 
             } catch(e) {
                 console.error('[loadData] Error:', e);
