@@ -6478,17 +6478,42 @@
                 const diff  = (windMag - rwyHdg) * (Math.PI / 180);
                 const hw    = Math.round(Math.cos(diff) * currentWind.spd);
                 const xw    = Math.round(Math.sin(diff) * currentWind.spd);
-                const vHW   = document.getElementById('valHW');
-                const vXW   = document.getElementById('valXW');
-                if (currentWind.spd === 0) {
-                    vHW.innerText = "Calm"; vHW.style.color = textCalm; vXW.innerText = "Calm";
-                } else if (currentWind.dir === 'VRB') {
-                    vHW.innerText = "VRB"; vHW.style.color = textVrb; vXW.innerText = "VRB";
-                } else {
-                    vHW.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`;
-                    vHW.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
-                    vXW.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'R' : 'L'}`;
-                }
+    
+                // Update BOTH tab's wind component displays
+                const hwEls = [
+                    document.getElementById('valHW'),
+                    document.getElementById('valHW2')
+                ];
+                const xwEls = [
+                    document.getElementById('valXW'),
+                    document.getElementById('valXW2')
+                ];
+    
+                hwEls.forEach(el => {
+                    if (!el) return;
+                    if (currentWind.spd === 0) {
+                        el.innerText = "Calm";
+                        el.style.color = textCalm;
+                    } else if (currentWind.dir === 'VRB') {
+                        el.innerText = "VRB";
+                        el.style.color = textVrb;
+                    } else {
+                        el.innerText = hw >= 0 ? `${hw}kt Head` : `${Math.abs(hw)}kt Tail`;
+                        el.style.color = hw < 0 ? 'var(--danger)' : 'var(--success)';
+                    }
+                });
+    
+                xwEls.forEach(el => {
+                    if (!el) return;
+                    if (currentWind.spd === 0) {
+                        el.innerText = "Calm";
+                    } else if (currentWind.dir === 'VRB') {
+                        el.innerText = "VRB";
+                    } else {
+                        el.innerText = `${Math.abs(xw)}kt ${xw >= 0 ? 'R' : 'L'}`;
+                    }
+                });
+    
                 checkMins();
             }
 
