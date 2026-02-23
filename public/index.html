@@ -6009,102 +6009,107 @@
 
         let _nearbyModalData = null;
 
-async function findNearbyStations(lat, lon) {
+        async function findNearbyStations(lat, lon) {
             console.log(`[Nearby] 🔍 Called with lat=${lat}, lon=${lon}`);
-            
-            const list = document.getElementById('nearList');
+        
+            const list  = document.getElementById('nearList');
+            const list2 = document.getElementById('nearList2');
+        
             if (!list) {
                 console.error('[Nearby] ❌ Element #nearList not found!');
                 return;
             }
-            
-            list.innerHTML = '<span style="color:#555;font-size:12px;">Scanning…</span>';
-            
+        
+            const loadingHTML = '<span style="color:#555;font-size:12px;">Scanning…</span>';
+            list.innerHTML  = loadingHTML;
+            if (list2) list2.innerHTML = loadingHTML;
+        
             try {
                 const url = `/api/weather?type=near&station=${lat},${lon}&distance=150`;
                 console.log(`[Nearby] 📡 Fetching: ${url}`);
-                
+        
                 const data = await secureFetch(url);
                 console.log('[Nearby] 📦 Raw API response:', data);
-                
-                // CRITICAL FIX: AVWX returns {0:{...}, 1:{...}, _meta:{...}}
-                // Convert to array and filter out _meta
+        
+                // AVWX returns {0:{...}, 1:{...}, _meta:{...}} — convert to array
                 let items;
                 if (Array.isArray(data)) {
                     items = data;
                 } else if (typeof data === 'object' && data !== null) {
-                    // Object with numeric keys + _meta → convert to array
-                    items = Object.values(data).filter(item => 
+                    items = Object.values(data).filter(item =>
                         item && typeof item === 'object' && !item.hasOwnProperty('key_used')
                     );
                 } else {
                     items = [];
                 }
-                
+        
                 console.log(`[Nearby] 📊 Extracted ${items.length} items`);
-                if (items.length > 0) {
-                    console.log('[Nearby] 🔬 First item:', items[0]);
-                }
-                
+        
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
-                console.log(`[Nearby] 🛫 Current airport: ${currentIcao}`);
-                
-                // Filter out current airport, sort by distance, take top 5
+        
                 const others = items
                     .filter(item => {
                         const icao = item.station?.icao || item.icao || '';
-                        const keep = icao !== currentIcao;
-                        if (!keep) console.log(`[Nearby] ⏭️  Skipping current airport: ${icao}`);
-                        return keep;
+                        return icao !== currentIcao;
                     })
                     .sort((a, b) => getNm(a) - getNm(b))
                     .slice(0, 5);
-                
+        
                 console.log(`[Nearby] ✂️  After filter: ${others.length} stations`);
-                others.forEach((item, i) => {
-                    const icao = item.station?.icao || item.icao || '????';
-                    const nm = getNm(item);
-                    console.log(`[Nearby]   ${i+1}. ${icao} - ${nm}nm`);
-                });
-                
-                list.innerHTML = '';
-                
+        
+                // Clear both lists
+                list.innerHTML  = '';
+                if (list2) list2.innerHTML = '';
+        
                 if (others.length === 0) {
-                    console.log('[Nearby] ⚠️  No nearby stations found');
-                    list.innerHTML = '<span style="color:#555;font-size:12px;">No stations found within 150nm.</span>';
+                    const emptyHTML = '<span style="color:#555;font-size:12px;">No stations found within 150nm.</span>';
+                    list.innerHTML  = emptyHTML;
+                    if (list2) list2.innerHTML = emptyHTML;
                     return;
                 }
-                
+        
                 others.forEach(item => {
                     const icao = item.station?.icao || item.icao || '????';
                     const nm   = Math.round(getNm(item));
-                    
-                    // Calculate bearing from current station to this one
+        
+                    // Bearing calculation
                     const stn = item.station || item;
                     let bearingStr = '';
                     if (lat != null && lon != null && stn.latitude != null && stn.longitude != null) {
-                        const bearing = getBearing(lat, lon, stn.latitude, stn.longitude);
+                        const bearing  = getBearing(lat, lon, stn.latitude, stn.longitude);
                         const cardinal = bearingToCardinal(bearing);
                         bearingStr = ` · ${bearing}° (${cardinal})`;
                     }
-                    
-                    const btn = document.createElement('div');
-                    btn.className = 'nearby-btn';
-                    btn.innerHTML = `
+        
+                    const innerHTML = `
                         <span>✈</span>
                         <span>${icao}</span>
                         <span style="color:var(--sub-text);font-size:10px;">${nm}nm${bearingStr}</span>`;
-                    
-                    btn.onclick = () => openNearbyModal(item);
+        
+                    // ── Primary list (METAR tab) ──
+                    const btn = document.createElement('div');
+                    btn.className = 'nearby-btn';
+                    btn.innerHTML = innerHTML;
+                    btn.onclick   = () => openNearbyModal(item);
                     list.appendChild(btn);
+        
+                    // ── Mirror list (Weather tab) — clone with LIVE onclick handler ──
+                    if (list2) {
+                        const btn2 = document.createElement('div');
+                        btn2.className = 'nearby-btn';
+                        btn2.innerHTML = innerHTML;
+                        btn2.onclick   = () => openNearbyModal(item);   // same closure, not innerHTML copy
+                        list2.appendChild(btn2);
+                    }
                 });
-                
-                console.log('[Nearby] ✅ Rendered successfully - check UI!');
-                
+        
+                console.log('[Nearby] ✅ Rendered successfully in both lists');
+        
             } catch(e) {
                 console.error('[Nearby] ❌ Error:', e);
-                console.error('[Nearby] ❌ Stack:', e.stack);
-                list.innerHTML = '<span style="color:#555;font-size:12px;">Failed to load nearby stations.</span>';
+                const errHTML = '<span style="color:#555;font-size:12px;">Failed to load nearby stations.</span>';
+                list.innerHTML  = errHTML;
+                if (list2) list2.innerHTML = errHTML;
             }
         }
 
