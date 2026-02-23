@@ -5361,6 +5361,10 @@
                         
                         // Store for trend analysis
                         storeMetarForTrend(icao, m);
+                        // ── Sync dashboard card if this airport is tracked ──
+                        if (multiAirports.includes(icao)) {
+                            fetchMultiAirportData(icao);
+                        }
                         
                         const liveBtn = document.getElementById('btnFetchLive');
                         if (icao === 'KMHR') liveBtn.classList.remove('hidden'); 
