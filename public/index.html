@@ -5395,6 +5395,7 @@
                     }
                     showSourceFooters();   
                     updateUSAirportLinks(icao);
+                    mirrorToWeatherTab();
                     } catch(renderErr) {
                         console.error('[loadData] Render error:', renderErr);
                         showToast('⚠️ Data loaded but render failed — check console');
@@ -5925,7 +5926,6 @@
             ageEl.innerText = `${minAgo}m ago`;
             ageEl.style.color      = minAgo > 60 ? 'var(--danger)' : 'var(--sub-text)';
             ageEl.style.fontWeight = minAgo > 60 ? '700' : '400';
-            mirrorToWeatherTab();
 
         }
 
@@ -6671,8 +6671,6 @@
                 }
             });
             if (stationSunTimes) updateTafSkyGradient(startT, endT);
-            mirrorToWeatherTab();
-
         }
 
         function toggleTafNeedleTooltip() {
@@ -7388,7 +7386,15 @@
                 const c = document.getElementById(copy);
                 if (o && c) { c.innerHTML = o.innerHTML; c.style.cssText = o.style.cssText; }
             });
-        
+
+            // Mirror TAF needle (NOW indicator)
+            const needle1 = document.getElementById('tafNeedle');
+            const needle2 = document.getElementById('tafNeedle2');
+            if (needle1 && needle2) {
+                needle2.style.display = needle1.style.display;
+                needle2.style.left    = needle1.style.left;
+            }
+            
             // Mirror wind rose values
             ['valHW','valXW'].forEach(id => {
                 const o = document.getElementById(id);
