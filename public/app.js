@@ -658,6 +658,17 @@
                 maxGust: 10,
                 maxXW: 19,
                 ceilXC: 3000
+            },
+            kmhr: {
+                name: 'KMHR',
+                minCeil: 1500,      // KMHR pattern altitude considerations
+                minVis: 3,          // Local area familiarity
+                maxSteady: 20,      // Moderate wind tolerance
+                maxPeak: 25,        // Peak wind with gust consideration
+                maxGust: 8,         // Gust factor for local operations
+                maxXW: 15,          // Crosswind for KMHR runways
+                ceilXC: 3000,
+                useAwos: true       // Flag to indicate AWOS available
             }
         };
 
@@ -689,19 +700,33 @@
 
         function switchMinsProfile(profile) {
             // Update button states
-            const buttons = ['btnProfileSolo', 'btnProfileDual', 'btnProfileCustom'];
+            const buttons = ['btnProfileSolo', 'btnProfileDual', 'btnProfileKmhr', 'btnProfileCustom'];
             buttons.forEach(id => {
                 const btn = document.getElementById(id);
-                btn.style.background = 'transparent';
-                btn.style.color = 'var(--sub-text)';
+                if (btn) {
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--sub-text)';
+                }
             });
             
             const activeBtn = document.getElementById(`btnProfile${profile.charAt(0).toUpperCase() + profile.slice(1)}`);
-            activeBtn.style.background = 'var(--accent)';
-            activeBtn.style.color = '#fff';
+            if (activeBtn) {
+                activeBtn.style.background = 'var(--accent)';
+                activeBtn.style.color = '#fff';
+            }
+
+            // Show/hide KMHR AWOS notice
+            const kmhrNotice = document.getElementById('kmhrAwosNotice');
+            const currentIcao = document.getElementById('icao')?.value?.toUpperCase();
+            if (kmhrNotice) {
+                kmhrNotice.style.display = (profile === 'kmhr' && currentIcao === 'KMHR') ? 'block' : 'none';
+            }
 
             // Show/hide custom inputs
-            document.getElementById('minsCustomInputs').style.display = profile === 'custom' ? 'block' : 'none';
+            const customInputs = document.getElementById('minsCustomInputs');
+            if (customInputs) {
+                customInputs.style.display = profile === 'custom' ? 'block' : 'none';
+            }
 
             // Load profile or custom
             if (profile === 'custom') {
@@ -769,6 +794,13 @@
             const compactStatus = document.getElementById('minsStatusCompact');
             const detailsDiv = document.getElementById('minsStatusDetails');
             const banner = document.getElementById('minBanner');
+            const kmhrNotice = document.getElementById('kmhrAwosNotice');
+
+            // Update KMHR AWOS notice visibility
+            const currentIcao = document.getElementById('icao')?.value?.toUpperCase();
+            if (kmhrNotice && activeMinsProfile) {
+                kmhrNotice.style.display = (activeMinsProfile.name === 'KMHR' && currentIcao === 'KMHR') ? 'block' : 'none';
+            }
 
             // If no profile selected
             if (!activeMinsProfile) {
@@ -823,6 +855,11 @@
             if (actualGustFactor > activeMinsProfile.maxGust) violations.push(`Gust factor ${Math.round(actualGustFactor)}kt > ${activeMinsProfile.maxGust}kt`);
             if (rwyIdent && actualXW > activeMinsProfile.maxXW) violations.push(`Crosswind ${Math.round(actualXW)}kt > ${activeMinsProfile.maxXW}kt`);
 
+            // KMHR-specific note about AWOS
+            const kmhrAwosNote = (activeMinsProfile.name === 'KMHR' && currentIcao === 'KMHR') 
+                ? '<div style="margin-top:10px; padding:8px; background:rgba(10,132,255,0.08); border-radius:6px; font-size:11px; color:var(--accent);">💡 Live AWOS available - check for most current conditions</div>'
+                : '';
+
             // Update UI
             if (violations.length > 0) {
                 compactStatus.innerText = 'NO-GO ⛔';
@@ -833,7 +870,8 @@
                 banner.innerText = `⚠️ NO-GO: ${violations.length} LIMIT${violations.length > 1 ? 'S' : ''} EXCEEDED`;
                 
                 detailsDiv.innerHTML = '<div style="color:var(--danger); font-weight:700; margin-bottom:6px;">❌ VIOLATIONS:</div>' +
-                    violations.map(v => `<div style="color:var(--danger);">• ${v}</div>`).join('');
+                    violations.map(v => `<div style="color:var(--danger);">• ${v}</div>`).join('') +
+                    kmhrAwosNote;
             } else {
                 compactStatus.innerText = `GO ✅ (${activeMinsProfile.name})`;
                 compactStatus.style.backgroundColor = 'var(--success)';
@@ -849,7 +887,7 @@
                     <div>• Peak: ${Math.round(actualPeak)}kt (max ${activeMinsProfile.maxPeak}kt)</div>
                     <div>• Gust Factor: ${Math.round(actualGustFactor)}kt (max ${activeMinsProfile.maxGust}kt)</div>
                     ${rwyIdent ? `<div>• Crosswind: ${Math.round(actualXW)}kt (max ${activeMinsProfile.maxXW}kt)</div>` : ''}
-                `;
+                ` + kmhrAwosNote;
             }
         }
 

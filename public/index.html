@@ -1159,18 +1159,36 @@
                 <!-- Profile Toggle -->
                 <div style="margin-bottom:16px;">
                     <div class="conv-lbl" style="margin-bottom:8px;">FLIGHT PROFILE</div>
-                    <div style="display:flex; background:#1c1c1e; border-radius:10px; padding:3px; gap:2px; border:1px solid #2a2a2a;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; background:#1c1c1e; border-radius:10px; padding:3px; gap:2px; border:1px solid #2a2a2a;">
                         <button id="btnProfileSolo" onclick="switchMinsProfile('solo')" 
-                                style="flex:1; padding:10px 0; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:all 0.2s;">
+                                style="padding:10px 4px; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:all 0.2s;">
                             SOLO
                         </button>
                         <button id="btnProfileDual" onclick="switchMinsProfile('dual')"
-                                style="flex:1; padding:10px 0; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; background:transparent; color:var(--sub-text); transition:all 0.2s;">
+                                style="padding:10px 4px; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:transparent; color:var(--sub-text); transition:all 0.2s;">
                             DUAL
                         </button>
+                        <button id="btnProfileKmhr" onclick="switchMinsProfile('kmhr')"
+                                style="padding:10px 4px; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:transparent; color:var(--sub-text); transition:all 0.2s;">
+                            KMHR
+                        </button>
                         <button id="btnProfileCustom" onclick="switchMinsProfile('custom')"
-                                style="flex:1; padding:10px 0; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; background:transparent; color:var(--sub-text); transition:all 0.2s;">
+                                style="padding:10px 4px; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:transparent; color:var(--sub-text); transition:all 0.2s;">
                             CUSTOM
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KMHR AWOS Notice (only visible when KMHR profile selected) -->
+                <div id="kmhrAwosNotice" style="display:none; margin-bottom:16px; padding:12px; background:rgba(10,132,255,0.1); border:1px solid rgba(10,132,255,0.3); border-radius:8px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                        <div style="flex:1;">
+                            <div style="font-size:12px; font-weight:700; color:var(--accent); margin-bottom:4px;">📡 LIVE AWOS AVAILABLE</div>
+                            <div style="font-size:11px; color:var(--sub-text);">Check real-time sensor data for most accurate conditions</div>
+                        </div>
+                        <button id="btnOpenAwosFromMins" onclick="openAwosModal()" 
+                                style="background:var(--accent); border:none; color:#000; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0;">
+                            VIEW AWOS
                         </button>
                     </div>
                 </div>
@@ -1237,17 +1255,17 @@
                     </div>
                 </div>
 
-                <!-- EVA FTA Info Expander -->
+                <!-- Reference Info Expander -->
                 <button onclick="toggleEvaInfo()" style="width:100%; background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:12px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-                    <span>📋 EVA FTA Training Limits</span>
+                    <span>📋 View All Profile Details</span>
                     <span id="evaInfoIcon" style="transition:transform 0.2s;">▼</span>
                 </button>
                 
                 <div id="evaInfoContent" style="display:none; margin-top:12px; padding:16px; background:rgba(10,132,255,0.05); border:1px solid rgba(10,132,255,0.2); border-radius:8px; font-size:12px; line-height:1.7; color:var(--sub-text);">
-                    <div style="font-weight:700; color:#fff; margin-bottom:12px;">EVA Flight Training Academy Minimums</div>
+                    <div style="font-weight:700; color:#fff; margin-bottom:12px;">Personal Minimums Reference</div>
                     
                     <div style="margin-bottom:12px;">
-                        <div style="color:var(--accent); font-weight:700; margin-bottom:6px;">✈️ SOLO</div>
+                        <div style="color:var(--accent); font-weight:700; margin-bottom:6px;">✈️ SOLO (EVA FTA)</div>
                         <div>• Cloud: 2,000ft ceiling / 5,000ft local X-country</div>
                         <div>• Visibility: 5 SM</div>
                         <div>• Steady Wind: 15kt</div>
@@ -1256,8 +1274,8 @@
                         <div>• Max Crosswind: 10kt</div>
                     </div>
                     
-                    <div>
-                        <div style="color:var(--success); font-weight:700; margin-bottom:6px;">👨‍✈️ DUAL</div>
+                    <div style="margin-bottom:12px;">
+                        <div style="color:var(--success); font-weight:700; margin-bottom:6px;">👨‍✈️ DUAL (EVA FTA)</div>
                         <div>• Cloud: 1,500ft ceiling / 3,000ft X-country</div>
                         <div>• Visibility: 3 SM</div>
                         <div>• Steady Wind: 25kt</div>
@@ -1266,8 +1284,21 @@
                         <div>• Max Crosswind: 19kt</div>
                     </div>
                     
+                    <div style="margin-bottom:12px;">
+                        <div style="color:var(--warn); font-weight:700; margin-bottom:6px;">🏠 KMHR (Local Operations)</div>
+                        <div>• Cloud: 1,500ft ceiling / 3,000ft X-country</div>
+                        <div>• Visibility: 3 SM</div>
+                        <div>• Steady Wind: 20kt</div>
+                        <div>• Peak Wind: 25kt</div>
+                        <div>• Gust Factor: 8kt</div>
+                        <div>• Max Crosswind: 15kt</div>
+                        <div style="margin-top:6px; padding:8px; background:rgba(10,132,255,0.1); border-radius:6px; font-size:11px;">
+                            📡 <strong>AWOS Available:</strong> Check live sensor data at KMHR for real-time conditions (more accurate than METAR)
+                        </div>
+                    </div>
+                    
                     <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1); font-size:11px; color:#666;">
-                        These minimums are designed for flight training operations at EVA FTA. Always comply with instructor guidance and current regulations.
+                        These minimums are guidelines for flight training and personal operations. SOLO/DUAL based on EVA FTA standards. KMHR profile optimized for local operations. Always comply with instructor guidance, aircraft limitations, and current regulations.
                     </div>
                 </div>
             </div>
