@@ -1,0 +1,2253 @@
+        body { overflow-x: hidden; }
+        
+        /* Swipe panels */
+        .view-section {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        /* Suppress re-entry animation after swipe commit */
+        .swipe-committed.view-section.active {
+            animation: none !important;
+        }
+        .swipe-committed.view-section.active > * {
+            animation: none !important;
+        }
+        
+        /* ============================================================
+           1. CORE THEME & LAYOUT
+        ============================================================ */
+        :root {
+            --bg:        #000000;
+            --card-bg:   #1c1c1e;
+            --text:      #ffffff;
+            --sub-text:  #8e8e93;
+            --border:    #38383a;
+            --accent:    #0a84ff;
+            --danger:    #ff453a;
+            --warn:      #ff9f0a;
+            --success:   #32d74b;
+            --mvfr:      #0a84ff;
+            --lifr:      #bf5af2;
+            --sky-bg:    #131d2e;
+            --strip-bg:  #3a3a3c;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: max(40px, env(safe-area-inset-bottom));
+            padding-top: max(12px, env(safe-area-inset-top));
+            overscroll-behavior-y: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* ============================================================
+           2. MODAL (FLOATING SHEET STYLE)
+        ============================================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: max(40px, env(safe-area-inset-top) + 20px);
+            padding-bottom: max(20px, env(safe-area-inset-bottom) + 20px);
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            background: #2c2c2e;
+            padding: 12px 16px;
+            border-radius: 12px 12px 0 0;
+            border: 1px solid var(--border);
+            border-bottom: none;
+            color: #fff;
+            margin-bottom: 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+        }
+
+        .modal-close {
+            background: #444;
+            border: 1px solid #666;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .browser-frame {
+            width: 100%;
+            max-width: 600px;
+            flex-grow: 1;
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* ============================================================
+           3. ANIMATIONS
+        ============================================================ */
+        @keyframes slideUpFade {
+            0%   { opacity: 0; transform: translateY(20px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .view-section.active > * {
+            animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+
+        /* ============================================================
+           4. LIQUID GLASS MODE (iOS Home Screen Only)
+        ============================================================ */
+        @media all and (display-mode: standalone) {
+            body {
+                background: linear-gradient(160deg, #1a1a2e 0%, #000000 100%);
+                background-attachment: fixed;
+            }
+            .metar-card, .info-card, .freq-card, .search-box,
+            .wind-vis-container, .taf-detail-card, .fr-bar-container,
+            .atc-btn, .nearby-btn, .tabs, .sky-section,
+            .meteogram-container, .quick-chip, .craft-pad {
+                background: rgba(35, 35, 40, 0.65) !important;
+                backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            }
+            .search-box { background: rgba(60, 60, 65, 0.5) !important; }
+            .tabs {
+                background: rgba(0, 0, 0, 0.3) !important;
+                border-radius: 12px;
+                margin-top: 4px;
+                padding: 4px;
+                border: 1px solid rgba(255,255,255,0.05);
+            }
+            .tab.active { color: #fff; text-shadow: 0 0 10px rgba(10, 132, 255, 0.8); }
+        }
+
+        /* ============================================================
+           5. COCKPIT NIGHT MODE
+        ============================================================ */
+        body.cockpit-dark {
+            --bg:       #000000 !important;
+            --card-bg:  #000000 !important;
+            --text:     #ff3333 !important;
+            --sub-text: #881111 !important;
+            --border:   #550000 !important;
+            --accent:   #ff0000 !important;
+            --success:  #ff0000 !important;
+            --warn:     #cc3300 !important;
+            --danger:   #ff0000 !important;
+            --mvfr:     #aa0000 !important;
+            --lifr:     #770000 !important;
+            --sky-bg:   #000000 !important;
+            --strip-bg: #220000 !important;
+        }
+        body.cockpit-dark * {
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+            border-color: #440000 !important;
+        }
+        body.cockpit-dark .sky-section,
+        body.cockpit-dark canvas,
+        body.cockpit-dark .icon-btn,
+        body.cockpit-dark .fr-track-modern,
+        body.cockpit-dark .taf-sky-strip,
+        body.cockpit-dark .meteogram-container,
+        body.cockpit-dark .quick-chip,
+        body.cockpit-dark .craft-pad {
+            filter: grayscale(100%) sepia(100%) saturate(1000%) hue-rotate(-50deg) contrast(1.5);
+        }
+        body.cockpit-dark .badge-cat {
+            color: #000 !important;
+            background: #ff0000 !important;
+            font-weight: 900;
+        }
+        body.cockpit-dark .tab.active {
+            border-bottom-color: #ff0000;
+            color: #ff0000;
+        }
+        body.cockpit-dark input,
+        body.cockpit-dark select,
+        body.cockpit-dark textarea {
+            background: #110000 !important;
+            color: #ff3333 !important;
+        }
+
+        /* NOTAM Highlighter Styles */
+        .n-crit  { color: #ff453a; font-weight: 800; background: rgba(255, 69, 58, 0.15); padding: 0 4px; border-radius: 3px; }
+        .n-warn  { color: #ff9f0a; font-weight: 700; }
+        .n-bold  { color: #ffffff; font-weight: 700; text-decoration: underline; text-decoration-color: #555; }
+        body.cockpit-dark .n-crit { color: #ff0000; background: #330000; }
+        body.cockpit-dark .n-warn { color: #cc3300; }
+        body.cockpit-dark .n-bold { color: #ff3333; }
+
+        /* ============================================================
+           6. UI ELEMENTS — TOP BAR & SEARCH
+        ============================================================ */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 40px;
+        }
+        .search-wrapper {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-box {
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            padding-left: 8px;
+            transition: border-color 0.2s;
+        }
+        .search-box:focus-within { border-color: var(--accent); }
+        #icao {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: inherit;
+            padding: 8px 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+            font-size: 16px;
+            outline: none;
+            width: 100%;
+        }
+        .clear-btn {
+            color: var(--sub-text);
+            cursor: pointer;
+            padding: 0 8px;
+            font-size: 14px;
+            display: none;
+        }
+        .icon-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            width: 40px;
+            height: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        .badge {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            min-width: 60px;
+        }
+        .badge-time {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: 'SF Mono', monospace;
+            letter-spacing: -0.5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 12px;
+            gap: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .badge-time:hover {
+            border-color: var(--accent);
+            background: rgba(10,132,255,0.1);
+        }
+        .badge-time-main {
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .badge-time-offset {
+            font-size: 9px;
+            color: var(--sub-text);
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            transition: color 0.2s ease;
+        }
+        .badge-cat {
+            background: var(--card-bg);
+            color: var(--sub-text);
+            transition: background 0.3s, color 0.3s;
+        }
+        .cat-vfr  { background-color: var(--success) !important; color: #000 !important; }
+        .cat-mvfr { background-color: var(--mvfr)    !important; color: #fff !important; }
+        .cat-ifr  { background-color: var(--danger)  !important; color: #fff !important; }
+        .cat-lifr { background-color: var(--lifr)    !important; color: #fff !important; }
+
+        /* ============================================================
+           7. TABS
+        ============================================================ */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            gap: 15px;
+            padding: 0 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .tab {
+            padding: 10px 0;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--sub-text);
+            border-bottom: 2px solid transparent;
+            text-transform: uppercase;
+            white-space: nowrap;
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; left: 50%;
+            width: 0; height: 2px;
+            background: var(--accent);
+            transform: translateX(-50%);
+            transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border-radius: 2px;
+        }
+        .tab.active::after  { width: 100%; }
+        .tab.active { border-bottom-color: transparent !important; color: var(--accent); }
+
+        /* ============================================================
+           8. VIEW SECTIONS & LAYOUT HELPERS
+        ============================================================ */
+        .view-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        .view-section.active {
+            display: block;
+            animation: tabReveal 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+        @keyframes tabReveal {
+            0%   { opacity: 0; transform: translateY(10px) scale(0.99); }
+            100% { opacity: 1; transform: translateY(0px)  scale(1); }
+        }
+        .hidden { display: none !important; }
+        .section-title {
+            font-weight: 700;
+            color: var(--sub-text);
+            margin: 20px 0 8px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .raw-text {
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            color: #d0d0d0;
+            margin-top: 6px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        /* ============================================================
+           9. QUICK SELECT CHIPS & FAVORITES
+        ============================================================ */
+        .quick-select-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            min-height: 32px;
+        }
+        .quick-chip {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .quick-chip:active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .quick-chip.fav {
+            border-color: #ff9f0a;
+            color: #ff9f0a;
+            background: rgba(255, 159, 10, 0.1);
+        }
+        .chip-del {
+            margin-left: 6px;
+            color: var(--danger);
+            font-weight: 900;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .chip-del:hover { opacity: 1; }
+
+        /* ============================================================
+           10. GLASSMORPHISM CARDS
+        ============================================================ */
+        .metar-card, .info-card, .freq-card,
+        .taf-detail-card, .fr-bar-container,
+        .wind-vis-container, .meteogram-container {
+            background: rgba(28, 28, 30, 0.75) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: box-shadow 0.3s ease, transform 0.2s ease;
+        }
+        .metar-card:active, .info-card:active {
+            transform: scale(0.99);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Ambient background glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(10, 132, 255, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(50, 215, 75, 0.03) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body > * { position: relative; z-index: 1; }
+
+        /* ============================================================
+           11. METAR GRID & VALUE CARDS
+        ============================================================ */
+        .metar-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .metar-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .metar-card.full-width { grid-column: span 2; }
+        .m-label  { font-size: 11px; color: var(--sub-text); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+        .m-value  { font-size: 16px; font-weight: 600; color: var(--text); }
+        .m-sub    { font-size: 12px; color: var(--sub-text); font-weight: 400; margin-left: 4px; }
+        .metar-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding: 0 4px;
+            font-size: 12px;
+            color: var(--sub-text);
+        }
+
+        /* ============================================================
+           12. SKY SECTION
+        ============================================================ */
+        .sky-section {
+            grid-column: span 2;
+            background: var(--sky-bg);
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .sky-header {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .sky-layer        { display: flex; flex-direction: column; margin-bottom: 14px; }
+        .sky-icons-row    { display: flex; gap: 12px; margin-bottom: 4px; align-items: flex-end; }
+        .sky-icon         { width: 32px; height: 20px; fill: #d1d5db; opacity: 0.9; }
+        .sky-layer-text   { font-size: 15px; font-weight: 500; color: #fff; }
+        .sky-no-data      { text-align: center; color: rgba(255,255,255,0.3); padding: 20px; font-style: italic; }
+
+        /* ============================================================
+           13. FLIGHT RULE GAUGES
+        ============================================================ */
+        .fr-bar-container {
+            grid-column: span 2;
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+        .fr-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .fr-title      { font-size: 11px; color: var(--sub-text); font-weight: 700; text-transform: uppercase; }
+        .fr-gauge-group { display: flex; flex-direction: column; gap: 14px; }
+        .fr-row-label  {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--sub-text);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .fr-val-text { color: var(--text); font-family: 'SF Mono', monospace; font-size: 12px; }
+        .fr-track-modern {
+            position: relative;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+        }
+        .fr-sec {
+            height: 100%;
+            border-right: 1px solid rgba(0,0,0,0.3);
+            position: relative;
+            background: rgba(255,255,255,0.02);
+        }
+        .fr-sec span {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 7px;
+            color: rgba(255,255,255,0.2);
+            font-weight: 800;
+            pointer-events: none;
+            z-index: 1;
+            letter-spacing: 0.5px;
+        }
+        .fr-fill-bar {
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            background: var(--accent);
+            border-right: 2px solid #fff;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.5);
+            transition: width 1s cubic-bezier(0.1, 1.2, 0.3, 1), background-color 0.3s;
+            z-index: 2;
+            opacity: 0.9;
+            border-radius: 5px 0 0 5px;
+        }
+        .fr-msg {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text);
+            font-weight: 500;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+        }
+
+        /* ============================================================
+           14. METEOGRAM
+        ============================================================ */
+        .meteogram-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 8px;
+            position: relative;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        #meteoCanvas, #meteoCanvas2 { width: 100%; height: 150px; display: block; }
+        /* ============================================================
+           15. WIND ROSE & VISIBILITY
+        ============================================================ */
+        .wind-vis-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .wind-controls { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+        .wind-stats {
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            color: var(--text);
+            margin-top: 5px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
+        }
+        select.stealth-select {
+            background: #2c2c2e;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 6px;
+            border-radius: 6px;
+            width: 100%;
+            font-weight: 600;
+            outline: none;
+        }
+
+        /* ============================================================
+           16. TAF VISUALIZATION
+        ============================================================ */
+        .taf-viz-container { margin-top: 10px; position: relative; }
+        .taf-bar {
+            display: flex;
+            height: 32px;
+            width: 100%;
+            background: #2c2c2e;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+            z-index: 2;
+        }
+        .taf-sky-strip {
+            height: 6px;
+            width: 100%;
+            margin-top: 2px;
+            border-radius: 3px;
+            background: #333;
+            overflow: hidden;
+            position: relative;
+        }
+        .taf-axis { display: flex; width: 100%; margin-top: 4px; margin-bottom: 12px; }
+        .taf-block {
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(0,0,0,0.6);
+            border-right: 1px solid rgba(0,0,0,0.1);
+            transition: opacity 0.2s;
+            text-transform: uppercase;
+        }
+        .taf-block:hover { opacity: 0.8; }
+        .taf-detail-card {
+            position: relative;
+            z-index: 10;
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 16px;
+            border-left: 4px solid var(--sub-text);
+            animation: slideUpFade 0.2s ease-out;
+        }
+        #tafNeedle {
+            position: absolute;
+            top: -4px;
+            height: 40px;
+            width: 2px;
+            background: #ff453a;
+            z-index: 5;
+            pointer-events: none;
+            box-shadow: 0 0 8px #ff453a;
+            transition: left 0.5s ease-out;
+            display: none;
+        }
+        /* TAF Needle Tooltip */
+        #tafNeedleTooltip {
+            position: absolute;
+            top: -52px;
+            transform: translateX(-50%);
+            background: rgba(28,28,30,0.95);
+            border: 1px solid rgba(255,69,58,0.5);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-family: 'SF Mono', monospace;
+            color: #fff;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        #tafNeedleTooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -5px; left: 50%;
+            width: 8px; height: 8px;
+            background: rgba(28,28,30,0.95);
+            border-right: 1px solid rgba(255,69,58,0.5);
+            border-bottom: 1px solid rgba(255,69,58,0.5);
+            transform: translateX(-50%) rotate(45deg);
+        }
+        #tafNeedleTooltip.visible { opacity: 1; }
+        #tafNeedle::after {
+            content: '';
+            position: absolute;
+            top: -4px; left: -4px;
+            width: 10px; height: 10px;
+            background: #ff453a;
+            border-radius: 50%;
+            border: 2px solid #000;
+        }
+
+        /* ============================================================
+           17. RUNWAYS
+        ============================================================ */
+        .rwy-complex { margin-bottom: 16px; }
+        .rc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 4px;
+            padding: 0 4px;
+        }
+        .rc-idents { font-size: 16px; font-weight: 800; font-family: 'SF Mono', monospace; }
+        .rc-strip {
+            height: 44px;
+            background: var(--strip-bg);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        .rc-id-v {
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            padding: 0 4px;
+        }
+        .rc-data {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .wind-comp {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* ============================================================
+           18. ATC & EXTERNAL LINKS
+        ============================================================ */
+        .atc-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 14px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 15px;
+            border: 1px solid var(--border);
+            transition: background 0.2s;
+            margin-bottom: 10px;
+        }
+        .atc-btn:hover { background: #2c2c2e; border-color: var(--accent); }
+        .tool-btn {
+            background: #333;
+            border: 1px solid var(--border);
+            color: #fff;
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           19. NEARBY STATIONS
+        ============================================================ */
+        .nearby-container { grid-column: span 2; display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+        .nearby-header    { font-size: 11px; color: var(--sub-text); font-weight: 700; }
+        .nearby-list      { display: flex; gap: 6px; flex-wrap: wrap; }
+        .nearby-btn {
+            background: #2c2c2e;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ============================================================
+           20. INFO / FREQ CARDS
+        ============================================================ */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .info-card { background: var(--card-bg); padding: 10px; border-radius: 8px; }
+        .ic-lbl    { font-size: 11px; color: var(--sub-text); text-transform: uppercase; }
+        .ic-val    { font-size: 15px; font-weight: 600; color: var(--text); margin-top: 2px; }
+        .freq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+        .freq-card { background: var(--card-bg); border-radius: 8px; padding: 10px; text-align: center; }
+        .freq-type { font-size: 11px; color: var(--sub-text); text-transform: uppercase; margin-bottom: 4px; }
+        .freq-val  { font-size: 16px; font-weight: 700; color: var(--accent); font-family: 'SF Mono', monospace; }
+
+        /* ============================================================
+           21. WORLD CLOCK (iOS-style)
+        ============================================================ */
+        .clock-card {
+            background: #000;
+            padding: 16px 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            margin-bottom: 0;
+        }
+        .clock-left  { display: flex; flex-direction: column; gap: 2px; }
+        .clock-city  { font-size: 24px; font-weight: 400; color: #fff; }
+        .clock-diff  { font-size: 13px; color: #8e8e93; font-weight: 500; }
+        .clock-time  { font-family: -apple-system, sans-serif; font-size: 48px; font-weight: 300; color: #fff; letter-spacing: -1px; }
+        .clock-del-btn {
+            background: transparent;
+            color: #ff453a;
+            border: 1px solid #ff453a;
+            border-radius: 50%;
+            width: 24px; height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            margin-left: 12px;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+        .clock-del-btn:hover { opacity: 1; background: rgba(255, 69, 58, 0.2); }
+
+        /* ============================================================
+           22. CONVERTER / E6B INPUTS
+        ============================================================ */
+        .conv-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .conv-lbl { font-size: 10px; color: var(--sub-text); margin-bottom: 4px; text-transform: uppercase; }
+        .conv-inp {
+            width: 100%;
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           23. CRAFT PAD
+        ============================================================ */
+        .craft-pad {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            font-family: 'SF Mono', monospace;
+            font-size: 14px;
+            color: #fff;
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            outline: none;
+        }
+
+        /* ============================================================
+           24. STORAGE SETUP & PIN PAD
+        ============================================================ */
+        .setup-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .setup-card {
+            width: 100%;
+            max-width: 320px;
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .setup-card:hover    { border-color: var(--accent); }
+        .setup-card.highlighted { border-color: var(--accent); }
+        .pin-dot {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            border: 2px solid #555;
+            background: transparent;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+        .pin-btn {
+            width: 72px; height: 72px;
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pin-btn:active  { background: #333; }
+        .pin-btn.empty   { background: transparent; border: none; pointer-events: none; }
+        .pin-btn.delete  { font-size: 20px; }
+
+        /* ============================================================
+           25. TOAST & OFFLINE BANNER
+        ============================================================ */
+        .toast-msg {
+            position: fixed;
+            bottom: max(30px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 9999;
+            white-space: nowrap;
+            animation: slideUpFade 0.3s ease-out;
+        }
+        .offline-banner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            background: linear-gradient(135deg, #7c3300, #4a2000);
+            border: 1px solid #ff9f0a;
+            border-radius: 8px;
+            color: #ff9f0a;
+            text-align: center;
+            padding: 8px 12px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+            animation: slideUpFade 0.3s ease-out;
+        }
+        .offline-banner:hover { background: linear-gradient(135deg, #9a4000, #622b00); }
+
+        /* ============================================================
+           26. SAFETY FOOTER & MISC
+        ============================================================ */
+        .safety-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 10px;
+            color: #555;
+            padding: 10px;
+            border-top: 1px solid #222;
+            order: 999;
+        }
+        .active-fuel {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-color: #ffffff !important;
+            color: #ffffff !important;
+        }
+
+        /* ============================================================
+           27. LAUNCH SCREEN
+        ============================================================ */
+        #launchScreen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #launchScreen.fade-out {
+            animation: launchFadeOut 0.8s ease-in forwards;
+        }
+        @keyframes launchFadeOut {
+            0%   { opacity: 1; }
+            100% { opacity: 0; pointer-events: none; }
+        }
+
+        /* Aircraft wrap */
+        .launch-aircraft-wrap {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .launch-aircraft-img {
+            position: absolute;
+            width: 200px;
+            height: auto;
+            top: 58%;
+            opacity: 0;
+            transform: translateY(-50%) translateZ(0);
+            animation: aircraftSlide 3.0s cubic-bezier(0.25, 0.1, 0.25, 1) 0.4s forwards;
+            will-change: transform;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            perspective: 1000px;
+            -webkit-perspective: 1000px;
+        }
+
+        @keyframes aircraftSlide {
+
+            /* ── PHASE 1: FADE IN & FIRST ROLL (0–8%) ── */
+            0%   { transform: translateX(-240px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0;     }
+            1%   { transform: translateX(-238px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0.10;  }
+            2%   { transform: translateX(-235px) translateY(-50%) scale(0.960) rotate(0deg) translateZ(0); opacity: 0.20;  }
+            3%   { transform: translateX(-232px) translateY(-50%) scale(0.965) rotate(0deg) translateZ(0); opacity: 0.35;  }
+            4%   { transform: translateX(-228px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.50;  }
+            5%   { transform: translateX(-223px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.625; }
+            6%   { transform: translateX(-218px) translateY(-50%) scale(0.970) rotate(0deg) translateZ(0); opacity: 0.75;  }
+            7%   { transform: translateX(-212px) translateY(-50%) scale(0.975) rotate(0deg) translateZ(0); opacity: 0.875; }
+            8%   { transform: translateX(-205px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1;     }
+
+            /* ── PHASE 2: TAXI ACCELERATION (9–16%) ── */
+            9%   { transform: translateX(-197px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1; }
+            10%  { transform: translateX(-188px) translateY(-50%) scale(0.980) rotate(0deg) translateZ(0); opacity: 1; }
+            11%  { transform: translateX(-177px) translateY(-50%) scale(0.983) rotate(0deg) translateZ(0); opacity: 1; }
+            12%  { transform: translateX(-165px) translateY(-50%) scale(0.987) rotate(0deg) translateZ(0); opacity: 1; }
+            13%  { transform: translateX(-154px) translateY(-50%) scale(0.990) rotate(0deg) translateZ(0); opacity: 1; }
+            14%  { transform: translateX(-143px) translateY(-50%) scale(0.993) rotate(0deg) translateZ(0); opacity: 1; }
+            15%  { transform: translateX(-131px) translateY(-50%) scale(0.997) rotate(0deg) translateZ(0); opacity: 1; }
+            16%  { transform: translateX(-120px) translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 3: FULL SPEED TAXI (17–32%) ── */
+            17%  { transform: translateX(-105px) translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            18%  { transform: translateX(-90px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            19%  { transform: translateX(-75px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            20%  { transform: translateX(-60px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            21%  { transform: translateX(-45px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            22%  { transform: translateX(-30px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            23%  { transform: translateX(-15px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            24%  { transform: translateX(0px)    translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            25%  { transform: translateX(19px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            26%  { transform: translateX(38px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            27%  { transform: translateX(56px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            28%  { transform: translateX(75px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            29%  { transform: translateX(94px)   translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            30%  { transform: translateX(113px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            31%  { transform: translateX(131px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            32%  { transform: translateX(150px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 4: APPROACH TO V1 (33–44%) ── */
+            33%  { transform: translateX(166px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            34%  { transform: translateX(182px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            35%  { transform: translateX(198px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            36%  { transform: translateX(214px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            37%  { transform: translateX(230px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            38%  { transform: translateX(246px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            39%  { transform: translateX(262px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            40%  { transform: translateX(278px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            41%  { transform: translateX(288px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            42%  { transform: translateX(299px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            43%  { transform: translateX(309px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            44%  { transform: translateX(320px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 5: V1 HOLD & COAST (45–53%) ── */
+            45%  { transform: translateX(330px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            46%  { transform: translateX(334px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            47%  { transform: translateX(337px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            48%  { transform: translateX(341px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            49%  { transform: translateX(344px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            50%  { transform: translateX(348px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            51%  { transform: translateX(351px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            52%  { transform: translateX(354px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+            53%  { transform: translateX(358px)  translateY(-50%) scale(1.000) rotate(0deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 6: VR — NOSE ROTATION BEGINS (54–62%) ── */
+            54%  { transform: translateX(362px)  translateY(-50.17%) scale(1.000)  rotate(-0.33deg) translateZ(0); opacity: 1; }
+            55%  { transform: translateX(366px)  translateY(-50.33%) scale(1.000)  rotate(-0.67deg) translateZ(0); opacity: 1; }
+            56%  { transform: translateX(370px)  translateY(-50.50%) scale(1.000)  rotate(-1.00deg) translateZ(0); opacity: 1; }
+            57%  { transform: translateX(377px)  translateY(-50.83%) scale(0.9975) rotate(-1.25deg) translateZ(0); opacity: 1; }
+            58%  { transform: translateX(384px)  translateY(-51.15%) scale(0.9950) rotate(-1.50deg) translateZ(0); opacity: 1; }
+            59%  { transform: translateX(391px)  translateY(-51.48%) scale(0.9925) rotate(-1.75deg) translateZ(0); opacity: 1; }
+            60%  { transform: translateX(398px)  translateY(-51.80%) scale(0.9900) rotate(-2.00deg) translateZ(0); opacity: 1; }
+            61%  { transform: translateX(408px)  translateY(-52.30%) scale(0.9875) rotate(-2.25deg) translateZ(0); opacity: 1; }
+            62%  { transform: translateX(418px)  translateY(-52.80%) scale(0.9850) rotate(-2.50deg) translateZ(0); opacity: 1; }
+
+            /* ── PHASE 7: LIFTOFF — INITIAL CLIMB (63–70%) ── */
+            63%  { transform: translateX(431px)  translateY(-53.48%) scale(0.9825) rotate(-2.75deg) translateZ(0); opacity: 0.995; }
+            64%  { transform: translateX(444px)  translateY(-54.15%) scale(0.9800) rotate(-3.00deg) translateZ(0); opacity: 0.990; }
+            65%  { transform: translateX(457px)  translateY(-54.83%) scale(0.9775) rotate(-3.25deg) translateZ(0); opacity: 0.985; }
+            66%  { transform: translateX(470px)  translateY(-55.50%) scale(0.9750) rotate(-3.50deg) translateZ(0); opacity: 0.980; }
+            67%  { transform: translateX(487px)  translateY(-56.43%) scale(0.9725) rotate(-3.75deg) translateZ(0); opacity: 0.968; }
+            68%  { transform: translateX(504px)  translateY(-57.35%) scale(0.9700) rotate(-4.00deg) translateZ(0); opacity: 0.955; }
+            69%  { transform: translateX(521px)  translateY(-58.28%) scale(0.9675) rotate(-4.25deg) translateZ(0); opacity: 0.943; }
+            70%  { transform: translateX(538px)  translateY(-59.20%) scale(0.9650) rotate(-4.50deg) translateZ(0); opacity: 0.930; }
+
+            /* ── PHASE 8: CLIMB & RECEDE (71–78%) ── */
+            71%  { transform: translateX(559px)  translateY(-60.40%) scale(0.9613) rotate(-4.70deg) translateZ(0); opacity: 0.910; }
+            72%  { transform: translateX(580px)  translateY(-61.60%) scale(0.9575) rotate(-4.90deg) translateZ(0); opacity: 0.890; }
+            73%  { transform: translateX(601px)  translateY(-62.80%) scale(0.9538) rotate(-5.10deg) translateZ(0); opacity: 0.870; }
+            74%  { transform: translateX(622px)  translateY(-64.00%) scale(0.9500) rotate(-5.30deg) translateZ(0); opacity: 0.850; }
+            75%  { transform: translateX(647px)  translateY(-65.63%) scale(0.9450) rotate(-5.48deg) translateZ(0); opacity: 0.813; }
+            76%  { transform: translateX(672px)  translateY(-67.25%) scale(0.9400) rotate(-5.65deg) translateZ(0); opacity: 0.775; }
+            77%  { transform: translateX(697px)  translateY(-68.88%) scale(0.9350) rotate(-5.83deg) translateZ(0); opacity: 0.738; }
+            78%  { transform: translateX(722px)  translateY(-70.50%) scale(0.9300) rotate(-6.00deg) translateZ(0); opacity: 0.700; }
+
+            /* ── PHASE 9: HIGH CLIMB & FADE (79–86%) ── */
+            79%  { transform: translateX(751px)  translateY(-72.58%) scale(0.9225) rotate(-6.10deg) translateZ(0); opacity: 0.650; }
+            80%  { transform: translateX(780px)  translateY(-74.65%) scale(0.9150) rotate(-6.20deg) translateZ(0); opacity: 0.600; }
+            81%  { transform: translateX(809px)  translateY(-76.73%) scale(0.9075) rotate(-6.30deg) translateZ(0); opacity: 0.550; }
+            82%  { transform: translateX(838px)  translateY(-78.80%) scale(0.9000) rotate(-6.40deg) translateZ(0); opacity: 0.500; }
+            83%  { transform: translateX(871px)  translateY(-81.23%) scale(0.8925) rotate(-6.48deg) translateZ(0); opacity: 0.450; }
+            84%  { transform: translateX(904px)  translateY(-83.65%) scale(0.8850) rotate(-6.55deg) translateZ(0); opacity: 0.400; }
+            85%  { transform: translateX(937px)  translateY(-86.08%) scale(0.8775) rotate(-6.63deg) translateZ(0); opacity: 0.350; }
+            86%  { transform: translateX(970px)  translateY(-88.50%) scale(0.8700) rotate(-6.70deg) translateZ(0); opacity: 0.300; }
+
+            /* ── PHASE 10: VANISH INTO DISTANCE (87–100%) ── */
+            87%  { transform: translateX(1007px) translateY(-91.38%) scale(0.8625) rotate(-6.75deg) translateZ(0); opacity: 0.263; }
+            88%  { transform: translateX(1044px) translateY(-94.25%) scale(0.8550) rotate(-6.80deg) translateZ(0); opacity: 0.225; }
+            89%  { transform: translateX(1081px) translateY(-97.13%) scale(0.8475) rotate(-6.85deg) translateZ(0); opacity: 0.188; }
+            90%  { transform: translateX(1118px) translateY(-100.0%) scale(0.8400) rotate(-6.90deg) translateZ(0); opacity: 0.150; }
+            91%  { transform: translateX(1159px) translateY(-103.4%) scale(0.8325) rotate(-6.93deg) translateZ(0); opacity: 0.128; }
+            92%  { transform: translateX(1200px) translateY(-106.8%) scale(0.8250) rotate(-6.95deg) translateZ(0); opacity: 0.105; }
+            93%  { transform: translateX(1241px) translateY(-110.1%) scale(0.8175) rotate(-6.98deg) translateZ(0); opacity: 0.083; }
+            94%  { transform: translateX(1282px) translateY(-113.5%) scale(0.8100) rotate(-7.00deg) translateZ(0); opacity: 0.060; }
+            95%  { transform: translateX(1328px) translateY(-117.6%) scale(0.8025) rotate(-7.00deg) translateZ(0); opacity: 0.050; }
+            96%  { transform: translateX(1374px) translateY(-121.7%) scale(0.7950) rotate(-7.00deg) translateZ(0); opacity: 0.040; }
+            97%  { transform: translateX(1420px) translateY(-125.8%) scale(0.7875) rotate(-7.00deg) translateZ(0); opacity: 0.030; }
+            98%  { transform: translateX(1466px) translateY(-129.8%) scale(0.7800) rotate(-7.00deg) translateZ(0); opacity: 0.020; }
+            99%  { transform: translateX(1512px) translateY(-133.9%) scale(0.7725) rotate(-7.00deg) translateZ(0); opacity: 0.010; }
+            100% { transform: translateX(1558px) translateY(-138.0%) scale(0.7650) rotate(-7.00deg) translateZ(0); opacity: 0;     }
+        }
+        /* Runway / Ground elements */
+        .launch-ground {
+            position: absolute;
+            bottom: 40px; left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(
+                to right,
+                transparent,
+                rgba(255,255,255,0.08) 20%,
+                rgba(255,255,255,0.15) 50%,
+                rgba(255,255,255,0.08) 80%,
+                transparent
+            );
+        }
+        /* Runway centerline — auto-fills full screen width with repeating dashes */
+        .launch-dashes {
+            position: absolute;
+            bottom: 32px;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: repeating-linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0.55) 0px,
+                rgba(255, 255, 255, 0.55) 28px,   /* dash length */
+                transparent 28px,
+                transparent 46px                   /* gap length */
+            );
+            border-radius: 2px;
+            opacity: 0;
+            animation: fadeIn 0.4s ease 0.2s forwards;
+        }
+        /* .launch-dash divs are no longer needed — kept for backwards compat */
+        .launch-dash { display: none; }
+        .launch-lights {
+            position: absolute;
+            bottom: 27px; left: 5%; right: 5%;
+            display: flex;
+            justify-content: space-between;
+            opacity: 0;
+            animation: fadeIn 0.4s ease 0.2s forwards;
+        }
+        .launch-light {
+            width: 4px; height: 4px;
+            background: #ff9f0a;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #ff9f0a, 0 0 12px rgba(255,159,10,0.4);
+            animation: lightPulse 1.5s ease-in-out infinite;
+        }
+        .launch-light:nth-child(2) { animation-delay: 0.2s; }
+        .launch-light:nth-child(3) { animation-delay: 0.4s; }
+        .launch-light:nth-child(4) { animation-delay: 0.6s; }
+        .launch-light:nth-child(5) { animation-delay: 0.8s; }
+        .launch-light:nth-child(6) { animation-delay: 1.0s; }
+        .launch-light:nth-child(7) { animation-delay: 1.2s; }
+        .launch-glow {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 60px;
+            background: radial-gradient(ellipse at 50% 100%, rgba(100,200,255,0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Branding text */
+        .launch-title {
+            font-size: 30px; font-weight: 800; color: #fff;
+            letter-spacing: 5px; text-transform: uppercase;
+            opacity: 0;
+            animation: titleReveal 0.6s ease 1.8s forwards;
+            text-align: center;
+        }
+        .launch-sub {
+            font-size: 11px; color: #0a84ff;
+            letter-spacing: 3px; text-transform: uppercase;
+            margin-top: 8px;
+            opacity: 0;
+            animation: titleReveal 0.6s ease 2.1s forwards;
+            text-align: center;
+        }
+        .launch-version {
+            font-size: 10px; color: #2a2a2a;
+            margin-top: 20px;
+            opacity: 0;
+            animation: titleReveal 0.4s ease 2.3s forwards;
+            font-family: 'SF Mono', monospace;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        @keyframes titleReveal {
+            0%   { opacity: 0; transform: translateY(6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn    { to { opacity: 1; } }
+        @keyframes lightPulse {
+            0%, 100% { opacity: 0.3; }
+            50%       { opacity: 1;   }
+        }
+
+        /* ============================================================
+           HELP / USER MANUAL STYLES
+        ============================================================ */
+        .help-section {
+            background: rgba(28, 28, 30, 0.75);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .help-section-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .help-item {
+            margin-bottom: 12px;
+        }
+        .help-item:last-child { margin-bottom: 0; }
+        .help-q {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+        .help-a {
+            font-size: 12px;
+            color: var(--sub-text);
+            line-height: 1.6;
+        }
+        .help-a b { color: var(--text); }
+
+        /* ============================================================
+           28. RESPONSIVE LAYOUT — TABLET & DESKTOP
+           820px  = iPad landscape
+           1100px = Desktop
+           1400px = Wide desktop
+        ============================================================ */
+
+        /* ── 820px+: Sidebar nav + 2-panel METAR tab ── */
+        @media (min-width: 820px) {
+
+            /* ─── Body: CSS Named Grid ─── */
+            body {
+                max-width: 1280px;
+                margin: 0 auto;
+                padding: 16px 28px;
+                display: grid;
+                grid-template-areas:
+                    "topbar   topbar"
+                    "chips    chips"
+                    "banner   banner"
+                    "sidenav  content"
+                    "sidenav  sfooter";
+                grid-template-columns: 138px 1fr;
+                grid-template-rows: auto auto auto 1fr auto;
+                column-gap: 20px;
+                row-gap: 10px;
+                align-items: start;
+            }
+
+            .top-bar          { grid-area: topbar;  }
+            .quick-select-row { grid-area: chips;   }
+            #minBanner        { grid-area: banner;  }
+            #offlineBanner    { grid-area: banner;  }
+            .tabs             { grid-area: sidenav; }
+            .view-section     { grid-area: content; }
+            .safety-footer    { grid-area: sfooter; }
+
+            /* ─── Vertical sidebar tab pill ─── */
+            .tabs {
+                flex-direction: column;
+                gap: 2px;
+                padding: 4px;
+                border-bottom: none;
+                overflow: visible;
+                position: sticky;
+                top: 16px;
+                align-self: start;
+                background: rgba(28,28,30,0.78);
+                border-radius: 10px;
+                border: 1px solid var(--border);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+            }
+            .tab {
+                padding: 10px 12px;
+                text-align: left;
+                font-size: 11px;
+                letter-spacing: 0.3px;
+                border-radius: 7px;
+                border-bottom: none;
+                border-right: 3px solid transparent;
+                white-space: nowrap;
+                width: 100%;
+            }
+            .tab:hover:not(.active) {
+                background: rgba(255,255,255,0.06);
+                color: var(--text);
+            }
+            .tab.active {
+                background: rgba(10,132,255,0.14);
+                border-right-color: var(--accent);
+                color: var(--accent);
+            }
+            .tab::after { display: none; }
+
+
+            /* ═══════════════════════════════════════════════════
+               METAR TAB: 2-column explicit grid
+               Col 1 (220px): wind rose → AWOS btn → raw METAR → footer
+               Col 2 (1fr):   metar-grid (sky+fr side-by-side + value cards)
+               Row 5 (full):  nearby stations
+            ═══════════════════════════════════════════════════ */
+            #tab-metar {
+                display: grid;
+                grid-template-columns: 220px 1fr;
+                /* 5 explicit rows:
+                   1 = rose + grid top
+                   2 = awos + grid mid
+                   3 = rawmetar + grid (continues)
+                   4 = footer + grid bottom
+                   5 = nearby (full width)       */
+                grid-template-rows: auto auto 1fr auto auto;
+                column-gap: 16px;
+                row-gap: 0;
+                align-items: start;
+            }
+
+            /* ── Col 1, Row 1: Wind rose ── */
+            #tab-metar > .wind-vis-container {
+                grid-column: 1;
+                grid-row: 1;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                margin-top: 0;
+                padding: 16px 14px 12px;
+                gap: 12px;
+            }
+            #tab-metar #windRose {
+                width: 150px !important;
+                height: 150px !important;
+            }
+            #tab-metar .wind-controls {
+                width: 100%;
+            }
+
+            /* ── Col 1, Row 2: AWOS button (KMHR only) ── */
+            #tab-metar > #btnFetchLive {
+                grid-column: 1;
+                grid-row: 2;
+                margin: 8px 0 4px;
+                font-size: 11px;
+                padding: 9px 8px;
+                line-height: 1.3;
+                align-self: start;
+            }
+
+            /* ── Col 1, Row 3: Raw METAR text ── */
+            #tab-metar > .raw-text {
+                grid-column: 1;
+                grid-row: 3;
+                font-size: 11px;
+                line-height: 1.6;
+                margin-top: 8px;
+                padding: 10px;
+                overflow-wrap: break-word;
+                word-break: break-all;
+                align-self: start;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            /* ── Col 1, Row 4: Age + spread footer ── */
+            #tab-metar > .metar-footer {
+                grid-column: 1;
+                grid-row: 4;
+                font-size: 11px;
+                margin-top: 6px;
+                padding: 0 4px;
+                flex-direction: column;
+                gap: 2px;
+                align-items: flex-start;
+                align-self: start;
+            }
+
+            /* ── Col 2, Rows 1-4: metar-grid ── */
+            #tab-metar > .metar-grid {
+                grid-column: 2;
+                grid-row: 1 / 5;
+                /* 2-column sub-grid inside: sky | flight-cat side by side,
+                   then value cards fill 2 cols each              */
+                grid-template-columns: 1fr 1fr;
+                align-self: start;
+                gap: 8px;
+            }
+
+            /* Sky Cover + Flight Category: each takes ONE col → side by side */
+            #tab-metar .sky-section     { grid-column: span 1 !important; }
+            #tab-metar .fr-bar-container { grid-column: span 1 !important; }
+
+            /* Value cards: each 1 col (2 per row: WIND|VIS then CEIL|ALT) */
+            #tab-metar .metar-card { grid-column: span 1; }
+
+            /* TEMP/DEWPOINT: full width of the 2-col grid */
+            #tab-metar .metar-card.full-width { grid-column: span 2 !important; }
+
+            /* ── Row 5: Nearby stations — full width ── */
+            #tab-metar > .nearby-container {
+                grid-column: 1 / -1;
+                grid-row: 5;
+                margin-top: 10px;
+            }
+
+
+            /* ─── Other tabs: standard 3-col grids ─── */
+            .info-grid  { grid-template-columns: 1fr 1fr 1fr; }
+            .freq-grid  { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+
+            /* Meteogram taller */
+            #meteoCanvas { height: 175px; }
+        }
+
+        /* ============================================================
+           WEATHER TAB — mirror METAR tab 2-column layout on 820px+
+        ============================================================ */
+        @media (min-width: 820px) {
+        
+            /* ── METAR pane inside Weather tab ── */
+            #weather-metar-pane {
+                display: grid;
+                grid-template-columns: 220px 1fr;
+                grid-template-rows: auto auto auto 1fr auto auto;
+                column-gap: 16px;
+                row-gap: 0;
+                align-items: start;
+            }
+        
+            /* Col 1 Row 1 – wind rose */
+            #weather-metar-pane > .wind-vis-container {
+                grid-column: 1;
+                grid-row: 1;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                margin-top: 0;
+                padding: 16px 14px 12px;
+                gap: 12px;
+            }
+            #weather-metar-pane #windRose2 {
+                width: 150px !important;
+                height: 150px !important;
+            }
+            #weather-metar-pane .wind-controls { width: 100%; }
+        
+            /* Col 1 Row 2 – AWOS button */
+            #weather-metar-pane > #btnFetchLive2 {
+                grid-column: 1;
+                grid-row: 2;
+                margin: 8px 0 4px;
+                font-size: 11px;
+                padding: 9px 8px;
+                line-height: 1.3;
+                align-self: start;
+            }
+        
+            /* Col 1 Row 3 – "RAW METAR" label + copy button */
+            #weather-metar-pane > .section-header-row {
+                grid-column: 1;
+                grid-row: 3;
+                align-self: end;
+                margin-top: 8px;
+                margin-bottom: 4px;
+            }
+        
+            /* Col 1 Row 4 – raw METAR text */
+            #weather-metar-pane > .raw-text {
+                grid-column: 1;
+                grid-row: 4;
+                font-size: 11px;
+                line-height: 1.6;
+                padding: 10px;
+                overflow-wrap: break-word;
+                word-break: break-all;
+                align-self: start;
+                max-height: 300px;
+                overflow-y: auto;
+                margin-top: 0;
+            }
+        
+            /* Col 1 Row 5 – age / spread footer */
+            #weather-metar-pane > .metar-footer {
+                grid-column: 1;
+                grid-row: 5;
+                font-size: 11px;
+                margin-top: 6px;
+                flex-direction: column;
+                gap: 2px;
+                align-items: flex-start;
+                align-self: start;
+            }
+        
+            /* Col 2 Rows 1-5 – METAR data grid */
+            #weather-metar-pane > .metar-grid {
+                grid-column: 2;
+                grid-row: 1 / 6;
+                grid-template-columns: 1fr 1fr;
+                align-self: start;
+                gap: 8px;
+            }
+            #weather-metar-pane .sky-section      { grid-column: span 1 !important; }
+            #weather-metar-pane .fr-bar-container { grid-column: span 1 !important; }
+            #weather-metar-pane .metar-card       { grid-column: span 1; }
+            #weather-metar-pane .metar-card.full-width { grid-column: span 2 !important; }
+        
+            /* Row 6 – nearby stations (full width) */
+            #weather-metar-pane > .nearby-container {
+                grid-column: 1 / -1;
+                grid-row: 6;
+                margin-top: 10px;
+            }
+        
+        
+        /* ── 1100px+: widen wind column, 4-col metar grid ── */
+        @media (min-width: 1100px) {
+            #weather-metar-pane {
+                grid-template-columns: 240px 1fr;
+                column-gap: 20px;
+            }
+            #weather-metar-pane #windRose2 {
+                width: 160px !important;
+                height: 160px !important;
+            }
+            #weather-metar-pane > .wind-vis-container {
+                padding: 18px 16px 14px;
+            }
+            #weather-metar-pane > .metar-grid {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+            #weather-metar-pane .sky-section      { grid-column: span 2 !important; }
+            #weather-metar-pane .fr-bar-container { grid-column: span 2 !important; }
+            #weather-metar-pane .metar-card       { grid-column: span 1; }
+            #weather-metar-pane .metar-card.full-width { grid-column: span 4 !important; }
+        }
+        
+        /* ── 1400px+: wider ── */
+        @media (min-width: 1400px) {
+            #weather-metar-pane {
+                grid-template-columns: 260px 1fr;
+            }
+            #weather-metar-pane #windRose2 {
+                width: 170px !important;
+                height: 170px !important;
+            }
+            #weather-metar-pane > .wind-vis-container {
+                padding: 20px 18px 16px;
+            }
+        }
+        }
+
+        /* ── 1100px+: Desktop ── */
+        @media (min-width: 1100px) {
+            body {
+                padding: 20px 40px;
+                grid-template-columns: 152px 1fr;
+                column-gap: 28px;
+            }
+            .tab { font-size: 12px; padding: 11px 15px; }
+            #tab-metar { grid-template-columns: 240px 1fr; column-gap: 20px; }
+            #tab-metar > .wind-vis-container { padding: 18px 16px 14px; }
+            #tab-metar #windRose { width: 160px !important; height: 160px !important; }
+            #tab-metar > .metar-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            #tab-metar .sky-section      { grid-column: span 2 !important; }
+            #tab-metar .fr-bar-container { grid-column: span 2 !important; }
+            #tab-metar .metar-card       { grid-column: span 1; }
+            #tab-metar .metar-card.full-width { grid-column: span 4 !important; }
+            #meteoCanvas { height: 200px; }
+            .nearby-btn { padding: 8px 14px; font-size: 13px; }
+            .info-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            /* Weather tab mirror */
+            #weather-metar-pane { grid-template-columns: 240px 1fr; column-gap: 20px; }
+            #weather-metar-pane #windRose2 { width: 160px !important; height: 160px !important; }
+            #weather-metar-pane > .wind-vis-container { padding: 18px 16px 14px; }
+            #weather-metar-pane > .metar-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            #weather-metar-pane .sky-section      { grid-column: span 2 !important; }
+            #weather-metar-pane .fr-bar-container { grid-column: span 2 !important; }
+            #weather-metar-pane .metar-card       { grid-column: span 1; }
+            #weather-metar-pane .metar-card.full-width { grid-column: span 4 !important; }
+        }
+        
+        /* ── 1400px+: Wide desktop ── */
+        @media (min-width: 1400px) {
+            body { max-width: 1440px; padding: 24px 48px; grid-template-columns: 160px 1fr; }
+            .tab { font-size: 12px; padding: 12px 18px; }
+            #tab-metar { grid-template-columns: 260px 1fr; }
+            #tab-metar > .wind-vis-container { padding: 20px 18px 16px; }
+            #tab-metar #windRose { width: 170px !important; height: 170px !important; }
+            #tab-metar > .metar-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            .info-grid { grid-template-columns: repeat(5, 1fr); }
+            #weather-metar-pane { grid-template-columns: 260px 1fr; }
+            #weather-metar-pane #windRose2 { width: 170px !important; height: 170px !important; }
+            #weather-metar-pane > .wind-vis-container { padding: 20px 18px 16px; }
+        }
+        /* ============================================================
+           29. SKELETON LOADING SCREENS
+        ============================================================ */
+        @keyframes shimmer {
+            0%   { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                rgba(28,28,30,0.8) 0%,
+                rgba(60,60,60,0.8) 50%,
+                rgba(28,28,30,0.8) 100%
+            );
+            background-size: 1000px 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            border-radius: 8px;
+            min-height: 20px;
+        }
+        
+        .skeleton-text {
+            height: 14px;
+            margin: 6px 0;
+            background: linear-gradient(
+                90deg,
+                rgba(28,28,30,0.8) 0%,
+                rgba(60,60,60,0.8) 50%,
+                rgba(28,28,30,0.8) 100%
+            );
+            background-size: 1000px 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            border-radius: 4px;
+        }
+        
+        .skeleton-card {
+            background: rgba(28,28,30,0.75);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        /* ============================================================
+           30. WEATHER TREND INDICATORS
+        ============================================================ */
+        .trend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            text-transform: uppercase;
+        }
+        .trend-improving {
+            background: rgba(50, 215, 75, 0.15);
+            color: var(--success);
+        }
+        .trend-worsening {
+            background: rgba(255, 69, 58, 0.15);
+            color: var(--danger);
+        }
+        .trend-steady {
+            background: rgba(255, 159, 10, 0.15);
+            color: var(--warn);
+        }
+
+        /* ============================================================
+           31. COPY BUTTONS
+        ============================================================ */
+        .copy-btn {
+            background: rgba(10,132,255,0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .copy-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .section-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        /* ============================================================
+           32. PHONE NUMBER CARDS
+        ============================================================ */
+        .phone-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .phone-label {
+            font-size: 10px;
+            color: var(--sub-text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+        .phone-number {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: 'SF Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .phone-number:active {
+            transform: scale(0.98);
+        }
+
+        /* ============================================================
+           33. MULTI-AIRPORT DASHBOARD
+        ============================================================ */
+        .multi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .multi-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .multi-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(10,132,255,0.2);
+        }
+        .multi-card:active {
+            transform: translateY(0);
+        }
+        
+        .multi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .multi-icao {
+            font-size: 20px;
+            font-weight: 800;
+            font-family: 'SF Mono', monospace;
+            color: var(--text);
+        }
+        .multi-remove {
+            background: rgba(255,69,58,0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .multi-remove:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+        
+        .multi-name {
+            font-size: 11px;
+            color: var(--sub-text);
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .multi-data {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-size: 11px;
+        }
+        .multi-data-item {
+            background: rgba(255,255,255,0.03);
+            padding: 6px 8px;
+            border-radius: 6px;
+        }
+        .multi-data-label {
+            color: var(--sub-text);
+            font-size: 9px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .multi-data-value {
+            font-weight: 700;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        .multi-age {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 9px;
+            color: var(--sub-text);
+        }
+        
+        .multi-loading {
+            color: var(--sub-text);
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+        }
+        
+        .multi-add-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .multi-add-input {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            outline: none;
+        }
+        .multi-add-input:focus {
+            border-color: var(--accent);
+        }
+        .multi-add-btn {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .multi-add-btn:active {
+            transform: scale(0.98);
+        }
+        
+        @media (min-width: 820px) {
+            .multi-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+        @media (min-width: 1100px) {
+            .multi-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 28px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: var(--accent);
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* ============================================================
+           WEATHER TAB PILL TOGGLE
+        ============================================================ */
+        .weather-pill-row {
+            display: flex;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 3px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border);
+        }
+        .pill-btn {
+            flex: 1;
+            padding: 9px 0;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--sub-text);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .pill-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(10,132,255,0.35);
+        }
+        body.cockpit-dark .pill-btn.active {
+            background: #ff0000;
+            box-shadow: none;
+        }
+
+        /* ============================================================
+           WHATS NEW MODAL
+        ============================================================ */
+        .whatsnew-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 99998;
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .whatsnew-overlay.active { display: flex; }
+        .whatsnew-card {
+            background: #1c1c1e;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 28px 24px 20px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            animation: slideUpFade 0.4s cubic-bezier(0.2,0.8,0.2,1) both;
+        }
+        .whatsnew-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(10,132,255,0.15);
+            border: 1px solid rgba(10,132,255,0.4);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .whatsnew-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .whatsnew-sub {
+            font-size: 12px;
+            color: var(--sub-text);
+            margin-bottom: 20px;
+        }
+        .whatsnew-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .whatsnew-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        .whatsnew-icon {
+            font-size: 20px;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .whatsnew-item-text { flex: 1; }
+        .whatsnew-item-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+        .whatsnew-item-desc {
+            font-size: 11px;
+            color: var(--sub-text);
+            line-height: 1.5;
+        }
+        .whatsnew-btn {
+            width: 100%;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .whatsnew-btn:active { opacity: 0.8; }
+
+        /* ============================================================
+           COLLAPSIBLE HELP SECTIONS
+        ============================================================ */
+        .help-section { cursor: default; }
+        .help-section-title {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .help-chevron {
+            font-size: 11px;
+            color: var(--sub-text);
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+        .help-section.open .help-chevron {
+            transform: rotate(180deg);
+        }
+        .help-body {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+                        opacity   0.25s ease;
+            opacity: 0;
+        }
+        .help-section.open .help-body {
+            max-height: 5000px;
+            opacity: 1;
+        }
+        /* ── Drag handle ── */
+        .sort-handle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--sub-text);
+            font-size: 16px;
+            letter-spacing: -4px;
+            padding: 0 10px 0 4px;
+            flex-shrink: 0;
+            cursor: grab;
+            user-select: none;
+            opacity: 0.5;
+        }
+
+        /* Global spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================================
+           UNIT PREFERENCE PILL TOGGLES
+        ============================================================ */
+        
+        /* ============================================================
+           UNIT PREFERENCE PILL TOGGLES
+        ============================================================ */
+        .unit-pill {
+            background: transparent;
+            border: none;
+            color: var(--sub-text);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            white-space: nowrap;
+        }
+        .unit-pill.active-unit {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(10,132,255,0.35);
+        }
+        body.cockpit-dark .unit-pill.active-unit {
+            background: #ff0000;
+            box-shadow: none;
+        }
+        
