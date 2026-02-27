@@ -635,42 +635,229 @@
         // ================================================================
         // 20. TOOLS — PERSONAL MINIMUMS & E6B
         // ================================================================
-        function checkMins() {
-            const xwVal   = document.getElementById('minXW').value;
-            const ceilVal = document.getElementById('minCeil').value;
-            const resDiv  = document.getElementById('minsResult');
-            const card    = document.getElementById('minsCard');
-            const banner  = document.getElementById('minBanner');
-            if (xwVal === '' || ceilVal === '') {
-                resDiv.innerText = "SET LIMITS"; resDiv.style.backgroundColor = "#333"; resDiv.style.color = "#aaa";
-                card.style.borderLeftColor = "#555"; banner.className = 'hidden'; return;
+        // ================================================================
+        // PERSONAL MINIMUMS - PROFILE BASED
+        // ================================================================
+        const MINS_PROFILES = {
+            solo: {
+                name: 'SOLO',
+                minCeil: 2000,
+                minVis: 5,
+                maxSteady: 15,
+                maxPeak: 15,
+                maxGust: 5,
+                maxXW: 10,
+                ceilXC: 5000  // Cross-country ceiling
+            },
+            dual: {
+                name: 'DUAL',
+                minCeil: 1500,
+                minVis: 3,
+                maxSteady: 25,
+                maxPeak: 30,
+                maxGust: 10,
+                maxXW: 19,
+                ceilXC: 3000
             }
-            const limitXW   = parseFloat(xwVal);
-            const limitCeil = parseFloat(ceilVal);
-            Storage.set('efb_min_xw', limitXW); Storage.set('efb_min_ceil', limitCeil);
-            if (!currentMetar || !stationData) { resDiv.innerText = "LOAD DATA"; return; }
+        };
+
+        let activeMinsProfile = null;
+
+        function togglePersonalMins() {
+            const content = document.getElementById('minsExpandedContent');
+            const icon = document.getElementById('minsExpandIcon');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleEvaInfo() {
+            const content = document.getElementById('evaInfoContent');
+            const icon = document.getElementById('evaInfoIcon');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function switchMinsProfile(profile) {
+            // Update button states
+            const buttons = ['btnProfileSolo', 'btnProfileDual', 'btnProfileCustom'];
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--sub-text)';
+            });
+            
+            const activeBtn = document.getElementById(`btnProfile${profile.charAt(0).toUpperCase() + profile.slice(1)}`);
+            activeBtn.style.background = 'var(--accent)';
+            activeBtn.style.color = '#fff';
+
+            // Show/hide custom inputs
+            document.getElementById('minsCustomInputs').style.display = profile === 'custom' ? 'block' : 'none';
+
+            // Load profile or custom
+            if (profile === 'custom') {
+                const saved = Storage.get('efb_mins_custom');
+                if (saved) {
+                    activeMinsProfile = JSON.parse(saved);
+                    document.getElementById('customMinCeil').value = activeMinsProfile.minCeil || '';
+                    document.getElementById('customMinVis').value = activeMinsProfile.minVis || '';
+                    document.getElementById('customMaxSteady').value = activeMinsProfile.maxSteady || '';
+                    document.getElementById('customMaxPeak').value = activeMinsProfile.maxPeak || '';
+                    document.getElementById('customMaxGust').value = activeMinsProfile.maxGust || '';
+                    document.getElementById('customMaxXW').value = activeMinsProfile.maxXW || '';
+                } else {
+                    activeMinsProfile = { name: 'CUSTOM', minCeil: 1000, minVis: 3, maxSteady: 20, maxPeak: 25, maxGust: 8, maxXW: 15 };
+                }
+            } else {
+                activeMinsProfile = MINS_PROFILES[profile];
+            }
+
+            Storage.set('efb_mins_active_profile', profile);
+            updateMinsDisplay();
+            checkMins();
+        }
+
+        function saveCustomMins() {
+            const custom = {
+                name: 'CUSTOM',
+                minCeil: parseFloat(document.getElementById('customMinCeil').value) || 1000,
+                minVis: parseFloat(document.getElementById('customMinVis').value) || 3,
+                maxSteady: parseFloat(document.getElementById('customMaxSteady').value) || 20,
+                maxPeak: parseFloat(document.getElementById('customMaxPeak').value) || 25,
+                maxGust: parseFloat(document.getElementById('customMaxGust').value) || 8,
+                maxXW: parseFloat(document.getElementById('customMaxXW').value) || 15
+            };
+            Storage.set('efb_mins_custom', JSON.stringify(custom));
+            activeMinsProfile = custom;
+            updateMinsDisplay();
+            checkMins();
+            
+            // Show feedback
+            const btn = event.target;
+            const orig = btn.innerText;
+            btn.innerText = 'SAVED ✓';
+            btn.style.background = 'var(--success)';
+            setTimeout(() => {
+                btn.innerText = orig;
+                btn.style.background = 'var(--accent)';
+            }, 1500);
+        }
+
+        function updateMinsDisplay() {
+            if (!activeMinsProfile) return;
+            
+            document.getElementById('activeMinsProfile').innerText = activeMinsProfile.name;
+            document.getElementById('displayMinCeil').innerText = activeMinsProfile.minCeil;
+            document.getElementById('displayMinVis').innerText = activeMinsProfile.minVis;
+            document.getElementById('displayMaxSteady').innerText = activeMinsProfile.maxSteady;
+            document.getElementById('displayMaxPeak').innerText = activeMinsProfile.maxPeak;
+            document.getElementById('displayMaxGust').innerText = activeMinsProfile.maxGust;
+            document.getElementById('displayMaxXW').innerText = activeMinsProfile.maxXW;
+        }
+
+        function checkMins() {
+            const card = document.getElementById('minsCard');
+            const compactStatus = document.getElementById('minsStatusCompact');
+            const detailsDiv = document.getElementById('minsStatusDetails');
+            const banner = document.getElementById('minBanner');
+
+            // If no profile selected
+            if (!activeMinsProfile) {
+                compactStatus.innerText = 'TAP TO SET LIMITS';
+                compactStatus.style.backgroundColor = '#333';
+                compactStatus.style.color = '#aaa';
+                card.style.borderLeftColor = '#555';
+                banner.className = 'hidden';
+                detailsDiv.innerHTML = 'Load airport data to check limits';
+                return;
+            }
+
+            // If no data loaded
+            if (!currentMetar || !stationData) {
+                compactStatus.innerText = 'LOAD AIRPORT DATA';
+                compactStatus.style.backgroundColor = '#333';
+                compactStatus.style.color = '#aaa';
+                card.style.borderLeftColor = '#555';
+                banner.className = 'hidden';
+                detailsDiv.innerHTML = 'Select an airport to check against your minimums';
+                return;
+            }
+
+            // Calculate actual conditions
             const rwyIdent = document.getElementById('rwySelect').value;
             let actualXW = 0;
-            if (rwyIdent) {
-                const mv     = stationData.magnetic_variation || 0;
+            if (rwyIdent && currentWind.dir !== 'VRB') {
+                const mv = stationData.magnetic_variation || 0;
                 const rwyHdg = parseInt(rwyIdent.replace(/\D/g, '')) * 10;
-                const diff   = (currentWind.dir - mv - rwyHdg) * (Math.PI / 180);
-                actualXW     = Math.abs(Math.sin(diff) * currentWind.spd);
+                const diff = (currentWind.dir - mv - rwyHdg) * (Math.PI / 180);
+                actualXW = Math.abs(Math.sin(diff) * currentWind.spd);
             }
+
             let actualCeil = 9999;
             if (lastMetarObj?.clouds) {
                 const cl = lastMetarObj.clouds.find(c => ['BKN','OVC','VV'].includes(c.type));
                 if (cl) actualCeil = cl.altitude * 100;
             }
-            if (actualXW > limitXW || actualCeil < limitCeil) {
-                resDiv.innerText = "NO-GO ⛔"; resDiv.style.backgroundColor = "var(--danger)"; resDiv.style.color = "#fff";
-                card.style.borderLeftColor = "var(--danger)"; banner.className = '';
-                banner.innerText = `⚠️ NO-GO: ${actualXW > limitXW ? 'X-WIND' : 'CEILING'} EXCEEDED`;
+
+            const actualVis = lastMetarObj?.visibility?.value || 10;
+            const actualSteady = currentWind.spd || 0;
+            const actualGust = currentWind.gust || 0;
+            const actualGustFactor = actualGust > 0 ? (actualGust - actualSteady) : 0;
+            const actualPeak = Math.max(actualSteady, actualGust);
+
+            // Check each limit
+            const violations = [];
+            if (actualCeil < activeMinsProfile.minCeil) violations.push(`Ceiling ${actualCeil}ft < ${activeMinsProfile.minCeil}ft`);
+            if (actualVis < activeMinsProfile.minVis) violations.push(`Visibility ${actualVis}SM < ${activeMinsProfile.minVis}SM`);
+            if (actualSteady > activeMinsProfile.maxSteady) violations.push(`Steady wind ${Math.round(actualSteady)}kt > ${activeMinsProfile.maxSteady}kt`);
+            if (actualPeak > activeMinsProfile.maxPeak) violations.push(`Peak wind ${Math.round(actualPeak)}kt > ${activeMinsProfile.maxPeak}kt`);
+            if (actualGustFactor > activeMinsProfile.maxGust) violations.push(`Gust factor ${Math.round(actualGustFactor)}kt > ${activeMinsProfile.maxGust}kt`);
+            if (rwyIdent && actualXW > activeMinsProfile.maxXW) violations.push(`Crosswind ${Math.round(actualXW)}kt > ${activeMinsProfile.maxXW}kt`);
+
+            // Update UI
+            if (violations.length > 0) {
+                compactStatus.innerText = 'NO-GO ⛔';
+                compactStatus.style.backgroundColor = 'var(--danger)';
+                compactStatus.style.color = '#fff';
+                card.style.borderLeftColor = 'var(--danger)';
+                banner.className = '';
+                banner.innerText = `⚠️ NO-GO: ${violations.length} LIMIT${violations.length > 1 ? 'S' : ''} EXCEEDED`;
+                
+                detailsDiv.innerHTML = '<div style="color:var(--danger); font-weight:700; margin-bottom:6px;">❌ VIOLATIONS:</div>' +
+                    violations.map(v => `<div style="color:var(--danger);">• ${v}</div>`).join('');
             } else {
-                resDiv.innerText = "GO ✅"; resDiv.style.backgroundColor = "var(--success)"; resDiv.style.color = "#000";
-                card.style.borderLeftColor = "var(--success)"; banner.className = 'hidden';
+                compactStatus.innerText = `GO ✅ (${activeMinsProfile.name})`;
+                compactStatus.style.backgroundColor = 'var(--success)';
+                compactStatus.style.color = '#000';
+                card.style.borderLeftColor = 'var(--success)';
+                banner.className = 'hidden';
+                
+                detailsDiv.innerHTML = `
+                    <div style="color:var(--success); font-weight:700; margin-bottom:6px;">✅ ALL LIMITS MET</div>
+                    <div>• Ceiling: ${actualCeil}ft (min ${activeMinsProfile.minCeil}ft)</div>
+                    <div>• Visibility: ${actualVis}SM (min ${activeMinsProfile.minVis}SM)</div>
+                    <div>• Steady: ${Math.round(actualSteady)}kt (max ${activeMinsProfile.maxSteady}kt)</div>
+                    <div>• Peak: ${Math.round(actualPeak)}kt (max ${activeMinsProfile.maxPeak}kt)</div>
+                    <div>• Gust Factor: ${Math.round(actualGustFactor)}kt (max ${activeMinsProfile.maxGust}kt)</div>
+                    ${rwyIdent ? `<div>• Crosswind: ${Math.round(actualXW)}kt (max ${activeMinsProfile.maxXW}kt)</div>` : ''}
+                `;
             }
         }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedProfile = Storage.get('efb_mins_active_profile') || 'solo';
+            switchMinsProfile(savedProfile);
+        });
 
         function calcE6B() {
             const uQnh  = document.getElementById('unitQnh').value;
