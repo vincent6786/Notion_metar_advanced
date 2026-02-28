@@ -53,14 +53,24 @@ function openToolsExtension() {
  * Close the tools extension panel and return to main tools tab
  */
 function closeToolsExtension() {
+    console.log('Closing tools extension...');
+    
     const toolsTab = document.getElementById('tab-tools');
     const toolsExtension = document.getElementById('tools-extension-panel');
     
     if (toolsTab && toolsExtension) {
-        toolsTab.style.display = 'block';
+        // Hide the extension panel
         toolsExtension.style.display = 'none';
+        toolsExtension.classList.remove('active');
+        
+        // Show the main tools tab
+        toolsTab.style.display = 'block';
+        toolsTab.classList.add('active');
+        
         toolsExtensionState.isOpen = false;
         toolsExtensionState.currentTool = null;
+        
+        console.log('Extension closed, tools tab restored');
     }
 }
 
