@@ -1304,70 +1304,23 @@
             </div>
         </div>
 
-        <!-- E6B Flight Computer -->
-        <div class="section-title">E6B Flight Computer</div>
-        <div class="info-card">
-            <div class="conv-row">
-                <div style="flex:1">
-                    <div class="conv-lbl">Indicated Alt (ft)</div>
-                    <input type="number" id="e6bAlt" class="conv-inp" placeholder="0" oninput="calcE6B()">
-                </div>
-                <div style="flex:1">
-                    <div class="conv-lbl">CAS / IAS (kts)</div>
-                    <input type="number" id="e6bIas" class="conv-inp" placeholder="0" oninput="calcE6B()">
-                </div>
-            </div>
-            <div class="conv-row" style="align-items:flex-end;">
-                <div style="flex:1">
-                    <div class="conv-lbl">Altimeter (QNH)</div>
-                    <input type="number" id="e6bQnh" class="conv-inp" placeholder="1013" oninput="calcE6B()">
-                </div>
-                <div style="width:80px;">
-                    <select id="unitQnh" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
-                        <option value="hpa">hPa</option>
-                        <option value="inhg">inHg</option>
-                    </select>
-                </div>
-            </div>
-            <div class="conv-row" style="align-items:flex-end;">
-                <div style="flex:1">
-                    <div class="conv-lbl">OAT (Temp)</div>
-                    <input type="number" id="e6bTemp" class="conv-inp" placeholder="15" oninput="calcE6B()">
-                </div>
-                <div style="flex:1">
-                    <div class="conv-lbl">Dewpoint</div>
-                    <input type="number" id="e6bDew" class="conv-inp" placeholder="10" oninput="calcE6B()">
-                </div>
-                <div style="width:80px;">
-                    <select id="unitTemp" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
-                        <option value="c">°C</option>
-                        <option value="f">°F</option>
-                    </select>
-                </div>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; padding-top:15px; border-top:1px solid #333;">
-                <div><div class="ic-lbl">Density Alt</div><div class="ic-val" id="resDA" style="color:var(--accent);">--</div></div>
-                <div><div class="ic-lbl">True Airspeed</div><div class="ic-val" id="resTAS" style="color:var(--success);">--</div></div>
-                <div><div class="ic-lbl">Cloud Base (AGL)</div><div class="ic-val" id="resCloud">--</div></div>
-                <div><div class="ic-lbl">Freezing Lvl</div><div class="ic-val" id="resFrz">--</div></div>
-            </div>
-        </div>
-
         <!-- Aviation Tools Extension -->
-        <div class="section-title">More Aviation Tools</div>
+        <div class="section-title">Aviation Tools</div>
         <div class="info-card" style="background:linear-gradient(135deg, rgba(10,132,255,0.1) 0%, rgba(10,132,255,0.05) 100%); border:1px solid rgba(10,132,255,0.3); cursor:pointer; transition:all 0.3s;" onclick="openToolsExtension()">
             <div style="display:flex; align-items:center; justify-content:space-between;">
                 <div style="flex:1;">
                     <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
                         <div style="font-size:28px;">🛠️</div>
                         <div>
-                            <div style="font-size:15px; font-weight:800; color:#fff;">Aviation Tools</div>
-                            <div style="font-size:11px; color:var(--sub-text);">Unit converter, great circle, weather terms & more</div>
+                            <div style="font-size:15px; font-weight:800; color:#fff;">Aviation Tools Collection</div>
+                            <div style="font-size:11px; color:var(--sub-text);">6 essential tools for pilots - tap to explore</div>
                         </div>
                     </div>
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;">
                         <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">CONVERTER</span>
+                        <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">E6B</span>
                         <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">DISTANCE</span>
+                        <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">TRAINER</span>
                         <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">WX TERMS</span>
                         <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">ABBREV</span>
                     </div>
@@ -1419,11 +1372,25 @@
                     <div style="font-size:11px; color:var(--sub-text);">Distance, speed, pressure, temp</div>
                 </div>
                 
+                <!-- E6B Flight Computer -->
+                <div onclick="openTool('e6b-calculator')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">✈️</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Calculator</div>
+                    <div style="font-size:11px; color:var(--sub-text);">DA, TAS, cloud base, freezing</div>
+                </div>
+                
                 <!-- Great Circle -->
                 <div onclick="openTool('great-circle')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">🌍</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Great Circle</div>
                     <div style="font-size:11px; color:var(--sub-text);">Distance & bearing calc</div>
+                </div>
+                
+                <!-- E6B Trainer -->
+                <div onclick="openTool('e6b-trainer')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">🎓</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Trainer</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Interactive UND trainer</div>
                 </div>
                 
                 <!-- Weather Terms -->
@@ -1472,6 +1439,72 @@
                 <div style="background:#1c1c1e; padding:20px; border-radius:10px; text-align:center; border:2px solid var(--accent);">
                     <div style="font-size:11px; color:var(--sub-text); margin-bottom:6px; text-transform:uppercase;">RESULT</div>
                     <div id="conv-result" style="font-size:32px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">-- --</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             E6B FLIGHT COMPUTER CALCULATOR
+        ================================================================ -->
+        <div id="tool-e6b-calculator" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div class="conv-row">
+                    <div style="flex:1">
+                        <div class="conv-lbl">Indicated Alt (ft)</div>
+                        <input type="number" id="e6bAlt" class="conv-inp" placeholder="0" oninput="calcE6B()">
+                    </div>
+                    <div style="flex:1">
+                        <div class="conv-lbl">CAS / IAS (kts)</div>
+                        <input type="number" id="e6bIas" class="conv-inp" placeholder="0" oninput="calcE6B()">
+                    </div>
+                </div>
+                <div class="conv-row" style="align-items:flex-end;">
+                    <div style="flex:1">
+                        <div class="conv-lbl">Altimeter (QNH)</div>
+                        <input type="number" id="e6bQnh" class="conv-inp" placeholder="1013" oninput="calcE6B()">
+                    </div>
+                    <div style="width:80px;">
+                        <select id="unitQnh" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
+                            <option value="hpa">hPa</option>
+                            <option value="inhg">inHg</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="conv-row" style="align-items:flex-end;">
+                    <div style="flex:1">
+                        <div class="conv-lbl">OAT (Temp)</div>
+                        <input type="number" id="e6bTemp" class="conv-inp" placeholder="15" oninput="calcE6B()">
+                    </div>
+                    <div style="flex:1">
+                        <div class="conv-lbl">Dewpoint</div>
+                        <input type="number" id="e6bDew" class="conv-inp" placeholder="10" oninput="calcE6B()">
+                    </div>
+                    <div style="width:80px;">
+                        <select id="unitTemp" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
+                            <option value="c">°C</option>
+                            <option value="f">°F</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; padding-top:15px; border-top:1px solid #333;">
+                    <div><div class="ic-lbl">Density Alt</div><div class="ic-val" id="resDA" style="color:var(--accent);">--</div></div>
+                    <div><div class="ic-lbl">True Airspeed</div><div class="ic-val" id="resTAS" style="color:var(--success);">--</div></div>
+                    <div><div class="ic-lbl">Cloud Base (AGL)</div><div class="ic-val" id="resCloud">--</div></div>
+                    <div><div class="ic-lbl">Freezing Lvl</div><div class="ic-val" id="resFrz">--</div></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             E6B TRAINER (UND)
+        ================================================================ -->
+        <div id="tool-e6b-trainer" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div id="e6b-trainer-content">
+                    <!-- Content will be loaded by openUNDE6B() when tool opens -->
+                    <div style="text-align:center; padding:20px;">
+                        <div style="font-size:16px; color:var(--sub-text);">Loading E6B trainer...</div>
+                    </div>
                 </div>
             </div>
         </div>

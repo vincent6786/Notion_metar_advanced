@@ -88,7 +88,9 @@ function openTool(toolName) {
             'unit-converter': 'Unit Converter',
             'great-circle': 'Great Circle Distance',
             'abbreviations': 'Aviation Abbreviations',
-            'weather-terms': 'Present Weather Terms'
+            'weather-terms': 'Present Weather Terms',
+            'e6b-calculator': 'E6B Flight Computer',
+            'e6b-trainer': 'E6B Trainer (UND)'
         };
         updateExtensionHeader(toolTitles[toolName] || 'Tool', true);
         
@@ -99,6 +101,10 @@ function openTool(toolName) {
             displayAllWeatherTerms(); // Show all terms by default
         } else if (toolName === 'abbreviations') {
             openAbbreviations(); // Load the abbreviations database
+        } else if (toolName === 'e6b-calculator') {
+            calcE6B(); // Initialize E6B calculations
+        } else if (toolName === 'e6b-trainer') {
+            openUNDE6B(); // Load UND E6B trainer
         }
     }
 }
@@ -454,6 +460,67 @@ function openAbbreviations() {
         </iframe>
         <div style="margin-top:8px; font-size:11px; color:var(--sub-text); text-align:center;">
             Searchable database of aviation acronyms and abbreviations
+        </div>
+    `;
+}
+
+// ============================================================================
+// E6B FLIGHT COMPUTER
+// ============================================================================
+
+function calcE6B() {
+    const uQnh  = document.getElementById('unitQnh').value;
+    const uTemp = document.getElementById('unitTemp').value;
+    document.getElementById('e6bAlt').placeholder  = "0";
+    document.getElementById('e6bQnh').placeholder  = (uQnh === 'inhg') ? "29.92" : "1013";
+    document.getElementById('e6bTemp').placeholder = (uTemp === 'f') ? "59" : "15";
+    document.getElementById('e6bDew').placeholder  = (uTemp === 'f') ? "50" : "10";
+
+    let alt     = parseFloat(document.getElementById('e6bAlt').value) || 0;
+    let ias     = parseFloat(document.getElementById('e6bIas').value) || 0;
+    let rawQnh  = parseFloat(document.getElementById('e6bQnh').value);
+    let rawTemp = parseFloat(document.getElementById('e6bTemp').value);
+    let rawDew  = parseFloat(document.getElementById('e6bDew').value);
+
+    if (isNaN(rawQnh))  rawQnh  = (uQnh === 'inhg') ? 29.92 : 1013;
+    if (isNaN(rawTemp)) rawTemp = (uTemp === 'f') ? 59 : 15;
+
+    let qnhHpa = uQnh === 'inhg' ? rawQnh * 33.8639 : rawQnh;
+    let tempC  = uTemp === 'f' ? (rawTemp - 32) * 5/9 : rawTemp;
+    let dewC   = isNaN(rawDew) ? null : (uTemp === 'f' ? (rawDew - 32) * 5/9 : rawDew);
+
+    const pa      = alt + (1013.25 - qnhHpa) * 30;
+    const isaTemp = 15 - (2 * (pa / 1000));
+    const da      = pa + 120 * (tempC - isaTemp);
+    const tas     = ias * (1 + ((alt / 1000) * 0.02));
+    let cloudBase = "--", freezingLvl = "--";
+    if (dewC !== null) { cloudBase = `${Math.round(((tempC - dewC) / 2.5) * 1000)} ft`; }
+    if (tempC > 0) { freezingLvl = `${Math.round(alt + (tempC / 2) * 1000)} ft`; } else { freezingLvl = "Surface"; }
+
+    document.getElementById('resDA').innerText    = `${Math.round(da)} ft`;
+    document.getElementById('resTAS').innerText   = `${Math.round(tas)} kt`;
+    document.getElementById('resCloud').innerText = cloudBase;
+    document.getElementById('resFrz').innerText   = freezingLvl;
+    const daEl = document.getElementById('resDA');
+    daEl.style.color = da > alt + 2000 ? "var(--warn)" : "var(--accent)";
+}
+
+function openUNDE6B() {
+    const url = 'https://mediafiles.aero.und.edu/aero.und.edu/aviation/trainers/e6b/';
+    const resultEl = document.getElementById('e6b-trainer-content');
+    
+    resultEl.innerHTML = `
+        <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-size:13px; font-weight:700; color:var(--accent);">UND E6B FLIGHT COMPUTER TRAINER</div>
+            <button onclick="window.open('${url}', '_blank')" class="tool-btn" style="background:var(--accent); border:none; color:#000; padding:6px 12px; font-size:11px; font-weight:700;">
+                OPEN IN NEW TAB ↗
+            </button>
+        </div>
+        <iframe src="${url}" 
+                style="width:100%; height:60vh; border:1px solid #333; border-radius:8px; background:#fff;">
+        </iframe>
+        <div style="margin-top:8px; font-size:11px; color:var(--sub-text); text-align:center;">
+            Interactive E6B flight computer trainer from University of North Dakota
         </div>
     `;
 }
