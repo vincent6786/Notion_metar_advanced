@@ -1,0 +1,416 @@
+/**
+ * METAR GO - Tools Extension
+ * Modular tools system for aviation calculations and references
+ */
+
+// ============================================================================
+// TOOLS EXTENSION STATE & NAVIGATION
+// ============================================================================
+
+let toolsExtensionState = {
+    isOpen: false,
+    currentTool: null,
+    previousTab: 'tools'
+};
+
+/**
+ * Open the tools extension panel
+ */
+function openToolsExtension() {
+    // Hide main tools tab content
+    const toolsTab = document.getElementById('tab-tools');
+    const toolsExtension = document.getElementById('tools-extension-panel');
+    
+    if (toolsTab && toolsExtension) {
+        toolsTab.style.display = 'none';
+        toolsExtension.style.display = 'block';
+        toolsExtensionState.isOpen = true;
+        toolsExtensionState.previousTab = 'tools';
+        
+        // Show the tools menu by default
+        showToolsMenu();
+    }
+}
+
+/**
+ * Close the tools extension panel and return to main tools tab
+ */
+function closeToolsExtension() {
+    const toolsTab = document.getElementById('tab-tools');
+    const toolsExtension = document.getElementById('tools-extension-panel');
+    
+    if (toolsTab && toolsExtension) {
+        toolsTab.style.display = 'block';
+        toolsExtension.style.display = 'none';
+        toolsExtensionState.isOpen = false;
+        toolsExtensionState.currentTool = null;
+    }
+}
+
+/**
+ * Show the tools menu (main extension view)
+ */
+function showToolsMenu() {
+    const menu = document.getElementById('tools-menu');
+    const toolViews = document.querySelectorAll('.tool-view');
+    
+    if (menu) {
+        menu.style.display = 'block';
+        toolViews.forEach(view => view.style.display = 'none');
+        toolsExtensionState.currentTool = null;
+        
+        // Update header
+        updateExtensionHeader('Aviation Tools', false);
+    }
+}
+
+/**
+ * Open a specific tool
+ */
+function openTool(toolName) {
+    const menu = document.getElementById('tools-menu');
+    const toolView = document.getElementById(`tool-${toolName}`);
+    
+    if (menu && toolView) {
+        menu.style.display = 'none';
+        
+        // Hide all tool views
+        document.querySelectorAll('.tool-view').forEach(view => {
+            view.style.display = 'none';
+        });
+        
+        // Show selected tool
+        toolView.style.display = 'block';
+        toolsExtensionState.currentTool = toolName;
+        
+        // Update header with tool name
+        const toolTitles = {
+            'unit-converter': 'Unit Converter',
+            'great-circle': 'Great Circle Distance',
+            'abbreviations': 'Aviation Abbreviations',
+            'weather-terms': 'Present Weather Terms'
+        };
+        updateExtensionHeader(toolTitles[toolName] || 'Tool', true);
+    }
+}
+
+/**
+ * Update the extension header
+ */
+function updateExtensionHeader(title, showBackToMenu) {
+    const headerTitle = document.getElementById('extension-header-title');
+    const backToMenuBtn = document.getElementById('back-to-menu-btn');
+    
+    if (headerTitle) {
+        headerTitle.textContent = title;
+    }
+    
+    if (backToMenuBtn) {
+        backToMenuBtn.style.display = showBackToMenu ? 'flex' : 'none';
+    }
+}
+
+// ============================================================================
+// UNIT CONVERTER TOOL
+// ============================================================================
+
+const unitConversions = {
+    // Distance
+    distance: {
+        nm: { label: 'Nautical Miles', toMeters: 1852 },
+        sm: { label: 'Statute Miles', toMeters: 1609.344 },
+        km: { label: 'Kilometers', toMeters: 1000 },
+        m: { label: 'Meters', toMeters: 1 },
+        ft: { label: 'Feet', toMeters: 0.3048 }
+    },
+    // Temperature
+    temperature: {
+        c: { label: '°Celsius' },
+        f: { label: '°Fahrenheit' },
+        k: { label: 'Kelvin' }
+    },
+    // Speed
+    speed: {
+        kts: { label: 'Knots', toMPS: 0.514444 },
+        mph: { label: 'MPH', toMPS: 0.44704 },
+        kph: { label: 'KPH', toMPS: 0.277778 },
+        mps: { label: 'M/S', toMPS: 1 }
+    },
+    // Pressure
+    pressure: {
+        hpa: { label: 'hPa', toHPA: 1 },
+        inhg: { label: 'inHg', toHPA: 33.8639 },
+        mb: { label: 'mbar', toHPA: 1 }
+    }
+};
+
+function convertUnit() {
+    const category = document.getElementById('conv-category').value;
+    const inputValue = parseFloat(document.getElementById('conv-input').value);
+    const fromUnit = document.getElementById('conv-from').value;
+    const toUnit = document.getElementById('conv-to').value;
+    const resultEl = document.getElementById('conv-result');
+    
+    if (isNaN(inputValue)) {
+        resultEl.textContent = '-- --';
+        return;
+    }
+    
+    let result;
+    
+    if (category === 'distance') {
+        const toMeters = unitConversions.distance[fromUnit].toMeters;
+        const fromMeters = unitConversions.distance[toUnit].toMeters;
+        result = (inputValue * toMeters) / fromMeters;
+    } else if (category === 'temperature') {
+        result = convertTemperature(inputValue, fromUnit, toUnit);
+    } else if (category === 'speed') {
+        const toMPS = unitConversions.speed[fromUnit].toMPS;
+        const fromMPS = unitConversions.speed[toUnit].toMPS;
+        result = (inputValue * toMPS) / fromMPS;
+    } else if (category === 'pressure') {
+        const toHPA = unitConversions.pressure[fromUnit].toHPA;
+        const fromHPA = unitConversions.pressure[toUnit].toHPA;
+        result = (inputValue * toHPA) / fromHPA;
+    }
+    
+    resultEl.textContent = result.toFixed(2) + ' ' + unitConversions[category][toUnit].label.split(' ')[0];
+}
+
+function convertTemperature(value, from, to) {
+    let celsius;
+    
+    // Convert to Celsius first
+    if (from === 'c') celsius = value;
+    else if (from === 'f') celsius = (value - 32) * 5/9;
+    else if (from === 'k') celsius = value - 273.15;
+    
+    // Convert from Celsius to target
+    if (to === 'c') return celsius;
+    else if (to === 'f') return celsius * 9/5 + 32;
+    else if (to === 'k') return celsius + 273.15;
+}
+
+function updateUnitSelectors() {
+    const category = document.getElementById('conv-category').value;
+    const fromSelect = document.getElementById('conv-from');
+    const toSelect = document.getElementById('conv-to');
+    
+    fromSelect.innerHTML = '';
+    toSelect.innerHTML = '';
+    
+    const units = unitConversions[category];
+    for (let unit in units) {
+        fromSelect.innerHTML += `<option value="${unit}">${units[unit].label}</option>`;
+        toSelect.innerHTML += `<option value="${unit}">${units[unit].label}</option>`;
+    }
+    
+    // Set different defaults for to/from
+    if (toSelect.options.length > 1) {
+        toSelect.selectedIndex = 1;
+    }
+    
+    convertUnit();
+}
+
+// ============================================================================
+// GREAT CIRCLE CALCULATOR
+// ============================================================================
+
+function calculateGreatCircle() {
+    const from = document.getElementById('gc-from').value.trim().toUpperCase();
+    const to = document.getElementById('gc-to').value.trim().toUpperCase();
+    
+    // For demo purposes - in production, you'd need airport coordinates database
+    // This is a simplified example
+    const result = document.getElementById('gc-result');
+    
+    if (!from || !to) {
+        result.innerHTML = '<div style="color:var(--sub-text);">Enter departure and destination airports</div>';
+        return;
+    }
+    
+    // Mock calculation (you'll need real airport coordinates)
+    result.innerHTML = `
+        <div style="color:var(--sub-text); margin-bottom:8px;">Route: ${from} → ${to}</div>
+        <div style="font-size:11px; color:#666; margin-bottom:12px;">
+            Note: Connect airport database for accurate calculations
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div style="background:#1c1c1e; padding:12px; border-radius:8px;">
+                <div style="font-size:11px; color:var(--sub-text);">Distance (NM)</div>
+                <div style="font-size:20px; font-weight:800; color:var(--accent);">--</div>
+            </div>
+            <div style="background:#1c1c1e; padding:12px; border-radius:8px;">
+                <div style="font-size:11px; color:var(--sub-text);">Initial Track</div>
+                <div style="font-size:20px; font-weight:800; color:var(--success);">--°</div>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================================
+// WEATHER TERMS LOOKUP
+// ============================================================================
+
+const weatherTerms = {
+    // Precipitation
+    'DZ': { term: 'Drizzle', desc: 'Light precipitation with drops smaller than rain' },
+    'RA': { term: 'Rain', desc: 'Water droplets falling from clouds' },
+    'SN': { term: 'Snow', desc: 'Ice crystals falling from clouds' },
+    'SG': { term: 'Snow Grains', desc: 'Very small white opaque particles' },
+    'IC': { term: 'Ice Crystals', desc: 'Diamond dust, small ice crystals' },
+    'PL': { term: 'Ice Pellets', desc: 'Sleet, frozen raindrops' },
+    'GR': { term: 'Hail', desc: 'Ice balls or stones (≥5mm)' },
+    'GS': { term: 'Small Hail', desc: 'Snow pellets (<5mm)' },
+    'UP': { term: 'Unknown Precipitation', desc: 'Automated station detected precip' },
+    
+    // Obscuration
+    'BR': { term: 'Mist', desc: 'Visibility ≥5/8 SM but <6 SM' },
+    'FG': { term: 'Fog', desc: 'Visibility <5/8 SM due to water droplets' },
+    'FU': { term: 'Smoke', desc: 'Visibility reduced by smoke particles' },
+    'VA': { term: 'Volcanic Ash', desc: 'Ash suspended in atmosphere' },
+    'DU': { term: 'Dust', desc: 'Widespread dust raised by wind' },
+    'SA': { term: 'Sand', desc: 'Sand raised by wind' },
+    'HZ': { term: 'Haze', desc: 'Dry particles suspended in air' },
+    'PY': { term: 'Spray', desc: 'Water spray limiting visibility' },
+    
+    // Other phenomena
+    'PO': { term: 'Dust/Sand Whirls', desc: 'Well-developed dust or sand devils' },
+    'SQ': { term: 'Squalls', desc: 'Sudden increase in wind ≥16kt' },
+    'FC': { term: 'Funnel Cloud', desc: 'Tornado or waterspout' },
+    'SS': { term: 'Sandstorm', desc: 'Severe sand reducing visibility' },
+    'DS': { term: 'Duststorm', desc: 'Severe dust reducing visibility' },
+    
+    // Descriptors
+    'MI': { term: 'Shallow', desc: 'Ground-level phenomenon' },
+    'BC': { term: 'Patches', desc: 'Random occurrence' },
+    'PR': { term: 'Partial', desc: 'Covers part of aerodrome' },
+    'DR': { term: 'Low Drifting', desc: 'Below 6 feet' },
+    'BL': { term: 'Blowing', desc: 'Raised above 6 feet' },
+    'SH': { term: 'Shower(s)', desc: 'Precipitation of short duration' },
+    'TS': { term: 'Thunderstorm', desc: 'Lightning/thunder present' },
+    'FZ': { term: 'Freezing', desc: 'Supercooled, forms ice on contact' },
+    
+    // Intensity
+    '-': { term: 'Light', desc: 'Light intensity' },
+    '+': { term: 'Heavy', desc: 'Heavy/severe intensity' },
+    'VC': { term: 'Vicinity', desc: 'Within 5-10 SM of aerodrome' }
+};
+
+function searchWeatherTerms() {
+    const searchInput = document.getElementById('wx-search').value.trim().toUpperCase();
+    const resultsEl = document.getElementById('wx-results');
+    
+    if (!searchInput) {
+        displayAllWeatherTerms();
+        return;
+    }
+    
+    // Find matching terms
+    const matches = [];
+    for (let code in weatherTerms) {
+        if (code.includes(searchInput) || 
+            weatherTerms[code].term.toUpperCase().includes(searchInput) ||
+            weatherTerms[code].desc.toUpperCase().includes(searchInput)) {
+            matches.push({ code, ...weatherTerms[code] });
+        }
+    }
+    
+    if (matches.length === 0) {
+        resultsEl.innerHTML = '<div style="color:var(--sub-text); padding:20px; text-align:center;">No matching weather terms found</div>';
+        return;
+    }
+    
+    let html = '';
+    matches.forEach(item => {
+        html += `
+            <div style="background:#1c1c1e; padding:12px; border-radius:8px; margin-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <div style="font-size:14px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">${item.code}</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff;">${item.term}</div>
+                </div>
+                <div style="font-size:12px; color:var(--sub-text); line-height:1.5;">${item.desc}</div>
+            </div>
+        `;
+    });
+    
+    resultsEl.innerHTML = html;
+}
+
+function displayAllWeatherTerms() {
+    const resultsEl = document.getElementById('wx-results');
+    
+    let html = '<div style="font-size:13px; font-weight:700; color:var(--accent); margin-bottom:12px;">PRECIPITATION</div>';
+    ['DZ', 'RA', 'SN', 'SG', 'IC', 'PL', 'GR', 'GS', 'UP'].forEach(code => {
+        const item = weatherTerms[code];
+        html += `
+            <div style="background:#1c1c1e; padding:10px; border-radius:6px; margin-bottom:6px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="font-size:13px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace; width:40px;">${code}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px; font-weight:700; color:#fff;">${item.term}</div>
+                        <div style="font-size:11px; color:var(--sub-text);">${item.desc}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '<div style="font-size:13px; font-weight:700; color:var(--accent); margin:20px 0 12px 0;">OBSCURATION</div>';
+    ['BR', 'FG', 'FU', 'VA', 'DU', 'SA', 'HZ', 'PY'].forEach(code => {
+        const item = weatherTerms[code];
+        html += `
+            <div style="background:#1c1c1e; padding:10px; border-radius:6px; margin-bottom:6px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="font-size:13px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace; width:40px;">${code}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px; font-weight:700; color:#fff;">${item.term}</div>
+                        <div style="font-size:11px; color:var(--sub-text);">${item.desc}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    resultsEl.innerHTML = html;
+}
+
+// ============================================================================
+// ABBREVIATIONS DATABASE (Link to external tool)
+// ============================================================================
+
+function openAbbreviations() {
+    // You mentioned you have a link to an abbreviations tool
+    // This would open it in a new tab or iframe
+    const url = 'YOUR_ABBREVIATIONS_TOOL_URL'; // Replace with your actual URL
+    
+    // Option 1: Open in new tab
+    // window.open(url, '_blank');
+    
+    // Option 2: Display in iframe within the tool
+    const resultEl = document.getElementById('abbrev-content');
+    resultEl.innerHTML = `
+        <div style="background:#1c1c1e; padding:16px; border-radius:8px; text-align:center;">
+            <div style="font-size:13px; color:var(--sub-text); margin-bottom:12px;">
+                Aviation Abbreviations Database
+            </div>
+            <button onclick="window.open('${url}', '_blank')" class="tool-btn" style="background:var(--accent); border:none; color:#000; font-weight:700;">
+                OPEN ABBREVIATIONS
+            </button>
+            <div style="font-size:11px; color:#666; margin-top:8px;">
+                Opens in new window
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+// Initialize weather terms display when tool is opened
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tools as needed
+    console.log('Tools Extension loaded');
+});

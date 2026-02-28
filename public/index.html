@@ -1352,6 +1352,188 @@
                 <div><div class="ic-lbl">Freezing Lvl</div><div class="ic-val" id="resFrz">--</div></div>
             </div>
         </div>
+
+        <!-- Aviation Tools Extension -->
+        <div class="section-title">More Aviation Tools</div>
+        <div class="info-card" style="background:linear-gradient(135deg, rgba(10,132,255,0.1) 0%, rgba(10,132,255,0.05) 100%); border:1px solid rgba(10,132,255,0.3); cursor:pointer; transition:all 0.3s;" onclick="openToolsExtension()">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                        <div style="font-size:28px;">🛠️</div>
+                        <div>
+                            <div style="font-size:15px; font-weight:800; color:#fff;">Aviation Tools</div>
+                            <div style="font-size:11px; color:var(--sub-text);">Unit converter, great circle, weather terms & more</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;">
+                        <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">CONVERTER</span>
+                        <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">DISTANCE</span>
+                        <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">WX TERMS</span>
+                        <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">ABBREV</span>
+                    </div>
+                </div>
+                <div style="font-size:20px; color:var(--accent); margin-left:12px;">→</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         TOOLS EXTENSION PANEL
+    ================================================================ -->
+    <div id="tools-extension-panel" class="view-section" style="display:none;">
+        
+        <!-- Extension Header -->
+        <div style="position:sticky; top:0; z-index:10; background:var(--bg); padding:12px 0; border-bottom:1px solid #333; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <!-- Back to Tools button -->
+                <button onclick="closeToolsExtension()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:16px;">←</span>
+                    <span style="font-size:12px; font-weight:700;">TOOLS</span>
+                </button>
+                
+                <!-- Title -->
+                <div id="extension-header-title" style="font-size:15px; font-weight:800; color:#fff;">
+                    Aviation Tools
+                </div>
+                
+                <!-- Back to Menu button (shown when viewing a tool) -->
+                <button id="back-to-menu-btn" onclick="showToolsMenu()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; display:none;">
+                    MENU
+                </button>
+                
+                <!-- Spacer when back-to-menu is hidden -->
+                <div style="width:80px;"></div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             TOOLS MENU (Main Extension View)
+        ================================================================ -->
+        <div id="tools-menu">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                
+                <!-- Unit Converter -->
+                <div onclick="openTool('unit-converter')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">📏</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Unit Converter</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Distance, speed, pressure, temp</div>
+                </div>
+                
+                <!-- Great Circle -->
+                <div onclick="openTool('great-circle')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">🌍</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Great Circle</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Distance & bearing calc</div>
+                </div>
+                
+                <!-- Weather Terms -->
+                <div onclick="openTool('weather-terms')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">🌦️</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Terms</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Present weather codes</div>
+                </div>
+                
+                <!-- Abbreviations -->
+                <div onclick="openTool('abbreviations')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">📖</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Abbreviations</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Aviation terminology</div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             UNIT CONVERTER TOOL
+        ================================================================ -->
+        <div id="tool-unit-converter" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div class="conv-lbl" style="margin-bottom:8px;">CATEGORY</div>
+                <select id="conv-category" class="stealth-select" onchange="updateUnitSelectors()" style="margin-bottom:16px;">
+                    <option value="distance">Distance</option>
+                    <option value="temperature">Temperature</option>
+                    <option value="speed">Speed</option>
+                    <option value="pressure">Pressure</option>
+                </select>
+                
+                <div class="conv-lbl" style="margin-bottom:8px;">CONVERT FROM</div>
+                <div class="conv-row" style="margin-bottom:16px;">
+                    <input type="number" id="conv-input" class="conv-inp" placeholder="Enter value" oninput="convertUnit()" style="flex:2;">
+                    <select id="conv-from" class="stealth-select" onchange="convertUnit()" style="flex:1; margin-left:8px;"></select>
+                </div>
+                
+                <div class="conv-lbl" style="margin-bottom:8px;">CONVERT TO</div>
+                <select id="conv-to" class="stealth-select" onchange="convertUnit()" style="margin-bottom:16px;"></select>
+                
+                <div style="background:#1c1c1e; padding:20px; border-radius:10px; text-align:center; border:2px solid var(--accent);">
+                    <div style="font-size:11px; color:var(--sub-text); margin-bottom:6px; text-transform:uppercase;">RESULT</div>
+                    <div id="conv-result" style="font-size:32px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">-- --</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             GREAT CIRCLE CALCULATOR
+        ================================================================ -->
+        <div id="tool-great-circle" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div class="conv-lbl" style="margin-bottom:8px;">FROM AIRPORT</div>
+                <input type="text" id="gc-from" class="conv-inp" placeholder="ICAO Code (e.g., RCTP)" style="text-transform:uppercase; margin-bottom:16px;" oninput="this.value = this.value.toUpperCase()">
+                
+                <div class="conv-lbl" style="margin-bottom:8px;">TO AIRPORT</div>
+                <input type="text" id="gc-to" class="conv-inp" placeholder="ICAO Code (e.g., KJFK)" style="text-transform:uppercase; margin-bottom:16px;" oninput="this.value = this.value.toUpperCase()">
+                
+                <button onclick="calculateGreatCircle()" class="tool-btn" style="width:100%; background:var(--accent); border:none; color:#000; font-weight:700; margin-bottom:16px;">
+                    CALCULATE
+                </button>
+                
+                <div id="gc-result" style="min-height:120px; background:#1c1c1e; padding:16px; border-radius:8px;">
+                    <div style="color:var(--sub-text); text-align:center; padding:20px;">
+                        Enter departure and destination airports
+                    </div>
+                </div>
+                
+                <div style="margin-top:16px; padding:12px; background:rgba(10,132,255,0.1); border:1px solid rgba(10,132,255,0.3); border-radius:8px; font-size:11px; color:var(--sub-text);">
+                    💡 <strong>Note:</strong> Connect to airport coordinates database for accurate distance and bearing calculations
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             WEATHER TERMS LOOKUP
+        ================================================================ -->
+        <div id="tool-weather-terms" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div class="conv-lbl" style="margin-bottom:8px;">SEARCH WEATHER TERMS</div>
+                <div style="position:relative; margin-bottom:16px;">
+                    <input type="text" id="wx-search" class="conv-inp" placeholder="Search by code or term..." oninput="searchWeatherTerms()" style="padding-left:36px;">
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">🔍</span>
+                </div>
+                
+                <div id="wx-results" style="max-height:60vh; overflow-y:auto;">
+                    <!-- Results populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             ABBREVIATIONS TOOL
+        ================================================================ -->
+        <div id="tool-abbreviations" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div id="abbrev-content">
+                    <div style="text-align:center; padding:40px 20px;">
+                        <div style="font-size:48px; margin-bottom:16px;">📖</div>
+                        <div style="font-size:15px; font-weight:700; color:#fff; margin-bottom:8px;">Aviation Abbreviations</div>
+                        <div style="font-size:12px; color:var(--sub-text); margin-bottom:20px;">Comprehensive database of aviation terminology</div>
+                        <button onclick="openAbbreviations()" class="tool-btn" style="background:var(--accent); border:none; color:#000; font-weight:700;">
+                            OPEN DATABASE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
 
     <!-- ================================================================
@@ -2002,4 +2184,30 @@
 
 <script src="core.js"></script>
 <script src="app.js"></script>
+<script src="tools-extension.js"></script>
+
+<!-- Tool card hover effects -->
+<style>
+.tool-card:hover {
+    background: #252525 !important;
+    border-color: var(--accent) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(10,132,255,0.2);
+}
+
+.tool-card:active {
+    transform: translateY(0);
+}
+
+.info-card:has([onclick*="openToolsExtension"]):hover {
+    background: linear-gradient(135deg, rgba(10,132,255,0.15) 0%, rgba(10,132,255,0.08) 100%) !important;
+    border-color: var(--accent) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(10,132,255,0.2);
+}
+
+.info-card:has([onclick*="openToolsExtension"]):active {
+    transform: translateY(0);
+}
+</style>
 </html>
