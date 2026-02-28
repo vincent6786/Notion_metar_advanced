@@ -656,7 +656,7 @@
                 maxSteady: 25,
                 maxPeak: 30,
                 maxGust: 10,
-                maxXW: 19,
+                maxXW: 17,
                 ceilXC: 3000
             },
             kmhr: {
