@@ -17,18 +17,35 @@ let toolsExtensionState = {
  * Open the tools extension panel
  */
 function openToolsExtension() {
+    console.log('Opening tools extension...');
+    
     // Hide main tools tab content
     const toolsTab = document.getElementById('tab-tools');
     const toolsExtension = document.getElementById('tools-extension-panel');
     
+    console.log('toolsTab:', toolsTab);
+    console.log('toolsExtension:', toolsExtension);
+    
     if (toolsTab && toolsExtension) {
+        // Hide the main tools tab
         toolsTab.style.display = 'none';
+        toolsTab.classList.remove('active');
+        
+        // Show the extension panel
         toolsExtension.style.display = 'block';
+        toolsExtension.classList.add('active');
+        
         toolsExtensionState.isOpen = true;
         toolsExtensionState.previousTab = 'tools';
         
         // Show the tools menu by default
         showToolsMenu();
+        
+        console.log('Extension opened successfully');
+    } else {
+        console.error('Elements not found!');
+        if (!toolsTab) console.error('tab-tools not found');
+        if (!toolsExtension) console.error('tools-extension-panel not found');
     }
 }
 

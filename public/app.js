@@ -699,6 +699,11 @@
         }
 
         function switchMinsProfile(profile) {
+            // Safety check - prevent crashes if profile is undefined/null
+            if (!profile || typeof profile !== 'string') {
+                profile = 'solo';
+            }
+            
             // Update button states
             const buttons = ['btnProfileSolo', 'btnProfileDual', 'btnProfileKmhr', 'btnProfileCustom'];
             buttons.forEach(id => {
