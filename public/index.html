@@ -1451,9 +1451,13 @@
                 <div class="conv-lbl" style="margin-bottom:8px;">CATEGORY</div>
                 <select id="conv-category" class="stealth-select" onchange="updateUnitSelectors()" style="margin-bottom:16px;">
                     <option value="distance">Distance</option>
+                    <option value="altitude">Altitude</option>
+                    <option value="speed">Speed / Velocity</option>
                     <option value="temperature">Temperature</option>
-                    <option value="speed">Speed</option>
                     <option value="pressure">Pressure</option>
+                    <option value="fuelVolume">Fuel Volume</option>
+                    <option value="weight">Weight / Mass</option>
+                    <option value="fuelFlow">Fuel Flow Rate</option>
                 </select>
                 
                 <div class="conv-lbl" style="margin-bottom:8px;">CONVERT FROM</div>
@@ -1522,13 +1526,9 @@
         <div id="tool-abbreviations" class="tool-view" style="display:none;">
             <div class="info-card">
                 <div id="abbrev-content">
-                    <div style="text-align:center; padding:40px 20px;">
-                        <div style="font-size:48px; margin-bottom:16px;">📖</div>
-                        <div style="font-size:15px; font-weight:700; color:#fff; margin-bottom:8px;">Aviation Abbreviations</div>
-                        <div style="font-size:12px; color:var(--sub-text); margin-bottom:20px;">Comprehensive database of aviation terminology</div>
-                        <button onclick="openAbbreviations()" class="tool-btn" style="background:var(--accent); border:none; color:#000; font-weight:700;">
-                            OPEN DATABASE
-                        </button>
+                    <!-- Content will be loaded by openAbbreviations() when tool opens -->
+                    <div style="text-align:center; padding:20px;">
+                        <div style="font-size:16px; color:var(--sub-text);">Loading abbreviations database...</div>
                     </div>
                 </div>
             </div>

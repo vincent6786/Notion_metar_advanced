@@ -91,6 +91,15 @@ function openTool(toolName) {
             'weather-terms': 'Present Weather Terms'
         };
         updateExtensionHeader(toolTitles[toolName] || 'Tool', true);
+        
+        // Initialize specific tools
+        if (toolName === 'unit-converter') {
+            updateUnitSelectors(); // Initialize with default units
+        } else if (toolName === 'weather-terms') {
+            displayAllWeatherTerms(); // Show all terms by default
+        } else if (toolName === 'abbreviations') {
+            openAbbreviations(); // Load the abbreviations database
+        }
     }
 }
 
@@ -117,30 +126,58 @@ function updateExtensionHeader(title, showBackToMenu) {
 const unitConversions = {
     // Distance
     distance: {
-        nm: { label: 'Nautical Miles', toMeters: 1852 },
-        sm: { label: 'Statute Miles', toMeters: 1609.344 },
-        km: { label: 'Kilometers', toMeters: 1000 },
-        m: { label: 'Meters', toMeters: 1 },
-        ft: { label: 'Feet', toMeters: 0.3048 }
+        nm: { label: 'Nautical Miles (NM)', toMeters: 1852 },
+        sm: { label: 'Statute Miles (SM)', toMeters: 1609.344 },
+        km: { label: 'Kilometers (km)', toMeters: 1000 },
+        m: { label: 'Meters (m)', toMeters: 1 },
+        ft: { label: 'Feet (ft)', toMeters: 0.3048 }
+    },
+    // Altitude (same as distance but different context)
+    altitude: {
+        ft: { label: 'Feet (ft)', toMeters: 0.3048 },
+        m: { label: 'Meters (m)', toMeters: 1 },
+        fl: { label: 'Flight Level (FL)', toMeters: 30.48 }  // FL = ft/100
     },
     // Temperature
     temperature: {
-        c: { label: '°Celsius' },
-        f: { label: '°Fahrenheit' },
-        k: { label: 'Kelvin' }
+        c: { label: 'Celsius (°C)' },
+        f: { label: 'Fahrenheit (°F)' },
+        k: { label: 'Kelvin (K)' }
     },
     // Speed
     speed: {
-        kts: { label: 'Knots', toMPS: 0.514444 },
-        mph: { label: 'MPH', toMPS: 0.44704 },
-        kph: { label: 'KPH', toMPS: 0.277778 },
-        mps: { label: 'M/S', toMPS: 1 }
+        kts: { label: 'Knots (kt)', toMPS: 0.514444 },
+        mph: { label: 'Miles/Hour (mph)', toMPS: 0.44704 },
+        kph: { label: 'Kilometers/Hour (km/h)', toMPS: 0.277778 },
+        mps: { label: 'Meters/Second (m/s)', toMPS: 1 },
+        fpm: { label: 'Feet/Minute (fpm)', toMPS: 0.00508 }
     },
     // Pressure
     pressure: {
-        hpa: { label: 'hPa', toHPA: 1 },
-        inhg: { label: 'inHg', toHPA: 33.8639 },
-        mb: { label: 'mbar', toHPA: 1 }
+        hpa: { label: 'Hectopascals (hPa)', toHPA: 1 },
+        inhg: { label: 'Inches Mercury (inHg)', toHPA: 33.8639 },
+        mb: { label: 'Millibars (mb)', toHPA: 1 },
+        psi: { label: 'PSI (lb/in²)', toHPA: 68.9476 }
+    },
+    // Fuel Volume
+    fuelVolume: {
+        usgal: { label: 'US Gallons (gal)', toLiters: 3.78541 },
+        impgal: { label: 'Imperial Gallons (gal)', toLiters: 4.54609 },
+        liter: { label: 'Liters (L)', toLiters: 1 },
+        quart: { label: 'Quarts (qt)', toLiters: 0.946353 }
+    },
+    // Weight (for fuel and cargo)
+    weight: {
+        lbs: { label: 'Pounds (lbs)', toKG: 0.453592 },
+        kg: { label: 'Kilograms (kg)', toKG: 1 },
+        tons: { label: 'Tons (US)', toKG: 907.185 },
+        mt: { label: 'Metric Tons (t)', toKG: 1000 }
+    },
+    // Fuel Flow
+    fuelFlow: {
+        gph: { label: 'Gallons/Hour (GPH)', toLPH: 3.78541 },
+        lph: { label: 'Liters/Hour (L/h)', toLPH: 1 },
+        pph: { label: 'Pounds/Hour (PPH)', toLPH: 0 }  // Special case
     }
 };
 
@@ -158,9 +195,9 @@ function convertUnit() {
     
     let result;
     
-    if (category === 'distance') {
-        const toMeters = unitConversions.distance[fromUnit].toMeters;
-        const fromMeters = unitConversions.distance[toUnit].toMeters;
+    if (category === 'distance' || category === 'altitude') {
+        const toMeters = unitConversions[category][fromUnit].toMeters;
+        const fromMeters = unitConversions[category][toUnit].toMeters;
         result = (inputValue * toMeters) / fromMeters;
     } else if (category === 'temperature') {
         result = convertTemperature(inputValue, fromUnit, toUnit);
@@ -172,9 +209,29 @@ function convertUnit() {
         const toHPA = unitConversions.pressure[fromUnit].toHPA;
         const fromHPA = unitConversions.pressure[toUnit].toHPA;
         result = (inputValue * toHPA) / fromHPA;
+    } else if (category === 'fuelVolume') {
+        const toLiters = unitConversions.fuelVolume[fromUnit].toLiters;
+        const fromLiters = unitConversions.fuelVolume[toUnit].toLiters;
+        result = (inputValue * toLiters) / fromLiters;
+    } else if (category === 'weight') {
+        const toKG = unitConversions.weight[fromUnit].toKG;
+        const fromKG = unitConversions.weight[toUnit].toKG;
+        result = (inputValue * toKG) / fromKG;
+    } else if (category === 'fuelFlow') {
+        if (fromUnit === 'pph' || toUnit === 'pph') {
+            // PPH requires fuel density - show note
+            resultEl.innerHTML = '<div style="font-size:11px; color:var(--sub-text);">PPH conversion requires fuel density</div>';
+            return;
+        }
+        const toLPH = unitConversions.fuelFlow[fromUnit].toLPH;
+        const fromLPH = unitConversions.fuelFlow[toUnit].toLPH;
+        result = (inputValue * toLPH) / fromLPH;
     }
     
-    resultEl.textContent = result.toFixed(2) + ' ' + unitConversions[category][toUnit].label.split(' ')[0];
+    // Format result
+    const unitLabel = unitConversions[category][toUnit].label.split(' ')[0];
+    const decimals = result < 10 ? 3 : result < 100 ? 2 : result < 1000 ? 1 : 0;
+    resultEl.textContent = result.toFixed(decimals) + ' ' + unitLabel;
 }
 
 function convertTemperature(value, from, to) {
@@ -381,26 +438,22 @@ function displayAllWeatherTerms() {
 // ============================================================================
 
 function openAbbreviations() {
-    // You mentioned you have a link to an abbreviations tool
-    // This would open it in a new tab or iframe
-    const url = 'YOUR_ABBREVIATIONS_TOOL_URL'; // Replace with your actual URL
-    
-    // Option 1: Open in new tab
-    // window.open(url, '_blank');
-    
-    // Option 2: Display in iframe within the tool
+    const url = 'https://acronym-dictionary.vercel.app/';
     const resultEl = document.getElementById('abbrev-content');
+    
+    // Embed the abbreviation tool in an iframe
     resultEl.innerHTML = `
-        <div style="background:#1c1c1e; padding:16px; border-radius:8px; text-align:center;">
-            <div style="font-size:13px; color:var(--sub-text); margin-bottom:12px;">
-                Aviation Abbreviations Database
-            </div>
-            <button onclick="window.open('${url}', '_blank')" class="tool-btn" style="background:var(--accent); border:none; color:#000; font-weight:700;">
-                OPEN ABBREVIATIONS
+        <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-size:13px; font-weight:700; color:var(--accent);">AVIATION ABBREVIATIONS</div>
+            <button onclick="window.open('${url}', '_blank')" class="tool-btn" style="background:var(--accent); border:none; color:#000; padding:6px 12px; font-size:11px; font-weight:700;">
+                OPEN IN NEW TAB ↗
             </button>
-            <div style="font-size:11px; color:#666; margin-top:8px;">
-                Opens in new window
-            </div>
+        </div>
+        <iframe src="${url}" 
+                style="width:100%; height:65vh; border:1px solid #333; border-radius:8px; background:#fff;">
+        </iframe>
+        <div style="margin-top:8px; font-size:11px; color:var(--sub-text); text-align:center;">
+            Searchable database of aviation acronyms and abbreviations
         </div>
     `;
 }
