@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', updateFullScreenButtonVisibility);
 function openToolsExtension() {
     console.log('Opening tools extension...');
     
-    // Hide main tools tab content
+    // Keep main tools tab visible (don't hide it)
     const toolsTab = document.getElementById('tab-tools');
     const toolsExtension = document.getElementById('tools-extension-panel');
     
@@ -155,33 +155,37 @@ function openToolsExtension() {
     console.log('toolsExtension:', toolsExtension);
     
     if (toolsTab && toolsExtension) {
-        // Hide the main tools tab
-        toolsTab.style.display = 'none';
-        toolsTab.classList.remove('active');
+        // Keep the tools tab visible (don't hide or remove active class)
         
-        // Show the extension panel
+        // Show the extension panel as an overlay
         toolsExtension.style.display = 'block';
         toolsExtension.classList.add('active');
         
+        // Position as overlay on top of tools tab
+        toolsExtension.style.position = 'fixed';
+        toolsExtension.style.top = '0';
+        toolsExtension.style.left = '0';
+        toolsExtension.style.right = '0';
+        toolsExtension.style.bottom = '0';
+        toolsExtension.style.zIndex = '1000';
+        toolsExtension.style.background = 'var(--bg)';
+        toolsExtension.style.overflowY = 'auto';
+        toolsExtension.style.WebkitOverflowScrolling = 'touch';
+        
         toolsExtensionState.isOpen = true;
         toolsExtensionState.previousTab = 'tools';
+        toolsExtensionState.isFullScreen = false;
         
         // Show the tools menu by default
         showToolsMenu();
         
-        // Check if mobile - if yes, open DIRECTLY in full-screen
-        if (isMobileDevice()) {
-            console.log('Mobile device detected, opening directly in full-screen mode');
-            toolsExtensionState.isFullScreen = false; // Set to false first so toggle works
-            toggleFullScreen(); // Immediately enter full-screen
-        } else {
-            toolsExtensionState.isFullScreen = false;
+        // Hide full-screen button (not needed in overlay mode)
+        const fullscreenBtn = document.getElementById('fullscreen-toggle');
+        if (fullscreenBtn) {
+            fullscreenBtn.style.display = 'none';
         }
         
-        // Update full-screen button visibility
-        updateFullScreenButtonVisibility();
-        
-        console.log('Extension opened successfully');
+        console.log('Extension opened successfully as overlay');
     } else {
         console.error('Elements not found!');
         if (!toolsTab) console.error('tab-tools not found');
@@ -204,19 +208,28 @@ function closeToolsExtension() {
     const toolsExtension = document.getElementById('tools-extension-panel');
     
     if (toolsTab && toolsExtension) {
-        // Hide the extension panel
+        // Hide the extension panel and reset overlay styling
         toolsExtension.style.display = 'none';
         toolsExtension.classList.remove('active');
         
-        // Show the main tools tab
-        toolsTab.style.display = 'block';
-        toolsTab.classList.add('active');
+        // Reset overlay positioning
+        toolsExtension.style.position = '';
+        toolsExtension.style.top = '';
+        toolsExtension.style.left = '';
+        toolsExtension.style.right = '';
+        toolsExtension.style.bottom = '';
+        toolsExtension.style.zIndex = '';
+        toolsExtension.style.background = '';
+        toolsExtension.style.overflowY = '';
+        toolsExtension.style.WebkitOverflowScrolling = '';
+        
+        // Tools tab is already visible, no need to show it
         
         toolsExtensionState.isOpen = false;
         toolsExtensionState.currentTool = null;
         toolsExtensionState.isFullScreen = false;
         
-        console.log('Extension closed, tools tab restored');
+        console.log('Extension closed, overlay removed');
     }
 }
 

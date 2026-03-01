@@ -1350,18 +1350,15 @@
                 
                 <!-- Right side buttons -->
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <!-- Full Screen Toggle (mobile only) -->
-                    <button id="fullscreen-toggle" onclick="toggleFullScreen()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:16px; display:none;">
-                        <span id="fullscreen-icon">⛶</span>
+                    <!-- Close button -->
+                    <button id="close-toggle" onclick="closeToolsExtension()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:16px;">
+                        <span>✕</span>
                     </button>
                     
                     <!-- Back to Menu button (shown when viewing a tool) -->
                     <button id="back-to-menu-btn" onclick="showToolsMenu()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; display:none;">
                         MENU
                     </button>
-                    
-                    <!-- Spacer when back-to-menu is hidden -->
-                    <div id="header-spacer" style="width:50px;"></div>
                 </div>
             </div>
         </div>
