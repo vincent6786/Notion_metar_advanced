@@ -29,6 +29,8 @@ function toggleFullScreen() {
     
     if (toolsExtensionState.isFullScreen) {
         // Enter full-screen mode
+        document.body.classList.add('fullscreen-mode');
+        
         if (panel) {
             panel.style.position = 'fixed';
             panel.style.top = '0';
@@ -38,24 +40,43 @@ function toggleFullScreen() {
             panel.style.zIndex = '9999';
             panel.style.background = 'var(--bg)';
             panel.style.overflowY = 'auto';
-            panel.style.padding = '0 16px 20px 16px';
+            panel.style.WebkitOverflowScrolling = 'touch'; // Smooth scrolling on iOS
+            
+            // Add safe area padding for iPhone notch and home indicator
+            panel.style.paddingTop = 'calc(env(safe-area-inset-top) + 8px)';
+            panel.style.paddingBottom = 'calc(env(safe-area-inset-bottom) + 20px)';
+            panel.style.paddingLeft = 'max(16px, env(safe-area-inset-left))';
+            panel.style.paddingRight = 'max(16px, env(safe-area-inset-right))';
         }
         
         // Hide main app header/nav if they exist
         if (header) header.style.display = 'none';
         if (bottomNav) bottomNav.style.display = 'none';
         
-        // Update extension header for full-screen
+        // Update extension header for full-screen with safe area support
         if (extensionHeader) {
-            extensionHeader.style.paddingTop = '16px';
+            // Add subtle background to show safe area
+            extensionHeader.style.paddingTop = 'calc(max(12px, env(safe-area-inset-top)) + 4px)';
+            extensionHeader.style.paddingBottom = '12px';
+            extensionHeader.style.position = 'sticky';
+            extensionHeader.style.top = '0';
+            extensionHeader.style.background = 'var(--bg)';
+            extensionHeader.style.zIndex = '100';
+            extensionHeader.style.marginTop = 'calc(-1 * env(safe-area-inset-top))'; // Extend to top edge
+            extensionHeader.style.marginLeft = '-16px';
+            extensionHeader.style.marginRight = '-16px';
+            extensionHeader.style.paddingLeft = 'max(16px, env(safe-area-inset-left))';
+            extensionHeader.style.paddingRight = 'max(16px, env(safe-area-inset-right))';
         }
         
         // Change icon to exit full-screen
-        if (fullscreenIcon) fullscreenIcon.textContent = '⛶';
+        if (fullscreenIcon) fullscreenIcon.textContent = '✕';
         
-        console.log('Entered full-screen mode');
+        console.log('Entered full-screen mode with safe area support');
     } else {
         // Exit full-screen mode
+        document.body.classList.remove('fullscreen-mode');
+        
         if (panel) {
             panel.style.position = '';
             panel.style.top = '';
@@ -63,7 +84,13 @@ function toggleFullScreen() {
             panel.style.right = '';
             panel.style.bottom = '';
             panel.style.zIndex = '';
-            panel.style.padding = '';
+            panel.style.WebkitOverflowScrolling = '';
+            
+            // Reset safe area padding
+            panel.style.paddingTop = '';
+            panel.style.paddingBottom = '';
+            panel.style.paddingLeft = '';
+            panel.style.paddingRight = '';
         }
         
         // Restore main app header/nav
@@ -73,6 +100,16 @@ function toggleFullScreen() {
         // Restore extension header
         if (extensionHeader) {
             extensionHeader.style.paddingTop = '';
+            extensionHeader.style.paddingBottom = '';
+            extensionHeader.style.position = '';
+            extensionHeader.style.top = '';
+            extensionHeader.style.background = '';
+            extensionHeader.style.zIndex = '';
+            extensionHeader.style.marginTop = '';
+            extensionHeader.style.marginLeft = '';
+            extensionHeader.style.marginRight = '';
+            extensionHeader.style.paddingLeft = '';
+            extensionHeader.style.paddingRight = '';
         }
         
         // Change icon back to full-screen
@@ -126,6 +163,17 @@ function openToolsExtension() {
         
         // Show the tools menu by default
         showToolsMenu();
+        
+        // Auto-enable full-screen on mobile devices
+        if (isMobileDevice()) {
+            console.log('Mobile device detected, auto-enabling full-screen mode');
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                if (!toolsExtensionState.isFullScreen) {
+                    toggleFullScreen();
+                }
+            }, 100);
+        }
         
         // Update full-screen button visibility
         updateFullScreenButtonVisibility();

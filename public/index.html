@@ -2249,5 +2249,29 @@
 .info-card:has([onclick*="openToolsExtension"]):active {
     transform: translateY(0);
 }
+
+/* Safe area support for iPhone notch and home indicator */
+#tools-extension-panel {
+    /* Default padding that respects safe areas */
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+}
+
+/* Extension header safe area support */
+#tools-extension-header {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: 12px;
+}
+
+/* Ensure content doesn't get hidden behind bottom home indicator */
+#tools-extension-panel > *:last-child {
+    margin-bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+/* Full-screen mode specific safe areas (applied via JavaScript) */
+body.fullscreen-mode {
+    /* Prevent scrolling behind full-screen panel */
+    overflow: hidden;
+}
 </style>
 </html>
