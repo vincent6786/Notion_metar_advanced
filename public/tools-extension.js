@@ -24,6 +24,7 @@ function toggleFullScreen() {
     const fullscreenBtn = document.getElementById('fullscreen-toggle');
     const fullscreenIcon = document.getElementById('fullscreen-icon');
     const extensionHeader = document.getElementById('tools-extension-header');
+    const toolsMenu = document.getElementById('tools-menu');
     
     toolsExtensionState.isFullScreen = !toolsExtensionState.isFullScreen;
     
@@ -42,8 +43,8 @@ function toggleFullScreen() {
             panel.style.overflowY = 'auto';
             panel.style.WebkitOverflowScrolling = 'touch'; // Smooth scrolling on iOS
             
-            // Add safe area padding for iPhone notch and home indicator
-            panel.style.paddingTop = 'calc(env(safe-area-inset-top) + 8px)';
+            // ONLY add safe area padding in full-screen mode
+            panel.style.paddingTop = 'env(safe-area-inset-top)';
             panel.style.paddingBottom = 'calc(env(safe-area-inset-bottom) + 20px)';
             panel.style.paddingLeft = 'max(16px, env(safe-area-inset-left))';
             panel.style.paddingRight = 'max(16px, env(safe-area-inset-right))';
@@ -53,20 +54,20 @@ function toggleFullScreen() {
         if (header) header.style.display = 'none';
         if (bottomNav) bottomNav.style.display = 'none';
         
-        // Update extension header for full-screen with safe area support
+        // Update extension header for full-screen
         if (extensionHeader) {
-            // Add subtle background to show safe area
-            extensionHeader.style.paddingTop = 'calc(max(12px, env(safe-area-inset-top)) + 4px)';
-            extensionHeader.style.paddingBottom = '12px';
             extensionHeader.style.position = 'sticky';
             extensionHeader.style.top = '0';
             extensionHeader.style.background = 'var(--bg)';
             extensionHeader.style.zIndex = '100';
-            extensionHeader.style.marginTop = 'calc(-1 * env(safe-area-inset-top))'; // Extend to top edge
-            extensionHeader.style.marginLeft = '-16px';
-            extensionHeader.style.marginRight = '-16px';
-            extensionHeader.style.paddingLeft = 'max(16px, env(safe-area-inset-left))';
-            extensionHeader.style.paddingRight = 'max(16px, env(safe-area-inset-right))';
+            extensionHeader.style.paddingTop = '12px';
+            extensionHeader.style.paddingBottom = '12px';
+            // No negative margins - let it sit naturally with safe area padding
+        }
+        
+        // Add top margin to content to prevent header overlap
+        if (toolsMenu) {
+            toolsMenu.style.marginTop = '0'; // Header already has margin-bottom from HTML
         }
         
         // Change icon to exit full-screen
@@ -84,9 +85,11 @@ function toggleFullScreen() {
             panel.style.right = '';
             panel.style.bottom = '';
             panel.style.zIndex = '';
+            panel.style.background = '';
+            panel.style.overflowY = '';
             panel.style.WebkitOverflowScrolling = '';
             
-            // Reset safe area padding
+            // Remove safe area padding when exiting full-screen
             panel.style.paddingTop = '';
             panel.style.paddingBottom = '';
             panel.style.paddingLeft = '';
@@ -99,17 +102,17 @@ function toggleFullScreen() {
         
         // Restore extension header
         if (extensionHeader) {
-            extensionHeader.style.paddingTop = '';
-            extensionHeader.style.paddingBottom = '';
             extensionHeader.style.position = '';
             extensionHeader.style.top = '';
             extensionHeader.style.background = '';
             extensionHeader.style.zIndex = '';
-            extensionHeader.style.marginTop = '';
-            extensionHeader.style.marginLeft = '';
-            extensionHeader.style.marginRight = '';
-            extensionHeader.style.paddingLeft = '';
-            extensionHeader.style.paddingRight = '';
+            extensionHeader.style.paddingTop = '';
+            extensionHeader.style.paddingBottom = '';
+        }
+        
+        // Remove top margin from content
+        if (toolsMenu) {
+            toolsMenu.style.marginTop = '';
         }
         
         // Change icon back to full-screen
@@ -138,6 +141,9 @@ document.addEventListener('DOMContentLoaded', updateFullScreenButtonVisibility);
 /**
  * Open the tools extension panel
  */
+/**
+ * Open the tools extension panel
+ */
 function openToolsExtension() {
     console.log('Opening tools extension...');
     
@@ -159,20 +165,17 @@ function openToolsExtension() {
         
         toolsExtensionState.isOpen = true;
         toolsExtensionState.previousTab = 'tools';
-        toolsExtensionState.isFullScreen = false; // Reset full-screen state
         
         // Show the tools menu by default
         showToolsMenu();
         
-        // Auto-enable full-screen on mobile devices
+        // Check if mobile - if yes, open DIRECTLY in full-screen
         if (isMobileDevice()) {
-            console.log('Mobile device detected, auto-enabling full-screen mode');
-            // Small delay to ensure DOM is ready
-            setTimeout(() => {
-                if (!toolsExtensionState.isFullScreen) {
-                    toggleFullScreen();
-                }
-            }, 100);
+            console.log('Mobile device detected, opening directly in full-screen mode');
+            toolsExtensionState.isFullScreen = false; // Set to false first so toggle works
+            toggleFullScreen(); // Immediately enter full-screen
+        } else {
+            toolsExtensionState.isFullScreen = false;
         }
         
         // Update full-screen button visibility
@@ -285,13 +288,19 @@ function openTool(toolName) {
 function updateExtensionHeader(title, showBackToMenu) {
     const headerTitle = document.getElementById('extension-header-title');
     const backToMenuBtn = document.getElementById('back-to-menu-btn');
+    const headerSpacer = document.getElementById('header-spacer');
     
     if (headerTitle) {
         headerTitle.textContent = title;
     }
     
     if (backToMenuBtn) {
-        backToMenuBtn.style.display = showBackToMenu ? 'flex' : 'none';
+        backToMenuBtn.style.display = showBackToMenu ? 'block' : 'none';
+    }
+    
+    // Hide spacer when showing back-to-menu button
+    if (headerSpacer) {
+        headerSpacer.style.display = showBackToMenu ? 'none' : 'block';
     }
 }
 
