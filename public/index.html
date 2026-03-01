@@ -1350,15 +1350,13 @@
                 
                 <!-- Right side buttons -->
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <!-- Close button -->
-                    <button id="close-toggle" onclick="closeToolsExtension()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:16px;">
-                        <span>✕</span>
-                    </button>
-                    
                     <!-- Back to Menu button (shown when viewing a tool) -->
                     <button id="back-to-menu-btn" onclick="showToolsMenu()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; display:none;">
                         MENU
                     </button>
+                    
+                    <!-- Spacer for alignment when menu button is hidden -->
+                    <div id="header-spacer" style="width:50px;"></div>
                 </div>
             </div>
         </div>

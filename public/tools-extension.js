@@ -172,6 +172,12 @@ function openToolsExtension() {
         toolsExtension.style.overflowY = 'auto';
         toolsExtension.style.WebkitOverflowScrolling = 'touch';
         
+        // Add safe area padding for iPhone notch/dynamic island
+        toolsExtension.style.paddingTop = 'env(safe-area-inset-top)';
+        toolsExtension.style.paddingBottom = 'env(safe-area-inset-bottom)';
+        toolsExtension.style.paddingLeft = 'max(16px, env(safe-area-inset-left))';
+        toolsExtension.style.paddingRight = 'max(16px, env(safe-area-inset-right))';
+        
         toolsExtensionState.isOpen = true;
         toolsExtensionState.previousTab = 'tools';
         toolsExtensionState.isFullScreen = false;
@@ -222,6 +228,12 @@ function closeToolsExtension() {
         toolsExtension.style.background = '';
         toolsExtension.style.overflowY = '';
         toolsExtension.style.WebkitOverflowScrolling = '';
+        
+        // Reset safe area padding
+        toolsExtension.style.paddingTop = '';
+        toolsExtension.style.paddingBottom = '';
+        toolsExtension.style.paddingLeft = '';
+        toolsExtension.style.paddingRight = '';
         
         // Tools tab is already visible, no need to show it
         
