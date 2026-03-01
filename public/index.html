@@ -1336,7 +1336,7 @@
     <div id="tools-extension-panel" class="view-section" style="display:none;">
         
         <!-- Extension Header -->
-        <div style="position:sticky; top:0; z-index:10; background:var(--bg); padding:12px 0; border-bottom:1px solid #333; margin-bottom:16px;">
+        <div id="tools-extension-header" style="position:sticky; top:0; z-index:10; background:var(--bg); padding:12px 0; border-bottom:1px solid #333; margin-bottom:16px;">
             <div style="display:flex; align-items:center; justify-content:space-between;">
                 <!-- Back to Tools button -->
                 <button onclick="closeToolsExtension()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; font-size:20px; min-width:50px; justify-content:center;">
@@ -1348,13 +1348,21 @@
                     Aviation Tools
                 </div>
                 
-                <!-- Back to Menu button (shown when viewing a tool) -->
-                <button id="back-to-menu-btn" onclick="showToolsMenu()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; display:none;">
-                    MENU
-                </button>
-                
-                <!-- Spacer when back-to-menu is hidden -->
-                <div style="width:50px;"></div>
+                <!-- Right side buttons -->
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <!-- Full Screen Toggle (mobile only) -->
+                    <button id="fullscreen-toggle" onclick="toggleFullScreen()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:16px; display:none;">
+                        <span id="fullscreen-icon">⛶</span>
+                    </button>
+                    
+                    <!-- Back to Menu button (shown when viewing a tool) -->
+                    <button id="back-to-menu-btn" onclick="showToolsMenu()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; display:none;">
+                        MENU
+                    </button>
+                    
+                    <!-- Spacer when back-to-menu is hidden -->
+                    <div id="header-spacer" style="width:50px;"></div>
+                </div>
             </div>
         </div>
         

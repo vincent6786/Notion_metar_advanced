@@ -1451,30 +1451,19 @@
                 metarTafBtn.querySelector('span').innerText = `☁️ Metar-Taf.com (${icao})`;
             }
 
-            // ── PRESERVE AUDIO PLAYBACK STATE BEFORE REFRESH ──
-            const playingStates = new Map();
-            const existingAudio = container.querySelectorAll('audio');
-            existingAudio.forEach(audio => {
-                if (!audio.paused) {
-                    const src = audio.querySelector('source')?.src || audio.src;
-                    playingStates.set(src, {
-                        currentTime: audio.currentTime,
-                        volume: audio.volume
-                    });
-                }
-            });
-
             // Stream configs: [ICAO, labelText, streams[]]
             const streamConfigs = {
                 RCTP: { label: "RCTP LIVE STREAMS (TWATC)", streams: [
                     { type: "ATIS",              src: "https://stream.twatc.net/RCTP_ATIS",     color: "var(--accent)" },
+                    { type: "RCTP Airport",      src: "https://stream.twatc.net/RCTP_Scan2",    color: "var(--success)" },
                     { type: "Area Control/Approach", src: "https://stream.twatc.net/RCAA_Scan",     color: "var(--success)" },
                     { type: "Radar Control",     src: "https://stream.twatc.net/RCTP_App_Scan", color: "var(--ifr)" },
                     { type: "Strait",            src: "https://stream.twatc.net/RCAA",          color: "var(--mvfr)" }
                 ]},
                 RCSS: { label: "RCSS LIVE STREAMS", streams: [
                     { type: "ATIS",              src: "https://stream.twatc.net/RCSS_ATIS",     color: "var(--accent)" },
-                    { type: "Approach/Ground/Tower/Clearance", src: "https://stream.twatc.net/RCSS_Scan", color: "var(--success)" }
+                    { type: "Approach/Ground/Tower/Clearance", src: "https://stream.twatc.net/RCSS_Scan", color: "var(--success)" },
+                    { type: "RCSS Airport",      src: "https://stream.twatc.net/RCSS_Scan2",    color: "var(--success)" }
                 ]},
                 RCKH: { label: "RCKH LIVE STREAMS", streams: [
                     { type: "ATIS",        src: "https://stream.twatc.net/RCKH_ATIS",  color: "var(--accent)" },
@@ -1495,12 +1484,10 @@
             const cfg = streamConfigs[icao];
             if (cfg) {
                 label.innerText = cfg.label;
-                container.innerHTML = cfg.streams.map((s, idx) => `
+                container.innerHTML = cfg.streams.map(s => `
                     <div style="margin-bottom:12px;">
                         <div class="m-label" style="color:${s.color};">${s.type}</div>
                         <audio controls 
-                               data-stream-src="${s.src}"
-                               data-stream-idx="${idx}"
                                style="width:100%;height:32px;border-radius:16px;"
                                onerror="this.style.display='none';
                                         this.nextElementSibling.style.display='flex';">
@@ -1519,20 +1506,6 @@
                         </div>
                     </div>`).join('') +
                     `<div style="font-size:10px;color:#555;margin-top:8px;text-align:right;">Source: TWATC.net & LiveATC</div>`;
-                
-                // ── RESTORE AUDIO PLAYBACK STATE AFTER REFRESH ──
-                setTimeout(() => {
-                    const newAudio = container.querySelectorAll('audio');
-                    newAudio.forEach(audio => {
-                        const src = audio.getAttribute('data-stream-src');
-                        if (playingStates.has(src)) {
-                            const state = playingStates.get(src);
-                            audio.volume = state.volume;
-                            audio.currentTime = state.currentTime;
-                            audio.play().catch(e => console.log('[Audio] Auto-resume failed:', e));
-                        }
-                    });
-                }, 100);
             } else {
                 label.innerText = "AUDIO STREAMS";
                 container.innerHTML = `<div style="color:var(--sub-text);font-size:13px;text-align:center;padding:10px 0;">No direct in-app stream available for ${icao}.<br><span style="font-size:11px;color:#555;">Use the LiveATC button below.</span></div>`;

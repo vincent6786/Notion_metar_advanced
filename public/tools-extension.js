@@ -10,8 +10,93 @@
 let toolsExtensionState = {
     isOpen: false,
     currentTool: null,
-    previousTab: 'tools'
+    previousTab: 'tools',
+    isFullScreen: false
 };
+
+/**
+ * Toggle full-screen mode (mobile optimization)
+ */
+function toggleFullScreen() {
+    const panel = document.getElementById('tools-extension-panel');
+    const header = document.querySelector('.header'); // Main app header
+    const bottomNav = document.querySelector('.bottom-nav'); // Main app navigation
+    const fullscreenBtn = document.getElementById('fullscreen-toggle');
+    const fullscreenIcon = document.getElementById('fullscreen-icon');
+    const extensionHeader = document.getElementById('tools-extension-header');
+    
+    toolsExtensionState.isFullScreen = !toolsExtensionState.isFullScreen;
+    
+    if (toolsExtensionState.isFullScreen) {
+        // Enter full-screen mode
+        if (panel) {
+            panel.style.position = 'fixed';
+            panel.style.top = '0';
+            panel.style.left = '0';
+            panel.style.right = '0';
+            panel.style.bottom = '0';
+            panel.style.zIndex = '9999';
+            panel.style.background = 'var(--bg)';
+            panel.style.overflowY = 'auto';
+            panel.style.padding = '0 16px 20px 16px';
+        }
+        
+        // Hide main app header/nav if they exist
+        if (header) header.style.display = 'none';
+        if (bottomNav) bottomNav.style.display = 'none';
+        
+        // Update extension header for full-screen
+        if (extensionHeader) {
+            extensionHeader.style.paddingTop = '16px';
+        }
+        
+        // Change icon to exit full-screen
+        if (fullscreenIcon) fullscreenIcon.textContent = '⛶';
+        
+        console.log('Entered full-screen mode');
+    } else {
+        // Exit full-screen mode
+        if (panel) {
+            panel.style.position = '';
+            panel.style.top = '';
+            panel.style.left = '';
+            panel.style.right = '';
+            panel.style.bottom = '';
+            panel.style.zIndex = '';
+            panel.style.padding = '';
+        }
+        
+        // Restore main app header/nav
+        if (header) header.style.display = '';
+        if (bottomNav) bottomNav.style.display = '';
+        
+        // Restore extension header
+        if (extensionHeader) {
+            extensionHeader.style.paddingTop = '';
+        }
+        
+        // Change icon back to full-screen
+        if (fullscreenIcon) fullscreenIcon.textContent = '⛶';
+        
+        console.log('Exited full-screen mode');
+    }
+}
+
+/**
+ * Show/hide full-screen button based on screen size
+ */
+function updateFullScreenButtonVisibility() {
+    const fullscreenBtn = document.getElementById('fullscreen-toggle');
+    if (fullscreenBtn) {
+        // Show on mobile (screen width < 768px), hide on desktop
+        const isMobile = window.innerWidth < 768;
+        fullscreenBtn.style.display = isMobile ? 'block' : 'none';
+    }
+}
+
+// Initialize full-screen button visibility on load and resize
+window.addEventListener('resize', updateFullScreenButtonVisibility);
+document.addEventListener('DOMContentLoaded', updateFullScreenButtonVisibility);
 
 /**
  * Open the tools extension panel
@@ -37,9 +122,13 @@ function openToolsExtension() {
         
         toolsExtensionState.isOpen = true;
         toolsExtensionState.previousTab = 'tools';
+        toolsExtensionState.isFullScreen = false; // Reset full-screen state
         
         // Show the tools menu by default
         showToolsMenu();
+        
+        // Update full-screen button visibility
+        updateFullScreenButtonVisibility();
         
         console.log('Extension opened successfully');
     } else {
@@ -55,6 +144,11 @@ function openToolsExtension() {
 function closeToolsExtension() {
     console.log('Closing tools extension...');
     
+    // Exit full-screen mode if active
+    if (toolsExtensionState.isFullScreen) {
+        toggleFullScreen();
+    }
+    
     const toolsTab = document.getElementById('tab-tools');
     const toolsExtension = document.getElementById('tools-extension-panel');
     
@@ -69,6 +163,7 @@ function closeToolsExtension() {
         
         toolsExtensionState.isOpen = false;
         toolsExtensionState.currentTool = null;
+        toolsExtensionState.isFullScreen = false;
         
         console.log('Extension closed, tools tab restored');
     }
