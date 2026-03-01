@@ -320,7 +320,7 @@ function updateExtensionHeader(title, showBackToMenu) {
     }
     
     if (backToMenuBtn) {
-        backToMenuBtn.style.display = showBackToMenu ? 'block' : 'none';
+        backToMenuBtn.style.display = showBackToMenu ? 'flex' : 'none';
     }
     
     // Hide spacer when showing back-to-menu button
