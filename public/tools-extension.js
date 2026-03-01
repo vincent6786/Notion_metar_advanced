@@ -139,8 +139,55 @@ window.addEventListener('resize', updateFullScreenButtonVisibility);
 document.addEventListener('DOMContentLoaded', updateFullScreenButtonVisibility);
 
 /**
- * Open the tools extension panel
+ * Disable horizontal scrolling on main app elements
  */
+function disableHorizontalScroll() {
+    // Disable horizontal scrolling on tabs
+    const tabs = document.querySelector('.tabs');
+    if (tabs) {
+        tabs.style.overflowX = 'hidden';
+    }
+    
+    // Disable horizontal scrolling on quick select row
+    const quickSelect = document.querySelector('.quick-select-row');
+    if (quickSelect) {
+        quickSelect.style.overflowX = 'hidden';
+    }
+    
+    // Disable horizontal scrolling on meteogram containers
+    const meteogramContainers = document.querySelectorAll('.meteogram-container');
+    meteogramContainers.forEach(container => {
+        container.style.overflowX = 'hidden';
+    });
+    
+    console.log('Horizontal scrolling disabled');
+}
+
+/**
+ * Re-enable horizontal scrolling on main app elements
+ */
+function enableHorizontalScroll() {
+    // Re-enable horizontal scrolling on tabs
+    const tabs = document.querySelector('.tabs');
+    if (tabs) {
+        tabs.style.overflowX = 'auto';
+    }
+    
+    // Re-enable horizontal scrolling on quick select row
+    const quickSelect = document.querySelector('.quick-select-row');
+    if (quickSelect) {
+        quickSelect.style.overflowX = 'auto';
+    }
+    
+    // Re-enable horizontal scrolling on meteogram containers
+    const meteogramContainers = document.querySelectorAll('.meteogram-container');
+    meteogramContainers.forEach(container => {
+        container.style.overflowX = 'auto';
+    });
+    
+    console.log('Horizontal scrolling re-enabled');
+}
+
 /**
  * Open the tools extension panel
  */
@@ -155,6 +202,9 @@ function openToolsExtension() {
     console.log('toolsExtension:', toolsExtension);
     
     if (toolsTab && toolsExtension) {
+        // Disable horizontal scrolling on main app
+        disableHorizontalScroll();
+        
         // Keep the tools tab visible (don't hide or remove active class)
         
         // Show the extension panel as an overlay
@@ -214,6 +264,9 @@ function closeToolsExtension() {
     const toolsExtension = document.getElementById('tools-extension-panel');
     
     if (toolsTab && toolsExtension) {
+        // Re-enable horizontal scrolling on main app
+        enableHorizontalScroll();
+        
         // Hide the extension panel and reset overlay styling
         toolsExtension.style.display = 'none';
         toolsExtension.classList.remove('active');
