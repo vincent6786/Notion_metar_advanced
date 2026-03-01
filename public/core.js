@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.2.9',                         // ← bump this on every update
+            version: '3.3.0',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -12,30 +12,30 @@
                     desc: 'Toggle in the settings~ A dahsboard with multi-airport~ New combined METAR + TAF tab when enabled. Switch between views with the pill toggle.'
                 },
                 {
-                    icon: '‼️',
-                    title: 'Decode updated',
-                    desc: 'RAW METAR and TAF decode'
+                    icon: '🔨',
+                    title: 'Aviation tools added ‼️',
+                    desc: 'New update for Unit conversion & Abbreviation'
                 },
                 // {
                 //     icon: '📊',
                 //     title: 'Data sources updated',
                 //     desc: 'See more in the Help section~'
                 // },
-                {
-                    icon: '🔤',
-                    title: 'IATA codes in Dashboard',
-                    desc: 'Add airports by IATA code (e.g. JFK) — auto-resolves to ICAO.'
-                },
+                // {
+                //     icon: '🔤',
+                //     title: 'IATA codes in Dashboard',
+                //     desc: 'Add airports by IATA code (e.g. JFK) — auto-resolves to ICAO.'
+                // },
                 // {
                 //     icon: '🛬',
                 //     title: 'Prefered runway~',
                 //     desc: 'When setting default airport, you can either select auto or rwy needed!'
                 // },
-                {
-                    icon: '📋',
-                    title: 'Raw data switch in Dashborad',
-                    desc: 'Switch between raw data and easy view in Dashboard 😎'
-                },
+                // {
+                //     icon: '📋',
+                //     title: 'Raw data switch in Dashborad',
+                //     desc: 'Switch between raw data and easy view in Dashboard 😎'
+                // },
                 {
                     icon: '✅',
                     title: 'Bug fixed',
