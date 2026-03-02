@@ -871,8 +871,15 @@
                 compactStatus.style.backgroundColor = 'var(--danger)';
                 compactStatus.style.color = '#fff';
                 card.style.borderLeftColor = 'var(--danger)';
-                banner.className = '';
-                banner.innerText = `⚠️ NO-GO: ${violations.length} LIMIT${violations.length > 1 ? 'S' : ''} EXCEEDED`;
+                
+                // Check if NO-GO banner is enabled in settings
+                const bannerEnabled = Storage.get('efb_no_go_banner_enabled');
+                if (bannerEnabled !== false) { // Default to true if not set
+                    banner.className = '';
+                    banner.innerText = `⚠️ NO-GO: ${violations.length} LIMIT${violations.length > 1 ? 'S' : ''} EXCEEDED`;
+                } else {
+                    banner.className = 'hidden';
+                }
                 
                 detailsDiv.innerHTML = '<div style="color:var(--danger); font-weight:700; margin-bottom:6px;">❌ VIOLATIONS:</div>' +
                     violations.map(v => `<div style="color:var(--danger);">• ${v}</div>`).join('') +
@@ -1112,6 +1119,12 @@
                         }
                     }
                 }
+
+        async function checkNoGoBannerEnabled() {
+                    const enabled = await Storage.get('efb_no_go_banner_enabled', true); // Default to true
+                    const toggle = document.getElementById('toggleNoGoBanner');
+                    if (toggle) toggle.checked = !!enabled;
+                }
         
         async function toggleMultiDashboard() {
             const toggle  = document.getElementById('toggleMultiDashboard');
@@ -1141,6 +1154,19 @@
                     renderRunwaysComplex();
                 }, 100);
             }
+        }
+
+        async function toggleNoGoBanner() {
+            const toggle  = document.getElementById('toggleNoGoBanner');
+            const enabled = toggle?.checked || false;
+            await Storage.set('efb_no_go_banner_enabled', enabled);
+            
+            // Re-check minimums to update banner visibility
+            if (typeof checkMins === 'function') {
+                checkMins();
+            }
+            
+            showToast(enabled ? '⚠️ NO-GO banner enabled' : 'NO-GO banner disabled');
         }
     
         function applyDashboardMode(enabled) {

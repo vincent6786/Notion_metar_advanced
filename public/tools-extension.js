@@ -363,22 +363,23 @@ function openTool(toolName) {
 /**
  * Update the extension header
  */
-function updateExtensionHeader(title, showBackToMenu) {
+function updateExtensionHeader(title, showBackButton) {
     const headerTitle = document.getElementById('extension-header-title');
     const backToMenuBtn = document.getElementById('back-to-menu-btn');
-    const headerSpacer = document.getElementById('header-spacer');
     
     if (headerTitle) {
         headerTitle.textContent = title;
     }
     
+    // Show/hide back button with opacity transition
     if (backToMenuBtn) {
-        backToMenuBtn.style.display = showBackToMenu ? 'flex' : 'none';
-    }
-    
-    // Hide spacer when showing back-to-menu button
-    if (headerSpacer) {
-        headerSpacer.style.display = showBackToMenu ? 'none' : 'block';
+        if (showBackButton) {
+            backToMenuBtn.style.opacity = '1';
+            backToMenuBtn.style.pointerEvents = 'auto';
+        } else {
+            backToMenuBtn.style.opacity = '0';
+            backToMenuBtn.style.pointerEvents = 'none';
+        }
     }
 }
 

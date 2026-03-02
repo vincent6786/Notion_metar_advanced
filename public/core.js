@@ -769,6 +769,7 @@
             renderFavoritesSettings();
             renderHistory();
             await checkMultiDashboardEnabled();
+            await checkNoGoBannerEnabled();
             loadUnitPreferences();
 
 
