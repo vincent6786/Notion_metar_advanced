@@ -872,9 +872,11 @@
                 compactStatus.style.color = '#fff';
                 card.style.borderLeftColor = 'var(--danger)';
                 
-                // Check if NO-GO banner is enabled in settings
-                const bannerEnabled = Storage.get('efb_no_go_banner_enabled');
-                if (bannerEnabled !== false) { // Default to true if not set
+                // Check if NO-GO banner is enabled in settings (use localStorage for immediate sync access)
+                const bannerEnabledStr = localStorage.getItem('efb_no_go_banner_enabled');
+                const bannerEnabled = bannerEnabledStr === null ? true : bannerEnabledStr === 'true';
+                
+                if (bannerEnabled) {
                     banner.className = '';
                     banner.innerText = `⚠️ NO-GO: ${violations.length} LIMIT${violations.length > 1 ? 'S' : ''} EXCEEDED`;
                 } else {
@@ -1159,11 +1161,21 @@
         async function toggleNoGoBanner() {
             const toggle  = document.getElementById('toggleNoGoBanner');
             const enabled = toggle?.checked || false;
+            const banner  = document.getElementById('minBanner');
+            
             await Storage.set('efb_no_go_banner_enabled', enabled);
             
-            // Re-check minimums to update banner visibility
-            if (typeof checkMins === 'function') {
-                checkMins();
+            // Immediately update banner visibility
+            if (banner) {
+                if (enabled) {
+                    // Re-check minimums to show banner if needed
+                    if (typeof checkMins === 'function') {
+                        checkMins();
+                    }
+                } else {
+                    // Immediately hide banner
+                    banner.className = 'hidden';
+                }
             }
             
             showToast(enabled ? '⚠️ NO-GO banner enabled' : 'NO-GO banner disabled');
