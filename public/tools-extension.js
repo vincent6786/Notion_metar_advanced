@@ -340,6 +340,7 @@ function openTool(toolName) {
             'great-circle': 'Great Circle Distance',
             'abbreviations': 'Aviation Abbreviations',
             'weather-terms': 'Present Weather Terms',
+            'weather-symbols': 'Weather Symbols',
             'e6b-calculator': 'E6B Flight Computer',
             'e6b-trainer': 'E6B Trainer (UND)'
         };
@@ -350,6 +351,8 @@ function openTool(toolName) {
             updateUnitSelectors(); // Initialize with default units
         } else if (toolName === 'weather-terms') {
             displayAllWeatherTerms(); // Show all terms by default
+        } else if (toolName === 'weather-symbols') {
+            displayAllWeatherSymbols(); // Show all symbols by default
         } else if (toolName === 'abbreviations') {
             openAbbreviations(); // Load the abbreviations database
         } else if (toolName === 'e6b-calculator') {
@@ -940,6 +943,464 @@ function displayAllCategories() {
     html += `
         <div style="margin-top:20px; text-align:center;">
             <button onclick="displayAllWeatherTerms()" class="tool-btn" style="background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:10px 20px; font-size:12px; font-weight:700;">
+                ← BACK TO MAIN VIEW
+            </button>
+        </div>
+    `;
+    
+    resultsEl.innerHTML = html;
+}
+
+// ============================================================================
+// WEATHER SYMBOLS DATABASE
+// Sources: NOAA Legends PDF & Aviation Weather GFA
+// ============================================================================
+
+const weatherSymbols = [
+    // ========== FLIGHT CATEGORIES ==========
+    { symbol: '🟢', code: 'VFR', name: 'Visual Flight Rules', category: 'flight_category', 
+      description: 'Ceiling greater than 3,000 feet AGL and visibility greater than 5 statute miles', color: '#34c759' },
+    { symbol: '🔵', code: 'MVFR', name: 'Marginal Visual Flight Rules', category: 'flight_category',
+      description: 'Ceiling 1,000 to 3,000 feet AGL and/or visibility 3 to 5 statute miles', color: '#5ac8fa' },
+    { symbol: '🔴', code: 'IFR', name: 'Instrument Flight Rules', category: 'flight_category',
+      description: 'Ceiling 500 to below 1,000 feet AGL and/or visibility 1 to less than 3 statute miles', color: '#ff453a' },
+    { symbol: '🟣', code: 'LIFR', name: 'Low Instrument Flight Rules', category: 'flight_category',
+      description: 'Ceiling below 500 feet AGL and/or visibility less than 1 statute mile', color: '#bf5af2' },
+    
+    // ========== CLOUD COVERAGE ==========
+    { symbol: '○', code: 'SKC', name: 'Sky Clear', category: 'cloud_coverage',
+      description: 'Human observer reports sky completely clear (0/8 coverage)' },
+    { symbol: '□', code: 'CLR', name: 'Clear', category: 'cloud_coverage',
+      description: 'Automated station reports clear below 12,000 feet (0/8 coverage)' },
+    { symbol: '◔', code: 'FEW', name: 'Few Clouds', category: 'cloud_coverage',
+      description: '1/8 to 2/8 sky coverage' },
+    { symbol: '◑', code: 'SCT', name: 'Scattered Clouds', category: 'cloud_coverage',
+      description: '3/8 to 4/8 sky coverage' },
+    { symbol: '◕', code: 'BKN', name: 'Broken Clouds', category: 'cloud_coverage',
+      description: '5/8 to 7/8 sky coverage' },
+    { symbol: '●', code: 'OVC', name: 'Overcast', category: 'cloud_coverage',
+      description: '8/8 sky coverage (complete coverage)' },
+    { symbol: '⊗', code: 'OVX', name: 'Sky Obscured', category: 'cloud_coverage',
+      description: 'Vertical visibility reported, no cloud information (obscuration)' },
+    
+    // ========== CLOUD TYPES ==========
+    { symbol: 'CB', code: 'CB', name: 'Cumulonimbus', category: 'cloud_type',
+      description: 'Towering vertical clouds, thunderstorm clouds' },
+    { symbol: 'TCU', code: 'TCU', name: 'Towering Cumulus', category: 'cloud_type',
+      description: 'Large cumulus with vertical development' },
+    { symbol: 'ACC', code: 'ACC', name: 'Altocumulus Castellanus', category: 'cloud_type',
+      description: 'Mid-level clouds with turrets, indicates instability' },
+    { symbol: 'ACSL', code: 'ACSL', name: 'Altocumulus Standing Lenticular', category: 'cloud_type',
+      description: 'Lens-shaped clouds formed by mountain waves' },
+    { symbol: 'CCSL', code: 'CCSL', name: 'Cirrocumulus Standing Lenticular', category: 'cloud_type',
+      description: 'High-altitude lenticular clouds' },
+    { symbol: 'SCSL', code: 'SCSL', name: 'Stratocumulus Standing Lenticular', category: 'cloud_type',
+      description: 'Low-level lenticular clouds' },
+    
+    // ========== SURFACE FRONTS ==========
+    { symbol: '▼▼▼', code: 'COLD_FRONT', name: 'Cold Front', category: 'front',
+      description: 'Cooler, denser air mass advancing and replacing warmer air', color: '#007aff' },
+    { symbol: '●●●', code: 'WARM_FRONT', name: 'Warm Front', category: 'front',
+      description: 'Warm air mass advancing and replacing cooler air', color: '#ff3b30' },
+    { symbol: '▼●▼●', code: 'STATIONARY_FRONT', name: 'Stationary Front', category: 'front',
+      description: 'Front between warm and cold air masses moving very slowly or not at all', color: '#ff3b30' },
+    { symbol: '▲▲▲', code: 'OCCLUDED_FRONT', name: 'Occluded Front', category: 'front',
+      description: 'Cold front overtaking warm front, composite of two fronts', color: '#bf5af2' },
+    { symbol: '╌╌╌', code: 'TROUGH', name: 'Trough', category: 'front',
+      description: 'Elongated area of low pressure, also depicts outflow boundaries', color: '#ff9500' },
+    { symbol: '●●●●', code: 'SQUALL_LINE', name: 'Squall Line', category: 'front',
+      description: 'Line of active thunderstorms with continuous or broken precipitation', color: '#ff3b30' },
+    { symbol: '◡◡◡', code: 'DRY_LINE', name: 'Dry Line', category: 'front',
+      description: 'Boundary separating moist and dry air masses', color: '#ff9500' },
+    { symbol: '~~~', code: 'TROPICAL_WAVE', name: 'Tropical Wave', category: 'front',
+      description: 'Trough or cyclonic curvature in trade wind easterlies', color: '#ff9500' },
+    
+    // ========== FRONTOGENESIS/FRONTOLYSIS ==========
+    { symbol: '▼- -▼', code: 'FRONTOGENESIS', name: 'Frontogenesis', category: 'front',
+      description: 'Initial formation of surface front (dashed line with frontal symbols)' },
+    { symbol: '●- -●', code: 'FRONTOLYSIS', name: 'Frontolysis', category: 'front',
+      description: 'Dissipation or weakening of front (dashed line, symbols on alternating segments)' },
+    
+    // ========== PRECIPITATION TYPES ==========
+    { symbol: '••', code: 'RA', name: 'Rain', category: 'precipitation',
+      description: 'Liquid water droplets falling from clouds', metarCodes: ['-RA', 'RA', '+RA'] },
+    { symbol: '❄', code: 'SN', name: 'Snow', category: 'precipitation',
+      description: 'Ice crystals falling from clouds', metarCodes: ['-SN', 'SN', '+SN'] },
+    { symbol: ',,', code: 'DZ', name: 'Drizzle', category: 'precipitation',
+      description: 'Very small water droplets (diameter < 0.5mm)', metarCodes: ['-DZ', 'DZ', '+DZ'] },
+    { symbol: '⚡', code: 'TS', name: 'Thunderstorm', category: 'precipitation',
+      description: 'Lightning and thunder present', metarCodes: ['TS', 'TSRA', 'TSSN', '+TSRA'] },
+    { symbol: '▽', code: 'SH', name: 'Showers', category: 'precipitation',
+      description: 'Precipitation of short duration and varying intensity', metarCodes: ['SHRA', 'SHSN', 'SHGR'] },
+    { symbol: '⊕', code: 'GR', name: 'Hail', category: 'precipitation',
+      description: 'Ice balls or stones (diameter ≥ 5mm)', metarCodes: ['-GR', 'GR', '+GR', 'SHGR'] },
+    { symbol: '△', code: 'GS', name: 'Small Hail / Snow Pellets', category: 'precipitation',
+      description: 'Small hail or snow pellets (diameter < 5mm)', metarCodes: ['-GS', 'GS', '+GS'] },
+    { symbol: '△', code: 'PL', name: 'Ice Pellets', category: 'precipitation',
+      description: 'Transparent or translucent ice pellets (sleet)', metarCodes: ['PL', 'SHPL'] },
+    { symbol: '⟋', code: 'FZRA', name: 'Freezing Rain', category: 'precipitation',
+      description: 'Supercooled rain that freezes on contact', metarCodes: ['-FZRA', 'FZRA', '+FZRA'] },
+    { symbol: '⟋', code: 'FZDZ', name: 'Freezing Drizzle', category: 'precipitation',
+      description: 'Supercooled drizzle that freezes on contact', metarCodes: ['-FZDZ', 'FZDZ', '+FZDZ'] },
+    { symbol: '⋄', code: 'IC', name: 'Ice Crystals', category: 'precipitation',
+      description: 'Diamond dust - tiny ice crystals floating in air', metarCodes: ['IC'] },
+    { symbol: '❄', code: 'SG', name: 'Snow Grains', category: 'precipitation',
+      description: 'Very small white opaque particles of ice', metarCodes: ['SG'] },
+    { symbol: '?', code: 'UP', name: 'Unknown Precipitation', category: 'precipitation',
+      description: 'Automated station detected precipitation but cannot identify type', metarCodes: ['UP'] },
+    
+    // ========== OBSCURATIONS ==========
+    { symbol: '≡', code: 'FG', name: 'Fog', category: 'obscuration',
+      description: 'Visibility reduced to less than 5/8 SM by water droplets', metarCodes: ['FG', 'BCFG', 'MIFG', 'PRFG', 'FZFG'] },
+    { symbol: '∽', code: 'BR', name: 'Mist', category: 'obscuration',
+      description: 'Visibility 5/8 to less than 6 SM due to water droplets', metarCodes: ['BR'] },
+    { symbol: '∞', code: 'HZ', name: 'Haze', category: 'obscuration',
+      description: 'Dry particles suspended in air reducing visibility', metarCodes: ['HZ'] },
+    { symbol: 'Λ', code: 'FU', name: 'Smoke', category: 'obscuration',
+      description: 'Visibility reduced by combustion products', metarCodes: ['FU'] },
+    { symbol: 'S', code: 'DU', name: 'Dust', category: 'obscuration',
+      description: 'Widespread dust in suspension raised by wind', metarCodes: ['DU', 'BLDU'] },
+    { symbol: 'S', code: 'SA', name: 'Sand', category: 'obscuration',
+      description: 'Sand raised to considerable height by wind', metarCodes: ['SA', 'BLSA'] },
+    { symbol: '⊕', code: 'PY', name: 'Spray', category: 'obscuration',
+      description: 'Water droplets torn from wave crests by wind', metarCodes: ['PY', 'BLPY'] },
+    { symbol: '△', code: 'VA', name: 'Volcanic Ash', category: 'obscuration',
+      description: 'Ash particles from volcanic eruption', metarCodes: ['VA'] },
+    
+    // ========== OTHER PHENOMENA ==========
+    { symbol: 'ϕ', code: 'PO', name: 'Dust/Sand Whirls', category: 'other_phenomena',
+      description: 'Well-developed dust devils or sand whirls', metarCodes: ['PO', 'VCPO'] },
+    { symbol: 'ᴝ', code: 'SQ', name: 'Squalls', category: 'other_phenomena',
+      description: 'Sudden wind increase of at least 16 knots, lasting ≥1 minute', metarCodes: ['SQ'] },
+    { symbol: '⋉', code: 'FC', name: 'Funnel Cloud', category: 'other_phenomena',
+      description: 'Tornado or waterspout cloud', metarCodes: ['FC', '+FC', 'VCFC'] },
+    { symbol: 'S', code: 'SS', name: 'Sandstorm', category: 'other_phenomena',
+      description: 'Severe sandstorm significantly reducing visibility', metarCodes: ['SS', 'VCSS'] },
+    { symbol: 'S', code: 'DS', name: 'Duststorm', category: 'other_phenomena',
+      description: 'Severe duststorm significantly reducing visibility', metarCodes: ['DS', 'VCDS'] },
+    
+    // ========== DESCRIPTORS ==========
+    { symbol: '-', code: 'LIGHT', name: 'Light Intensity', category: 'intensity',
+      description: 'Light intensity precipitation or phenomenon', prefix: '-' },
+    { symbol: '+', code: 'HEAVY', name: 'Heavy Intensity', category: 'intensity',
+      description: 'Heavy or severe intensity precipitation or phenomenon', prefix: '+' },
+    { symbol: 'VC', code: 'VC', name: 'In Vicinity', category: 'descriptor',
+      description: 'Within 5-10 statute miles of aerodrome but not at station', prefix: 'VC' },
+    { symbol: 'MI', code: 'MI', name: 'Shallow', category: 'descriptor',
+      description: 'Ground-level phenomenon (below 6 feet)', prefix: 'MI' },
+    { symbol: 'BC', code: 'BC', name: 'Patches', category: 'descriptor',
+      description: 'Random occurrence covering part of area', prefix: 'BC' },
+    { symbol: 'PR', code: 'PR', name: 'Partial', category: 'descriptor',
+      description: 'Covers part of aerodrome', prefix: 'PR' },
+    { symbol: 'DR', code: 'DR', name: 'Low Drifting', category: 'descriptor',
+      description: 'Below 6 feet above ground', prefix: 'DR' },
+    { symbol: 'BL', code: 'BL', name: 'Blowing', category: 'descriptor',
+      description: 'Raised above 6 feet by wind', prefix: 'BL' },
+    { symbol: 'SH', code: 'SH', name: 'Showers', category: 'descriptor',
+      description: 'Short duration precipitation', prefix: 'SH' },
+    { symbol: 'TS', code: 'TS', name: 'Thunderstorm', category: 'descriptor',
+      description: 'Lightning and thunder present', prefix: 'TS' },
+    { symbol: 'FZ', code: 'FZ', name: 'Freezing', category: 'descriptor',
+      description: 'Supercooled, freezes on contact', prefix: 'FZ' },
+    
+    // ========== WIND SYMBOLS ==========
+    { symbol: '○', code: 'CALM', name: 'Calm Wind', category: 'wind',
+      description: 'Wind speed less than 3 knots' },
+    { symbol: '→', code: 'WIND_5KT', name: 'Wind 5 Knots', category: 'wind',
+      description: 'Half barb = 5 knots' },
+    { symbol: '→|', code: 'WIND_10KT', name: 'Wind 10 Knots', category: 'wind',
+      description: 'Full barb = 10 knots' },
+    { symbol: '→▶', code: 'WIND_50KT', name: 'Wind 50 Knots', category: 'wind',
+      description: 'Pennant/flag = 50 knots' },
+    { symbol: 'VRB', code: 'VRB', name: 'Variable Wind', category: 'wind',
+      description: 'Wind direction varying, typically light winds' },
+    { symbol: 'G', code: 'GUST', name: 'Wind Gust', category: 'wind',
+      description: 'Peak wind speed exceeding sustained speed by 10+ knots' },
+    
+    // ========== PRESSURE SYSTEMS ==========
+    { symbol: 'H', code: 'HIGH', name: 'High Pressure Center', category: 'pressure',
+      description: 'Center of high atmospheric pressure (anticyclone)', color: '#007aff' },
+    { symbol: 'L', code: 'LOW', name: 'Low Pressure Center', category: 'pressure',
+      description: 'Center of low atmospheric pressure (cyclone)', color: '#ff3b30' },
+    
+    // ========== TURBULENCE ==========
+    { symbol: '∧', code: 'TURB_LGT', name: 'Light Turbulence', category: 'turbulence',
+      description: 'Light turbulence, slight bumpiness' },
+    { symbol: '∧∧', code: 'TURB_MOD', name: 'Moderate Turbulence', category: 'turbulence',
+      description: 'Moderate turbulence, noticeable bumpiness' },
+    { symbol: '∧∧∧', code: 'TURB_SEV', name: 'Severe Turbulence', category: 'turbulence',
+      description: 'Severe turbulence, abrupt changes, momentary loss of control' },
+    { symbol: '∧∧∧∧', code: 'TURB_EXT', name: 'Extreme Turbulence', category: 'turbulence',
+      description: 'Extreme turbulence, aircraft may be impossible to control' },
+    
+    // ========== ICING ==========
+    { symbol: '❅', code: 'ICE_TRACE', name: 'Trace Icing', category: 'icing',
+      description: 'Trace icing, barely perceptible accumulation' },
+    { symbol: '❅❅', code: 'ICE_LGT', name: 'Light Icing', category: 'icing',
+      description: 'Light icing, perceptible accumulation requiring deice procedures' },
+    { symbol: '❅❅❅', code: 'ICE_MOD', name: 'Moderate Icing', category: 'icing',
+      description: 'Moderate icing, potentially hazardous if prolonged' },
+    { symbol: '❅❅❅❅', code: 'ICE_SEV', name: 'Severe Icing', category: 'icing',
+      description: 'Severe icing, hazardous even for short encounters' },
+    
+    // ========== LIGHTNING ==========
+    { symbol: 'CA', code: 'CA', name: 'Cloud-Air Lightning', category: 'lightning',
+      description: 'Lightning between cloud and air' },
+    { symbol: 'CC', code: 'CC', name: 'Cloud-Cloud Lightning', category: 'lightning',
+      description: 'Lightning between clouds (intra-cloud or inter-cloud)' },
+    { symbol: 'CG', code: 'CG', name: 'Cloud-Ground Lightning', category: 'lightning',
+      description: 'Lightning between cloud and ground' },
+    { symbol: 'IC', code: 'IC_LIGHT', name: 'In-Cloud Lightning', category: 'lightning',
+      description: 'Lightning within a cloud' },
+    
+    // ========== AIRMET/SIGMET SYMBOLS ==========
+    { symbol: 'IFR', code: 'AIRMET_IFR', name: 'AIRMET IFR', category: 'airmet',
+      description: 'Ceiling below 1000 ft and/or visibility below 3 SM affecting over 50% of area' },
+    { symbol: 'MT_OBSC', code: 'AIRMET_MTN', name: 'AIRMET Mountain Obscuration', category: 'airmet',
+      description: 'Mountains obscured by clouds, precipitation, fog, or haze' },
+    { symbol: 'TURB', code: 'AIRMET_TURB', name: 'AIRMET Turbulence', category: 'airmet',
+      description: 'Moderate turbulence, sustained surface winds 30+ knots' },
+    { symbol: 'ICE', code: 'AIRMET_ICE', name: 'AIRMET Icing', category: 'airmet',
+      description: 'Moderate icing conditions' },
+    { symbol: 'LLWS', code: 'LLWS', name: 'Low Level Wind Shear', category: 'airmet',
+      description: 'Wind shear below 2000 feet AGL, non-convective' },
+    { symbol: 'CONVECTIVE', code: 'SIGMET_CONV', name: 'SIGMET Convective', category: 'sigmet',
+      description: 'Severe or greater turbulence, severe icing, low-level wind shear' }
+];
+
+// Category labels for weather symbols
+const weatherSymbolCategories = {
+    'flight_category': 'FLIGHT CATEGORIES',
+    'cloud_coverage': 'CLOUD COVERAGE',
+    'cloud_type': 'CLOUD TYPES',
+    'front': 'FRONTS & BOUNDARIES',
+    'precipitation': 'PRECIPITATION',
+    'obscuration': 'OBSCURATIONS',
+    'other_phenomena': 'OTHER PHENOMENA',
+    'descriptor': 'DESCRIPTORS',
+    'intensity': 'INTENSITY',
+    'wind': 'WIND',
+    'pressure': 'PRESSURE SYSTEMS',
+    'turbulence': 'TURBULENCE',
+    'icing': 'ICING',
+    'lightning': 'LIGHTNING',
+    'airmet': 'AIRMET',
+    'sigmet': 'SIGMET'
+};
+
+function searchWeatherSymbols() {
+    const searchInput = document.getElementById('symbol-search').value.trim().toUpperCase();
+    const resultsEl = document.getElementById('symbol-results');
+    
+    if (!searchInput) {
+        displayAllWeatherSymbols();
+        return;
+    }
+    
+    // Find matching symbols
+    const matches = weatherSymbols.filter(item => 
+        item.code.toUpperCase().includes(searchInput) ||
+        item.name.toUpperCase().includes(searchInput) ||
+        item.description.toUpperCase().includes(searchInput) ||
+        (item.metarCodes && item.metarCodes.some(code => code.includes(searchInput)))
+    );
+    
+    if (matches.length === 0) {
+        resultsEl.innerHTML = '<div style="color:var(--sub-text); padding:20px; text-align:center;">No matching weather symbols found</div>';
+        return;
+    }
+    
+    // Display source links and result count at top
+    let html = `
+        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <div style="font-size:11px; color:var(--sub-text);">
+                    <strong style="color:var(--accent);">${matches.length}</strong> result${matches.length !== 1 ? 's' : ''} found
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="window.open('https://www.blondsinaviation.com/wp-content/uploads/2019/05/NOAA-Legends-1407.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        NOAA PDF ↗
+                    </button>
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        GFA SYMBOLS ↗
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    matches.forEach(item => {
+        const bgColor = item.color ? item.color + '20' : '#1c1c1e'; // Add transparency to colored items
+        const borderColor = item.color ? item.color : '#333';
+        
+        html += `
+            <div style="background:${bgColor}; padding:12px; border-radius:8px; margin-bottom:8px; border:1px solid ${borderColor};">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+                    <div style="font-size:24px; min-width:32px; text-align:center;">${item.symbol}</div>
+                    <div style="flex:1;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <div style="font-size:14px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">${item.code}</div>
+                            <div style="font-size:13px; font-weight:700; color:#fff;">${item.name}</div>
+                            ${item.metarCodes ? `<div style="font-size:10px; color:#666;">METAR: ${item.metarCodes.join(', ')}</div>` : ''}
+                        </div>
+                        <div style="font-size:12px; color:var(--sub-text); margin-top:4px; line-height:1.5;">${item.description}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    resultsEl.innerHTML = html;
+}
+
+function displayAllWeatherSymbols() {
+    const resultsEl = document.getElementById('symbol-results');
+    
+    // Group by category
+    const grouped = {};
+    weatherSymbols.forEach(item => {
+        if (!grouped[item.category]) {
+            grouped[item.category] = [];
+        }
+        grouped[item.category].push(item);
+    });
+    
+    // Display source links at top
+    let html = `
+        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div style="font-size:11px; color:var(--sub-text);">
+                    Comprehensive aviation weather symbols database
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="window.open('https://www.blondsinaviation.com/wp-content/uploads/2019/05/NOAA-Legends-1407.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        NOAA PDF ↗
+                    </button>
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        GFA SYMBOLS ↗
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Priority categories to show first
+    const priorityCategories = [
+        'flight_category', 'cloud_coverage', 'precipitation', 'front', 
+        'obscuration', 'wind', 'turbulence', 'icing'
+    ];
+    
+    // Display priority categories
+    priorityCategories.forEach(category => {
+        if (grouped[category]) {
+            const label = weatherSymbolCategories[category] || category.toUpperCase();
+            html += `<div style="font-size:13px; font-weight:700; color:var(--accent); margin:20px 0 12px 0;">${label}</div>`;
+            
+            grouped[category].forEach(item => {
+                const bgColor = item.color ? item.color + '20' : '#1c1c1e';
+                const borderColor = item.color ? item.color : '#333';
+                
+                html += `
+                    <div style="background:${bgColor}; padding:10px; border-radius:6px; margin-bottom:6px; border:1px solid ${borderColor};">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="font-size:20px; min-width:28px; text-align:center;">${item.symbol}</div>
+                            <div style="flex:1;">
+                                <div style="font-size:12px; font-weight:700; color:#fff; margin-bottom:2px;">${item.code} - ${item.name}</div>
+                                <div style="font-size:11px; color:var(--sub-text);">${item.description}</div>
+                                ${item.metarCodes ? `<div style="font-size:10px; color:#666; margin-top:2px;">METAR: ${item.metarCodes.join(', ')}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    });
+    
+    // Add "Show All Categories" button
+    html += `
+        <div style="margin-top:20px; text-align:center;">
+            <button onclick="displayAllSymbolCategories()" class="tool-btn" style="background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:10px 20px; font-size:12px; font-weight:700;">
+                SHOW ALL CATEGORIES ↓
+            </button>
+        </div>
+    `;
+    
+    resultsEl.innerHTML = html;
+}
+
+function displayAllSymbolCategories() {
+    const resultsEl = document.getElementById('symbol-results');
+    
+    // Group by category
+    const grouped = {};
+    weatherSymbols.forEach(item => {
+        if (!grouped[item.category]) {
+            grouped[item.category] = [];
+        }
+        grouped[item.category].push(item);
+    });
+    
+    // Display source links at top
+    let html = `
+        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div style="font-size:11px; color:var(--sub-text);">
+                    All ${weatherSymbols.length} weather symbols
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="window.open('https://www.blondsinaviation.com/wp-content/uploads/2019/05/NOAA-Legends-1407.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        NOAA PDF ↗
+                    </button>
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        GFA SYMBOLS ↗
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Sort categories for consistent display
+    const sortedCategories = Object.keys(grouped).sort();
+    
+    sortedCategories.forEach(category => {
+        const label = weatherSymbolCategories[category] || category.toUpperCase();
+        html += `<div style="font-size:13px; font-weight:700; color:var(--accent); margin:20px 0 12px 0;">${label} (${grouped[category].length})</div>`;
+        
+        grouped[category].forEach(item => {
+            const bgColor = item.color ? item.color + '20' : '#1c1c1e';
+            const borderColor = item.color ? item.color : '#333';
+            
+            html += `
+                <div style="background:${bgColor}; padding:10px; border-radius:6px; margin-bottom:6px; border:1px solid ${borderColor};">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="font-size:20px; min-width:28px; text-align:center;">${item.symbol}</div>
+                        <div style="flex:1;">
+                            <div style="font-size:12px; font-weight:700; color:#fff; margin-bottom:2px;">${item.code} - ${item.name}</div>
+                            <div style="font-size:11px; color:var(--sub-text);">${item.description}</div>
+                            ${item.metarCodes ? `<div style="font-size:10px; color:#666; margin-top:2px;">METAR: ${item.metarCodes.join(', ')}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    });
+    
+    // Add button to return to main view
+    html += `
+        <div style="margin-top:20px; text-align:center;">
+            <button onclick="displayAllWeatherSymbols()" class="tool-btn" style="background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:10px 20px; font-size:12px; font-weight:700;">
                 ← BACK TO MAIN VIEW
             </button>
         </div>

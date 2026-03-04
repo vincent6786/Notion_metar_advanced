@@ -1396,6 +1396,13 @@
                     <div style="font-size:11px; color:var(--sub-text);">Present weather codes</div>
                 </div>
                 
+                <!-- Weather Symbols -->
+                <div onclick="openTool('weather-symbols')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">🌩️</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Symbols</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Visual weather symbols</div>
+                </div>
+                
                 <!-- Abbreviations -->
                 <div onclick="openTool('abbreviations')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📖</div>
@@ -1544,6 +1551,23 @@
                 </div>
                 
                 <div id="wx-results" style="max-height:60vh; overflow-y:auto;">
+                    <!-- Results populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             WEATHER SYMBOLS VISUAL REFERENCE
+        ================================================================ -->
+        <div id="tool-weather-symbols" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div class="conv-lbl" style="margin-bottom:8px;">SEARCH WEATHER SYMBOLS</div>
+                <div style="position:relative; margin-bottom:16px;">
+                    <input type="text" id="symbol-search" class="conv-inp" placeholder="Search by code, name, or METAR..." oninput="searchWeatherSymbols()" style="padding-left:36px;">
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">🔍</span>
+                </div>
+                
+                <div id="symbol-results" style="max-height:60vh; overflow-y:auto;">
                     <!-- Results populated by JavaScript -->
                 </div>
             </div>
