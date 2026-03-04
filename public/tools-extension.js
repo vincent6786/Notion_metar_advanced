@@ -445,6 +445,28 @@ const unitConversions = {
         gph: { label: 'Gallons/Hour (GPH)', toLPH: 3.78541 },
         lph: { label: 'Liters/Hour (L/h)', toLPH: 1 },
         pph: { label: 'Pounds/Hour (PPH)', toLPH: 0 }  // Special case
+    },
+    // Energy
+    energy: {
+        j: { label: 'Joules (J)', toJoules: 1 },
+        kj: { label: 'Kilojoules (kJ)', toJoules: 1000 },
+        mj: { label: 'Megajoules (MJ)', toJoules: 1000000 },
+        cal: { label: 'Calories (cal)', toJoules: 4.184 },
+        kcal: { label: 'Kilocalories (kcal)', toJoules: 4184 },
+        wh: { label: 'Watt-hours (Wh)', toJoules: 3600 },
+        kwh: { label: 'Kilowatt-hours (kWh)', toJoules: 3600000 },
+        btu: { label: 'BTU (British Thermal Unit)', toJoules: 1055.06 },
+        ftlb: { label: 'Foot-pounds (ft·lb)', toJoules: 1.35582 }
+    },
+    // Power
+    power: {
+        w: { label: 'Watts (W)', toWatts: 1 },
+        kw: { label: 'Kilowatts (kW)', toWatts: 1000 },
+        mw: { label: 'Megawatts (MW)', toWatts: 1000000 },
+        hp: { label: 'Horsepower (hp)', toWatts: 745.7 },
+        ps: { label: 'Metric Horsepower (PS)', toWatts: 735.5 },
+        btuh: { label: 'BTU/Hour (BTU/h)', toWatts: 0.293071 },
+        ftlbs: { label: 'Foot-pounds/sec (ft·lb/s)', toWatts: 1.35582 }
     }
 };
 
@@ -493,6 +515,14 @@ function convertUnit() {
         const toLPH = unitConversions.fuelFlow[fromUnit].toLPH;
         const fromLPH = unitConversions.fuelFlow[toUnit].toLPH;
         result = (inputValue * toLPH) / fromLPH;
+    } else if (category === 'energy') {
+        const toJoules = unitConversions.energy[fromUnit].toJoules;
+        const fromJoules = unitConversions.energy[toUnit].toJoules;
+        result = (inputValue * toJoules) / fromJoules;
+    } else if (category === 'power') {
+        const toWatts = unitConversions.power[fromUnit].toWatts;
+        const fromWatts = unitConversions.power[toUnit].toWatts;
+        result = (inputValue * toWatts) / fromWatts;
     }
     
     // Format result
@@ -778,8 +808,15 @@ const categoryLabels = {
 };
 
 function searchWeatherTerms() {
-    const searchInput = document.getElementById('wx-search').value.trim().toUpperCase();
+    const searchInputEl = document.getElementById('wx-search');
+    const searchInput = searchInputEl.value.trim().toUpperCase();
     const resultsEl = document.getElementById('wx-results');
+    const clearBtn = document.getElementById('wx-clear-btn');
+    
+    // Show/hide clear button
+    if (clearBtn) {
+        clearBtn.style.display = searchInputEl.value ? 'block' : 'none';
+    }
     
     if (!searchInput) {
         displayAllWeatherTerms();
@@ -825,6 +862,16 @@ function searchWeatherTerms() {
     });
     
     resultsEl.innerHTML = html;
+}
+
+function clearWeatherSearch() {
+    const searchInput = document.getElementById('wx-search');
+    const clearBtn = document.getElementById('wx-clear-btn');
+    searchInput.value = '';
+    if (clearBtn) {
+        clearBtn.style.display = 'none';
+    }
+    displayAllWeatherTerms();
 }
 
 function displayAllWeatherTerms() {
@@ -1189,8 +1236,15 @@ const weatherSymbolCategories = {
 };
 
 function searchWeatherSymbols() {
-    const searchInput = document.getElementById('symbol-search').value.trim().toUpperCase();
+    const searchInputEl = document.getElementById('symbol-search');
+    const searchInput = searchInputEl.value.trim().toUpperCase();
     const resultsEl = document.getElementById('symbol-results');
+    const clearBtn = document.getElementById('symbol-clear-btn');
+    
+    // Show/hide clear button
+    if (clearBtn) {
+        clearBtn.style.display = searchInputEl.value ? 'block' : 'none';
+    }
     
     if (!searchInput) {
         displayAllWeatherSymbols();
@@ -1255,6 +1309,16 @@ function searchWeatherSymbols() {
     });
     
     resultsEl.innerHTML = html;
+}
+
+function clearSymbolSearch() {
+    const searchInput = document.getElementById('symbol-search');
+    const clearBtn = document.getElementById('symbol-clear-btn');
+    searchInput.value = '';
+    if (clearBtn) {
+        clearBtn.style.display = 'none';
+    }
+    displayAllWeatherSymbols();
 }
 
 function displayAllWeatherSymbols() {
