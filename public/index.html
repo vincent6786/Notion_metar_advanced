@@ -1393,14 +1393,7 @@
                 <div onclick="openTool('weather-terms')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">🌦️</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Terms</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Present weather codes</div>
-                </div>
-                
-                <!-- Weather Symbols -->
-                <div onclick="openTool('weather-symbols')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">🌩️</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Symbols</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Visual weather symbols</div>
+                    <div style="font-size:11px; color:var(--sub-text);">METAR abbreviations & symbols</div>
                 </div>
                 
                 <!-- Abbreviations -->
@@ -1553,6 +1546,36 @@
                     <button onclick="clearWeatherSearch()" id="wx-clear-btn" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
                 </div>
                 
+                <!-- More Sources Button -->
+                <div style="margin-bottom:16px;">
+                    <button onclick="toggleSourcesMenu()" class="tool-btn" style="width:100%; background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:12px; font-size:12px; font-weight:700; border-radius:8px;">
+                        📚 MORE SOURCES
+                    </button>
+                </div>
+                
+                <!-- Sources Menu (Initially Hidden) -->
+                <div id="sources-menu" style="display:none; margin-bottom:16px; background:#1c1c1e; border:1px solid #333; border-radius:8px; padding:12px;">
+                    <div style="font-size:11px; font-weight:700; color:var(--sub-text); margin-bottom:8px;">REFERENCE MATERIALS</div>
+                    
+                    <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:6px; text-align:left; display:flex; align-items:center; gap:8px;">
+                        <span>📄</span>
+                        <span style="flex:1;">METAR Decode Key (NWS PDF)</span>
+                        <span style="color:var(--sub-text);">↗</span>
+                    </button>
+                    
+                    <button onclick="window.open('https://www.blondsinaviation.com/wp-content/uploads/2019/05/NOAA-Legends-1407.pdf', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:6px; text-align:left; display:flex; align-items:center; gap:8px;">
+                        <span>📄</span>
+                        <span style="flex:1;">NOAA Chart Legends (PDF)</span>
+                        <span style="color:var(--sub-text);">↗</span>
+                    </button>
+                    
+                    <button onclick="openGFASymbolsViewer()" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid var(--accent); color:var(--accent); padding:10px; font-size:11px; text-align:left; display:flex; align-items:center; gap:8px;">
+                        <span>🔍</span>
+                        <span style="flex:1;">GFA Symbols (Interactive)</span>
+                        <span style="color:var(--accent);">→</span>
+                    </button>
+                </div>
+                
                 <div id="wx-results" style="max-height:60vh; overflow-y:auto;">
                     <!-- Results populated by JavaScript -->
                 </div>
@@ -1560,20 +1583,24 @@
         </div>
         
         <!-- ================================================================
-             WEATHER SYMBOLS VISUAL REFERENCE
+             GFA SYMBOLS VIEWER (IFRAME)
         ================================================================ -->
-        <div id="tool-weather-symbols" class="tool-view" style="display:none;">
-            <div class="info-card">
-                <div class="conv-lbl" style="margin-bottom:8px;">SEARCH WEATHER SYMBOLS</div>
-                <div style="position:relative; margin-bottom:16px;">
-                    <input type="text" id="symbol-search" class="conv-inp" placeholder="Search by code, name, or METAR..." oninput="searchWeatherSymbols()" style="padding-left:36px; padding-right:36px;">
-                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">🔍</span>
-                    <button onclick="clearSymbolSearch()" id="symbol-clear-btn" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
+        <div id="tool-gfa-viewer" class="tool-view" style="display:none;">
+            <div class="info-card" style="padding:0; height:calc(100vh - 200px);">
+                <!-- Search bar for iframe content -->
+                <div style="padding:12px; background:#1c1c1e; border-bottom:1px solid #333;">
+                    <div style="position:relative;">
+                        <input type="text" id="gfa-search" class="conv-inp" placeholder="Search symbols on page..." oninput="searchInGFA()" style="padding-left:36px; padding-right:36px; font-size:13px;">
+                        <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">🔍</span>
+                        <button onclick="clearGFASearch()" id="gfa-clear-btn" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
+                    </div>
+                    <div style="font-size:10px; color:var(--sub-text); margin-top:6px; text-align:center;">
+                        Use Ctrl+F (Cmd+F on Mac) to search within the page
+                    </div>
                 </div>
                 
-                <div id="symbol-results" style="max-height:60vh; overflow-y:auto;">
-                    <!-- Results populated by JavaScript -->
-                </div>
+                <!-- Iframe container -->
+                <iframe id="gfa-iframe" src="" style="width:100%; height:calc(100% - 80px); border:none; background:#fff;"></iframe>
             </div>
         </div>
         

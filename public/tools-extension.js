@@ -340,7 +340,7 @@ function openTool(toolName) {
             'great-circle': 'Great Circle Distance',
             'abbreviations': 'Aviation Abbreviations',
             'weather-terms': 'Present Weather Terms',
-            'weather-symbols': 'Weather Symbols',
+            'gfa-viewer': 'GFA Symbols Viewer',
             'e6b-calculator': 'E6B Flight Computer',
             'e6b-trainer': 'E6B Trainer (UND)'
         };
@@ -351,14 +351,14 @@ function openTool(toolName) {
             updateUnitSelectors(); // Initialize with default units
         } else if (toolName === 'weather-terms') {
             displayAllWeatherTerms(); // Show all terms by default
-        } else if (toolName === 'weather-symbols') {
-            displayAllWeatherSymbols(); // Show all symbols by default
         } else if (toolName === 'abbreviations') {
             openAbbreviations(); // Load the abbreviations database
         } else if (toolName === 'e6b-calculator') {
             calcE6B(); // Initialize E6B calculations
         } else if (toolName === 'e6b-trainer') {
             openUNDE6B(); // Load UND E6B trainer
+        } else if (toolName === 'gfa-viewer') {
+            loadGFAIframe(); // Load the GFA symbols page
         }
     }
 }
@@ -886,19 +886,7 @@ function displayAllWeatherTerms() {
         grouped[item.category].push(item);
     });
     
-    // Display source link at top
-    let html = `
-        <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; padding:10px; background:#1c1c1e; border-radius:8px;">
-            <div style="font-size:11px; color:var(--sub-text);">
-                Comprehensive METAR abbreviation database
-            </div>
-            <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
-                    class="tool-btn" 
-                    style="background:var(--accent); border:none; color:#000; padding:4px 10px; font-size:10px; font-weight:700;">
-                VIEW SOURCE PDF ↗
-            </button>
-        </div>
-    `;
+    let html = '';
     
     // Priority categories to show first
     const priorityCategories = [
@@ -951,19 +939,7 @@ function displayAllCategories() {
         grouped[item.category].push(item);
     });
     
-    // Display source link at top
-    let html = `
-        <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; padding:10px; background:#1c1c1e; border-radius:8px;">
-            <div style="font-size:11px; color:var(--sub-text);">
-                All ${metarAbbreviations.length} METAR abbreviations
-            </div>
-            <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
-                    class="tool-btn" 
-                    style="background:var(--accent); border:none; color:#000; padding:4px 10px; font-size:10px; font-weight:700;">
-                VIEW SOURCE PDF ↗
-            </button>
-        </div>
-    `;
+    let html = '';
     
     // Sort categories alphabetically
     const sortedCategories = Object.keys(grouped).sort();
@@ -996,6 +972,76 @@ function displayAllCategories() {
     `;
     
     resultsEl.innerHTML = html;
+}
+
+// ============================================================================
+// WEATHER TERMS - SOURCES MENU & GFA VIEWER
+// ============================================================================
+
+/**
+ * Toggle the sources menu visibility
+ */
+function toggleSourcesMenu() {
+    const menu = document.getElementById('sources-menu');
+    if (menu) {
+        if (menu.style.display === 'none' || !menu.style.display) {
+            menu.style.display = 'block';
+        } else {
+            menu.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Open the GFA Symbols viewer in iframe
+ */
+function openGFASymbolsViewer() {
+    openTool('gfa-viewer');
+}
+
+/**
+ * Load the GFA symbols page into the iframe
+ */
+function loadGFAIframe() {
+    const iframe = document.getElementById('gfa-iframe');
+    if (iframe && !iframe.src) {
+        iframe.src = 'https://aviationweather.gov/gfa/help/#symbols';
+    }
+}
+
+/**
+ * Search within GFA iframe (note: limited by CORS)
+ */
+function searchInGFA() {
+    const searchInput = document.getElementById('gfa-search');
+    const clearBtn = document.getElementById('gfa-clear-btn');
+    
+    if (searchInput && clearBtn) {
+        if (searchInput.value.trim()) {
+            clearBtn.style.display = 'block';
+            // Note: Due to CORS restrictions, we can't programmatically search in iframe
+            // User needs to use Ctrl+F/Cmd+F in their browser
+        } else {
+            clearBtn.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Clear GFA search field
+ */
+function clearGFASearch() {
+    const searchInput = document.getElementById('gfa-search');
+    const clearBtn = document.getElementById('gfa-clear-btn');
+    
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    
+    if (clearBtn) {
+        clearBtn.style.display = 'none';
+    }
 }
 
 // ============================================================================
