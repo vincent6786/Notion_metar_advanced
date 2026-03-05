@@ -1015,19 +1015,26 @@ const weatherSymbols = [
       description: 'Ceiling below 500 feet AGL and/or visibility less than 1 statute mile', color: '#bf5af2' },
     
     // ========== CLOUD COVERAGE ==========
-    { symbol: '○', code: 'SKC', name: 'Sky Clear', category: 'cloud_coverage',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`, 
+      code: 'SKC', name: 'Sky Clear', category: 'cloud_coverage',
       description: 'Human observer reports sky completely clear (0/8 coverage)' },
-    { symbol: '□', code: 'CLR', name: 'Clear', category: 'cloud_coverage',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><rect x="7" y="7" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`, 
+      code: 'CLR', name: 'Clear', category: 'cloud_coverage',
       description: 'Automated station reports clear below 12,000 feet (0/8 coverage)' },
-    { symbol: '◔', code: 'FEW', name: 'Few Clouds', category: 'cloud_coverage',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M 12,12 L 12,3 A 9,9 0 0,1 17.36,7.63 Z" fill="currentColor"/></svg>`, 
+      code: 'FEW', name: 'Few Clouds', category: 'cloud_coverage',
       description: '1/8 to 2/8 sky coverage' },
-    { symbol: '◑', code: 'SCT', name: 'Scattered Clouds', category: 'cloud_coverage',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M 12,12 L 12,3 A 9,9 0 0,1 21,12 Z" fill="currentColor"/></svg>`, 
+      code: 'SCT', name: 'Scattered Clouds', category: 'cloud_coverage',
       description: '3/8 to 4/8 sky coverage' },
-    { symbol: '◕', code: 'BKN', name: 'Broken Clouds', category: 'cloud_coverage',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M 12,12 L 12,3 A 9,9 0 1,1 5.27,17.73 Z" fill="currentColor"/></svg>`, 
+      code: 'BKN', name: 'Broken Clouds', category: 'cloud_coverage',
       description: '5/8 to 7/8 sky coverage' },
-    { symbol: '●', code: 'OVC', name: 'Overcast', category: 'cloud_coverage',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>`, 
+      code: 'OVC', name: 'Overcast', category: 'cloud_coverage',
       description: '8/8 sky coverage (complete coverage)' },
-    { symbol: '⊗', code: 'OVX', name: 'Sky Obscured', category: 'cloud_coverage',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="1.5"/><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="1.5"/></svg>`, 
+      code: 'OVX', name: 'Sky Obscured', category: 'cloud_coverage',
       description: 'Vertical visibility reported, no cloud information (obscuration)' },
     
     // ========== CLOUD TYPES ==========
@@ -1294,7 +1301,7 @@ function searchWeatherSymbols() {
         html += `
             <div style="background:${bgColor}; padding:12px; border-radius:8px; margin-bottom:8px; border:1px solid ${borderColor};">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
-                    <div style="font-size:24px; min-width:32px; text-align:center;">${item.symbol}</div>
+                    <div style="min-width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:#2c2c2e; border-radius:6px; color:#fff;">${item.symbol}</div>
                     <div style="flex:1;">
                         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             <div style="font-size:14px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">${item.code}</div>
@@ -1375,7 +1382,7 @@ function displayAllWeatherSymbols() {
                 html += `
                     <div style="background:${bgColor}; padding:10px; border-radius:6px; margin-bottom:6px; border:1px solid ${borderColor};">
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="font-size:20px; min-width:28px; text-align:center;">${item.symbol}</div>
+                            <div style="min-width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:#2c2c2e; border-radius:6px; color:#fff;">${item.symbol}</div>
                             <div style="flex:1;">
                                 <div style="font-size:12px; font-weight:700; color:#fff; margin-bottom:2px;">${item.code} - ${item.name}</div>
                                 <div style="font-size:11px; color:var(--sub-text);">${item.description}</div>
@@ -1449,7 +1456,7 @@ function displayAllSymbolCategories() {
             html += `
                 <div style="background:${bgColor}; padding:10px; border-radius:6px; margin-bottom:6px; border:1px solid ${borderColor};">
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="font-size:20px; min-width:28px; text-align:center;">${item.symbol}</div>
+                        <div style="min-width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:#2c2c2e; border-radius:6px; color:#fff;">${item.symbol}</div>
                         <div style="flex:1;">
                             <div style="font-size:12px; font-weight:700; color:#fff; margin-bottom:2px;">${item.code} - ${item.name}</div>
                             <div style="font-size:11px; color:var(--sub-text);">${item.description}</div>
