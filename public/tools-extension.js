@@ -340,7 +340,6 @@ function openTool(toolName) {
             'great-circle': 'Great Circle Distance',
             'abbreviations': 'Aviation Abbreviations',
             'weather-terms': 'Present Weather Terms',
-            'gfa-viewer': 'GFA Symbols Viewer',
             'e6b-calculator': 'E6B Flight Computer',
             'e6b-trainer': 'E6B Trainer (UND)'
         };
@@ -357,8 +356,6 @@ function openTool(toolName) {
             calcE6B(); // Initialize E6B calculations
         } else if (toolName === 'e6b-trainer') {
             openUNDE6B(); // Load UND E6B trainer
-        } else if (toolName === 'gfa-viewer') {
-            loadGFAIframe(); // Load the GFA symbols page
         }
     }
 }
@@ -995,74 +992,6 @@ function toggleSourcesMenu() {
 /**
  * Open the AWC GFA Symbols page in a new window
  */
-function openGFASymbolsViewer() {
-    openTool('gfa-viewer');
-}
-
-/**
- * Open the GFA symbols page in a new window (AWC blocks iframe embedding)
- */
-function loadGFAIframe() {
-    // AWC site blocks iframe embedding, so open in new window instead
-    window.open('https://aviationweather.gov/gfa/help/', '_blank');
-    
-    // Show a message to the user
-    const content = document.getElementById('extension-content');
-    if (content) {
-        content.innerHTML = `
-            <div style="padding:20px; text-align:center;">
-                <div style="font-size:48px; margin-bottom:20px;">📖</div>
-                <div style="font-size:16px; font-weight:700; color:var(--accent); margin-bottom:10px;">
-                    AWC Symbols Reference Opened
-                </div>
-                <div style="font-size:13px; color:var(--sub-text); margin-bottom:20px;">
-                    The official Aviation Weather Center symbols page<br/>
-                    has been opened in a new window.
-                </div>
-                <div style="font-size:12px; color:#666; padding:15px; background:#1c1c1e; border-radius:8px; max-width:400px; margin:0 auto;">
-                    💡 <strong>Tip:</strong> Use our built-in Weather Symbols tool for searchable<br/>
-                    symbols with descriptions and aviation applications!
-                </div>
-            </div>
-        `;
-    }
-}
-
-/**
- * Search within GFA iframe (note: limited by CORS)
- */
-function searchInGFA() {
-    const searchInput = document.getElementById('gfa-search');
-    const clearBtn = document.getElementById('gfa-clear-btn');
-    
-    if (searchInput && clearBtn) {
-        if (searchInput.value.trim()) {
-            clearBtn.style.display = 'block';
-            // Note: Due to CORS restrictions, we can't programmatically search in iframe
-            // User needs to use Ctrl+F/Cmd+F in their browser
-        } else {
-            clearBtn.style.display = 'none';
-        }
-    }
-}
-
-/**
- * Clear GFA search field
- */
-function clearGFASearch() {
-    const searchInput = document.getElementById('gfa-search');
-    const clearBtn = document.getElementById('gfa-clear-btn');
-    
-    if (searchInput) {
-        searchInput.value = '';
-        searchInput.focus();
-    }
-    
-    if (clearBtn) {
-        clearBtn.style.display = 'none';
-    }
-}
-
 // ============================================================================
 // WEATHER SYMBOLS DATABASE
 // Sources: NOAA Legends PDF & Aviation Weather GFA

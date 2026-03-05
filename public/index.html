@@ -1568,39 +1568,11 @@
                         <span style="flex:1;">NOAA Chart Legends (PDF)</span>
                         <span style="color:var(--sub-text);">↗</span>
                     </button>
-                    
-                    <button onclick="openGFASymbolsViewer()" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid var(--accent); color:var(--accent); padding:10px; font-size:11px; text-align:left; display:flex; align-items:center; gap:8px;">
-                        <span>🔍</span>
-                        <span style="flex:1;">GFA Symbols (Interactive)</span>
-                        <span style="color:var(--accent);">→</span>
-                    </button>
                 </div>
                 
                 <div id="wx-results" style="max-height:60vh; overflow-y:auto;">
                     <!-- Results populated by JavaScript -->
                 </div>
-            </div>
-        </div>
-        
-        <!-- ================================================================
-             GFA SYMBOLS VIEWER (IFRAME)
-        ================================================================ -->
-        <div id="tool-gfa-viewer" class="tool-view" style="display:none;">
-            <div class="info-card" style="padding:0; height:calc(100vh - 200px);">
-                <!-- Search bar for iframe content -->
-                <div style="padding:12px; background:#1c1c1e; border-bottom:1px solid #333;">
-                    <div style="position:relative;">
-                        <input type="text" id="gfa-search" class="conv-inp" placeholder="Search symbols on page..." oninput="searchInGFA()" style="padding-left:36px; padding-right:36px; font-size:13px;">
-                        <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">🔍</span>
-                        <button onclick="clearGFASearch()" id="gfa-clear-btn" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
-                    </div>
-                    <div style="font-size:10px; color:var(--sub-text); margin-top:6px; text-align:center;">
-                        Use Ctrl+F (Cmd+F on Mac) to search within the page
-                    </div>
-                </div>
-                
-                <!-- Iframe container -->
-                <iframe id="gfa-iframe" src="" style="width:100%; height:calc(100% - 80px); border:none; background:#fff;"></iframe>
             </div>
         </div>
         
