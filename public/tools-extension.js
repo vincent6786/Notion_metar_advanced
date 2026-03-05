@@ -1005,7 +1005,7 @@ function openGFASymbolsViewer() {
 function loadGFAIframe() {
     const iframe = document.getElementById('gfa-iframe');
     if (iframe && !iframe.src) {
-        iframe.src = 'https://aviationweather.gov/gfa/help/#symbols';
+        iframe.src = 'https://aviationweather.gov/gfa/help/';
     }
 }
 
@@ -1483,7 +1483,7 @@ function searchWeatherSymbols() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
                     </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/', '_blank')" 
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         GFA SYMBOLS ↗
@@ -1552,7 +1552,7 @@ function displayAllWeatherSymbols() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
                     </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/', '_blank')" 
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         GFA SYMBOLS ↗
@@ -1632,7 +1632,7 @@ function displayAllSymbolCategories() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
                     </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/', '_blank')" 
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         GFA SYMBOLS ↗
@@ -1685,7 +1685,7 @@ function displayAllSymbolCategories() {
 // ============================================================================
 
 function openAbbreviations() {
-    const url = 'https://acronym-dictionary.vercel.app/';
+    const url = 'https://simplify-acronym-search.vercel.app/';
     const resultEl = document.getElementById('abbrev-content');
     
     // Embed the abbreviation tool in an iframe
