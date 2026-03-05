@@ -993,19 +993,38 @@ function toggleSourcesMenu() {
 }
 
 /**
- * Open the GFA Symbols viewer in iframe
+ * Open the AWC GFA Symbols page in a new window
  */
 function openGFASymbolsViewer() {
     openTool('gfa-viewer');
 }
 
 /**
- * Load the GFA symbols page into the iframe
+ * Open the GFA symbols page in a new window (AWC blocks iframe embedding)
  */
 function loadGFAIframe() {
-    const iframe = document.getElementById('gfa-iframe');
-    if (iframe && !iframe.src) {
-        iframe.src = 'https://aviationweather.gov/gfa/help/';
+    // AWC site blocks iframe embedding, so open in new window instead
+    window.open('https://aviationweather.gov/gfa/help/', '_blank');
+    
+    // Show a message to the user
+    const content = document.getElementById('extension-content');
+    if (content) {
+        content.innerHTML = `
+            <div style="padding:20px; text-align:center;">
+                <div style="font-size:48px; margin-bottom:20px;">📖</div>
+                <div style="font-size:16px; font-weight:700; color:var(--accent); margin-bottom:10px;">
+                    AWC Symbols Reference Opened
+                </div>
+                <div style="font-size:13px; color:var(--sub-text); margin-bottom:20px;">
+                    The official Aviation Weather Center symbols page<br/>
+                    has been opened in a new window.
+                </div>
+                <div style="font-size:12px; color:#666; padding:15px; background:#1c1c1e; border-radius:8px; max-width:400px; margin:0 auto;">
+                    💡 <strong>Tip:</strong> Use our built-in Weather Symbols tool for searchable<br/>
+                    symbols with descriptions and aviation applications!
+                </div>
+            </div>
+        `;
     }
 }
 
@@ -1688,20 +1707,11 @@ function openAbbreviations() {
     const url = 'https://simplify-acronym-search.vercel.app/';
     const resultEl = document.getElementById('abbrev-content');
     
-    // Embed the abbreviation tool in an iframe
+    // Embed the abbreviation tool in an iframe - maximized for full screen usage
     resultEl.innerHTML = `
-        <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
-            <div style="font-size:13px; font-weight:700; color:var(--accent);">AVIATION ABBREVIATIONS</div>
-            <button onclick="window.open('${url}', '_blank')" class="tool-btn" style="background:var(--accent); border:none; color:#000; padding:6px 12px; font-size:11px; font-weight:700;">
-                OPEN IN NEW TAB ↗
-            </button>
-        </div>
         <iframe src="${url}" 
-                style="width:100%; height:65vh; border:1px solid #333; border-radius:8px; background:#fff;">
+                style="width:100%; height:calc(100vh - 120px); border:1px solid #333; border-radius:8px; background:#fff;">
         </iframe>
-        <div style="margin-top:8px; font-size:11px; color:var(--sub-text); text-align:center;">
-            Searchable database of aviation acronyms and abbreviations
-        </div>
     `;
 }
 
@@ -1750,19 +1760,11 @@ function openUNDE6B() {
     const url = 'https://mediafiles.aero.und.edu/aero.und.edu/aviation/trainers/e6b/';
     const resultEl = document.getElementById('e6b-trainer-content');
     
+    // Embed the E6B trainer in an iframe - maximized for full screen usage
     resultEl.innerHTML = `
-        <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
-            <div style="font-size:13px; font-weight:700; color:var(--accent);">UND E6B FLIGHT COMPUTER TRAINER</div>
-            <button onclick="window.open('${url}', '_blank')" class="tool-btn" style="background:var(--accent); border:none; color:#000; padding:6px 12px; font-size:11px; font-weight:700;">
-                OPEN IN NEW TAB ↗
-            </button>
-        </div>
         <iframe src="${url}" 
-                style="width:100%; height:60vh; border:1px solid #333; border-radius:8px; background:#fff;">
+                style="width:100%; height:calc(100vh - 120px); border:1px solid #333; border-radius:8px; background:#fff;">
         </iframe>
-        <div style="margin-top:8px; font-size:11px; color:var(--sub-text); text-align:center;">
-            Interactive E6B flight computer trainer from University of North Dakota
-        </div>
     `;
 }
 
