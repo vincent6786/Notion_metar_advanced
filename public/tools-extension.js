@@ -1052,27 +1052,37 @@ const weatherSymbols = [
       description: 'Low-level lenticular clouds' },
     
     // ========== SURFACE FRONTS ==========
-    { symbol: '▼▼▼', code: 'COLD_FRONT', name: 'Cold Front', category: 'front',
-      description: 'Cooler, denser air mass advancing and replacing warmer air', color: '#007aff' },
-    { symbol: '●●●', code: 'WARM_FRONT', name: 'Warm Front', category: 'front',
-      description: 'Warm air mass advancing and replacing cooler air', color: '#ff3b30' },
-    { symbol: '▼●▼●', code: 'STATIONARY_FRONT', name: 'Stationary Front', category: 'front',
-      description: 'Front between warm and cold air masses moving very slowly or not at all', color: '#ff3b30' },
-    { symbol: '▲▲▲', code: 'OCCLUDED_FRONT', name: 'Occluded Front', category: 'front',
-      description: 'Cold front overtaking warm front, composite of two fronts', color: '#bf5af2' },
-    { symbol: '╌╌╌', code: 'TROUGH', name: 'Trough', category: 'front',
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><line x1="2" y1="12" x2="46" y2="12" stroke="#0066cc" stroke-width="2"/><polygon points="12,12 16,7 16,17" fill="#0066cc"/><polygon points="24,12 28,7 28,17" fill="#0066cc"/><polygon points="36,12 40,7 40,17" fill="#0066cc"/></svg>`, 
+      code: 'COLD_FRONT', name: 'Cold Front', category: 'front',
+      description: 'Cooler, denser air mass advancing and replacing warmer air', color: '#0066cc' },
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><line x1="2" y1="12" x2="46" y2="12" stroke="#cc0000" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#cc0000" stroke-width="0"/><path d="M 12,7 A 5,5 0 0,1 12,17" fill="#cc0000"/><circle cx="24" cy="12" r="5" fill="none" stroke="#cc0000" stroke-width="0"/><path d="M 24,7 A 5,5 0 0,1 24,17" fill="#cc0000"/><circle cx="36" cy="12" r="5" fill="none" stroke="#cc0000" stroke-width="0"/><path d="M 36,7 A 5,5 0 0,1 36,17" fill="#cc0000"/></svg>`, 
+      code: 'WARM_FRONT', name: 'Warm Front', category: 'front',
+      description: 'Warm air mass advancing and replacing cooler air', color: '#cc0000' },
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><line x1="2" y1="12" x2="46" y2="12" stroke="#666" stroke-width="2"/><polygon points="12,12 16,7 16,17" fill="#0066cc"/><path d="M 24,7 A 5,5 0 0,1 24,17" fill="#cc0000"/><polygon points="36,12 40,7 40,17" fill="#0066cc"/></svg>`, 
+      code: 'STATIONARY_FRONT', name: 'Stationary Front', category: 'front',
+      description: 'Front between warm and cold air masses moving very slowly or not at all', color: '#666' },
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><line x1="2" y1="12" x2="46" y2="12" stroke="#9933cc" stroke-width="2"/><polygon points="12,12 15,8 15,16" fill="#9933cc"/><path d="M 22,8 A 4,4 0 0,1 22,16" fill="#9933cc"/><polygon points="30,12 33,8 33,16" fill="#9933cc"/><path d="M 38,8 A 4,4 0 0,1 38,16" fill="#9933cc"/></svg>`, 
+      code: 'OCCLUDED_FRONT', name: 'Occluded Front', category: 'front',
+      description: 'Cold front overtaking warm front, composite of two fronts', color: '#9933cc' },
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><path d="M 2,12 Q 12,4 24,12 T 46,12" stroke="#ff9500" stroke-width="2" fill="none"/></svg>`, 
+      code: 'TROUGH', name: 'Trough', category: 'front',
       description: 'Elongated area of low pressure, also depicts outflow boundaries', color: '#ff9500' },
-    { symbol: '●●●●', code: 'SQUALL_LINE', name: 'Squall Line', category: 'front',
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><line x1="2" y1="12" x2="46" y2="12" stroke="#ff3b30" stroke-width="2" stroke-dasharray="2,2"/><circle cx="12" cy="12" r="2" fill="#ff3b30"/><circle cx="20" cy="12" r="2" fill="#ff3b30"/><circle cx="28" cy="12" r="2" fill="#ff3b30"/><circle cx="36" cy="12" r="2" fill="#ff3b30"/></svg>`, 
+      code: 'SQUALL_LINE', name: 'Squall Line', category: 'front',
       description: 'Line of active thunderstorms with continuous or broken precipitation', color: '#ff3b30' },
-    { symbol: '◡◡◡', code: 'DRY_LINE', name: 'Dry Line', category: 'front',
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><line x1="2" y1="12" x2="46" y2="12" stroke="#ff9500" stroke-width="2"/><path d="M 10,12 A 3,3 0 0,0 10,18" stroke="#ff9500" stroke-width="1.5" fill="none"/><path d="M 18,12 A 3,3 0 0,0 18,18" stroke="#ff9500" stroke-width="1.5" fill="none"/><path d="M 26,12 A 3,3 0 0,0 26,18" stroke="#ff9500" stroke-width="1.5" fill="none"/><path d="M 34,12 A 3,3 0 0,0 34,18" stroke="#ff9500" stroke-width="1.5" fill="none"/><path d="M 42,12 A 3,3 0 0,0 42,18" stroke="#ff9500" stroke-width="1.5" fill="none"/></svg>`, 
+      code: 'DRY_LINE', name: 'Dry Line', category: 'front',
       description: 'Boundary separating moist and dry air masses', color: '#ff9500' },
-    { symbol: '~~~', code: 'TROPICAL_WAVE', name: 'Tropical Wave', category: 'front',
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><path d="M 2,12 Q 12,8 24,12 T 46,12" stroke="#ff9500" stroke-width="2" fill="none"/><path d="M 2,12 Q 12,16 24,12 T 46,12" stroke="#ff9500" stroke-width="2" fill="none"/></svg>`, 
+      code: 'TROPICAL_WAVE', name: 'Tropical Wave', category: 'front',
       description: 'Trough or cyclonic curvature in trade wind easterlies', color: '#ff9500' },
     
     // ========== FRONTOGENESIS/FRONTOLYSIS ==========
-    { symbol: '▼- -▼', code: 'FRONTOGENESIS', name: 'Frontogenesis', category: 'front',
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><line x1="2" y1="12" x2="46" y2="12" stroke="#0066cc" stroke-width="2" stroke-dasharray="4,3"/><polygon points="16,12 20,7 20,17" fill="#0066cc"/><polygon points="36,12 40,7 40,17" fill="#0066cc"/></svg>`, 
+      code: 'FRONTOGENESIS', name: 'Frontogenesis', category: 'front',
       description: 'Initial formation of surface front (dashed line with frontal symbols)' },
-    { symbol: '●- -●', code: 'FRONTOLYSIS', name: 'Frontolysis', category: 'front',
+    { symbol: `<svg viewBox="0 0 48 24" width="40" height="20"><line x1="2" y1="12" x2="46" y2="12" stroke="#cc0000" stroke-width="2" stroke-dasharray="4,3"/><path d="M 24,7 A 5,5 0 0,1 24,17" fill="#cc0000"/></svg>`, 
+      code: 'FRONTOLYSIS', name: 'Frontolysis', category: 'front',
       description: 'Dissipation or weakening of front (dashed line, symbols on alternating segments)' },
     
     // ========== PRECIPITATION TYPES ==========
@@ -1171,17 +1181,23 @@ const weatherSymbols = [
       description: 'Supercooled, freezes on contact', prefix: 'FZ' },
     
     // ========== WIND SYMBOLS ==========
-    { symbol: '○', code: 'CALM', name: 'Calm Wind', category: 'wind',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`, 
+      code: 'CALM', name: 'Calm Wind', category: 'wind',
       description: 'Wind speed less than 3 knots' },
-    { symbol: '→', code: 'WIND_5KT', name: 'Wind 5 Knots', category: 'wind',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="2"/><line x1="18" y1="12" x2="15" y2="10" stroke="currentColor" stroke-width="2"/></svg>`, 
+      code: 'WIND_5KT', name: 'Wind 5 Knots', category: 'wind',
       description: 'Half barb = 5 knots' },
-    { symbol: '→|', code: 'WIND_10KT', name: 'Wind 10 Knots', category: 'wind',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="2"/><line x1="18" y1="12" x2="15" y2="8" stroke="currentColor" stroke-width="2"/></svg>`, 
+      code: 'WIND_10KT', name: 'Wind 10 Knots', category: 'wind',
       description: 'Full barb = 10 knots' },
-    { symbol: '→▶', code: 'WIND_50KT', name: 'Wind 50 Knots', category: 'wind',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="2"/><polygon points="18,12 15,8 15,12" fill="currentColor"/></svg>`, 
+      code: 'WIND_50KT', name: 'Wind 50 Knots', category: 'wind',
       description: 'Pennant/flag = 50 knots' },
-    { symbol: 'VRB', code: 'VRB', name: 'Variable Wind', category: 'wind',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="bold" fill="currentColor">VRB</text></svg>`, 
+      code: 'VRB', name: 'Variable Wind', category: 'wind',
       description: 'Wind direction varying, typically light winds' },
-    { symbol: 'G', code: 'GUST', name: 'Wind Gust', category: 'wind',
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="currentColor">GUST</text></svg>`, 
+      code: 'GUST', name: 'Wind Gust', category: 'wind',
       description: 'Peak wind speed exceeding sustained speed by 10+ knots' },
     
     // ========== PRESSURE SYSTEMS ==========
@@ -1191,24 +1207,32 @@ const weatherSymbols = [
       description: 'Center of low atmospheric pressure (cyclone)', color: '#ff3b30' },
     
     // ========== TURBULENCE ==========
-    { symbol: '∧', code: 'TURB_LGT', name: 'Light Turbulence', category: 'turbulence',
-      description: 'Light turbulence, slight bumpiness' },
-    { symbol: '∧∧', code: 'TURB_MOD', name: 'Moderate Turbulence', category: 'turbulence',
-      description: 'Moderate turbulence, noticeable bumpiness' },
-    { symbol: '∧∧∧', code: 'TURB_SEV', name: 'Severe Turbulence', category: 'turbulence',
-      description: 'Severe turbulence, abrupt changes, momentary loss of control' },
-    { symbol: '∧∧∧∧', code: 'TURB_EXT', name: 'Extreme Turbulence', category: 'turbulence',
-      description: 'Extreme turbulence, aircraft may be impossible to control' },
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M 6,16 L 12,8 L 18,16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></svg>`, 
+      code: 'TURB_LGT', name: 'Light Turbulence', category: 'turbulence',
+      description: 'Light turbulence, slight bumpiness, slight strain against seat belts' },
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M 4,16 L 8,8 L 12,16 L 16,8 L 20,16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></svg>`, 
+      code: 'TURB_MOD', name: 'Moderate Turbulence', category: 'turbulence',
+      description: 'Moderate turbulence, changes in altitude/attitude, definite strain against seat belts' },
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M 3,16 L 6,8 L 9,16 L 12,8 L 15,16 L 18,8 L 21,16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="miter"/></svg>`, 
+      code: 'TURB_SEV', name: 'Severe Turbulence', category: 'turbulence',
+      description: 'Severe turbulence, large/abrupt changes, aircraft may be momentarily out of control' },
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M 2,16 L 4,8 L 6,16 L 8,8 L 10,16 L 12,8 L 14,16 L 16,8 L 18,16 L 20,8 L 22,16" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="miter"/></svg>`, 
+      code: 'TURB_EXT', name: 'Extreme Turbulence', category: 'turbulence',
+      description: 'Extreme turbulence, aircraft violently tossed about, practically impossible to control' },
     
     // ========== ICING ==========
-    { symbol: '❅', code: 'ICE_TRACE', name: 'Trace Icing', category: 'icing',
-      description: 'Trace icing, barely perceptible accumulation' },
-    { symbol: '❅❅', code: 'ICE_LGT', name: 'Light Icing', category: 'icing',
-      description: 'Light icing, perceptible accumulation requiring deice procedures' },
-    { symbol: '❅❅❅', code: 'ICE_MOD', name: 'Moderate Icing', category: 'icing',
-      description: 'Moderate icing, potentially hazardous if prolonged' },
-    { symbol: '❅❅❅❅', code: 'ICE_SEV', name: 'Severe Icing', category: 'icing',
-      description: 'Severe icing, hazardous even for short encounters' },
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M 12,6 L 13.5,9 L 10.5,9 Z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="14" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="12" x2="12" y2="16" stroke="currentColor" stroke-width="1.2"/></svg>`, 
+      code: 'ICE_TRACE', name: 'Trace Icing', category: 'icing',
+      description: 'Trace icing, ice becomes perceptible, rate of accumulation slightly greater than sublimation' },
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M 12,5 L 14,8 L 10,8 Z" fill="currentColor"/><circle cx="12" cy="13" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="10.5" x2="12" y2="15.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>`, 
+      code: 'ICE_LGT', name: 'Light Icing', category: 'icing',
+      description: 'Light icing, rate of accumulation may create problem if flight prolonged (over 1 hour)' },
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M 12,4 L 14.5,8 L 9.5,8 Z" fill="currentColor"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="9.5" x2="12" y2="16.5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>`, 
+      code: 'ICE_MOD', name: 'Moderate Icing', category: 'icing',
+      description: 'Moderate icing, rate of accumulation such that even short encounters become potentially hazardous' },
+    { symbol: `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M 12,3 L 15,8 L 9,8 Z" fill="currentColor"/><circle cx="12" cy="13" r="4.5" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="12" y1="8.5" x2="12" y2="17.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="20" r="2" fill="currentColor"/></svg>`, 
+      code: 'ICE_SEV', name: 'Severe Icing', category: 'icing',
+      description: 'Severe icing, rate of accumulation such that deicing/anti-icing equipment fails to reduce or control hazard' },
     
     // ========== LIGHTNING ==========
     { symbol: 'CA', code: 'CA', name: 'Cloud-Air Lightning', category: 'lightning',
@@ -1577,6 +1601,110 @@ function openUNDE6B() {
             Interactive E6B flight computer trainer from University of North Dakota
         </div>
     `;
+}
+
+// ============================================================================
+// WIND BARB GENERATOR
+// ============================================================================
+
+/**
+ * Generate SVG wind barb based on direction and speed
+ * @param {number} direction - Wind direction in degrees (0-360, wind FROM)
+ * @param {number} speed - Wind speed in knots
+ * @param {number} size - Size of the SVG (default 24)
+ * @returns {string} SVG string for wind barb
+ * 
+ * Wind Barb Rules:
+ * - Calm: Circle (speed < 3 kt)
+ * - Half barb: 5 knots (short line perpendicular to shaft)
+ * - Full barb: 10 knots (long line perpendicular to shaft)
+ * - Pennant: 50 knots (triangular flag)
+ * - Barbs drawn on "high pressure" side (clockwise from shaft in NH)
+ * - Shaft points TOWARD wind source (wind FROM direction)
+ */
+function generateWindBarb(direction, speed, size = 24) {
+    const center = size / 2;
+    const shaftLength = size * 0.6; // 60% of size
+    
+    // Calm wind (< 3 knots)
+    if (speed < 3) {
+        return `<svg viewBox="0 0 ${size} ${size}" width="20" height="20">
+            <circle cx="${center}" cy="${center}" r="${size * 0.25}" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        </svg>`;
+    }
+    
+    // Calculate components
+    const pennants = Math.floor(speed / 50);
+    const remainder = speed % 50;
+    const fullBarbs = Math.floor(remainder / 10);
+    const halfBarb = (remainder % 10) >= 5 ? 1 : 0;
+    
+    // Convert direction to radians (wind FROM, so rotate by direction)
+    // Add 180° because shaft points toward source, not away
+    const angle = ((direction + 180) % 360) * Math.PI / 180;
+    
+    // Calculate shaft endpoint
+    const shaftEndX = center + Math.cos(angle) * shaftLength;
+    const shaftEndY = center + Math.sin(angle) * shaftLength;
+    
+    // Generate barbs/pennants
+    let barbs = '';
+    let currentDistance = shaftLength; // Start from end of shaft
+    const barbSpacing = size * 0.12; // Space between barbs
+    const barbLength = size * 0.25; // Length of full barb
+    const halfBarbLength = size * 0.15; // Length of half barb
+    const pennantWidth = size * 0.2; // Width of pennant
+    
+    // Barbs are perpendicular to shaft, on the "high pressure" side
+    // In northern hemisphere, this is 90° clockwise from shaft direction
+    const barbAngle = angle + Math.PI / 2;
+    const barbDX = Math.cos(barbAngle);
+    const barbDY = Math.sin(barbAngle);
+    
+    // Draw pennants first (furthest from center)
+    for (let i = 0; i < pennants; i++) {
+        const baseX = center + Math.cos(angle) * currentDistance;
+        const baseY = center + Math.sin(angle) * currentDistance;
+        
+        const tip1X = baseX + barbDX * barbLength;
+        const tip1Y = baseY + barbDY * barbLength;
+        
+        const base2X = center + Math.cos(angle) * (currentDistance - pennantWidth);
+        const base2Y = center + Math.sin(angle) * (currentDistance - pennantWidth);
+        
+        barbs += `<polygon points="${baseX},${baseY} ${tip1X},${tip1Y} ${base2X},${base2Y}" fill="currentColor"/>`;
+        
+        currentDistance -= barbSpacing * 1.5; // Extra space after pennant
+    }
+    
+    // Draw full barbs
+    for (let i = 0; i < fullBarbs; i++) {
+        const baseX = center + Math.cos(angle) * currentDistance;
+        const baseY = center + Math.sin(angle) * currentDistance;
+        
+        const tipX = baseX + barbDX * barbLength;
+        const tipY = baseY + barbDY * barbLength;
+        
+        barbs += `<line x1="${baseX}" y1="${baseY}" x2="${tipX}" y2="${tipY}" stroke="currentColor" stroke-width="2"/>`;
+        
+        currentDistance -= barbSpacing;
+    }
+    
+    // Draw half barb
+    if (halfBarb) {
+        const baseX = center + Math.cos(angle) * currentDistance;
+        const baseY = center + Math.sin(angle) * currentDistance;
+        
+        const tipX = baseX + barbDX * halfBarbLength;
+        const tipY = baseY + barbDY * halfBarbLength;
+        
+        barbs += `<line x1="${baseX}" y1="${baseY}" x2="${tipX}" y2="${tipY}" stroke="currentColor" stroke-width="2"/>`;
+    }
+    
+    return `<svg viewBox="0 0 ${size} ${size}" width="20" height="20">
+        <line x1="${center}" y1="${center}" x2="${shaftEndX}" y2="${shaftEndY}" stroke="currentColor" stroke-width="2"/>
+        ${barbs}
+    </svg>`;
 }
 
 // ============================================================================
