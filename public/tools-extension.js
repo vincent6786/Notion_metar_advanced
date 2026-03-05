@@ -1431,7 +1431,7 @@ function searchWeatherSymbols() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
                     </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/', '_blank')" 
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         GFA SYMBOLS ↗
@@ -1500,7 +1500,7 @@ function displayAllWeatherSymbols() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
                     </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/', '_blank')" 
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         GFA SYMBOLS ↗
@@ -1580,7 +1580,7 @@ function displayAllSymbolCategories() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
                     </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/', '_blank')" 
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         GFA SYMBOLS ↗
