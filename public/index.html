@@ -699,8 +699,72 @@
                         <div class="help-a">Enter your crosswind and ceiling limits. The app checks live METAR data and shows <span style="color:var(--success);font-weight:800;">GO ✅</span> or <span style="color:var(--danger);font-weight:800;">NO-GO ⛔</span>. A red banner also appears at the top of the screen. Limits are saved automatically.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">E6B Flight Computer</div>
-                        <div class="help-a">Enter Indicated Alt, IAS, QNH, temp, and dewpoint to calculate: <b>Density Altitude</b>, <b>True Airspeed</b>, <b>Estimated Cloud Base</b>, and <b>Freezing Level</b>. Supports hPa / inHg and °C / °F.</div>
+                        <div class="help-q">✈️ Aviation Tools Collection</div>
+                        <div class="help-a">Tap <b>Open Aviation Tools</b> to launch the full tools overlay. Contains 6 tools accessible from the tool grid. Use <b>←</b> to go back to the tool menu, and <b>✕</b> to close the overlay entirely.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">📏 Aviation Tools — Unit Converter</div>
+                    <div class="help-item">
+                        <div class="help-q">What units are supported?</div>
+                        <div class="help-a">10 categories: <b>Distance</b> (NM, SM, km, m, ft) · <b>Altitude</b> (ft, m, FL) · <b>Speed</b> (kt, mph, km/h, m/s, fpm) · <b>Temperature</b> (°C, °F, K) · <b>Pressure</b> (hPa, inHg, mb, PSI) · <b>Fuel Volume</b> (US gal, Imp gal, L, qt) · <b>Weight</b> (lbs, kg, tons, metric tons) · <b>Fuel Flow</b> (GPH, L/h, PPH) · <b>Energy</b> (J, kJ, MJ, Wh, kWh, BTU, ft·lb) · <b>Power</b> (W, kW, MW, hp, PS, BTU/h).</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">⇅ Swap Button</div>
+                        <div class="help-a">Tap the <b>⇅</b> button between FROM and TO to instantly flip the conversion direction — swaps both unit selectors and moves the result back as the new input value.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Fuel Flow (PPH) note</div>
+                        <div class="help-a">Pounds per Hour (PPH) conversions require fuel density and cannot be calculated directly. A note will appear when PPH is selected.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">✈️ Aviation Tools — E6B Flight Computer</div>
+                    <div class="help-item">
+                        <div class="help-q">What does it calculate?</div>
+                        <div class="help-a">Enter Indicated Altitude, IAS, QNH, OAT, and Dewpoint to calculate: <b>Density Altitude</b>, <b>True Airspeed (TAS)</b>, <b>Estimated Cloud Base AGL</b>, and <b>Freezing Level</b>. Supports hPa / inHg for QNH and °C / °F for temperature.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Density Altitude colour warning</div>
+                        <div class="help-a">The Density Altitude value turns <span style="color:var(--warn);font-weight:800;">orange</span> when DA exceeds indicated altitude by more than 2,000 ft — a performance caution flag for hot / high conditions.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🌍 Aviation Tools — Great Circle Distance</div>
+                    <div class="help-item">
+                        <div class="help-q">How it works</div>
+                        <div class="help-a">Enter two ICAO airport codes to calculate the <b>great circle distance</b> (shortest path over the Earth's surface) and <b>initial track bearing</b> between them. Requires an airport coordinate database connection for live results.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🎓 Aviation Tools — E6B Trainer</div>
+                    <div class="help-item">
+                        <div class="help-q">What is the E6B Trainer?</div>
+                        <div class="help-a">An interactive E6B flight computer simulator from the <b>University of North Dakota (UND)</b>. Loads in-app so you can practice wind correction, fuel burn, time/distance problems, and TAS calculations without leaving METAR GO.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🌦️ Aviation Tools — Weather Terms</div>
+                    <div class="help-item">
+                        <div class="help-q">What is shown?</div>
+                        <div class="help-a">A searchable reference of <b>present weather codes</b> used in METARs — including phenomena symbols (RA, SN, TS, FG, etc.), intensity prefixes, and descriptor modifiers. Tap any category chip to filter by type. Includes wind barb symbology with live-generated SVG examples.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Searching</div>
+                        <div class="help-a">Type any code or description into the search box to filter the list in real time. Tap <b>← Back to Main View</b> to return to the full list after a category filter.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">📖 Aviation Tools — Abbreviations</div>
+                    <div class="help-item">
+                        <div class="help-q">What is the Abbreviations tool?</div>
+                        <div class="help-a">An embedded searchable dictionary of aviation acronyms and abbreviations, powered by <b>Simplify Acronym Search</b>. Look up any ICAO, FAA, or general aviation abbreviation directly in-app without switching browsers.</div>
                     </div>
                 </div>
                 
@@ -1426,11 +1490,21 @@
                 </select>
                 
                 <div class="conv-lbl" style="margin-bottom:8px;">CONVERT FROM</div>
-                <div class="conv-row" style="margin-bottom:16px;">
+                <div class="conv-row" style="margin-bottom:0px;">
                     <input type="number" id="conv-input" class="conv-inp" placeholder="Enter value" oninput="convertUnit()" style="flex:2;">
                     <select id="conv-from" class="stealth-select" onchange="convertUnit()" style="flex:1; margin-left:8px;"></select>
                 </div>
-                
+
+                <div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
+                    <div style="flex:1; height:1px; background:var(--border);"></div>
+                    <button onclick="swapUnits()" title="Swap FROM / TO"
+                            style="background:#1c1c1e; border:1px solid #444; color:var(--accent);
+                                   width:38px; height:38px; border-radius:50%; font-size:18px;
+                                   cursor:pointer; display:flex; align-items:center; justify-content:center;
+                                   flex-shrink:0; transition:transform 0.25s ease;">⇅</button>
+                    <div style="flex:1; height:1px; background:var(--border);"></div>
+                </div>
+
                 <div class="conv-lbl" style="margin-bottom:8px;">CONVERT TO</div>
                 <select id="conv-to" class="stealth-select" onchange="convertUnit()" style="margin-bottom:16px;"></select>
                 

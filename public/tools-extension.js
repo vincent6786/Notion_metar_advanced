@@ -564,6 +564,38 @@ function updateUnitSelectors() {
     convertUnit();
 }
 
+
+/**
+ * Swap the FROM and TO unit selectors, and move the result into the input
+ */
+function swapUnits() {
+    const fromSelect = document.getElementById('conv-from');
+    const toSelect   = document.getElementById('conv-to');
+    const inputEl    = document.getElementById('conv-input');
+    const resultEl   = document.getElementById('conv-result');
+
+    // Swap unit selections
+    const prevFrom = fromSelect.value;
+    fromSelect.value = toSelect.value;
+    toSelect.value   = prevFrom;
+
+    // If there is a numeric result, move it into the input field
+    const resultText = resultEl.textContent || '';
+    const numMatch   = resultText.match(/^[\d.]+/);
+    if (numMatch && inputEl.value !== '') {
+        inputEl.value = parseFloat(numMatch[0]);
+    }
+
+    // Animate the swap button
+    const btn = document.querySelector('button[onclick="swapUnits()"]');
+    if (btn) {
+        btn.style.transform = 'rotate(180deg)';
+        setTimeout(() => { btn.style.transform = ''; }, 300);
+    }
+
+    convertUnit();
+}
+
 // ============================================================================
 // GREAT CIRCLE CALCULATOR
 // ============================================================================
