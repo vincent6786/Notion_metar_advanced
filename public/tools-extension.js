@@ -1431,11 +1431,6 @@ function searchWeatherSymbols() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
                     </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
-                            class="tool-btn" 
-                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        GFA SYMBOLS ↗
-                    </button>
                 </div>
             </div>
         </div>
@@ -1499,11 +1494,6 @@ function displayAllWeatherSymbols() {
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
-                    </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
-                            class="tool-btn" 
-                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        GFA SYMBOLS ↗
                     </button>
                 </div>
             </div>
@@ -1579,11 +1569,6 @@ function displayAllSymbolCategories() {
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
-                    </button>
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" 
-                            class="tool-btn" 
-                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        GFA SYMBOLS ↗
                     </button>
                 </div>
             </div>
