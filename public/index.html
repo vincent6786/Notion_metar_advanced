@@ -2005,7 +2005,7 @@
     <!-- API Stats Modal -->
     <div id="apiStatsModal" class="modal-overlay">
         <div class="modal-header">
-            <div style="font-weight:700;">📊 API Usage Statistics</div>
+            <div style="font-weight:700;">🛡️ Admin Panel</div>
             <button class="modal-close" onclick="closeApiStatsModal()">CLOSE</button>
         </div>
         <div style="padding:20px; overflow-y:auto; height:100%;">
@@ -2050,6 +2050,49 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ================================================================
+         ACCESS GATE — shown on first launch until valid code entered
+    ================================================================ -->
+    <div id="accessGate" class="setup-overlay" style="display:none;">
+        <div style="font-size:48px; margin-bottom:8px;">✈️</div>
+        <div style="font-size:24px; font-weight:800; color:#fff; margin-bottom:4px; letter-spacing:0.5px;">METAR GO</div>
+        <div style="font-size:12px; color:#0a84ff; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:28px;">Restricted Access</div>
+
+        <div style="background:rgba(10,132,255,0.08);border:1px solid rgba(10,132,255,0.2);border-radius:12px;padding:16px 20px;max-width:280px;text-align:center;margin-bottom:24px;">
+            <div style="font-size:12px;color:#8e8e93;line-height:1.7;">
+                This app is invite-only.<br>
+                Enter your <b style="color:#fff;">access code</b> to continue.<br>
+                <span style="color:#555;font-size:11px;">Contact the admin if you need access.</span>
+            </div>
+        </div>
+
+        <div style="width:100%; max-width:280px; margin-bottom:12px;">
+            <input type="text" id="accessCodeInput"
+                   placeholder="e.g. ALPHA-01"
+                   autocapitalize="characters"
+                   autocomplete="off"
+                   autocorrect="off"
+                   spellcheck="false"
+                   onkeypress="if(event.key==='Enter') submitAccessCode()"
+                   oninput="this.value=this.value.toUpperCase()"
+                   style="width:100%; box-sizing:border-box;
+                          background:#1c1c1e; border:1px solid #444; color:#fff;
+                          padding:14px 16px; border-radius:12px; font-size:18px;
+                          font-family:'SF Mono',monospace; font-weight:700;
+                          text-align:center; letter-spacing:2px; outline:none;">
+        </div>
+
+        <div id="accessGateMsg" style="font-size:12px; color:#8e8e93; margin-bottom:16px; height:18px; text-align:center; font-weight:600;"></div>
+
+        <button id="accessGateBtn" onclick="submitAccessCode()"
+                style="background:var(--accent); border:none; color:#fff;
+                       padding:14px 48px; border-radius:13px; font-size:16px;
+                       font-weight:800; cursor:pointer; width:100%; max-width:280px;
+                       box-shadow:0 4px 20px rgba(10,132,255,0.45);">
+            Enter →
+        </button>
     </div>
 
     <!-- ================================================================
