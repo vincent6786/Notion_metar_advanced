@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>METAR GO — Admin</title>
+<style>
+  :root {
+    --bg:       #000;
+    --card:     #111;
+    --card2:    #1c1c1e;
+    --border:   #2a2a2a;
+    --border2:  #38383a;
+    --text:     #fff;
+    --sub:      #8e8e93;
+    --accent:   #0a84ff;
+    --success:  #32d74b;
+    --danger:   #ff453a;
+    --warn:     #ff9f0a;
+    --mono:     'SF Mono', 'Fira Code', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px);
+  }
+
+  /* ── Radar grid background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(10,132,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(10,132,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .wrapper {
+    position: relative; z-index: 1;
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 32px 0 60px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .header-badge {
+    display: inline-block;
+    background: rgba(10,132,255,0.12);
+    border: 1px solid rgba(10,132,255,0.3);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .header h1 span { color: var(--accent); }
+  .header p {
+    font-size: 13px;
+    color: var(--sub);
+  }
+
+  /* ── Login screen ── */
+  #loginScreen {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 18px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  #loginScreen .icon { font-size: 40px; margin-bottom: 16px; }
+  #loginScreen h2 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  #loginScreen p { font-size: 13px; color: var(--sub); margin-bottom: 24px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--sub);
+    margin-bottom: 14px;
+  }
+
+  /* ── Stats grid ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-box {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .stat-num { font-size: 26px; font-weight: 900; }
+  .stat-lbl { font-size: 10px; color: var(--sub); margin-top: 3px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* ── Inputs ── */
+  input[type=text], input[type=password] {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--accent); }
+  input.mono { font-family: var(--mono); letter-spacing: 1.5px; text-transform: uppercase; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+  .btn-ghost { background: var(--card2); border: 1px solid var(--border2); color: var(--sub); }
+  .btn-danger { background: rgba(255,69,58,0.15); border: 1px solid rgba(255,69,58,0.3); color: var(--danger); }
+  .btn-success { background: rgba(50,215,75,0.15); border: 1px solid rgba(50,215,75,0.3); color: var(--success); }
+  .btn-full { width: 100%; }
+
+  /* ── Form row ── */
+  .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .form-row input { flex: 1; }
+
+  /* ── User rows ── */
+  .user-row {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    transition: border-color 0.2s;
+  }
+  .user-row:hover { border-color: var(--border2); }
+  .user-row.revoked { opacity: 0.55; }
+  .user-code {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 1px;
+  }
+  .user-name { font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .user-calls {
+    font-size: 11px;
+    color: var(--sub);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .status-pill {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .status-active  { background: rgba(50,215,75,0.12); color: var(--success); }
+  .status-revoked { background: rgba(255,69,58,0.12); color: var(--danger); }
+
+  /* ── Progress bar ── */
+  .progress-wrap { height: 5px; background: #222; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .progress-bar  { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+  /* ── Copy button ── */
+  .copy-code-btn {
+    background: rgba(10,132,255,0.1);
+    border: 1px solid rgba(10,132,255,0.25);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+  .copy-code-btn:active { opacity: 0.6; }
+
+  /* ── Toasts ── */
+  #toast {
+    position: fixed;
+    bottom: max(env(safe-area-inset-bottom), 24px);
+    left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1c1c1e;
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+    opacity: 0;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ── Message line ── */
+  .msg { font-size: 12px; min-height: 18px; margin-top: 8px; font-weight: 600; }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  /* ── Empty state ── */
+  .empty { text-align: center; padding: 30px; color: var(--sub); font-size: 13px; }
+
+  /* ── Section label ── */
+  .section-lbl {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--sub);
+    margin: 20px 0 10px;
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    display: flex;
+    background: var(--card2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 3px;
+    gap: 2px;
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    color: var(--sub);
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--accent); color: #fff; }
+
+  /* ── API key bars ── */
+  .key-bar {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .key-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .key-bar-title { font-weight: 700; font-size: 13px; }
+  .key-bar-pct { font-size: 13px; font-weight: 700; }
+
+  /* ── QR / Share card (for giving codes to friends) ── */
+  .share-card {
+    background: linear-gradient(135deg, #0a1628, #0d1f3c);
+    border: 1px solid rgba(10,132,255,0.3);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .share-card::before {
+    content: '✈️';
+    position: absolute;
+    font-size: 120px;
+    right: -20px;
+    top: -20px;
+    opacity: 0.05;
+    line-height: 1;
+  }
+  .share-code-display {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 3px;
+    margin: 8px 0 4px;
+  }
+  .share-url {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    word-break: break-all;
+    margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="wrapper">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-badge">Admin Console</div>
+    <h1>METAR <span>GO</span></h1>
+    <p>Access code management &amp; API monitoring</p>
+  </div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen">
+    <div class="icon">🔐</div>
+    <h2>Admin Access</h2>
+    <p>Enter your admin password to manage access codes and view API stats.</p>
+    <div style="max-width:280px;margin:0 auto;">
+      <input type="password" id="loginPassword" placeholder="Admin password"
+             onkeypress="if(event.key==='Enter') doLogin()"
+             style="margin-bottom:12px; text-align:center; font-size:16px; letter-spacing:2px;">
+      <button class="btn btn-primary" onclick="doLogin()" id="loginBtn">Unlock →</button>
+      <div class="msg" id="loginMsg" style="text-align:center;"></div>
+    </div>
+  </div>
+
+  <!-- MAIN PANEL (hidden until login) -->
+  <div id="mainPanel" style="display:none;">
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabBtnUsers" onclick="switchTab('users')">👥 Access Codes</button>
+      <button class="tab-btn" id="tabBtnStats" onclick="switchTab('stats')">📊 API Stats</button>
+    </div>
+
+    <!-- ── USERS TAB ── -->
+    <div id="tabUsers">
+
+      <!-- Summary stats -->
+      <div class="stats-grid" id="userSummary">
+        <div class="stat-box"><div class="stat-num" style="color:var(--success)">—</div><div class="stat-lbl">Active</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--danger)">—</div><div class="stat-lbl">Revoked</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--accent)">—</div><div class="stat-lbl">Calls Today</div></div>
+      </div>
+
+      <!-- Create new code -->
+      <div class="card">
+        <div class="card-title">➕ New Access Code</div>
+        <div class="form-row">
+          <input type="text" id="newName" placeholder="Name (e.g. John)">
+          <input type="text" id="newCode" placeholder="Code" class="mono"
+                 oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9\-]/g,'')">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="randomCode()" style="white-space:nowrap;">🎲 Random</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="createCode()" id="createBtn">Create Code →</button>
+        </div>
+        <div class="msg" id="createMsg"></div>
+      </div>
+
+      <!-- Share card — shown after creation -->
+      <div id="shareCard" style="display:none;" class="share-card">
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">New Code Ready</div>
+        <div class="share-code-display" id="shareCodeText">—</div>
+        <div class="share-url" id="shareAppUrl"></div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button class="copy-code-btn" onclick="copyCode()" id="copyCodeBtn">📋 Copy Code</button>
+          <button class="copy-code-btn" onclick="copyMessage()" id="copyMsgBtn">💬 Copy Message</button>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:10px;">Tap a button above to copy, then share via WhatsApp, iMessage, etc.</div>
+      </div>
+
+      <!-- User list -->
+      <div class="section-lbl">All Access Codes</div>
+      <div id="userList"><div class="empty">Loading...</div></div>
+    </div>
+
+    <!-- ── STATS TAB ── -->
+    <div id="tabStats" style="display:none;">
+      <div id="statsContent"><div class="empty">Loading...</div></div>
+    </div>
+
+  </div><!-- /mainPanel -->
+</div><!-- /wrapper -->
+
+<script>
+// ── Config ───────────────────────────────────────────────────────────────
+// Update APP_URL to your actual Vercel URL
+const APP_URL = window.location.origin.replace('/admin', '') || 'https://your-app.vercel.app';
+
+let _password = null;
+const NATO = ['ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM','VICTOR','WHISKEY'];
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── Login ─────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pw  = document.getElementById('loginPassword').value;
+  const msg = document.getElementById('loginMsg');
+  const btn = document.getElementById('loginBtn');
+  if (!pw) return;
+
+  btn.disabled = true; btn.textContent = 'Checking...';
+  msg.style.color = '#8e8e93'; msg.textContent = 'Verifying...';
+
+  try {
+    // Use api-stats as the auth check (it requires admin password)
+    const res  = await fetch('/api/api-stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    if (res.status === 401) {
+      msg.style.color = 'var(--danger)'; msg.textContent = '❌ Wrong password';
+      btn.disabled = false; btn.textContent = 'Unlock →';
+      document.getElementById('loginPassword').value = '';
+      return;
+    }
+    const statsData = await res.json();
+    _password = pw;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainPanel').style.display  = 'block';
+    // Pre-populate stats tab with data we just fetched
+    window._statsData = statsData;
+    loadUsers();
+  } catch(e) {
+    msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Network error';
+    btn.disabled = false; btn.textContent = 'Unlock →';
+  }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tabUsers').style.display = tab === 'users' ? 'block' : 'none';
+  document.getElementById('tabStats').style.display = tab === 'stats' ? 'block' : 'none';
+  document.getElementById('tabBtnUsers').classList.toggle('active', tab === 'users');
+  document.getElementById('tabBtnStats').classList.toggle('active', tab === 'stats');
+  if (tab === 'stats') renderStats(window._statsData);
+}
+
+// ── Load users ────────────────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    const res  = await fetch('/api/access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'list', password: _password })
+    });
+    const data = await res.json();
+    renderUsers(data.users || []);
+  } catch(e) {
+    document.getElementById('userList').innerHTML = `<div class="empty">⚠️ Failed to load users</div>`;
+  }
+}
+
+function renderUsers(users) {
+  // Summary
+  const active   = users.filter(u => u.active).length;
+  const revoked  = users.filter(u => !u.active).length;
+  const calls    = users.reduce((s, u) => s + (u.calls_today || 0), 0);
+  const summary  = document.getElementById('userSummary');
+  summary.innerHTML = `
+    <div class="stat-box"><div class="stat-num" style="color:var(--success)">${active}</div><div class="stat-lbl">Active</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:var(--danger)">${revoked}</div><div class="stat-lbl">Revoked</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:var(--accent)">${calls}</div><div class="stat-lbl">Calls Today</div></div>`;
+
+  // User list
+  const list = document.getElementById('userList');
+  if (!users.length) { list.innerHTML = `<div class="empty">No codes yet — create one above.</div>`; return; }
+
+  list.innerHTML = users.map(u => {
+    const created = u.created ? new Date(u.created).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+    return `
+      <div class="user-row ${u.active ? '' : 'revoked'}">
+        <div style="flex:1;min-width:0;">
+          <div class="user-code">${u.code}</div>
+          <div class="user-name">${u.name} · ${created}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span class="user-calls">${u.calls_today || 0} calls</span>
+          <span class="status-pill ${u.active ? 'status-active' : 'status-revoked'}">${u.active ? 'ACTIVE' : 'REVOKED'}</span>
+          ${u.active
+            ? `<button class="btn btn-danger btn-sm" onclick="revokeCode('${u.code}')">Revoke</button>`
+            : `<button class="btn btn-success btn-sm" onclick="restoreCode('${u.code}')">Restore</button>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Create code ────────────────────────────────────────────────────────────
+function randomCode() {
+  const word = NATO[Math.floor(Math.random() * NATO.length)];
+  const num  = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
+  document.getElementById('newCode').value = `${word}-${num}`;
+}
+
+async function createCode() {
+  const name = document.getElementById('newName').value.trim();
+  const code = document.getElementById('newCode').value.trim();
+  const msg  = document.getElementById('createMsg');
+  const btn  = document.getElementById('createBtn');
+
+  if (!name) { msg.style.color='var(--warn)'; msg.textContent='⚠️ Enter a name'; return; }
+  if (code.length < 4) { msg.style.color='var(--warn)'; msg.textContent='⚠️ Code must be 4+ characters'; return; }
+
+  btn.disabled = true; btn.textContent = 'Creating...';
+  msg.textContent = '';
+
+  try {
+    const res  = await fetch('/api/access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', code, name, password: _password })
+    });
+    const data = await res.json();
+
+    if (res.status === 409) {
+      msg.style.color = 'var(--danger)'; msg.textContent = '❌ Code already exists';
+    } else if (data.success) {
+      msg.style.color = 'var(--success)'; msg.textContent = `✅ Created ${data.code}`;
+      showShareCard(data.code, name);
+      document.getElementById('newName').value = '';
+      document.getElementById('newCode').value = '';
+      loadUsers();
+    } else {
+      msg.style.color = 'var(--danger)'; msg.textContent = `❌ ${data.error || 'Failed'}`;
+    }
+  } catch(e) {
+    msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Network error';
+  }
+  btn.disabled = false; btn.textContent = 'Create Code →';
+}
+
+// ── Share card ─────────────────────────────────────────────────────────────
+function showShareCard(code, name) {
+  document.getElementById('shareCodeText').textContent = code;
+  document.getElementById('shareAppUrl').textContent   = APP_URL;
+  document.getElementById('shareCard').style.display   = 'block';
+  window._latestCode = code;
+  window._latestName = name;
+  document.getElementById('shareCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(window._latestCode || '').then(() => toast('✅ Code copied!'));
+  const btn = document.getElementById('copyCodeBtn');
+  btn.textContent = '✓ Copied!';
+  setTimeout(() => btn.textContent = '📋 Copy Code', 1500);
+}
+
+function copyMessage() {
+  const code = window._latestCode || '';
+  const name = window._latestName || '';
+  const msg  = `Hi ${name}! 👋\n\nYou've been given access to METAR GO, a weather app for pilots.\n\n🔑 Your access code: ${code}\n✈️ Open the app: ${APP_URL}\n\nEnter your code on the first screen. Let me know if you need help!`;
+  navigator.clipboard.writeText(msg).then(() => toast('💬 Message copied — paste into WhatsApp or iMessage!'));
+  const btn = document.getElementById('copyMsgBtn');
+  btn.textContent = '✓ Copied!';
+  setTimeout(() => btn.textContent = '💬 Copy Message', 1500);
+}
+
+// ── Revoke / Restore ───────────────────────────────────────────────────────
+async function revokeCode(code) {
+  if (!confirm(`Revoke ${code}?\n\nThis person will be blocked on their next app refresh.`)) return;
+  try {
+    await fetch('/api/access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'revoke', code, password: _password })
+    });
+    toast(`🔒 ${code} revoked`);
+    loadUsers();
+  } catch(e) { toast('⚠️ Failed to revoke'); }
+}
+
+async function restoreCode(code) {
+  try {
+    await fetch('/api/access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'restore', code, password: _password })
+    });
+    toast(`✅ ${code} restored`);
+    loadUsers();
+  } catch(e) { toast('⚠️ Failed to restore'); }
+}
+
+// ── API Stats ──────────────────────────────────────────────────────────────
+function renderStats(data) {
+  const el = document.getElementById('statsContent');
+  if (!data) { el.innerHTML = `<div class="empty">No stats available</div>`; return; }
+
+  const { date, keys, aggregate } = data;
+  const aggPct   = aggregate.percentage;
+  const aggColor = aggPct >= 90 ? 'var(--danger)' : aggPct >= 70 ? 'var(--warn)' : 'var(--success)';
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Total Usage · ${date} UTC</div>
+      <div style="font-size:32px;font-weight:900;margin-bottom:4px;">
+        ${aggregate.total_usage.toLocaleString()}
+        <span style="font-size:16px;color:var(--sub);font-weight:400;">/ ${aggregate.total_limit.toLocaleString()}</span>
+      </div>
+      <div style="font-size:12px;color:${aggColor};margin-bottom:8px;">${aggregate.total_remaining.toLocaleString()} requests remaining (${aggPct}% used)</div>
+      <div class="progress-wrap">
+        <div class="progress-bar" style="width:${aggPct}%;background:${aggColor};"></div>
+      </div>
+    </div>
+
+    <div class="section-lbl">Individual Key Breakdown</div>
+    ${keys.map(k => {
+      const c = k.percentage >= 90 ? 'var(--danger)' : k.percentage >= 70 ? 'var(--warn)' : 'var(--success)';
+      return `
+        <div class="key-bar">
+          <div class="key-bar-header">
+            <div class="key-bar-title">Key #${k.id}</div>
+            <div class="key-bar-pct" style="color:${c}">${k.percentage}%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:6px;">
+            <span>${k.usage.toLocaleString()} used</span>
+            <span>${k.remaining.toLocaleString()} remaining</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar" style="width:${k.percentage}%;background:${c};"></div>
+          </div>
+        </div>`;
+    }).join('')}
+
+    <div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:11px;color:#444;line-height:1.6;text-align:center;">
+      ℹ️ Stats reset daily at midnight UTC · Keys rotate automatically based on usage
+    </div>`;
+}
+
+// Focus password on load
+window.addEventListener('load', () => {
+  document.getElementById('loginPassword').focus();
+  document.getElementById('shareAppUrl').textContent = window.location.origin;
+});
+</script>
+</body>
+</html>
