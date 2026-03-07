@@ -1969,7 +1969,9 @@
                     t.tagName === 'SELECT'   || t.tagName === 'TEXTAREA' ||
                     t.closest('canvas')      || t.closest('.modal-overlay') ||
                     t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
-                    t.closest('.tabs')       ||   // ← NEW: let tab bar scroll freely
+                    t.closest('.tabs')       ||   // ← let tab bar scroll freely
+                    t.closest('#tools-extension-panel') ||  // ← tools extension open: no tab swipe
+                    (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) ||
                     window._sortMode?.active
                 ) return;
         
