@@ -1970,7 +1970,7 @@
                     t.closest('canvas')      || t.closest('.modal-overlay') ||
                     t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
                     t.closest('.tabs')       ||   // ← let tab bar scroll freely
-                    t.closest('#tools-extension-panel') ||  // ← tools extension open: no tab swipe
+                    t.closest('#tools-extension-panel') ||  // ← inside tools panel: no swipe
                     (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) ||
                     window._sortMode?.active
                 ) return;
@@ -1987,6 +1987,16 @@
             // non-passive so we can preventDefault for horizontal swipes
             document.addEventListener('touchmove', e => {
                 if (state.animating) return;
+
+                // If tools extension is open, never process horizontal tab swipe.
+                // Also reset any stale state that touchstart may have left behind
+                // (edge-swipe from outside the panel can bypass the touchstart guard).
+                if (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) {
+                    state.tracking = false;
+                    state.settled  = false;
+                    state.isHoriz  = false;
+                    return;
+                }
         
                 const x  = e.touches[0].clientX;
                 const y  = e.touches[0].clientY;
