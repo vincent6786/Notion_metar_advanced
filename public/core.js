@@ -528,31 +528,45 @@
         // ================================================================
         let apiStatsCache = null;
 
+        // Shared admin password cache within session
+        let _adminPasswordCache = null;
+
         async function openApiStatsModal() {
-            const modal   = document.getElementById('apiStatsModal');
-            const content = document.getElementById('apiStatsContent');
+            const modal = document.getElementById('apiStatsModal');
             modal.classList.add('active');
+            if (_adminPasswordCache) {
+                // Already authed — go straight to stats
+                showAdminPanel(_adminPasswordCache);
+            } else {
+                renderAdminLoginPrompt();
+            }
+        }
+
+        function closeApiStatsModal() {
+            document.getElementById('apiStatsModal').classList.remove('active');
+        }
+
+        function renderAdminLoginPrompt() {
+            const content = document.getElementById('apiStatsContent');
             content.innerHTML = `
                 <div style="text-align:center;padding:40px;color:#8e8e93;">
                     <div style="font-size:32px;margin-bottom:12px;">🔐</div>
                     <div style="font-weight:700;margin-bottom:8px;color:#fff;">Admin Access Required</div>
-                    <div style="font-size:12px;margin-bottom:20px;">Enter admin password to view usage statistics</div>
+                    <div style="font-size:12px;margin-bottom:20px;">Enter admin password to view statistics and manage users</div>
                     <input type="password" id="apiAdminPassword" placeholder="Password"
                            onkeypress="if(event.key==='Enter') fetchApiStats()"
                            style="background:#1c1c1e;border:1px solid #555;color:#fff;padding:12px;border-radius:8px;width:200px;font-size:14px;text-align:center;margin-bottom:12px;">
                     <br>
-                    <button onclick="fetchApiStats()" style="background:var(--accent);border:none;color:#fff;padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">View Stats</button>
+                    <button onclick="fetchApiStats()" style="background:var(--accent);border:none;color:#fff;padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">Unlock →</button>
                 </div>`;
         }
-
-        function closeApiStatsModal() { document.getElementById('apiStatsModal').classList.remove('active'); }
 
         async function fetchApiStats() {
             const content       = document.getElementById('apiStatsContent');
             const passwordInput = document.getElementById('apiAdminPassword');
             const password      = passwordInput?.value;
             if (!password) { alert('Please enter password'); return; }
-            content.innerHTML = `<div style="text-align:center;padding:40px;color:#8e8e93;"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Loading statistics...</div></div>`;
+            content.innerHTML = `<div style="text-align:center;padding:40px;color:#8e8e93;"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Unlocking...</div></div>`;
             try {
                 const res = await fetch('/api/api-stats', {
                     method: 'POST',
@@ -560,19 +574,222 @@
                     body: JSON.stringify({ password })
                 });
                 if (res.status === 401) {
-                    content.innerHTML = `<div style="text-align:center;padding:40px;"><div style="font-size:32px;margin-bottom:12px;">❌</div><div style="color:var(--danger);font-weight:700;margin-bottom:16px;">Incorrect Password</div><button onclick="openApiStatsModal()" style="background:#333;border:1px solid #555;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Try Again</button></div>`;
+                    content.innerHTML = `<div style="text-align:center;padding:40px;"><div style="font-size:32px;margin-bottom:12px;">❌</div><div style="color:var(--danger);font-weight:700;margin-bottom:16px;">Incorrect Password</div><button onclick="renderAdminLoginPrompt()" style="background:#333;border:1px solid #555;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Try Again</button></div>`;
                     return;
                 }
                 const data = await res.json();
                 apiStatsCache = data;
-                renderApiStats(data);
+                _adminPasswordCache = password;
+                showAdminPanel(password, 'stats');
             } catch (err) {
-                content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div>Error loading stats: ${err.message}</div></div>`;
+                content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div>Error: ${err.message}</div></div>`;
             }
         }
 
-        function renderApiStats(data) {
+        function showAdminPanel(password, tab) {
+            const activeTab = tab || 'stats';
             const content = document.getElementById('apiStatsContent');
+            content.innerHTML = `
+                <!-- Tab switcher -->
+                <div style="display:flex;gap:0;margin-bottom:20px;background:#1c1c1e;border-radius:10px;padding:3px;border:1px solid #333;">
+                    <button id="adminTab-stats" onclick="switchAdminTab('stats','${password}')"
+                            style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+                            background:${activeTab==='stats'?'var(--accent)':'transparent'};
+                            color:${activeTab==='stats'?'#fff':'#8e8e93'};">📊 API Stats</button>
+                    <button id="adminTab-users" onclick="switchAdminTab('users','${password}')"
+                            style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+                            background:${activeTab==='users'?'var(--accent)':'transparent'};
+                            color:${activeTab==='users'?'#fff':'#8e8e93'};">👥 Users</button>
+                </div>
+                <div id="adminTabContent"></div>`;
+
+            if (activeTab === 'stats' && apiStatsCache) {
+                renderApiStats(apiStatsCache);
+            } else if (activeTab === 'users') {
+                loadUsersTab(password);
+            } else {
+                loadStatsAndRender(password);
+            }
+        }
+
+        async function switchAdminTab(tab, password) {
+            // Update button styles
+            ['stats','users'].forEach(t => {
+                const btn = document.getElementById(`adminTab-${t}`);
+                if (!btn) return;
+                btn.style.background = t === tab ? 'var(--accent)' : 'transparent';
+                btn.style.color      = t === tab ? '#fff'           : '#8e8e93';
+            });
+            if (tab === 'stats') {
+                if (apiStatsCache) renderApiStats(apiStatsCache);
+                else await loadStatsAndRender(password);
+            } else {
+                await loadUsersTab(password);
+            }
+        }
+
+        async function loadStatsAndRender(password) {
+            const tabContent = document.getElementById('adminTabContent');
+            if (tabContent) tabContent.innerHTML = `<div style="text-align:center;padding:30px;color:#8e8e93;">⏳ Loading...</div>`;
+            try {
+                const res  = await fetch('/api/api-stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
+                const data = await res.json();
+                apiStatsCache = data;
+                renderApiStats(data);
+            } catch(e) {
+                if (tabContent) tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load stats: ${e.message}</div>`;
+            }
+        }
+
+        async function loadUsersTab(password) {
+            const tabContent = document.getElementById('adminTabContent');
+            if (!tabContent) return;
+            tabContent.innerHTML = `<div style="text-align:center;padding:30px;color:#8e8e93;">⏳ Loading users...</div>`;
+            try {
+                const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'list', password }) });
+                const data = await res.json();
+                renderUsersTab(data.users || [], password);
+            } catch(e) {
+                tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load users: ${e.message}</div>`;
+            }
+        }
+
+        function renderUsersTab(users, password) {
+            const tabContent = document.getElementById('adminTabContent');
+            if (!tabContent) return;
+
+            const activeCount  = users.filter(u => u.active).length;
+            const revokedCount = users.filter(u => !u.active).length;
+            const todayCalls   = users.reduce((sum, u) => sum + (u.calls_today || 0), 0);
+
+            let html = `
+                <!-- Summary -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;">
+                    <div style="background:rgba(50,215,75,0.1);border:1px solid rgba(50,215,75,0.25);border-radius:10px;padding:12px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;color:var(--success);">${activeCount}</div>
+                        <div style="font-size:10px;color:#8e8e93;margin-top:2px;">ACTIVE</div>
+                    </div>
+                    <div style="background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.25);border-radius:10px;padding:12px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;color:var(--danger);">${revokedCount}</div>
+                        <div style="font-size:10px;color:#8e8e93;margin-top:2px;">REVOKED</div>
+                    </div>
+                    <div style="background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.25);border-radius:10px;padding:12px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;color:var(--accent);">${todayCalls}</div>
+                        <div style="font-size:10px;color:#8e8e93;margin-top:2px;">CALLS TODAY</div>
+                    </div>
+                </div>
+
+                <!-- Create new user -->
+                <div style="background:#1c1c1e;border:1px solid #333;border-radius:10px;padding:14px;margin-bottom:16px;">
+                    <div style="font-size:11px;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">➕ New Access Code</div>
+                    <div style="display:flex;gap:8px;margin-bottom:8px;">
+                        <input id="newUserName" placeholder="Name (e.g. John)" type="text"
+                               style="flex:1;background:#111;border:1px solid #444;color:#fff;padding:9px 10px;border-radius:8px;font-size:13px;outline:none;">
+                        <input id="newUserCode" placeholder="Code (e.g. ALPHA-01)" type="text"
+                               style="flex:1;background:#111;border:1px solid #444;color:#fff;padding:9px 10px;border-radius:8px;font-size:13px;outline:none;text-transform:uppercase;"
+                               oninput="this.value=this.value.toUpperCase()">
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button onclick="generateRandomCode()" style="background:#2c2c2e;border:1px solid #444;color:#8e8e93;padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer;white-space:nowrap;">🎲 Random</button>
+                        <button onclick="createUser('${password}')" id="createUserBtn"
+                                style="flex:1;background:var(--accent);border:none;color:#fff;padding:9px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Create →</button>
+                    </div>
+                    <div id="createUserMsg" style="font-size:11px;margin-top:8px;height:14px;"></div>
+                </div>
+
+                <!-- User list -->
+                <div style="font-size:11px;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Access Codes (${users.length})</div>`;
+
+            if (users.length === 0) {
+                html += `<div style="text-align:center;padding:20px;color:#555;font-size:13px;">No users yet. Create one above.</div>`;
+            } else {
+                users.forEach(u => {
+                    const statusColor = u.active ? 'var(--success)' : 'var(--danger)';
+                    const statusText  = u.active ? 'ACTIVE'         : 'REVOKED';
+                    const created     = u.created ? new Date(u.created).toLocaleDateString() : '—';
+                    html += `
+                        <div style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:8px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                                <div>
+                                    <span style="font-weight:700;color:#fff;font-family:'SF Mono',monospace;font-size:13px;">${u.code}</span>
+                                    <span style="color:#8e8e93;font-size:12px;margin-left:8px;">${u.name}</span>
+                                </div>
+                                <span style="font-size:10px;font-weight:800;color:${statusColor};background:${u.active?'rgba(50,215,75,0.1)':'rgba(255,69,58,0.1)'};padding:2px 8px;border-radius:6px;">${statusText}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#555;">
+                                <span>Created ${created} · ${u.calls_today} calls today</span>
+                                <div style="display:flex;gap:6px;">
+                                    ${u.active
+                                        ? `<button onclick="revokeUser('${u.code}','${password}')" style="background:#2c2c2e;border:1px solid #555;color:var(--danger);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Revoke</button>`
+                                        : `<button onclick="restoreUser('${u.code}','${password}')" style="background:#2c2c2e;border:1px solid #555;color:var(--success);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Restore</button>`}
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            tabContent.innerHTML = html;
+        }
+
+        function generateRandomCode() {
+            const adjectives = ['ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM','VICTOR','WHISKEY'];
+            const adj  = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const num  = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
+            const code = `${adj}-${num}`;
+            const input = document.getElementById('newUserCode');
+            if (input) input.value = code;
+        }
+
+        async function createUser(password) {
+            const name    = document.getElementById('newUserName')?.value.trim();
+            const code    = document.getElementById('newUserCode')?.value.trim().toUpperCase();
+            const msg     = document.getElementById('createUserMsg');
+            const btn     = document.getElementById('createUserBtn');
+
+            if (!name) { msg.innerText = '⚠️ Enter a name'; msg.style.color = 'var(--warn)'; return; }
+            if (!code || code.length < 4) { msg.innerText = '⚠️ Code must be 4+ characters'; msg.style.color = 'var(--warn)'; return; }
+
+            btn.disabled = true; btn.innerText = 'Creating...';
+            msg.innerText = ''; 
+
+            try {
+                const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'create', code, name, password }) });
+                const data = await res.json();
+                if (res.status === 409) {
+                    msg.innerText = '❌ Code already exists. Try another.'; msg.style.color = 'var(--danger)';
+                } else if (data.success) {
+                    msg.innerText = `✅ Created: ${data.code}`; msg.style.color = 'var(--success)';
+                    document.getElementById('newUserName').value = '';
+                    document.getElementById('newUserCode').value = '';
+                    setTimeout(() => loadUsersTab(password), 800);
+                } else {
+                    msg.innerText = `❌ ${data.error || 'Failed'}`; msg.style.color = 'var(--danger)';
+                }
+            } catch(e) {
+                msg.innerText = '⚠️ Network error'; msg.style.color = 'var(--warn)';
+            }
+            btn.disabled = false; btn.innerText = 'Create →';
+        }
+
+        async function revokeUser(code, password) {
+            if (!confirm(`Revoke access for ${code}?
+
+They will be blocked immediately on next refresh.`)) return;
+            try {
+                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'revoke', code, password }) });
+                loadUsersTab(password);
+            } catch(e) { alert('Failed to revoke. Check connection.'); }
+        }
+
+        async function restoreUser(code, password) {
+            try {
+                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'restore', code, password }) });
+                loadUsersTab(password);
+            } catch(e) { alert('Failed to restore. Check connection.'); }
+        }
+
+        function renderApiStats(data) {
+            const content = document.getElementById('adminTabContent') || document.getElementById('apiStatsContent');
             const { date, keys, aggregate } = data;
             let html = `
                 <div style="margin-bottom:24px;">
@@ -831,14 +1048,28 @@
                 return cachedObj.data;
             }
 
+            // Build request headers — always send access code if stored
+            const headers = {};
+            const accessCode = localStorage.getItem('efb_access_code');
+            if (accessCode) headers['x-access-code'] = accessCode;
+
             try {
-                const res = await fetch(endpoint);
+                const res = await fetch(endpoint, { headers });
+
+                // Access revoked — clear code and show gate
+                if (res.status === 403) {
+                    localStorage.removeItem('efb_access_code');
+                    showAccessGate('🔒 Access revoked. Enter a new access code.');
+                    throw new Error('Access revoked');
+                }
+
                 if (!res.ok) throw new Error(`API Error: ${res.status}`);
                 const data = await res.json();
                 localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
                 hideOfflineBanner();
                 return data;
             } catch (err) {
+                if (err.message === 'Access revoked') throw err;
                 // Network failure — fall back to stale cache if available
                 if (cachedObj) {
                     const ageMin = Math.round((Date.now() - cachedObj.ts) / 60000);
@@ -847,8 +1078,108 @@
                     if (typeof showSourceFooters === 'function') showSourceFooters();
                     return cachedObj.data;
                 }
-                // No cache at all — throw so the caller can show an error
                 throw err;
+            }
+        }
+
+        // ================================================================
+        // 8b. ACCESS GATE
+        // ================================================================
+        function getStoredAccessCode() {
+            return localStorage.getItem('efb_access_code') || null;
+        }
+
+        async function checkAccessGate() {
+            const code = getStoredAccessCode();
+
+            // No code stored — show gate immediately
+            if (!code) {
+                showAccessGate();
+                return false;
+            }
+
+            // Validate stored code silently
+            try {
+                const res  = await fetch('/api/access', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ action: 'validate', code })
+                });
+                const data = await res.json();
+                if (data.valid) {
+                    console.log(`[Access] Welcome, ${data.name}!`);
+                    return true;
+                }
+            } catch(e) {
+                // Network error — allow app to load (offline tolerance)
+                console.warn('[Access] Validation failed (network), allowing offline load');
+                return true;
+            }
+
+            // Code was invalid / revoked
+            localStorage.removeItem('efb_access_code');
+            showAccessGate('🔒 Your access code was revoked. Contact the admin for a new one.');
+            return false;
+        }
+
+        function showAccessGate(errorMsg) {
+            const gate  = document.getElementById('accessGate');
+            const input = document.getElementById('accessCodeInput');
+            const msg   = document.getElementById('accessGateMsg');
+            if (!gate) return;
+            gate.style.display = 'flex';
+            if (errorMsg && msg) { msg.innerText = errorMsg; msg.style.color = 'var(--danger)'; }
+            if (input) { input.value = ''; setTimeout(() => input.focus(), 300); }
+        }
+
+        function hideAccessGate() {
+            const gate = document.getElementById('accessGate');
+            if (gate) gate.style.display = 'none';
+        }
+
+        async function submitAccessCode() {
+            const input  = document.getElementById('accessCodeInput');
+            const msg    = document.getElementById('accessGateMsg');
+            const btn    = document.getElementById('accessGateBtn');
+            const code   = (input?.value || '').trim().toUpperCase();
+
+            if (code.length < 4) {
+                msg.innerText   = '⚠️ Access code must be at least 4 characters';
+                msg.style.color = 'var(--warn)';
+                return;
+            }
+
+            msg.innerText   = '🔍 Verifying...';
+            msg.style.color = '#8e8e93';
+            if (btn) { btn.disabled = true; btn.innerText = 'Checking...'; }
+
+            try {
+                const res  = await fetch('/api/access', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ action: 'validate', code })
+                });
+                const data = await res.json();
+
+                if (data.valid) {
+                    msg.innerText   = `✅ Welcome, ${data.name}!`;
+                    msg.style.color = 'var(--success)';
+                    localStorage.setItem('efb_access_code', code);
+                    setTimeout(() => {
+                        hideAccessGate();
+                        initApp();
+                    }, 700);
+                } else {
+                    msg.innerText   = '❌ Invalid access code. Contact admin for access.';
+                    msg.style.color = 'var(--danger)';
+                    if (btn) { btn.disabled = false; btn.innerText = 'Enter →'; }
+                    input.value = '';
+                    input.focus();
+                }
+            } catch(e) {
+                msg.innerText   = '⚠️ Could not connect. Check your internet.';
+                msg.style.color = 'var(--warn)';
+                if (btn) { btn.disabled = false; btn.innerText = 'Enter →'; }
             }
         }
 

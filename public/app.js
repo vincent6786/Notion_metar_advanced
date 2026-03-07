@@ -1764,12 +1764,21 @@
                 runLaunchAnimation(),
                 new Promise(r => setTimeout(r, 100))
             ]);
+
+            // ── Access gate check ──────────────────────────────────
+            // If ACCESS_GATE is disabled (no env var set), skip straight to initApp
+            // The gate is enabled server-side via ACCESS_GATE_ENABLED=true in Vercel
+            const gateEl = document.getElementById('accessGate');
+            if (gateEl) {
+                const hasAccess = await checkAccessGate();
+                if (!hasAccess) return; // initApp called later from submitAccessCode
+            }
+
             initApp();
-        // Add this once, after DOMContentLoaded:
-        window.addEventListener('resize', () => {
-            if (meteoDataCache) drawMeteogram(meteoDataCache);
-        });
-            
+
+            window.addEventListener('resize', () => {
+                if (meteoDataCache) drawMeteogram(meteoDataCache);
+            });
         });
 
         // ================================================================
