@@ -961,108 +961,33 @@
         }
 
         // ================================================================
-        // 20b. FORMULA EXPLANATION MODAL  (E6B result tap-to-explain)
+        // 20b. FORMULA EXPLANATION MODAL
         // ================================================================
 
         const FORMULA_CONTENT = {
             pa: {
                 title: 'Pressure Altitude',
-                body: `
-                    <p style="color:var(--sub-text); font-size:13px; line-height:1.6; margin:0 0 14px;">
-                        Pressure Altitude is the altitude indicated when the altimeter is set to <strong>1013.25 hPa (29.92 inHg)</strong>. It is the reference used for density altitude, TAS, and flight levels.
-                    </p>
-                    <div style="background:#111; border-radius:10px; padding:14px 16px; font-family:'SF Mono',monospace; font-size:14px; color:var(--accent); margin-bottom:14px; line-height:2;">
-                        PA = Indicated Alt + (1013.25 − QNH) × 30
-                    </div>
-                    <p style="color:var(--sub-text); font-size:12px; line-height:1.5; margin:0;">
-                        QNH is in hPa. The <strong>30 ft/hPa</strong> factor is the standard pressure lapse rate near sea level. QNH below 1013 → PA above indicated altitude. QNH above 1013 → PA below indicated altitude.
-                    </p>`
+                body: `<p style="color:var(--sub-text);font-size:13px;line-height:1.6;margin:0 0 14px;">Pressure Altitude is the altitude indicated when the altimeter is set to the standard pressure of <strong>1013.25 hPa (29.92 inHg)</strong>. It is the reference used for density altitude, TAS, and flight levels.</p><div style="background:#111;border-radius:10px;padding:14px 16px;font-family:'SF Mono',monospace;font-size:14px;color:var(--accent);margin-bottom:14px;line-height:2;">PA = Indicated Alt + (1013.25 − QNH) × 30</div><p style="color:var(--sub-text);font-size:12px;line-height:1.5;margin:0;">QNH in hPa. The <strong>30 ft/hPa</strong> factor is the standard pressure lapse rate near sea level. QNH below 1013 → PA above indicated altitude. QNH above 1013 → PA below indicated altitude.</p>`
             },
             da: {
                 title: 'Density Altitude',
-                body: `
-                    <p style="color:var(--sub-text); font-size:13px; line-height:1.6; margin:0 0 14px;">
-                        Density Altitude is Pressure Altitude corrected for non-standard temperature. It represents the altitude at which current air density exists in the ISA model. High DA = aircraft performs as if at a higher altitude.
-                    </p>
-                    <div style="background:#111; border-radius:10px; padding:14px 16px; font-family:'SF Mono',monospace; font-size:13px; color:var(--accent); margin-bottom:14px; line-height:2.2;">
-                        ISA Temp = 15 − (2 × PA / 1000)<br>
-                        DA = PA + 120 × (OAT − ISA Temp)
-                    </div>
-                    <p style="color:var(--sub-text); font-size:12px; line-height:1.5; margin:0 0 10px;">
-                        <strong>120 ft/°C</strong> is the standard approximation. Each degree above ISA adds ~120 ft of density altitude.
-                    </p>
-                    <p style="color:#ff9f0a; font-size:12px; line-height:1.5; margin:0;">
-                        ⚠️ METAR GO highlights DA in orange when it exceeds field elevation by more than 2,000 ft.
-                    </p>`
+                body: `<p style="color:var(--sub-text);font-size:13px;line-height:1.6;margin:0 0 14px;">Density Altitude is Pressure Altitude corrected for non-standard temperature. It represents the altitude at which current air density exists in the ISA model. High DA = aircraft performs as if at a higher altitude.</p><div style="background:#111;border-radius:10px;padding:14px 16px;font-family:'SF Mono',monospace;font-size:13px;color:var(--accent);margin-bottom:14px;line-height:2.2;">ISA Temp = 15 − (2 × PA / 1000)<br>DA = PA + 120 × (OAT − ISA Temp)</div><p style="color:var(--sub-text);font-size:12px;line-height:1.5;margin:0 0 10px;"><strong>120 ft/°C</strong> is the standard approximation. Each degree above ISA adds ~120 ft of density altitude.</p><p style="color:#ff9f0a;font-size:12px;line-height:1.5;margin:0;">⚠️ METAR GO highlights DA in orange when it exceeds field elevation by more than 2,000 ft.</p>`
             },
             isa: {
                 title: 'ISA Deviation',
-                body: `
-                    <p style="color:var(--sub-text); font-size:13px; line-height:1.6; margin:0 0 14px;">
-                        ISA Deviation tells you how much warmer or colder the actual air is compared to the standard atmosphere at your pressure altitude.
-                    </p>
-                    <div style="background:#111; border-radius:10px; padding:14px 16px; font-family:'SF Mono',monospace; font-size:14px; color:var(--accent); margin-bottom:14px; line-height:2.2;">
-                        ISA Temp = 15 − (2 × PA / 1000)<br>
-                        ISA Dev  = OAT − ISA Temp
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
-                        <div style="background:#111; border-radius:8px; padding:10px; font-size:12px;">
-                            <div style="color:var(--sub-text); margin-bottom:4px;">ISA Standard</div>
-                            <div style="color:#fff; font-weight:700;">SL: 15°C</div>
-                            <div style="color:#fff; font-weight:700;">2,000 ft: 11°C</div>
-                            <div style="color:#fff; font-weight:700;">5,000 ft: 5°C</div>
-                            <div style="color:#fff; font-weight:700;">10,000 ft: −5°C</div>
-                        </div>
-                        <div style="background:#111; border-radius:8px; padding:10px; font-size:12px; color:var(--sub-text); line-height:1.6;">
-                            <strong style="color:#fff;">ISA+10</strong> = 10°C warmer than standard<br><br>
-                            <strong style="color:#fff;">ISA−10</strong> = 10°C colder than standard
-                        </div>
-                    </div>
-                    <p style="color:var(--sub-text); font-size:12px; line-height:1.5; margin:0;">
-                        Positive ISA Dev → less dense air → higher DA → reduced aircraft performance. Standard lapse rate: <strong>−2°C per 1,000 ft</strong>.
-                    </p>`
+                body: `<p style="color:var(--sub-text);font-size:13px;line-height:1.6;margin:0 0 14px;">ISA Deviation tells you how much warmer or colder the actual air is compared to the standard atmosphere at your pressure altitude.</p><div style="background:#111;border-radius:10px;padding:14px 16px;font-family:'SF Mono',monospace;font-size:14px;color:var(--accent);margin-bottom:14px;line-height:2.2;">ISA Temp = 15 − (2 × PA / 1000)<br>ISA Dev = OAT − ISA Temp</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div style="background:#111;border-radius:8px;padding:10px;font-size:12px;"><div style="color:var(--sub-text);margin-bottom:4px;">ISA Standard</div><div style="color:#fff;font-weight:700;">SL: 15°C</div><div style="color:#fff;font-weight:700;">2,000 ft: 11°C</div><div style="color:#fff;font-weight:700;">5,000 ft: 5°C</div><div style="color:#fff;font-weight:700;">10,000 ft: −5°C</div></div><div style="background:#111;border-radius:8px;padding:10px;font-size:12px;color:var(--sub-text);line-height:1.6;"><strong style="color:#fff;">ISA+10</strong> = 10°C warmer than standard<br><br><strong style="color:#fff;">ISA−10</strong> = 10°C colder than standard</div></div><p style="color:var(--sub-text);font-size:12px;line-height:1.5;margin:0;">Positive ISA Dev → less dense air → higher DA → reduced performance. Lapse rate: <strong>−2°C per 1,000 ft</strong>.</p>`
             },
             tas: {
                 title: 'True Airspeed (TAS)',
-                body: `
-                    <p style="color:var(--sub-text); font-size:13px; line-height:1.6; margin:0 0 14px;">
-                        TAS is your actual speed through the air mass. IAS decreases relative to TAS as altitude increases because the air is less dense.
-                    </p>
-                    <div style="background:#111; border-radius:10px; padding:14px 16px; font-family:'SF Mono',monospace; font-size:14px; color:var(--accent); margin-bottom:14px; line-height:2;">
-                        TAS ≈ IAS × (1 + 0.02 × Alt / 1,000)
-                    </div>
-                    <p style="color:var(--sub-text); font-size:12px; line-height:1.5; margin:0;">
-                        The <strong>2% rule</strong>: TAS increases by ~2% per 1,000 ft. At 10,000 ft, TAS is roughly 20% higher than IAS. More precise methods also factor in temperature.
-                    </p>`
+                body: `<p style="color:var(--sub-text);font-size:13px;line-height:1.6;margin:0 0 14px;">TAS is your actual speed through the air mass. IAS decreases relative to TAS as altitude increases because the air is less dense.</p><div style="background:#111;border-radius:10px;padding:14px 16px;font-family:'SF Mono',monospace;font-size:14px;color:var(--accent);margin-bottom:14px;line-height:2;">TAS ≈ IAS × (1 + 0.02 × Alt / 1,000)</div><p style="color:var(--sub-text);font-size:12px;line-height:1.5;margin:0;">The <strong>2% rule</strong>: TAS increases by ~2% per 1,000 ft. At 10,000 ft, TAS is roughly 20% higher than IAS.</p>`
             },
             cloudbase: {
                 title: 'Cloud Base (AGL)',
-                body: `
-                    <p style="color:var(--sub-text); font-size:13px; line-height:1.6; margin:0 0 14px;">
-                        Cloud base is estimated using the temperature/dewpoint spread — the <strong>Lifted Condensation Level (LCL)</strong> approximation.
-                    </p>
-                    <div style="background:#111; border-radius:10px; padding:14px 16px; font-family:'SF Mono',monospace; font-size:14px; color:var(--accent); margin-bottom:14px; line-height:2;">
-                        Cloud Base ≈ (Temp − Dewpoint) / 2.5 × 1,000 ft
-                    </div>
-                    <p style="color:var(--sub-text); font-size:12px; line-height:1.5; margin:0;">
-                        <strong>2.5°C spread = 1,000 ft AGL.</strong> Valid for surface-based convective clouds (cumulus). Less accurate for stratiform layers or elevated moisture. Requires dewpoint input.
-                    </p>`
+                body: `<p style="color:var(--sub-text);font-size:13px;line-height:1.6;margin:0 0 14px;">Estimated using the temperature/dewpoint spread — the <strong>Lifted Condensation Level (LCL)</strong> approximation.</p><div style="background:#111;border-radius:10px;padding:14px 16px;font-family:'SF Mono',monospace;font-size:14px;color:var(--accent);margin-bottom:14px;line-height:2;">Cloud Base ≈ (Temp − Dewpoint) / 2.5 × 1,000 ft</div><p style="color:var(--sub-text);font-size:12px;line-height:1.5;margin:0;"><strong>2.5°C spread = 1,000 ft AGL.</strong> Valid for surface-based convective clouds. Less accurate for stratiform layers. Requires dewpoint input.</p>`
             },
             frz: {
                 title: 'Freezing Level',
-                body: `
-                    <p style="color:var(--sub-text); font-size:13px; line-height:1.6; margin:0 0 14px;">
-                        The altitude at which temperature drops to 0°C. Above this level, liquid water droplets can freeze on contact with the aircraft.
-                    </p>
-                    <div style="background:#111; border-radius:10px; padding:14px 16px; font-family:'SF Mono',monospace; font-size:14px; color:var(--accent); margin-bottom:14px; line-height:2;">
-                        Frz Lvl ≈ Alt + (OAT / 2) × 1,000 ft
-                    </div>
-                    <p style="color:var(--sub-text); font-size:12px; line-height:1.5; margin:0 0 10px;">
-                        Uses standard lapse rate of <strong>2°C per 1,000 ft</strong>. OAT = 20°C at the field → freezing level ~10,000 ft above field.
-                    </p>
-                    <p style="color:#ff453a; font-size:12px; line-height:1.5; margin:0;">
-                        ⚠️ If OAT is already ≤ 0°C, the freezing level is at the surface.
-                    </p>`
+                body: `<p style="color:var(--sub-text);font-size:13px;line-height:1.6;margin:0 0 14px;">The altitude at which temperature drops to 0°C. Above this level, liquid water droplets can freeze on contact with the aircraft.</p><div style="background:#111;border-radius:10px;padding:14px 16px;font-family:'SF Mono',monospace;font-size:14px;color:var(--accent);margin-bottom:14px;line-height:2;">Frz Lvl ≈ Alt + (OAT / 2) × 1,000 ft</div><p style="color:var(--sub-text);font-size:12px;line-height:1.5;margin:0 0 10px;">Standard lapse rate <strong>2°C per 1,000 ft</strong>. OAT = 20°C → freezing level ~10,000 ft AGL.</p><p style="color:#ff453a;font-size:12px;margin:0;">⚠️ If OAT ≤ 0°C, freezing level is at the surface.</p>`
             }
         };
 
@@ -1073,9 +998,9 @@
             const sheet = document.getElementById('formula-modal-sheet');
             const body  = document.getElementById('formula-modal-body');
             if (!modal || !sheet || !body) return;
-            body.innerHTML = `<div style="font-size:16px; font-weight:800; color:#fff; margin-bottom:14px; padding-right:32px;">${data.title}</div>${data.body}`;
+            body.innerHTML = `<div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:14px;padding-right:32px;">${data.title}</div>${data.body}`;
             modal.style.display = 'flex';
-            sheet.getBoundingClientRect(); // force reflow
+            sheet.getBoundingClientRect();
             sheet.style.transform = 'translateY(0)';
         }
 
@@ -2109,7 +2034,9 @@
                     t.tagName === 'SELECT'   || t.tagName === 'TEXTAREA' ||
                     t.closest('canvas')      || t.closest('.modal-overlay') ||
                     t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
-                    t.closest('.tabs')       ||   // ← NEW: let tab bar scroll freely
+                    t.closest('.tabs')       ||   // ← let tab bar scroll freely
+                    t.closest('#tools-extension-panel') ||  // ← tools panel open: block tab swipe
+                    (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) ||
                     window._sortMode?.active
                 ) return;
         
@@ -2125,6 +2052,15 @@
             // non-passive so we can preventDefault for horizontal swipes
             document.addEventListener('touchmove', e => {
                 if (state.animating) return;
+
+                // If tools extension is open, never process horizontal tab swipe.
+                // Resets stale state that can arise from edge-swipe bypassing touchstart.
+                if (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) {
+                    state.tracking = false;
+                    state.settled  = false;
+                    state.isHoriz  = false;
+                    return;
+                }
         
                 const x  = e.touches[0].clientX;
                 const y  = e.touches[0].clientY;
