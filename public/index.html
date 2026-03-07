@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 </head>
 
 <body>
@@ -1582,29 +1583,80 @@
         </div>
         
         <!-- ================================================================
-             GREAT CIRCLE CALCULATOR
+             GREAT CIRCLE DISTANCE CALCULATOR
         ================================================================ -->
         <div id="tool-great-circle" class="tool-view" style="display:none;">
-            <div class="info-card">
-                <div class="conv-lbl" style="margin-bottom:8px;">FROM AIRPORT</div>
-                <input type="text" id="gc-from" class="conv-inp" placeholder="ICAO Code (e.g., RCTP)" style="text-transform:uppercase; margin-bottom:16px;" oninput="this.value = this.value.toUpperCase()">
-                
-                <div class="conv-lbl" style="margin-bottom:8px;">TO AIRPORT</div>
-                <input type="text" id="gc-to" class="conv-inp" placeholder="ICAO Code (e.g., KJFK)" style="text-transform:uppercase; margin-bottom:16px;" oninput="this.value = this.value.toUpperCase()">
-                
-                <button onclick="calculateGreatCircle()" class="tool-btn" style="width:100%; background:var(--accent); border:none; color:#000; font-weight:700; margin-bottom:16px;">
+
+            <!-- Inputs -->
+            <div class="info-card" style="margin-bottom:12px;">
+
+                <div class="conv-lbl" style="margin-bottom:6px;">FROM</div>
+                <input type="text" id="gc-from" class="conv-inp"
+                       placeholder="ICAO · IATA · lat, lon"
+                       autocomplete="off" autocorrect="off" spellcheck="false"
+                       oninput="gcResolveInput('gc-from','gc-from-name')"
+                       onkeydown="if(event.key==='Enter')calculateGreatCircle()">
+                <div id="gc-from-name" style="font-size:11px; min-height:18px; padding:3px 2px; color:var(--sub-text); transition:color 0.2s;"></div>
+
+                <!-- Swap button -->
+                <div style="text-align:center; margin:10px 0 6px;">
+                    <button onclick="gcSwap()" style="background:#2c2c2e; border:1px solid #444; color:#aaa; padding:5px 22px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:0.5px;">⇅ SWAP</button>
+                </div>
+
+                <div class="conv-lbl" style="margin-bottom:6px;">TO</div>
+                <input type="text" id="gc-to" class="conv-inp"
+                       placeholder="ICAO · IATA · lat, lon"
+                       autocomplete="off" autocorrect="off" spellcheck="false"
+                       oninput="gcResolveInput('gc-to','gc-to-name')"
+                       onkeydown="if(event.key==='Enter')calculateGreatCircle()">
+                <div id="gc-to-name" style="font-size:11px; min-height:18px; padding:3px 2px; color:var(--sub-text); transition:color 0.2s;"></div>
+
+                <button onclick="calculateGreatCircle()" class="tool-btn"
+                        style="margin-top:14px; background:var(--accent); border:none; color:#000; font-weight:700; font-size:14px; padding:13px; letter-spacing:0.5px;">
                     CALCULATE
                 </button>
-                
-                <div id="gc-result" style="min-height:120px; background:#1c1c1e; padding:16px; border-radius:8px;">
-                    <div style="color:var(--sub-text); text-align:center; padding:20px;">
-                        Enter departure and destination airports
+            </div>
+
+            <!-- Error banner (hidden by default) -->
+            <div id="gc-error" style="display:none; background:rgba(255,69,58,0.12); border:1px solid rgba(255,69,58,0.4); border-radius:8px; padding:10px 14px; font-size:13px; color:#ff453a; margin-bottom:12px;"></div>
+
+            <!-- Results (hidden until first calculation) -->
+            <div id="gc-result" style="display:none;">
+
+                <!-- Distance cards -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">NM</div>
+                        <div id="gc-nm" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
+                    </div>
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">KM</div>
+                        <div id="gc-km" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
+                    </div>
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">MI</div>
+                        <div id="gc-mi" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
                     </div>
                 </div>
-                
-                <div style="margin-top:16px; padding:12px; background:rgba(10,132,255,0.1); border:1px solid rgba(10,132,255,0.3); border-radius:8px; font-size:11px; color:var(--sub-text);">
-                    💡 <strong>Note:</strong> Connect to airport coordinates database for accurate distance and bearing calculations
+
+                <!-- Track cards -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">Initial Track (True)</div>
+                        <div id="gc-initial" style="font-size:24px; font-weight:800; color:var(--success); margin-top:4px; letter-spacing:-0.5px; font-family:'SF Mono',monospace;">--°</div>
+                    </div>
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">Final Track (True)</div>
+                        <div id="gc-final" style="font-size:24px; font-weight:800; color:var(--success); margin-top:4px; letter-spacing:-0.5px; font-family:'SF Mono',monospace;">--°</div>
+                    </div>
                 </div>
+
+                <!-- Leaflet map -->
+                <div id="gc-map" style="height:300px; border-radius:10px; overflow:hidden; background:#1c1c1e; border:1px solid #333;"></div>
+
+                <!-- Route label -->
+                <div id="gc-route-label" style="text-align:center; font-size:11px; color:var(--sub-text); margin-top:8px; letter-spacing:0.3px;"></div>
+
             </div>
         </div>
         
@@ -2402,6 +2454,8 @@
 
 <script src="core.js"></script>
 <script src="app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="airport-db.js"></script>
 <script src="tools-extension.js"></script>
 
 <!-- Tool card hover effects -->
