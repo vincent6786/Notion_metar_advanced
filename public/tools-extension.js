@@ -14,12 +14,6 @@ let toolsExtensionState = {
     isFullScreen: false
 };
 
-// Great Circle map state
-let gcMapInstance  = null;   // Leaflet map instance
-let gcArcLayer     = null;   // Great circle arc polyline
-let gcFromMarker   = null;   // Departure marker
-let gcToMarker     = null;   // Destination marker
-
 /**
  * Toggle full-screen mode (mobile optimization)
  */
@@ -347,7 +341,8 @@ function openTool(toolName) {
             'abbreviations': 'Aviation Abbreviations',
             'weather-terms': 'Present Weather Terms',
             'e6b-calculator': 'E6B Flight Computer',
-            'e6b-trainer': 'E6B Trainer (UND)'
+            'e6b-trainer': 'E6B Trainer (UND)',
+            'crosswind': 'Crosswind Calculator'
         };
         updateExtensionHeader(toolTitles[toolName] || 'Tool', true);
         
@@ -362,6 +357,8 @@ function openTool(toolName) {
             calcE6B(); // Initialize E6B calculations
         } else if (toolName === 'e6b-trainer') {
             openUNDE6B(); // Load UND E6B trainer
+        } else if (toolName === 'crosswind') {
+            calcCrosswind(); // Draw initial state
         } else if (toolName === 'great-circle') {
             gcInitMap(); // Initialize Leaflet map
         }
@@ -605,254 +602,39 @@ function swapUnits() {
 }
 
 // ============================================================================
-// GREAT CIRCLE DISTANCE CALCULATOR
-// Depends on: airport-db.js (lookupAirport), Leaflet 1.9.4
+// GREAT CIRCLE CALCULATOR
 // ============================================================================
 
-/**
- * Real-time ICAO/IATA/coord resolver — shows airport name under each input.
- */
-function gcResolveInput(inputId, nameId) {
-    const inputEl = document.getElementById(inputId);
-    const nameEl  = document.getElementById(nameId);
-    if (!inputEl || !nameEl) return;
-
-    const raw = inputEl.value;
-    const val = raw.trim();
-
-    // Don't uppercase coordinate strings
-    const looksLikeCoords = /^-?\d/.test(val);
-    if (!looksLikeCoords) inputEl.value = raw.toUpperCase();
-
-    if (!val) { nameEl.textContent = ''; return; }
-
-    // Try coordinate parse first
-    const coordMatch = val.match(/^(-?\d{1,3}(?:\.\d+)?)[,\s]+(-?\d{1,3}(?:\.\d+)?)$/);
-    if (coordMatch) {
-        const lat = parseFloat(coordMatch[1]);
-        const lon = parseFloat(coordMatch[2]);
-        if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-            nameEl.textContent = '✓ Coordinates';
-            nameEl.style.color = 'var(--success)';
-            return;
-        }
-    }
-
-    // Try airport lookup (3+ chars)
-    if (val.length >= 3) {
-        const airport = lookupAirport(val.toUpperCase());
-        if (airport && airport.name) {
-            const tag = airport.icao ? ` (${airport.icao})` : (airport.iata ? ` (${airport.iata})` : '');
-            nameEl.textContent = `✓ ${airport.name}${tag}`;
-            nameEl.style.color = 'var(--success)';
-        } else {
-            nameEl.textContent = '✗ Not found';
-            nameEl.style.color = '#ff453a';
-        }
-    } else {
-        nameEl.textContent = '';
-    }
-}
-
-/**
- * Swap FROM and TO inputs (values + resolved labels).
- */
-function gcSwap() {
-    const fromEl = document.getElementById('gc-from');
-    const toEl   = document.getElementById('gc-to');
-    if (!fromEl || !toEl) return;
-    const tmp    = fromEl.value;
-    fromEl.value = toEl.value;
-    toEl.value   = tmp;
-    gcResolveInput('gc-from', 'gc-from-name');
-    gcResolveInput('gc-to',   'gc-to-name');
-}
-
-/**
- * Main calculation: distance (NM/km/mi) + initial & final true tracks.
- */
 function calculateGreatCircle() {
-    const fromRaw = (document.getElementById('gc-from')?.value || '').trim();
-    const toRaw   = (document.getElementById('gc-to')?.value   || '').trim();
-
-    const showError = (msg) => {
-        const el = document.getElementById('gc-error');
-        if (el) { el.textContent = msg; el.style.display = 'block'; }
-        const res = document.getElementById('gc-result');
-        if (res) res.style.display = 'none';
-    };
-    const hideError = () => {
-        const el = document.getElementById('gc-error');
-        if (el) el.style.display = 'none';
-    };
-
-    if (!fromRaw || !toRaw) {
-        showError('Enter departure and destination airports or coordinates.');
+    const from = document.getElementById('gc-from').value.trim().toUpperCase();
+    const to = document.getElementById('gc-to').value.trim().toUpperCase();
+    
+    // For demo purposes - in production, you'd need airport coordinates database
+    // This is a simplified example
+    const result = document.getElementById('gc-result');
+    
+    if (!from || !to) {
+        result.innerHTML = '<div style="color:var(--sub-text);">Enter departure and destination airports</div>';
         return;
     }
-
-    const from = lookupAirport(fromRaw);
-    const to   = lookupAirport(toRaw);
-
-    if (!from) { showError(`Could not find airport or parse coordinates: "${fromRaw}"`); return; }
-    if (!to)   { showError(`Could not find airport or parse coordinates: "${toRaw}"`);   return; }
-
-    hideError();
-
-    // Haversine distance
-    const R    = 6371.0;
-    const lat1 = from.lat * Math.PI / 180;
-    const lat2 = to.lat   * Math.PI / 180;
-    const lon1 = from.lon * Math.PI / 180;
-    const lon2 = to.lon   * Math.PI / 180;
-    const dLat = lat2 - lat1;
-    const dLon = lon2 - lon1;
-
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    const distKm = R * c;
-    const distNM = distKm / 1.852;
-    const distMi = distKm / 1.60934;
-
-    // Initial true bearing (departure)
-    const y1 = Math.sin(dLon) * Math.cos(lat2);
-    const x1 = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-    const initialBearing = (Math.atan2(y1, x1) * 180 / Math.PI + 360) % 360;
-
-    // Final true bearing (arrival)
-    const y2 = Math.sin(-dLon) * Math.cos(lat1);
-    const x2 = Math.cos(lat2)  * Math.sin(lat1) - Math.sin(lat2) * Math.cos(lat1) * Math.cos(-dLon);
-    const finalBearing = (Math.atan2(y2, x2) * 180 / Math.PI + 360) % 360;
-
-    // Update cards
-    const fmt = (n, d = 0) => n.toLocaleString('en-US', { maximumFractionDigits: d });
-    document.getElementById('gc-nm').textContent      = fmt(distNM, 1);
-    document.getElementById('gc-km').textContent      = fmt(distKm, 1);
-    document.getElementById('gc-mi').textContent      = fmt(distMi, 1);
-    document.getElementById('gc-initial').textContent = fmt(initialBearing, 1) + '°';
-    document.getElementById('gc-final').textContent   = fmt(finalBearing,   1) + '°';
-
-    const fromLabel = from.icao || from.iata || `${from.lat.toFixed(2)},${from.lon.toFixed(2)}`;
-    const toLabel   = to.icao   || to.iata   || `${to.lat.toFixed(2)},${to.lon.toFixed(2)}`;
-    const routeEl   = document.getElementById('gc-route-label');
-    if (routeEl) routeEl.textContent = `${fromLabel} → ${toLabel}  ·  ${fmt(distNM, 1)} NM  ·  Initial ${fmt(initialBearing, 1)}°T`;
-
-    // Show results, then render map after layout settles
-    const resultEl = document.getElementById('gc-result');
-    if (resultEl) resultEl.style.display = 'block';
-    setTimeout(() => gcRenderMap(from, to, lat1, lon1, lat2, lon2, c), 60);
-}
-
-/**
- * Initialize the Leaflet map. No-op if already created.
- * Called from openTool() so the container is visible before Leaflet measures it.
- */
-function gcInitMap() {
-    if (gcMapInstance) {
-        setTimeout(() => gcMapInstance.invalidateSize(), 80);
-        return;
-    }
-    const el = document.getElementById('gc-map');
-    if (!el || typeof L === 'undefined') return;
-
-    gcMapInstance = L.map('gc-map', {
-        center: [20, 100],
-        zoom: 2,
-        zoomControl: true,
-        attributionControl: true,
-        worldCopyJump: true
-    });
-
-    // CartoDB Dark Matter — matches app dark theme
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 18
-    }).addTo(gcMapInstance);
-}
-
-/**
- * Compute great circle arc points via SLERP with antimeridian unwrapping.
- */
-function gcComputeArcPoints(lat1, lon1, lat2, lon2, angDist, n) {
-    n = n || 100;
-    const pts = [];
-    const sinD = Math.sin(angDist);
-
-    if (sinD < 1e-10) {
-        pts.push([lat1 * 180 / Math.PI, lon1 * 180 / Math.PI]);
-        pts.push([lat2 * 180 / Math.PI, lon2 * 180 / Math.PI]);
-        return pts;
-    }
-
-    for (let i = 0; i <= n; i++) {
-        const f = i / n;
-        const A = Math.sin((1 - f) * angDist) / sinD;
-        const B = Math.sin(f        * angDist) / sinD;
-        const x = A * Math.cos(lat1) * Math.cos(lon1) + B * Math.cos(lat2) * Math.cos(lon2);
-        const y = A * Math.cos(lat1) * Math.sin(lon1) + B * Math.cos(lat2) * Math.sin(lon2);
-        const z = A * Math.sin(lat1)                  + B * Math.sin(lat2);
-        pts.push([
-            Math.atan2(z, Math.sqrt(x * x + y * y)) * 180 / Math.PI,
-            Math.atan2(y, x)                          * 180 / Math.PI
-        ]);
-    }
-
-    // Unwrap longitudes to prevent antimeridian zig-zag
-    for (let i = 1; i < pts.length; i++) {
-        const diff = pts[i][1] - pts[i - 1][1];
-        if (diff >  180) pts[i][1] -= 360;
-        if (diff < -180) pts[i][1] += 360;
-    }
-
-    return pts;
-}
-
-/**
- * Draw (or redraw) the great circle arc and airport markers on the Leaflet map.
- */
-function gcRenderMap(from, to, lat1r, lon1r, lat2r, lon2r, angDist) {
-    gcInitMap();
-    if (!gcMapInstance) return;
-
-    // Remove previous layers
-    if (gcArcLayer)   { gcMapInstance.removeLayer(gcArcLayer);   gcArcLayer   = null; }
-    if (gcFromMarker) { gcMapInstance.removeLayer(gcFromMarker); gcFromMarker = null; }
-    if (gcToMarker)   { gcMapInstance.removeLayer(gcToMarker);   gcToMarker   = null; }
-
-    gcMapInstance.invalidateSize();
-
-    // Draw arc
-    const arcPts = gcComputeArcPoints(lat1r, lon1r, lat2r, lon2r, angDist);
-    gcArcLayer = L.polyline(arcPts, {
-        color: '#0a84ff',
-        weight: 2.5,
-        opacity: 0.9
-    }).addTo(gcMapInstance);
-
-    // Custom dot icons
-    const makeIcon = (color) => L.divIcon({
-        className: '',
-        html: `<div style="width:12px;height:12px;background:${color};border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,0.6);"></div>`,
-        iconSize:   [12, 12],
-        iconAnchor: [6, 6]
-    });
-
-    gcFromMarker = L.marker([from.lat, from.lon], { icon: makeIcon('#0a84ff') })
-        .addTo(gcMapInstance)
-        .bindTooltip(from.name || `${from.lat.toFixed(4)}, ${from.lon.toFixed(4)}`, { direction: 'top', offset: [0, -8] });
-
-    gcToMarker = L.marker([to.lat, to.lon], { icon: makeIcon('#32d74b') })
-        .addTo(gcMapInstance)
-        .bindTooltip(to.name   || `${to.lat.toFixed(4)}, ${to.lon.toFixed(4)}`,   { direction: 'top', offset: [0, -8] });
-
-    // Fit map to arc
-    try {
-        gcMapInstance.fitBounds(gcArcLayer.getBounds(), { padding: [30, 30], maxZoom: 8 });
-    } catch (e) {
-        gcMapInstance.setView([from.lat, from.lon], 4);
-    }
+    
+    // Mock calculation (you'll need real airport coordinates)
+    result.innerHTML = `
+        <div style="color:var(--sub-text); margin-bottom:8px;">Route: ${from} → ${to}</div>
+        <div style="font-size:11px; color:#666; margin-bottom:12px;">
+            Note: Connect airport database for accurate calculations
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div style="background:#1c1c1e; padding:12px; border-radius:8px;">
+                <div style="font-size:11px; color:var(--sub-text);">Distance (NM)</div>
+                <div style="font-size:20px; font-weight:800; color:var(--accent);">--</div>
+            </div>
+            <div style="background:#1c1c1e; padding:12px; border-radius:8px;">
+                <div style="font-size:11px; color:var(--sub-text);">Initial Track</div>
+                <div style="font-size:20px; font-weight:800; color:var(--success);">--°</div>
+            </div>
+        </div>
+    `;
 }
 
 // ============================================================================
@@ -2050,3 +1832,207 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize tools as needed
     console.log('Tools Extension loaded');
 });
+
+// ============================================================================
+// CROSSWIND / HEADWIND CALCULATOR
+// ============================================================================
+
+/**
+ * Main crosswind calculation. Reads inputs, computes components, updates UI.
+ */
+function calcCrosswind() {
+    const rwyRaw  = document.getElementById('cw-rwy')?.value.trim();
+    const wdirRaw = document.getElementById('cw-wdir')?.value.trim();
+    const wspdRaw = document.getElementById('cw-wspd')?.value.trim();
+    const gustRaw = document.getElementById('cw-gust')?.value.trim();
+    const limitEl = document.getElementById('cw-limit');
+
+    const result  = document.getElementById('cw-result');
+    const empty   = document.getElementById('cw-empty');
+
+    // Need at least runway + wind direction + wind speed
+    if (!rwyRaw || !wdirRaw || !wspdRaw) {
+        if (result) result.style.display = 'none';
+        if (empty)  empty.style.display  = 'block';
+        return;
+    }
+
+    const rwy  = parseFloat(rwyRaw);
+    const wdir = parseFloat(wdirRaw);
+    const wspd = parseFloat(wspdRaw);
+    const gust = gustRaw ? parseFloat(gustRaw) : null;
+    const limit = limitEl ? parseFloat(limitEl.value) : 0;
+
+    if (isNaN(rwy) || isNaN(wdir) || isNaN(wspd)) {
+        if (result) result.style.display = 'none';
+        if (empty)  empty.style.display  = 'block';
+        return;
+    }
+
+    // Angle between wind and runway (angular difference)
+    const angleDeg = wdir - rwy;
+    const angleRad = angleDeg * Math.PI / 180;
+
+    const headwind  = wspd * Math.cos(angleRad);   // + = headwind, - = tailwind
+    const crosswind = wspd * Math.sin(angleRad);   // + = from right, - = from left
+
+    // Gust components
+    let gustHW = null, gustXW = null;
+    if (gust !== null && !isNaN(gust)) {
+        gustHW = gust * Math.cos(angleRad);
+        gustXW = gust * Math.sin(angleRad);
+    }
+
+    // Crosswind side label
+    const xwSide = crosswind >= 0 ? 'Crosswind (from right)' : 'Crosswind (from left)';
+    const xwAbs  = Math.abs(crosswind);
+    const hwDisp = headwind >= 0 ? headwind : headwind;  // allow negative (tailwind)
+
+    // Update cards
+    const hwEl   = document.getElementById('cw-hw');
+    const xwEl   = document.getElementById('cw-xw');
+    const xwLbl  = document.getElementById('cw-xw-lbl');
+
+    if (hwEl) {
+        const hwAbs = Math.abs(headwind);
+        hwEl.textContent = (headwind >= 0 ? '' : '−') + hwAbs.toFixed(1);
+        hwEl.style.color = headwind < 0 ? '#ff453a' : 'var(--accent)';
+        hwEl.parentElement.querySelector('.ic-lbl').textContent = headwind >= 0 ? 'Headwind' : 'Tailwind ⚠️';
+    }
+    if (xwEl)  xwEl.textContent  = xwAbs.toFixed(1);
+    if (xwLbl) xwLbl.textContent = xwSide;
+
+    // XW color — warn if approaching limit
+    if (xwEl) {
+        if (limit > 0 && xwAbs >= limit) {
+            xwEl.style.color = '#ff453a';
+        } else if (limit > 0 && xwAbs >= limit * 0.85) {
+            xwEl.style.color = '#ff9f0a';
+        } else {
+            xwEl.style.color = 'var(--success)';
+        }
+    }
+
+    // Gust row
+    const gustRow = document.getElementById('cw-gust-row');
+    if (gustRow && gustHW !== null) {
+        gustRow.style.display = 'grid';
+        const ghwEl  = document.getElementById('cw-ghw');
+        const gxwEl  = document.getElementById('cw-gxw');
+        const gxwLbl = document.getElementById('cw-gxw-lbl');
+        const gxwAbs = Math.abs(gustXW);
+        if (ghwEl) {
+            ghwEl.textContent = (gustHW >= 0 ? '' : '−') + Math.abs(gustHW).toFixed(1);
+            ghwEl.style.color = gustHW < 0 ? '#ff453a' : 'var(--accent)';
+            ghwEl.parentElement.querySelector('.ic-lbl').textContent = gustHW >= 0 ? 'Gust Headwind' : 'Gust Tailwind ⚠️';
+        }
+        if (gxwEl) {
+            gxwEl.textContent = gxwAbs.toFixed(1);
+            gxwEl.style.color = limit > 0 && gxwAbs >= limit ? '#ff453a' : 'var(--accent)';
+        }
+        if (gxwLbl) gxwLbl.textContent = gustXW >= 0 ? 'Gust XW (from right)' : 'Gust XW (from left)';
+    } else if (gustRow) {
+        gustRow.style.display = 'none';
+    }
+
+    // GO/NO-GO status banner
+    const statusEl = document.getElementById('cw-status');
+    if (statusEl) {
+        const checkXW = gustHW !== null ? Math.abs(gustXW) : xwAbs;
+        const hasTailwind = headwind < 0;
+        if (limit > 0 && checkXW >= limit) {
+            statusEl.textContent = `✗ NO-GO  —  Crosswind ${checkXW.toFixed(1)} kt exceeds ${limit} kt limit`;
+            statusEl.style.background = 'rgba(255,69,58,0.15)';
+            statusEl.style.border     = '1px solid rgba(255,69,58,0.5)';
+            statusEl.style.color      = '#ff453a';
+        } else if (hasTailwind) {
+            statusEl.textContent = `⚠️ TAILWIND  —  ${Math.abs(headwind).toFixed(1)} kt — Check POH limits`;
+            statusEl.style.background = 'rgba(255,159,10,0.15)';
+            statusEl.style.border     = '1px solid rgba(255,159,10,0.5)';
+            statusEl.style.color      = '#ff9f0a';
+        } else if (limit > 0) {
+            statusEl.textContent = `✓ GO  —  Crosswind ${xwAbs.toFixed(1)} kt within ${limit} kt limit`;
+            statusEl.style.background = 'rgba(50,215,75,0.12)';
+            statusEl.style.border     = '1px solid rgba(50,215,75,0.4)';
+            statusEl.style.color      = 'var(--success)';
+        } else {
+            statusEl.textContent = `Crosswind ${xwAbs.toFixed(1)} kt  ·  ${headwind >= 0 ? 'Headwind' : 'Tailwind'} ${Math.abs(headwind).toFixed(1)} kt`;
+            statusEl.style.background = 'rgba(255,255,255,0.05)';
+            statusEl.style.border     = '1px solid #444';
+            statusEl.style.color      = '#fff';
+        }
+    }
+
+    // Show results, hide empty state
+    if (result) result.style.display = 'block';
+    if (empty)  empty.style.display  = 'none';
+
+    // Draw SVG diagram
+    cwDrawDiagram(rwy, wdir, wspd, gust, headwind, crosswind);
+}
+
+/**
+ * Draw runway + wind arrow SVG diagram.
+ */
+function cwDrawDiagram(rwyHdg, windDir, windSpd, gust, headwind, crosswind) {
+    const svg = document.getElementById('cw-svg');
+    if (!svg) return;
+
+    const cx = 100, cy = 100, r = 70;
+
+    // Runway rectangle — rotated to rwy heading (0° = north = up)
+    const rwyRad = (rwyHdg - 90) * Math.PI / 180;  // SVG 0° is right, so offset -90°
+
+    // Wind arrow — points in the direction the wind is COMING FROM
+    const windFromRad = (windDir - 90) * Math.PI / 180;
+    const arrowLen = Math.min(60, 20 + windSpd * 1.8);
+    const arrowStartX = cx + Math.cos(windFromRad) * r * 0.9;
+    const arrowStartY = cy + Math.sin(windFromRad) * r * 0.9;
+    const windToRad   = windFromRad + Math.PI;
+    const arrowEndX   = cx + Math.cos(windToRad) * (r * 0.9 - arrowLen);
+    const arrowEndY   = cy + Math.sin(windToRad) * (r * 0.9 - arrowLen);
+
+    svg.innerHTML = `
+        <!-- Compass ring -->
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#333" stroke-width="1"/>
+
+        <!-- N/S/E/W labels -->
+        <text x="${cx}" y="${cy - r - 6}" text-anchor="middle" fill="#555" font-size="9" font-family="'SF Mono',monospace">N</text>
+        <text x="${cx}" y="${cy + r + 14}" text-anchor="middle" fill="#555" font-size="9" font-family="'SF Mono',monospace">S</text>
+        <text x="${cx + r + 8}" y="${cy + 4}" text-anchor="middle" fill="#555" font-size="9" font-family="'SF Mono',monospace">E</text>
+        <text x="${cx - r - 8}" y="${cy + 4}" text-anchor="middle" fill="#555" font-size="9" font-family="'SF Mono',monospace">W</text>
+
+        <!-- Runway (long thin rectangle) -->
+        <rect x="${cx - 8}" y="${cy - 50}" width="16" height="100"
+              rx="3" ry="3"
+              fill="#2c2c2e" stroke="#555" stroke-width="1.5"
+              transform="rotate(${rwyHdg}, ${cx}, ${cy})"/>
+        <!-- Runway centerline dashes -->
+        <line x1="${cx}" y1="${cy - 40}" x2="${cx}" y2="${cy - 20}" stroke="#777" stroke-width="1" stroke-dasharray="4,4"
+              transform="rotate(${rwyHdg}, ${cx}, ${cy})"/>
+        <line x1="${cx}" y1="${cy - 10}" x2="${cx}" y2="${cy + 10}" stroke="#777" stroke-width="1" stroke-dasharray="4,4"
+              transform="rotate(${rwyHdg}, ${cx}, ${cy})"/>
+        <line x1="${cx}" y1="${cy + 20}" x2="${cx}" y2="${cy + 40}" stroke="#777" stroke-width="1" stroke-dasharray="4,4"
+              transform="rotate(${rwyHdg}, ${cx}, ${cy})"/>
+
+        <!-- Wind arrow (from → into wind) -->
+        <defs>
+            <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#0a84ff"/>
+            </marker>
+        </defs>
+        <line x1="${arrowStartX}" y1="${arrowStartY}"
+              x2="${arrowEndX}"   y2="${arrowEndY}"
+              stroke="#0a84ff" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+
+        <!-- Wind speed label near arrow start -->
+        <text x="${arrowStartX + (arrowEndX - arrowStartX) * 0.15}"
+              y="${arrowStartY + (arrowEndY - arrowStartY) * 0.15 - 6}"
+              text-anchor="middle" fill="#0a84ff" font-size="10" font-family="'SF Mono',monospace" font-weight="700">
+            ${windSpd}${gust ? 'G' + gust : ''}kt
+        </text>
+
+        <!-- Centre dot -->
+        <circle cx="${cx}" cy="${cy}" r="3" fill="#555"/>
+    `;
+}
