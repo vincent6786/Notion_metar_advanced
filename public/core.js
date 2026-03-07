@@ -546,6 +546,11 @@
             document.getElementById('apiStatsModal').classList.remove('active');
         }
 
+        function showAdminConsoleLink() {
+            const el = document.getElementById('adminConsoleLink');
+            if (el) el.style.display = 'block';
+        }
+
         function renderAdminLoginPrompt() {
             const content = document.getElementById('apiStatsContent');
             content.innerHTML = `
@@ -580,6 +585,7 @@
                 const data = await res.json();
                 apiStatsCache = data;
                 _adminPasswordCache = password;
+                showAdminConsoleLink(); // reveal shortcut in Settings
                 showAdminPanel(password, 'stats');
             } catch (err) {
                 content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div>Error: ${err.message}</div></div>`;
