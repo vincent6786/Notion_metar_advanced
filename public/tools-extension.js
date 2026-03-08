@@ -1872,7 +1872,7 @@ function _aeroInjectUI(container) {
 
         <!-- ── STICKY HEADER ── always visible, correct background -->
         <div id="aero-header"
-             style="position:sticky;top:0;z-index:10;
+             style="position:sticky;top:0;z-index:20;
                     background:var(--bg);
                     padding:0 0 6px;
                     transition:padding 0.25s;">
@@ -1894,7 +1894,7 @@ function _aeroInjectUI(container) {
                                font-size:18px;padding:4px 6px;cursor:pointer;line-height:1;">×</button>
             </div>
 
-            <!-- Collapsible filters — collapse on scroll down, expand on scroll up -->
+            <!-- Collapsible filters -->
             <div id="aero-filters"
                  style="overflow:hidden;max-height:120px;
                         transition:max-height 0.3s ease,opacity 0.3s ease;
@@ -1929,7 +1929,7 @@ function _aeroInjectUI(container) {
                 </div>
             </div><!-- /#aero-filters -->
 
-            <!-- Count + sync — always visible below filters -->
+            <!-- Count + sync -->
             <div style="display:flex;justify-content:space-between;align-items:center;
                         padding:0 2px;margin-top:2px;">
                 <div id="aero-count" style="font-size:12px;color:#555;font-weight:600;"></div>
@@ -1951,52 +1951,68 @@ function _aeroInjectUI(container) {
             </div>
         </div>
 
-        <!-- Back to top button — bottom-left, appears after scrolling down -->
-        <button id="aero-top-btn" onclick="_aeroScrollTop()"
-                style="position:fixed;bottom:max(24px,env(safe-area-inset-bottom));
-                       left:20px;width:40px;height:40px;border-radius:12px;
-                       background:#1c1c1e;border:1px solid #333;color:#0a84ff;
-                       font-size:16px;cursor:pointer;z-index:50;
-                       opacity:0;pointer-events:none;
-                       transition:opacity 0.25s,transform 0.25s;
-                       transform:translateY(8px);
-                       display:flex;align-items:center;justify-content:center;">
-            ↑
-        </button>
-
     </div>`;
 
     setTimeout(() => {
         document.getElementById('aero-input')?.focus();
+
         // Restore saved default search mode
         const savedMode = localStorage.getItem('aero_default_mode') || 'starts';
         const modeEl = document.getElementById('aero-mode');
         if (modeEl) modeEl.value = savedMode;
 
-        // Scroll-driven collapse: attach to tools-extension-panel (the actual scroll container)
-        const scrollEl = document.getElementById('tools-extension-panel') || document.getElementById('content-scroll') || window;
+        // Offset sticky header below tools-extension-header
+        const toolsHdr = document.getElementById('tools-extension-header');
+        const aeroHdr  = document.getElementById('aero-header');
+        if (toolsHdr && aeroHdr) {
+            const hdrH = toolsHdr.offsetHeight + 16; // +16 for margin-bottom
+            aeroHdr.style.top = hdrH + 'px';
+        }
+
+        // Inject back-to-top button as sibling inside the panel (not inside scroll content)
+        const panel = document.getElementById('tools-extension-panel');
+        let topBtn = document.getElementById('aero-top-btn');
+        if (!topBtn && panel) {
+            topBtn = document.createElement('button');
+            topBtn.id = 'aero-top-btn';
+            topBtn.onclick = _aeroScrollTop;
+            topBtn.textContent = '↑';
+            topBtn.style.cssText = `position:absolute;bottom:max(28px,env(safe-area-inset-bottom));
+                left:20px;width:40px;height:40px;border-radius:12px;
+                background:#1c1c1e;border:1px solid #444;color:#0a84ff;
+                font-size:18px;font-weight:700;cursor:pointer;z-index:3100;
+                opacity:0;pointer-events:none;
+                transition:opacity 0.25s,transform 0.25s;
+                transform:translateY(8px);
+                display:flex;align-items:center;justify-content:center;`;
+            panel.appendChild(topBtn);
+        }
+
+        // Scroll-driven collapse + back-to-top
+        const scrollEl = document.getElementById('tools-extension-panel');
+        if (!scrollEl) return;
         let _aeroLastScrollY = 0;
         let _aeroFiltersVisible = true;
 
         function _aeroOnScroll() {
-            const sy = scrollEl.scrollTop !== undefined ? scrollEl.scrollTop : window.scrollY;
+            const sy    = scrollEl.scrollTop;
             const going = sy - _aeroLastScrollY;
             _aeroLastScrollY = sy;
 
-            // Collapse filters when scrolling down past 60px
+            // Collapse filters on scroll down > 60px
             if (going > 0 && sy > 60 && _aeroFiltersVisible) {
                 _aeroFiltersVisible = false;
                 const f = document.getElementById('aero-filters');
                 if (f) { f.style.maxHeight = '0'; f.style.opacity = '0'; }
             }
-            // Expand filters when scrolling back to top
+            // Expand filters on scroll up or near top
             if ((going < 0 || sy < 30) && !_aeroFiltersVisible) {
                 _aeroFiltersVisible = true;
                 const f = document.getElementById('aero-filters');
                 if (f) { f.style.maxHeight = '120px'; f.style.opacity = '1'; }
             }
 
-            // Back-to-top button visibility
+            // Back-to-top visibility
             const btn = document.getElementById('aero-top-btn');
             if (btn) {
                 if (sy > 200) {
@@ -2012,15 +2028,18 @@ function _aeroInjectUI(container) {
         }
 
         scrollEl.addEventListener('scroll', _aeroOnScroll, { passive: true });
-        // Store cleanup ref on root so we can remove on next open
+        // Cleanup ref on root
         const root = document.getElementById('aero-root');
-        if (root) root._aeroScrollCleanup = () => scrollEl.removeEventListener('scroll', _aeroOnScroll);
+        if (root) root._aeroScrollCleanup = () => {
+            scrollEl.removeEventListener('scroll', _aeroOnScroll);
+            document.getElementById('aero-top-btn')?.remove();
+        };
     }, 120);
 }
 
 // ── Source filter ─────────────────────────────────────────────────────────
 function _aeroScrollTop() {
-    const el = document.getElementById('tools-extension-panel') || document.getElementById('content-scroll');
+    const el = document.getElementById('tools-extension-panel');
     if (el) el.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

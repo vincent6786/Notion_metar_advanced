@@ -2148,27 +2148,18 @@
                 state.tracking  = false;
                 state.settled   = false;
                 state.isHoriz   = false;
-        
-                // Duration proportional to remaining distance — feels snappy, not mechanical
-                const dur = complete
-                    ? Math.max(180, 260 - traveled * 0.35)
-                    : Math.max(130, 190 - traveled * 0.4);
-        
-                // Pure ease-out: fast start, graceful stop — zero overshoot on both paths
-                const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
-        
-                const fromTarget = complete ? (state.dir < 0 ? -state.W : state.W) : 0;
-                const toTarget   = complete ? 0 : (state.dir < 0 ? state.W : -state.W);
-        
-                state.fromEl.style.transition = `transform ${dur}ms ${ease}`;
-                state.toEl.style.transition   = `transform ${dur}ms ${ease}`;
-                state.fromEl.style.transform  = `translateX(${fromTarget}px)`;
-                state.toEl.style.transform    = `translateX(${toTarget}px)`;
-        
-                setTimeout(() => {
+
+                // Instant commit — no CSS transition, panels snap immediately
+                if (complete) {
+                    commit(state.toTab);
+                } else {
+                    // Snap back instantly
+                    resetEl(state.fromEl);
+                    resetEl(state.toEl);
+                    if (state.toWasHidden) state.toEl.classList.add('hidden');
+                    unlockScroll();
                     state.animating = false;
-                    commit(complete ? state.toTab : state.fromTab);
-                }, dur + 16);
+                }
         
             }, { passive: true });
         

@@ -886,7 +886,7 @@
            21. WORLD CLOCK (iOS-style)
         ============================================================ */
         .clock-card {
-            background: var(--bg);
+            background: transparent;
             padding: 16px 4px;
             display: flex;
             justify-content: space-between;
