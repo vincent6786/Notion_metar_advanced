@@ -1,0 +1,23 @@
+{
+  "name": "METAR GO",
+  "short_name": "METAR GO",
+  "description": "Aviation Weather & Electronic Flight Bag",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/appicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
