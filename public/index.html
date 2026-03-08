@@ -1710,146 +1710,153 @@
         ================================================================ -->
         <div id="tool-crosswind" class="tool-view" style="display:none;">
 
-            <!-- Mode toggle pill -->
-            <div style="display:flex;background:#1c1c1e;border:1px solid #333;border-radius:12px;
+            <!-- Mode Toggle -->
+            <div style="display:flex;background:#1a1a1c;border:1px solid #2a2a2a;border-radius:10px;
                         padding:3px;margin-bottom:14px;">
-                <button id="cw-mode-dial" onclick="cwSetMode('dial')"
-                        style="flex:1;padding:10px;border:none;border-radius:9px;font-size:13px;
-                               font-weight:700;cursor:pointer;background:#0a84ff;color:#fff;
-                               transition:all 0.2s;">🧭 Dial</button>
-                <button id="cw-mode-type" onclick="cwSetMode('type')"
-                        style="flex:1;padding:10px;border:none;border-radius:9px;font-size:13px;
-                               font-weight:700;cursor:pointer;background:transparent;color:#555;
-                               transition:all 0.2s;">✏️ Type-in</button>
+                <button id="cw-btn-visual" onclick="cwSetMode('visual')"
+                        style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;
+                               font-weight:700;cursor:pointer;transition:all 0.2s;
+                               background:#0a84ff;color:#fff;">
+                    🧭 Visual
+                </button>
+                <button id="cw-btn-type" onclick="cwSetMode('type')"
+                        style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;
+                               font-weight:700;cursor:pointer;transition:all 0.2s;
+                               background:transparent;color:#555;">
+                    ⌨️ Type In
+                </button>
             </div>
 
-            <!-- ── DIAL MODE ── -->
-            <div id="cw-dial-section">
+            <!-- ════════════════════════════════════
+                 VISUAL MODE
+            ════════════════════════════════════ -->
+            <div id="cw-visual-mode">
 
-                <!-- Wind + Runway status pills -->
-                <div style="display:flex;gap:10px;margin-bottom:12px;">
-                    <div style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:10px;
-                                padding:10px 14px;text-align:center;">
-                        <div style="font-size:10px;color:#555;font-weight:700;
-                                    letter-spacing:0.5px;margin-bottom:3px;">WIND</div>
-                        <div id="cw-wind-display"
-                             style="font-size:16px;font-weight:800;color:#ff9f0a;
-                                    font-family:'SF Mono',monospace;">360° / 0 KT</div>
+                <!-- Both runway ends -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div class="info-card" style="padding:10px 12px;border-left:3px solid #0a84ff;">
+                        <div id="cw-rwy1-label" style="font-size:10px;font-weight:800;color:#0a84ff;
+                                                        letter-spacing:0.5px;margin-bottom:5px;">RWY 36</div>
+                        <div id="cw-rwy1-hdw" style="font-size:12px;color:#888;margin-bottom:2px;">Headwind: 0 kt</div>
+                        <div id="cw-rwy1-xw"  style="font-size:12px;color:#888;">X-Wind: 0 kt</div>
                     </div>
-                    <div style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:10px;
-                                padding:10px 14px;text-align:center;">
-                        <div style="font-size:10px;color:#555;font-weight:700;
-                                    letter-spacing:0.5px;margin-bottom:3px;">RUNWAY</div>
-                        <div id="cw-rwy-display"
-                             style="font-size:16px;font-weight:800;color:#fff;
-                                    font-family:'SF Mono',monospace;">RWY 36/18</div>
+                    <div class="info-card" style="padding:10px 12px;border-left:3px solid #333;">
+                        <div id="cw-rwy2-label" style="font-size:10px;font-weight:800;color:#444;
+                                                        letter-spacing:0.5px;margin-bottom:5px;">RWY 18</div>
+                        <div id="cw-rwy2-hdw" style="font-size:12px;color:#555;margin-bottom:2px;">Tailwind: 0 kt</div>
+                        <div id="cw-rwy2-xw"  style="font-size:12px;color:#555;">X-Wind: 0 kt</div>
                     </div>
                 </div>
 
-                <!-- Compass dial + speed slider -->
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                <!-- Compass + speed slider -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
 
-                    <!-- SVG Compass -->
-                    <div style="flex:1;min-width:0;">
-                        <svg id="cw-compass" viewBox="0 0 280 280"
-                             style="width:100%;max-width:280px;display:block;margin:0 auto;
-                                    touch-action:none;cursor:crosshair;
-                                    user-select:none;-webkit-user-select:none;"></svg>
-                    </div>
+                    <canvas id="cw-canvas" style="touch-action:none;display:block;flex-shrink:0;"></canvas>
 
                     <!-- Vertical speed slider -->
                     <div style="display:flex;flex-direction:column;align-items:center;
-                                gap:6px;flex-shrink:0;padding:4px 0;">
-                        <div style="font-size:10px;color:#555;font-weight:700;
-                                    letter-spacing:0.5px;">SPEED</div>
-                        <div style="position:relative;height:190px;width:40px;
+                                justify-content:space-between;height:240px;flex-shrink:0;">
+                        <div style="font-size:10px;color:#555;font-weight:700;font-family:monospace;">50</div>
+                        <div style="position:relative;height:190px;width:28px;
                                     display:flex;align-items:center;justify-content:center;">
-                            <!-- Track visual -->
-                            <div style="position:absolute;width:8px;height:100%;
-                                        background:linear-gradient(to top,#ff9f0a22,#ff9f0a55);
-                                        border:1px solid #444;border-radius:4px;
-                                        pointer-events:none;"></div>
-                            <input type="range" id="cw-spd-slider"
-                                   min="0" max="50" value="0" step="1"
-                                   orient="vertical"
-                                   style="writing-mode:vertical-lr;direction:rtl;
-                                          -webkit-appearance:slider-vertical;
-                                          appearance:slider-vertical;
-                                          width:40px;height:190px;
-                                          cursor:pointer;accent-color:#ff9f0a;
-                                          background:transparent;"
-                                   oninput="cwSpdSliderChange(this.value)">
+                            <input type="range" id="cw-vslider" min="0" max="50" value="0" step="1"
+                                   style="width:180px;cursor:pointer;accent-color:#ff9f0a;
+                                          transform:rotate(-90deg);transform-origin:center center;
+                                          position:absolute;"
+                                   oninput="cwOnSpeedChange(this.value)" />
                         </div>
-                        <div id="cw-spd-val"
-                             style="font-size:16px;font-weight:800;color:#ff9f0a;
-                                    font-family:'SF Mono',monospace;min-width:28px;
-                                    text-align:center;">0</div>
-                        <div style="font-size:10px;color:#555;font-weight:700;">KT</div>
+                        <div style="font-size:10px;color:#555;font-weight:700;font-family:monospace;">0</div>
                     </div>
                 </div>
 
+                <!-- Interaction hint -->
+                <div style="text-align:center;font-size:10px;color:#333;margin-bottom:10px;letter-spacing:0.3px;">
+                    Drag inner disc → runway heading &nbsp;·&nbsp; Drag outer ring → wind direction
+                </div>
+
+                <!-- Wind readout display -->
+                <div id="cw-wind-readout"
+                     style="background:#111;border:1px solid #222;border-radius:10px;
+                            padding:11px 16px;text-align:center;margin-bottom:10px;
+                            font-family:'SF Mono',monospace;font-size:20px;font-weight:800;
+                            color:#ff9f0a;letter-spacing:2px;">
+                    360° / 0 KT
+                </div>
+
                 <!-- Gust + Limit row -->
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                    <div style="font-size:12px;color:#555;font-weight:700;white-space:nowrap;">Gust:</div>
-                    <input type="number" id="cw-gust-dial" class="conv-inp"
-                           placeholder="optional" min="0"
-                           style="flex:1;height:34px;font-size:13px;"
-                           oninput="cwCalcAndShow()">
-                    <div style="font-size:12px;color:#555;font-weight:700;white-space:nowrap;">Limit:</div>
-                    <select id="cw-limit-dial" class="stealth-select"
-                            onchange="cwCalcAndShow()"
-                            style="flex:1.2;height:34px;font-size:12px;">
-                        <option value="15">15 kt</option>
-                        <option value="12">12 kt</option>
-                        <option value="20">20 kt</option>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <div class="conv-lbl" style="margin:0;white-space:nowrap;font-size:12px;">Gust (kt):</div>
+                    <input type="number" id="cw-gust-v" class="conv-inp" placeholder="--" min="0"
+                           style="flex:1;height:34px;font-size:13px;" oninput="cwOnGustChange(this.value)">
+                    <div class="conv-lbl" style="margin:0;white-space:nowrap;font-size:12px;">Limit:</div>
+                    <select id="cw-limit-v" class="stealth-select" onchange="cwOnLimitChange(this.value)"
+                            style="flex:1.5;height:34px;font-size:12px;">
+                        <option value="15">15 kt — EVA Solo</option>
+                        <option value="12">12 kt — EVA Dual</option>
+                        <option value="20">20 kt — C172 POH</option>
                         <option value="25">25 kt</option>
                         <option value="0">No limit</option>
                     </select>
                 </div>
 
-                <!-- Dial hint -->
-                <div style="font-size:11px;color:#444;text-align:center;margin-bottom:4px;">
-                    Drag outer ring △ to set wind · Drag center runway to rotate heading
+                <!-- GO / NO-GO status -->
+                <div id="cw-status-v"
+                     style="text-align:center;padding:10px 14px;border-radius:10px;font-size:13px;
+                            font-weight:800;letter-spacing:0.5px;display:none;margin-bottom:8px;
+                            background:rgba(255,255,255,0.04);border:1px solid #333;color:#888;">
+                </div>
+
+                <!-- Gust component row (appears when gust entered) -->
+                <div id="cw-gust-result-v" style="display:none;margin-top:6px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div class="info-card" style="text-align:center;padding:10px 8px;">
+                            <div class="ic-lbl" id="cw-ghw-lbl-v">Gust Headwind</div>
+                            <div id="cw-ghw-v" style="font-size:20px;font-weight:700;
+                                                       color:var(--accent);font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);">kt</div>
+                        </div>
+                        <div class="info-card" style="text-align:center;padding:10px 8px;">
+                            <div id="cw-gxw-lbl-v" class="ic-lbl">Gust Crosswind</div>
+                            <div id="cw-gxw-v" style="font-size:20px;font-weight:700;
+                                                       color:var(--success);font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);">kt</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ── TYPE-IN MODE ── -->
-            <div id="cw-type-section" style="display:none;">
+            <!-- ════════════════════════════════════
+                 TYPE IN MODE
+            ════════════════════════════════════ -->
+            <div id="cw-type-mode" style="display:none;">
                 <div class="info-card" style="margin-bottom:12px;">
                     <div class="conv-row">
                         <div style="flex:1">
-                            <div class="conv-lbl" style="margin-bottom:6px;">Runway Heading (°)</div>
-                            <input type="number" id="cw-rwy-type" class="conv-inp"
-                                   placeholder="360" min="1" max="360"
-                                   oninput="cwTypeChange()" onkeydown="if(event.key==='Enter')cwTypeChange()">
+                            <div class="conv-lbl" style="margin-bottom:6px;">Runway (°)</div>
+                            <input type="number" id="cw-rwy" class="conv-inp" placeholder="360"
+                                   min="0" max="360" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
                         </div>
                         <div style="flex:1">
-                            <div class="conv-lbl" style="margin-bottom:6px;">Wind Direction (°)</div>
-                            <input type="number" id="cw-wdir-type" class="conv-inp"
-                                   placeholder="270" min="0" max="360"
-                                   oninput="cwTypeChange()" onkeydown="if(event.key==='Enter')cwTypeChange()">
+                            <div class="conv-lbl" style="margin-bottom:6px;">Wind Dir (°)</div>
+                            <input type="number" id="cw-wdir" class="conv-inp" placeholder="270"
+                                   min="0" max="360" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
                         </div>
                     </div>
                     <div class="conv-row">
                         <div style="flex:1">
                             <div class="conv-lbl" style="margin-bottom:6px;">Wind Speed (kt)</div>
-                            <input type="number" id="cw-wspd-type" class="conv-inp"
-                                   placeholder="10" min="0"
-                                   oninput="cwTypeChange()" onkeydown="if(event.key==='Enter')cwTypeChange()">
+                            <input type="number" id="cw-wspd" class="conv-inp" placeholder="10"
+                                   min="0" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
                         </div>
                         <div style="flex:1">
-                            <div class="conv-lbl" style="margin-bottom:6px;">Gust (kt)
-                                <span style="color:#555;font-weight:400;">optional</span></div>
-                            <input type="number" id="cw-gust-type" class="conv-inp"
-                                   placeholder="--" min="0"
-                                   oninput="cwTypeChange()" onkeydown="if(event.key==='Enter')cwTypeChange()">
+                            <div class="conv-lbl" style="margin-bottom:6px;">Gust (kt) <span style="color:#555;font-weight:400;">optional</span></div>
+                            <input type="number" id="cw-gust" class="conv-inp" placeholder="--"
+                                   min="0" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
                         </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
                         <div class="conv-lbl" style="margin:0;white-space:nowrap;">XWind Limit:</div>
-                        <select id="cw-limit-type" class="stealth-select"
-                                onchange="cwTypeChange()"
-                                style="flex:1;height:34px;font-size:13px;">
+                        <select id="cw-limit" class="stealth-select" onchange="calcCrosswind()" style="flex:1;height:34px;font-size:13px;">
                             <option value="15">15 kt — EVA Solo / C172 Demo</option>
                             <option value="12">12 kt — EVA Dual Student</option>
                             <option value="20">20 kt — C172 POH Max</option>
@@ -1858,52 +1865,44 @@
                         </select>
                     </div>
                 </div>
-            </div>
 
-            <!-- ── RESULTS (shared by both modes) ── -->
-            <div id="cw-result" style="display:none;">
-                <div id="cw-status"
-                     style="text-align:center;padding:12px;border-radius:10px;font-size:14px;
-                            font-weight:800;letter-spacing:0.5px;margin-bottom:12px;"></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                    <div class="info-card" style="text-align:center;padding:14px 8px;">
-                        <div class="ic-lbl" id="cw-hw-lbl">Headwind</div>
-                        <div id="cw-hw"
-                             style="font-size:26px;font-weight:800;color:var(--accent);
-                                    margin-top:4px;font-family:'SF Mono',monospace;">--</div>
-                        <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                <div id="cw-result" style="display:none;">
+                    <div id="cw-status" style="text-align:center;padding:12px;border-radius:10px;font-size:15px;font-weight:800;letter-spacing:0.5px;margin-bottom:12px;"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                        <div class="info-card" style="text-align:center;padding:14px 8px;">
+                            <div class="ic-lbl" id="cw-hw-lbl">Headwind</div>
+                            <div id="cw-hw" style="font-size:26px;font-weight:800;color:var(--accent);margin-top:4px;font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                        </div>
+                        <div class="info-card" style="text-align:center;padding:14px 8px;">
+                            <div id="cw-xw-lbl" class="ic-lbl">Crosswind</div>
+                            <div id="cw-xw" style="font-size:26px;font-weight:800;color:var(--success);margin-top:4px;font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                        </div>
                     </div>
-                    <div class="info-card" style="text-align:center;padding:14px 8px;">
-                        <div id="cw-xw-lbl" class="ic-lbl">Crosswind</div>
-                        <div id="cw-xw"
-                             style="font-size:26px;font-weight:800;color:var(--success);
-                                    margin-top:4px;font-family:'SF Mono',monospace;">--</div>
-                        <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                    <div id="cw-gust-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                        <div class="info-card" style="text-align:center;padding:10px 8px;">
+                            <div class="ic-lbl" id="cw-ghw-lbl">Gust Headwind</div>
+                            <div id="cw-ghw" style="font-size:20px;font-weight:700;color:var(--accent);margin-top:4px;font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                        </div>
+                        <div class="info-card" style="text-align:center;padding:10px 8px;">
+                            <div id="cw-gxw-lbl" class="ic-lbl">Gust Crosswind</div>
+                            <div id="cw-gxw" style="font-size:20px;font-weight:700;color:var(--success);margin-top:4px;font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                        </div>
+                    </div>
+                    <div class="info-card" style="padding:16px;text-align:center;">
+                        <div class="ic-lbl" style="margin-bottom:10px;">Runway Diagram</div>
+                        <svg id="cw-svg" viewBox="0 0 200 200" width="180" height="180"
+                             style="display:block;margin:0 auto;overflow:visible;"></svg>
                     </div>
                 </div>
-                <div id="cw-gust-row"
-                     style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                    <div class="info-card" style="text-align:center;padding:10px 8px;">
-                        <div class="ic-lbl" id="cw-ghw-lbl">Gust Headwind</div>
-                        <div id="cw-ghw"
-                             style="font-size:20px;font-weight:700;color:var(--accent);
-                                    margin-top:4px;font-family:'SF Mono',monospace;">--</div>
-                        <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
-                    </div>
-                    <div class="info-card" style="text-align:center;padding:10px 8px;">
-                        <div id="cw-gxw-lbl" class="ic-lbl">Gust Crosswind</div>
-                        <div id="cw-gxw"
-                             style="font-size:20px;font-weight:700;color:var(--success);
-                                    margin-top:4px;font-family:'SF Mono',monospace;">--</div>
-                        <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
-                    </div>
+                <div id="cw-empty" style="text-align:center;padding:28px 0;color:var(--sub-text);font-size:13px;">
+                    Enter runway heading and wind to calculate
                 </div>
             </div>
 
-            <div id="cw-empty"
-                 style="text-align:center;padding:20px 0;color:var(--sub-text);font-size:13px;">
-                Adjust the dial or enter values to calculate
-            </div>
         </div>
 
         <!-- ================================================================
@@ -1983,6 +1982,24 @@
     <div id="tab-settings" class="view-section">
         <div class="section-title" style="margin-top:0;">Startup Preferences</div>
 
+        <!-- Aviation Tools Preferences -->
+        <div class="section-title">Aviation Tools</div>
+        <div class="info-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div class="conv-lbl" style="margin:0;">Abbreviation Search Default</div>
+                    <div style="font-size:11px;color:var(--sub-text);margin-top:3px;">Mode used when opening Abbreviations</div>
+                </div>
+                <select id="aeroDefaultMode" class="stealth-select"
+                        onchange="localStorage.setItem('aero_default_mode',this.value)"
+                        style="width:130px;height:32px;font-size:12px;">
+                    <option value="starts">Starts with</option>
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact match</option>
+                </select>
+            </div>
+        </div>
+
         <!-- Favorite Airports -->
         <div class="section-title">Favorite Airports</div>
         <div class="info-card">
@@ -2055,24 +2072,6 @@
                     <input type="checkbox" id="toggleNoGoBanner" onchange="toggleNoGoBanner()" checked>
                     <span class="toggle-slider"></span>
                 </label>
-            </div>
-        </div>
-
-        <!-- Aviation Tools Preferences -->
-        <div class="section-title">Aviation Tools</div>
-        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                    <div style="font-weight:700;margin-bottom:4px;">Abbreviations: Search Mode</div>
-                    <div style="font-size:12px;color:var(--sub-text);">Default search behaviour when opening the tool</div>
-                </div>
-                <select id="aeroSearchModeDefault" class="stealth-select"
-                        onchange="saveAeroSearchMode(this.value)"
-                        style="width:120px;height:32px;font-size:12px;font-weight:700;">
-                    <option value="starts">Starts with</option>
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact match</option>
-                </select>
             </div>
         </div>
 
@@ -2770,6 +2769,11 @@
     if (!navigator.onLine) showOfflineBanner(null);
 
     window.__efbOffline = { showBanner: showOfflineBanner, hideBanner: hideOfflineBanner };
+
+    // Restore saved settings UI values
+    const _savedAeroMode = localStorage.getItem('aero_default_mode') || 'starts';
+    const _aeroModeEl = document.getElementById('aeroDefaultMode');
+    if (_aeroModeEl) _aeroModeEl.value = _savedAeroMode;
 })();
 </script>
 
