@@ -299,6 +299,11 @@ function closeToolsExtension() {
         toolsExtensionState.isOpen = false;
         toolsExtensionState.currentTool = null;
         toolsExtensionState.isFullScreen = false;
+
+        // Clean up abbreviations scroll listener and back-to-top button
+        const aeroRoot = document.getElementById('aero-root');
+        if (aeroRoot?._aeroScrollCleanup) { aeroRoot._aeroScrollCleanup(); }
+        document.getElementById('aero-top-btn')?.remove();
         
         console.log('Extension closed, overlay removed');
     }
