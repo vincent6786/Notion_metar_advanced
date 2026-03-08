@@ -41,7 +41,13 @@ async function validateAccessCode(code) {
     if (key.length < 4) return false;
     try {
         const user = await kv.get(`efb:users:${key}`);
-        return !!(user && user.active);
+        if (!(user && user.active)) return false;
+        // Increment per-user daily call counter (fire and forget)
+        const today = new Date();
+        const dateKey = `${today.getUTCFullYear()}-${String(today.getUTCMonth()+1).padStart(2,'0')}-${String(today.getUTCDate()).padStart(2,'0')}`;
+        kv.incr(`efb:users:${key}:calls:${dateKey}`).catch(() => {});
+        kv.expire(`efb:users:${key}:calls:${dateKey}`, 172800).catch(() => {});
+        return true;
     } catch(e) {
         console.error('[Access] Redis lookup failed:', e.message);
         return true; // Fail open on Redis errors — don't block real users
