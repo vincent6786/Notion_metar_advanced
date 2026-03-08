@@ -4,23 +4,49 @@
             height: 100%;
         }
 
-        /* ── Fixed chrome: only #content-scroll scrolls ── */
-        body {
-            height: 100dvh;
-            overflow: hidden !important;
+        /* ── Fixed chrome: only #content-scroll scrolls (mobile only) ── */
+        @media (max-width: 819px) {
+            body {
+                height: 100dvh;
+                overflow: hidden !important;
+            }
+            #content-scroll {
+                flex: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: none;
+                padding: 12px max(12px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+            }
         }
 
-        /* Content scroll container */
-        #content-scroll {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior-y: none;
-            padding: 12px max(12px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+        /* ── Tablet/desktop: normal page scroll, no fixed chrome ── */
+        @media (min-width: 820px) {
+            html { height: auto; }
+            body { height: auto; overflow: visible !important; }
+            #content-scroll {
+                overflow: visible;
+                padding: 0;
+                flex: none;
+                display: contents; /* let children participate in body grid */
+            }
         }
 
         body { overflow-x: hidden; }
+
+        /* ── Mobile chrome: flex column, sticky top bar + tab bar ── */
+        @media (max-width: 819px) {
+            .top-bar,
+            .tabs,
+            .quick-select-row {
+                flex-shrink: 0;
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+            }
+            .top-bar          { margin-bottom: 8px; }
+            .quick-select-row { margin-bottom: 0; }
+            .tabs             { margin-bottom: 0; }
+        }
         
         /* Swipe panels — no backface hack needed with fixed chrome layout */
         .view-section {
@@ -70,20 +96,6 @@
             overscroll-behavior-y: none;
             transition: background-color 0.3s, color 0.3s;
         }
-
-        /* Chrome elements never shrink, and carry their own horizontal padding */
-        .top-bar,
-        .tabs,
-        .quick-select-row {
-            flex-shrink: 0;
-            padding-left: max(12px, env(safe-area-inset-left));
-            padding-right: max(12px, env(safe-area-inset-right));
-        }
-
-        /* Spacing between chrome elements */
-        .top-bar          { margin-bottom: 8px; }
-        .quick-select-row { margin-bottom: 0; }
-        .tabs             { margin-bottom: 0; }
 
         /* ============================================================
            2. MODAL (FLOATING SHEET STYLE)
@@ -1408,11 +1420,11 @@
                 align-items: start;
             }
 
-            .top-bar          { grid-area: topbar;  }
-            .quick-select-row { grid-area: chips;   }
+            .top-bar          { grid-area: topbar; padding-left: 0; padding-right: 0; }
+            .quick-select-row { grid-area: chips;  padding-left: 0; padding-right: 0; }
             #minBanner        { grid-area: banner;  }
             #offlineBanner    { grid-area: banner;  }
-            .tabs             { grid-area: sidenav; }
+            .tabs             { grid-area: sidenav; padding-left: 0; padding-right: 0; }
             .view-section     { grid-area: content; }
             .safety-footer    { grid-area: sfooter; }
 
