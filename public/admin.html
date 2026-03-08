@@ -216,19 +216,6 @@
   .progress-bar  { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
 
   /* ── Copy button ── */
-  .copy-code-btn {
-    background: rgba(10,132,255,0.1);
-    border: 1px solid rgba(10,132,255,0.25);
-    color: var(--accent);
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    letter-spacing: 1px;
-  }
-  .copy-code-btn:active { opacity: 0.6; }
-
   /* ── Toasts ── */
   #toast {
     position: fixed;
@@ -309,39 +296,6 @@
   .key-bar-title { font-weight: 700; font-size: 13px; }
   .key-bar-pct { font-size: 13px; font-weight: 700; }
 
-  /* ── QR / Share card (for giving codes to friends) ── */
-  .share-card {
-    background: linear-gradient(135deg, #0a1628, #0d1f3c);
-    border: 1px solid rgba(10,132,255,0.3);
-    border-radius: 14px;
-    padding: 20px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .share-card::before {
-    content: '✈️';
-    position: absolute;
-    font-size: 120px;
-    right: -20px;
-    top: -20px;
-    opacity: 0.05;
-    line-height: 1;
-  }
-  .share-code-display {
-    font-family: var(--mono);
-    font-size: 28px;
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: 3px;
-    margin: 8px 0 4px;
-  }
-  .share-url {
-    font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    word-break: break-all;
-    margin-bottom: 14px;
-  }
   /* ── Edit drawer overlay ── */
   .drawer-overlay {
     position: fixed; inset: 0; z-index: 100;
@@ -482,20 +436,21 @@
         <div class="msg" id="createMsg"></div>
       </div>
 
-      <!-- Share card — shown after creation -->
-      <div id="shareCard" style="display:none;" class="share-card">
-        <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">New Code Ready</div>
-        <div class="share-code-display" id="shareCodeText">—</div>
-        <div class="share-url" id="shareAppUrl"></div>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-          <button class="copy-code-btn" onclick="copyCode()" id="copyCodeBtn">📋 Copy Code</button>
-          <button class="copy-code-btn" onclick="copyMessage()" id="copyMsgBtn">💬 Copy Message</button>
-        </div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:10px;">Tap a button above to copy, then share via WhatsApp, iMessage, etc.</div>
-      </div>
 
       <!-- User list -->
       <div class="section-lbl">All Access Codes</div>
+      <div id="apiUsageBanner" style="display:none; background:var(--card2); border:1px solid var(--border2); border-radius:10px; padding:12px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--sub);margin-bottom:3px;">API Usage Today</div>
+          <div id="apiUsageText" style="font-size:14px;font-weight:700;">— / —</div>
+        </div>
+        <div style="flex:1;min-width:120px;">
+          <div class="progress-wrap" style="margin-top:0;">
+            <div id="apiUsageBar" class="progress-bar" style="width:0%;background:var(--success);"></div>
+          </div>
+          <div id="apiUsagePct" style="font-size:11px;color:var(--sub);margin-top:4px;text-align:right;">0% used</div>
+        </div>
+      </div>
       <div id="userList"><div class="empty">Loading...</div></div>
     </div>
 
@@ -552,11 +507,27 @@ async function doLogin() {
     document.getElementById('mainPanel').style.display  = 'block';
     // Pre-populate stats tab with data we just fetched
     window._statsData = statsData;
+    updateApiUsageBanner(statsData);
     loadUsers();
   } catch(e) {
     msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Network error';
     btn.disabled = false; btn.textContent = 'Unlock →';
   }
+}
+
+// ── API Usage Banner ──────────────────────────────────────────────────────
+function updateApiUsageBanner(data) {
+  const banner = document.getElementById('apiUsageBanner');
+  if (!data?.aggregate || !banner) return;
+  const { total_usage, total_limit, total_remaining, percentage } = data.aggregate;
+  const color = percentage >= 90 ? 'var(--danger)' : percentage >= 70 ? 'var(--warn)' : 'var(--success)';
+  banner.style.display = 'flex';
+  document.getElementById('apiUsageText').innerHTML =
+    `<span style="color:${color}">${total_usage.toLocaleString()}</span> <span style="color:var(--sub);font-weight:400;font-size:12px;">/ ${total_limit.toLocaleString()} calls today</span>`;
+  document.getElementById('apiUsageBar').style.width = percentage + '%';
+  document.getElementById('apiUsageBar').style.background = color;
+  document.getElementById('apiUsagePct').textContent = `${total_remaining.toLocaleString()} remaining · ${percentage}% used`;
+  document.getElementById('apiUsagePct').style.color = color;
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────
@@ -645,10 +616,10 @@ async function createCode() {
       msg.style.color = 'var(--danger)'; msg.textContent = '❌ Code already exists';
     } else if (data.success) {
       msg.style.color = 'var(--success)'; msg.textContent = `✅ Created ${data.code}`;
-      showShareCard(data.code, name);
       document.getElementById('newName').value = '';
       document.getElementById('newCode').value = '';
-      loadUsers();
+      await loadUsers();                 // refresh list so drawer can find the new user
+      openDrawer(data.code);             // open edit drawer to share immediately
     } else {
       msg.style.color = 'var(--danger)'; msg.textContent = `❌ ${data.error || 'Failed'}`;
     }
@@ -656,33 +627,6 @@ async function createCode() {
     msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Network error';
   }
   btn.disabled = false; btn.textContent = 'Create Code →';
-}
-
-// ── Share card ─────────────────────────────────────────────────────────────
-function showShareCard(code, name) {
-  document.getElementById('shareCodeText').textContent = code;
-  document.getElementById('shareAppUrl').textContent   = APP_URL;
-  document.getElementById('shareCard').style.display   = 'block';
-  window._latestCode = code;
-  window._latestName = name;
-  document.getElementById('shareCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function copyCode() {
-  navigator.clipboard.writeText(window._latestCode || '').then(() => toast('✅ Code copied!'));
-  const btn = document.getElementById('copyCodeBtn');
-  btn.textContent = '✓ Copied!';
-  setTimeout(() => btn.textContent = '📋 Copy Code', 1500);
-}
-
-function copyMessage() {
-  const code = window._latestCode || '';
-  const name = window._latestName || '';
-  const msg  = `Hi ${name}! 👋\n\nYou've been given access to METAR GO, a weather app for pilots.\n\n🔑 Your access code: ${code}\n✈️ Open the app: ${APP_URL}\n\nEnter your code on the first screen. Let me know if you need help!`;
-  navigator.clipboard.writeText(msg).then(() => toast('💬 Message copied — paste into WhatsApp or iMessage!'));
-  const btn = document.getElementById('copyMsgBtn');
-  btn.textContent = '✓ Copied!';
-  setTimeout(() => btn.textContent = '💬 Copy Message', 1500);
 }
 
 // ── Revoke / Restore ───────────────────────────────────────────────────────
@@ -874,7 +818,6 @@ async function drawerDelete() {
 // Focus password on load
 window.addEventListener('load', () => {
   document.getElementById('loginPassword').focus();
-  document.getElementById('shareAppUrl').textContent = window.location.origin;
 });
 </script>
 </body>
