@@ -223,7 +223,7 @@ function openToolsExtension() {
         toolsExtension.style.left = '0';
         toolsExtension.style.right = '0';
         toolsExtension.style.bottom = '0';
-        toolsExtension.style.zIndex = '1000';
+        toolsExtension.style.zIndex = '3000';
         toolsExtension.style.background = 'var(--bg)';
         toolsExtension.style.overflowY = 'auto';
         toolsExtension.style.WebkitOverflowScrolling = 'touch';

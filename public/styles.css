@@ -425,10 +425,11 @@
         .quick-select-row {
             display: flex;
             gap: 8px;
-            margin-bottom: 8px;
+            margin-bottom: -12px; /* cancel body flex-gap so row is flush with tabs */
             overflow-x: auto;
             scrollbar-width: none;
             min-height: 32px;
+            touch-action: pan-x; /* horizontal scroll only, never triggers tab swipe */
         }
         .quick-chip {
             background: var(--card-bg);

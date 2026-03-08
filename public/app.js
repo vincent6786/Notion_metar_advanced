@@ -2036,6 +2036,7 @@
                     t.closest('canvas')      || t.closest('.modal-overlay') ||
                     t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
                     t.closest('.tabs')       ||   // ← let tab bar scroll freely
+                    t.closest('.quick-select-row') || // ← let history row scroll horizontally
                     t.closest('#tools-extension-panel') ||  // ← tools panel open: block tab swipe
                     (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) ||
                     window._sortMode?.active

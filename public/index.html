@@ -75,7 +75,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version">CLOUD EDITION · v3.6.0</div> 
+        <div class="launch-version">CLOUD EDITION · v3.3.0</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -563,7 +563,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.6.0 · Cloud Edition · Quick reference for all features</div>
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.3.0 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -1987,24 +1987,6 @@
     <div id="tab-settings" class="view-section">
         <div class="section-title" style="margin-top:0;">Startup Preferences</div>
 
-        <!-- Aviation Tools Preferences -->
-        <div class="section-title">Aviation Tools</div>
-        <div class="info-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                    <div class="conv-lbl" style="margin:0;">Abbreviation Search Default</div>
-                    <div style="font-size:11px;color:var(--sub-text);margin-top:3px;">Mode used when opening Abbreviations</div>
-                </div>
-                <select id="aeroDefaultMode" class="stealth-select"
-                        onchange="localStorage.setItem('aero_default_mode',this.value)"
-                        style="width:130px;height:32px;font-size:12px;">
-                    <option value="starts">Starts with</option>
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact match</option>
-                </select>
-            </div>
-        </div>
-
         <!-- Favorite Airports -->
         <div class="section-title">Favorite Airports</div>
         <div class="info-card">
@@ -2117,6 +2099,24 @@
                 </div>
             </div>
             
+        </div>
+
+        <!-- Aviation Tools Preferences -->
+        <div class="section-title">Aviation Tools</div>
+        <div class="info-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div class="conv-lbl" style="margin:0;">Abbreviation Search Default</div>
+                    <div style="font-size:11px;color:var(--sub-text);margin-top:3px;">Mode used when opening Abbreviations</div>
+                </div>
+                <select id="aeroDefaultMode" class="stealth-select"
+                        onchange="localStorage.setItem('aero_default_mode',this.value)"
+                        style="width:130px;height:32px;font-size:12px;">
+                    <option value="starts">Starts with</option>
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact match</option>
+                </select>
+            </div>
         </div>
         
         <!-- ── DASHBOARD CARD STYLE (only visible when Dashboard Mode is ON) ── -->
@@ -2544,7 +2544,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.6.0</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.3.0</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
