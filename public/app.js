@@ -1901,285 +1901,63 @@
         }
 
         // ================================================================
-        // SMOOTH SWIPE NAVIGATION — v3 (no DOM reparenting, no flicker)
+        // SWIPE NAVIGATION — minimal gesture detector, delegates to setTab()
         // ================================================================
         (function () {
             if (!('ontouchstart' in window)) return;
-        
-            const state = {
-                tracking:  false,
-                settled:   false,
-                isHoriz:   false,
-                startX: 0, startY: 0, curX: 0,
-                fromEl: null, toEl: null,
-                toWasHidden: false,
-                fromTab: null, toTab: null,
-                dir: 0,
-                W: 0,
-                raf: null,
-                animating: false
-            };
-        
-            function getOrder() {
-                const on = document.getElementById('toggleMultiDashboard')?.checked;
-                return on
-                    ? ['dashboard','weather','info','atc','world','tools','settings','help']
-                    : ['metar','taf','info','atc','world','tools','settings','help'];
+
+            let sx = 0, sy = 0, settled = false, isHoriz = false, locked = false;
+            const MIN_DIST = 40;   // px before we commit
+            const ANGLE    = 0.75; // tan(~37°) — must be more horizontal than this
+
+            function blocked(t) {
+                return t.closest('.quick-select-row') ||
+                       t.closest('#tools-extension-panel') ||
+                       (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) ||
+                       window._sortMode?.active;
             }
-        
-            // Freeze an element visually at its current position using fixed layout.
-            // The element stays in the DOM — no reparenting, no reflow.
-            function freezeAtRect(el, rect) {
-                el.style.cssText = `
-                    position: fixed !important;
-                    top:    ${rect.top}px !important;
-                    left:   0 !important;
-                    width:  100% !important;
-                    height: ${window.innerHeight - rect.top}px !important;
-                    overflow-y: auto;
-                    background: var(--bg);
-                    z-index: 200;
-                    transition: none;
-                    transform: translateX(0);
-                    margin: 0;
-                    padding: 0 12px;
-                    box-sizing: border-box;
-                    -webkit-overflow-scrolling: touch;
-                `;
-            }
-        
-            // Park the incoming panel off-screen (same rect, different translateX).
-            function parkOffscreen(el, rect, dir) {
-                el.style.cssText = `
-                    position: fixed !important;
-                    top:    ${rect.top}px !important;
-                    left:   0 !important;
-                    width:  100% !important;
-                    height: ${window.innerHeight - rect.top}px !important;
-                    overflow-y: auto;
-                    background: var(--bg);
-                    z-index: 199;
-                    transition: none;
-                    display: block !important;
-                    transform: translateX(${dir < 0 ? window.innerWidth : -window.innerWidth}px);
-                    margin: 0;
-                    padding: 0 12px;
-                    box-sizing: border-box;
-                    -webkit-overflow-scrolling: touch;
-                `;
-                el.classList.remove('hidden');
-            }
-        
-            // Fully reset an element's inline styles back to CSS-class-driven defaults
-            function resetEl(el) {
-                el.style.cssText = '';
-            }
-        
-            function unlockScroll() {
-                const _scrollEl = document.getElementById('content-scroll');
-                if (_scrollEl) _scrollEl.style.overflow = '';
-                document.body.style.touchAction = '';
-            }
-        
-            // Activate the winning tab cleanly after animation completes
-            function commit(name) {
-                resetEl(state.fromEl);
-                resetEl(state.toEl);
-                if (state.toWasHidden) state.toEl.classList.add('hidden');
-                unlockScroll();
-        
-                document.querySelectorAll('.view-section').forEach(el => {
-                    el.classList.remove('active');
-                    el.style.display = '';
-                });
-                document.querySelectorAll('.tab').forEach(t => {
-                    t.classList.remove('active');
-                    if (t.getAttribute('onclick')?.includes(`'${name}'`)) {
-                        t.classList.add('active');
-                        t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    }
-                });
-        
-                const destEl = document.getElementById('tab-' + name);
-                if (destEl) {
-                    destEl.classList.remove('hidden');
-                    destEl.classList.add('swipe-committed', 'active');
-                }
-        
-                if (name === 'world')   updateClock();
-                if (name === 'taf'     && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
-                if (name === 'weather' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 50);
-        
-                requestAnimationFrame(() => destEl?.classList.remove('swipe-committed'));
-            }
-        
-            function renderFrame() {
-                if (!state.tracking) return;
-                const raw   = state.curX - state.startX;
-                const limit = state.W * 0.5;
-                // Gentle rubber-band resistance at the edges — no snap/overshoot
-                const tx = Math.abs(raw) > limit
-                    ? Math.sign(raw) * (limit + (Math.abs(raw) - limit) * 0.07)
-                    : raw;
-        
-                state.fromEl.style.transform = `translateX(${tx}px)`;
-                state.toEl.style.transform   = `translateX(${(state.dir < 0 ? state.W : -state.W) + tx}px)`;
-                state.raf = null;
-            }
-        
-            /* ─────────────── TOUCH START ─────────────── */
+
             document.addEventListener('touchstart', e => {
-                if (state.animating) return;
-                const t = e.target;
-                if (
-                    t.tagName === 'INPUT'    || t.tagName === 'BUTTON'   ||
-                    t.tagName === 'SELECT'   || t.tagName === 'TEXTAREA' ||
-                    t.closest('canvas')      || t.closest('.modal-overlay') ||
-                    t.closest('.setup-overlay') || t.closest('.whatsnew-overlay') ||
-                    t.closest('.tabs')       ||   // ← let tab bar scroll freely
-                    t.closest('.quick-select-row') || // ← let history row scroll horizontally
-                    t.closest('#tools-extension-panel') ||  // ← tools panel open: block tab swipe
-                    (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) ||
-                    window._sortMode?.active
-                ) return;
-        
-                state.startX   = e.touches[0].clientX;
-                state.startY   = e.touches[0].clientY;
-                state.curX     = state.startX;
-                state.tracking = false;
-                state.settled  = false;
-                state.isHoriz  = false;
+                if (blocked(e.target)) return;
+                sx = e.touches[0].clientX;
+                sy = e.touches[0].clientY;
+                settled = false;
+                isHoriz = false;
+                locked  = false;
             }, { passive: true });
-        
-            /* ─────────────── TOUCH MOVE ─────────────── */
-            // non-passive so we can preventDefault for horizontal swipes
+
             document.addEventListener('touchmove', e => {
-                if (state.animating) return;
-
-                // If tools extension is open, never process horizontal tab swipe.
-                // Resets stale state that can arise from edge-swipe bypassing touchstart.
-                if (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) {
-                    state.tracking = false;
-                    state.settled  = false;
-                    state.isHoriz  = false;
-                    return;
-                }
-        
-                const x  = e.touches[0].clientX;
-                const y  = e.touches[0].clientY;
-                const dx = x - state.startX;
-                const dy = y - state.startY;
-        
-                /* ── Determine intent on first meaningful movement ── */
-                if (!state.settled) {
-                    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-                    state.settled = true;
-        
-                    // Clearly vertical → release to native scroll, never come back
-                    if (Math.abs(dy) > Math.abs(dx) * 0.9) {
-                        state.isHoriz = false;
-                        return;
-                    }
-        
-                    // Horizontal swipe confirmed
-                    state.isHoriz = true;
-        
-                    const order    = getOrder();
-                    state.fromTab  = document.querySelector('.view-section.active')?.id.replace('tab-', '');
-                    const idx      = order.indexOf(state.fromTab);
-                    if (idx === -1) { state.isHoriz = false; return; }
-        
-                    state.dir      = dx < 0 ? -1 : 1;
-                    const nIdx     = (idx - state.dir + order.length) % order.length;
-                    state.toTab    = order[nIdx];
-        
-                    state.fromEl   = document.getElementById('tab-' + state.fromTab);
-                    state.toEl     = document.getElementById('tab-' + state.toTab);
-                    if (!state.fromEl || !state.toEl) { state.isHoriz = false; return; }
-        
-                    state.toWasHidden = state.toEl.classList.contains('hidden');
-        
-                    // Measure content rect BEFORE touching any styles
-                    // Use #content-scroll bounds (fixed chrome means panel top ≠ viewport top)
-                    const _scrollEl = document.getElementById('content-scroll');
-                    const rect = (_scrollEl || state.fromEl).getBoundingClientRect();
-                    state.W    = window.innerWidth; // full viewport for translation
-        
-                    // Lock content scroll so page can't drift during horizontal animation
-                    if (_scrollEl) _scrollEl.style.overflow = 'hidden';
-                    document.body.style.touchAction = 'none';
-        
-                    // Freeze from-panel in place; park to-panel off screen — NO DOM reparenting
-                    freezeAtRect(state.fromEl, rect);
-                    parkOffscreen(state.toEl, rect, state.dir);
-        
-                    state.tracking = true;
-                }
-        
-                // Vertical scroll — let browser handle it natively
-                if (!state.isHoriz) return;
-        
-                // Horizontal — suppress native scroll/rubber-band
-                e.preventDefault();
-        
-                state.curX = x;
-                if (!state.raf) state.raf = requestAnimationFrame(renderFrame);
-        
+                if (locked) return;
+                if (settled) { if (isHoriz) e.preventDefault(); return; }
+                const dx = e.touches[0].clientX - sx;
+                const dy = e.touches[0].clientY - sy;
+                if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+                settled = true;
+                isHoriz = Math.abs(dx) > Math.abs(dy) * ANGLE;
+                if (!isHoriz) locked = true;
+                else e.preventDefault();
             }, { passive: false });
-        
-            /* ─────────────── TOUCH END ─────────────── */
-            document.addEventListener('touchend', e => {
-                if (!state.tracking) {
-                    state.settled = false;
-                    state.isHoriz = false;
-                    return;
-                }
-                if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
-        
-                const dx       = state.curX - state.startX;
-                const velX     = e.changedTouches[0].clientX - state.curX;
-                const traveled = Math.abs(dx);
-                const flick    = Math.abs(velX) > 4;
-                const enough   = traveled > state.W * 0.28;
-                const correct  = Math.sign(dx) === state.dir;
-                const complete = correct && (enough || flick);
-        
-                state.animating = true;
-                state.tracking  = false;
-                state.settled   = false;
-                state.isHoriz   = false;
 
-                // Instant commit — no CSS transition, panels snap immediately
-                if (complete) {
-                    commit(state.toTab);
-                } else {
-                    // Snap back instantly
-                    resetEl(state.fromEl);
-                    resetEl(state.toEl);
-                    if (state.toWasHidden) state.toEl.classList.add('hidden');
-                    unlockScroll();
-                    state.animating = false;
-                }
-        
+            document.addEventListener('touchend', e => {
+                if (!isHoriz || locked) return;
+                const dx = e.changedTouches[0].clientX - sx;
+                if (Math.abs(dx) < MIN_DIST) return;
+
+                const order = getTabOrder();
+                const cur   = document.querySelector('.view-section.active')?.id.replace('tab-', '');
+                const idx   = order.indexOf(cur);
+                if (idx === -1) return;
+
+                // swipe right (dx > 0) → go to previous tab; left → next tab
+                const next = dx > 0
+                    ? order[(idx - 1 + order.length) % order.length]
+                    : order[(idx + 1) % order.length];
+
+                setTab(next);
             }, { passive: true });
-        
-            /* ─────────────── TOUCH CANCEL ─────────────── */
-            document.addEventListener('touchcancel', () => {
-                if (!state.tracking) return;
-                if (state.raf) { cancelAnimationFrame(state.raf); state.raf = null; }
-        
-                resetEl(state.fromEl);
-                resetEl(state.toEl);
-                if (state.toWasHidden) state.toEl.classList.add('hidden');
-                unlockScroll();
-        
-                state.animating = false;
-                state.tracking  = false;
-                state.settled   = false;
-                state.isHoriz   = false;
-            }, { passive: true });
-        
+
         })();
+
 
         function openExternal(url) {
             const a = document.createElement('a');

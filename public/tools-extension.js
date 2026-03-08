@@ -1977,7 +1977,7 @@ function _aeroInjectUI(container) {
             topBtn.id = 'aero-top-btn';
             topBtn.onclick = _aeroScrollTop;
             topBtn.textContent = '↑';
-            topBtn.style.cssText = `position:absolute;bottom:max(28px,env(safe-area-inset-bottom));
+            topBtn.style.cssText = `position:fixed;bottom:max(28px,env(safe-area-inset-bottom));
                 left:20px;width:40px;height:40px;border-radius:12px;
                 background:#1c1c1e;border:1px solid #444;color:#0a84ff;
                 font-size:18px;font-weight:700;cursor:pointer;z-index:3100;
