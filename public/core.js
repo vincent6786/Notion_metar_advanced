@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.6.3',                         // ← bump this on every update
+            version: '3.6.4',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -14,7 +14,7 @@
                 {
                     icon: '🔨',
                     title: 'Aviation tools added ‼️',
-                    desc: 'New update for Unit conversion & Abbreviation'
+                    desc: 'New update for Unit wind calculation & Abbreviation'
                 },
                 // {
                 //     icon: '📊',
