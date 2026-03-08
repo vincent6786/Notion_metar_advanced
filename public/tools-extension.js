@@ -1975,13 +1975,11 @@ function _aeroInjectUI(container) {
         }
 
         // Inject back-to-top button as sibling inside the panel (not inside scroll content)
-        const panel = document.getElementById('tools-extension-panel');
         let topBtn = document.getElementById('aero-top-btn');
-        if (!topBtn && panel) {
+        if (!topBtn) {
             topBtn = document.createElement('button');
             topBtn.id = 'aero-top-btn';
             topBtn.onclick = () => {
-                // Hide immediately on tap
                 topBtn.style.opacity = '0';
                 topBtn.style.pointerEvents = 'none';
                 topBtn.style.transform = 'translateY(8px)';
@@ -1993,10 +1991,10 @@ function _aeroInjectUI(container) {
                 background:#1c1c1e;border:1px solid #444;color:#0a84ff;
                 font-size:18px;font-weight:700;cursor:pointer;z-index:3100;
                 opacity:0;pointer-events:none;
-                transition:opacity 0.25s,transform 0.25s;
+                transition:opacity 0.2s,transform 0.2s;
                 transform:translateY(8px);
                 display:flex;align-items:center;justify-content:center;`;
-            panel.appendChild(topBtn);
+            document.body.appendChild(topBtn);
         }
 
         // Scroll-driven collapse + back-to-top

@@ -1919,12 +1919,16 @@
             }
 
             document.addEventListener('touchstart', e => {
-                if (blocked(e.target)) return;
-                sx = e.touches[0].clientX;
-                sy = e.touches[0].clientY;
+                // Always reset state on new touch
                 settled = false;
                 isHoriz = false;
                 locked  = false;
+                if (blocked(e.target)) {
+                    locked = true;   // prevent any gesture from this touch
+                    return;
+                }
+                sx = e.touches[0].clientX;
+                sy = e.touches[0].clientY;
             }, { passive: true });
 
             document.addEventListener('touchmove', e => {
