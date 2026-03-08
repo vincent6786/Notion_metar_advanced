@@ -1819,6 +1819,10 @@ function openAbbreviations() {
     const container = document.getElementById('abbrev-content');
     if (!container) return;
 
+    // Clean up previous scroll listener if re-opening
+    const oldRoot = document.getElementById('aero-root');
+    if (oldRoot?._aeroScrollCleanup) { oldRoot._aeroScrollCleanup(); }
+
     if (!_aeroReady) {
         _aeroReady = true;
         _aeroInjectStyles();
@@ -1866,13 +1870,18 @@ function _aeroInjectUI(container) {
     container.innerHTML = `
     <div id="aero-root" style="display:flex;flex-direction:column;gap:0;">
 
-        <div style="position:sticky;top:0;z-index:10;background:#0a0a0f;padding:0 0 10px;">
+        <!-- ── STICKY HEADER ── always visible, correct background -->
+        <div id="aero-header"
+             style="position:sticky;top:0;z-index:10;
+                    background:var(--bg);
+                    padding:0 0 6px;
+                    transition:padding 0.25s;">
 
-            <!-- Search bar -->
+            <!-- Search bar — always visible -->
             <div id="aero-search-wrap"
                  style="display:flex;align-items:center;background:#1c1c1e;
                         border:1.5px solid #333;border-radius:12px;padding:4px 10px;
-                        margin-bottom:10px;transition:border-color 0.2s,box-shadow 0.2s;">
+                        margin-bottom:8px;transition:border-color 0.2s,box-shadow 0.2s;">
                 <span style="font-size:14px;margin-right:6px;opacity:0.4;">⌕</span>
                 <input id="aero-input" type="text"
                        placeholder="Search acronyms or definitions…"
@@ -1885,36 +1894,44 @@ function _aeroInjectUI(container) {
                                font-size:18px;padding:4px 6px;cursor:pointer;line-height:1;">×</button>
             </div>
 
-            <!-- Source pills -->
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-                <button class="aero-pill aero-pill-active" data-source="all"
-                        style="background:#1a3050;border:1px solid #0a84ff;color:#0a84ff;"
-                        onclick="_aeroSetSource('all',this)">All</button>
-                ${sourcePills}
-            </div>
+            <!-- Collapsible filters — collapse on scroll down, expand on scroll up -->
+            <div id="aero-filters"
+                 style="overflow:hidden;max-height:120px;
+                        transition:max-height 0.3s ease,opacity 0.3s ease;
+                        opacity:1;">
 
-            <!-- Mode + Sort -->
-            <div style="display:flex;gap:8px;margin-bottom:8px;">
-                <select id="aero-mode"
-                        style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
-                               color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
-                               cursor:pointer;outline:none;" onchange="_aeroRender()">
-                    <option value="contains">Contains</option>
-                    <option value="starts">Starts with</option>
-                    <option value="exact">Exact match</option>
-                </select>
-                <select id="aero-sort"
-                        style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
-                               color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
-                               cursor:pointer;outline:none;" onchange="_aeroRender()">
-                    <option value="default">Original order</option>
-                    <option value="az">A → Z</option>
-                    <option value="za">Z → A</option>
-                </select>
-            </div>
+                <!-- Source pills -->
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+                    <button class="aero-pill aero-pill-active" data-source="all"
+                            style="background:#1a3050;border:1px solid #0a84ff;color:#0a84ff;"
+                            onclick="_aeroSetSource('all',this)">All</button>
+                    ${sourcePills}
+                </div>
 
-            <!-- Count + sync -->
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">
+                <!-- Mode + Sort -->
+                <div style="display:flex;gap:8px;margin-bottom:6px;">
+                    <select id="aero-mode"
+                            style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
+                                   color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
+                                   cursor:pointer;outline:none;" onchange="_aeroRender()">
+                        <option value="contains">Contains</option>
+                        <option value="starts">Starts with</option>
+                        <option value="exact">Exact match</option>
+                    </select>
+                    <select id="aero-sort"
+                            style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
+                                   color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
+                                   cursor:pointer;outline:none;" onchange="_aeroRender()">
+                        <option value="default">Original order</option>
+                        <option value="az">A → Z</option>
+                        <option value="za">Z → A</option>
+                    </select>
+                </div>
+            </div><!-- /#aero-filters -->
+
+            <!-- Count + sync — always visible below filters -->
+            <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:0 2px;margin-top:2px;">
                 <div id="aero-count" style="font-size:12px;color:#555;font-weight:600;"></div>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <div id="aero-sync-info" style="font-size:11px;color:#555;"></div>
@@ -1923,16 +1940,29 @@ function _aeroInjectUI(container) {
                                    cursor:pointer;padding:2px 0;font-weight:700;">↻ Sync</button>
                 </div>
             </div>
-        </div>
+        </div><!-- /#aero-header -->
 
         <!-- Results list -->
-        <div id="aero-results" style="display:flex;flex-direction:column;gap:8px;padding-bottom:24px;">
+        <div id="aero-results" style="display:flex;flex-direction:column;gap:8px;padding-bottom:60px;">
             <div style="text-align:center;padding:40px 0;">
                 <div style="width:28px;height:28px;border:3px solid #222;border-top-color:#0a84ff;
                             border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 12px;"></div>
                 <div style="font-size:12px;color:#555;">Loading databases…</div>
             </div>
         </div>
+
+        <!-- Back to top button — bottom-left, appears after scrolling down -->
+        <button id="aero-top-btn" onclick="_aeroScrollTop()"
+                style="position:fixed;bottom:max(24px,env(safe-area-inset-bottom));
+                       left:20px;width:40px;height:40px;border-radius:12px;
+                       background:#1c1c1e;border:1px solid #333;color:#0a84ff;
+                       font-size:16px;cursor:pointer;z-index:50;
+                       opacity:0;pointer-events:none;
+                       transition:opacity 0.25s,transform 0.25s;
+                       transform:translateY(8px);
+                       display:flex;align-items:center;justify-content:center;">
+            ↑
+        </button>
 
     </div>`;
 
@@ -1942,10 +1972,59 @@ function _aeroInjectUI(container) {
         const savedMode = localStorage.getItem('aero_default_mode') || 'starts';
         const modeEl = document.getElementById('aero-mode');
         if (modeEl) modeEl.value = savedMode;
+
+        // Scroll-driven collapse: attach to #content-scroll (the app's scroll container)
+        const scrollEl = document.getElementById('content-scroll') || window;
+        let _aeroLastScrollY = 0;
+        let _aeroFiltersVisible = true;
+
+        function _aeroOnScroll() {
+            const sy = scrollEl.scrollTop !== undefined ? scrollEl.scrollTop : window.scrollY;
+            const going = sy - _aeroLastScrollY;
+            _aeroLastScrollY = sy;
+
+            // Collapse filters when scrolling down past 60px
+            if (going > 0 && sy > 60 && _aeroFiltersVisible) {
+                _aeroFiltersVisible = false;
+                const f = document.getElementById('aero-filters');
+                if (f) { f.style.maxHeight = '0'; f.style.opacity = '0'; }
+            }
+            // Expand filters when scrolling back to top
+            if ((going < 0 || sy < 30) && !_aeroFiltersVisible) {
+                _aeroFiltersVisible = true;
+                const f = document.getElementById('aero-filters');
+                if (f) { f.style.maxHeight = '120px'; f.style.opacity = '1'; }
+            }
+
+            // Back-to-top button visibility
+            const btn = document.getElementById('aero-top-btn');
+            if (btn) {
+                if (sy > 200) {
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.transform = 'translateY(0)';
+                } else {
+                    btn.style.opacity = '0';
+                    btn.style.pointerEvents = 'none';
+                    btn.style.transform = 'translateY(8px)';
+                }
+            }
+        }
+
+        scrollEl.addEventListener('scroll', _aeroOnScroll, { passive: true });
+        // Store cleanup ref on root so we can remove on next open
+        const root = document.getElementById('aero-root');
+        if (root) root._aeroScrollCleanup = () => scrollEl.removeEventListener('scroll', _aeroOnScroll);
     }, 120);
 }
 
 // ── Source filter ─────────────────────────────────────────────────────────
+function _aeroScrollTop() {
+    const el = document.getElementById('content-scroll') || window;
+    if (el.scrollTo) el.scrollTo({ top: 0, behavior: 'smooth' });
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function _aeroSetSource(source, el) {
     _aeroActiveSource = source;
     document.querySelectorAll('.aero-pill').forEach(p => {

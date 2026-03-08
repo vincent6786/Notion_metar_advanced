@@ -1,3 +1,26 @@
+        /* ── Kill iOS white elastic scroll flash ── */
+        html {
+            background: #000;
+            height: 100%;
+        }
+
+        /* ── Fixed chrome: only #content-scroll scrolls ── */
+        body {
+            height: 100dvh;
+            overflow: hidden !important;
+        }
+
+        /* Content scroll container */
+        #content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: none;
+            padding: 12px 12px;
+            padding-bottom: max(40px, env(safe-area-inset-bottom));
+        }
+
         body { overflow-x: hidden; }
         
         /* Swipe panels */
@@ -45,10 +68,17 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            padding-bottom: max(40px, env(safe-area-inset-bottom));
+            padding-bottom: 0;
             padding-top: max(12px, env(safe-area-inset-top));
             overscroll-behavior-y: none;
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Chrome elements never shrink */
+        .top-bar,
+        .tabs,
+        .quick-select-row {
+            flex-shrink: 0;
         }
 
         /* ============================================================

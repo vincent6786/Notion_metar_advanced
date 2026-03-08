@@ -1975,7 +1975,8 @@
             }
         
             function unlockScroll() {
-                document.body.style.overflowY = '';
+                const _scrollEl = document.getElementById('content-scroll');
+                if (_scrollEl) _scrollEl.style.overflow = '';
                 document.body.style.touchAction = '';
             }
         
@@ -2097,11 +2098,13 @@
                     state.toWasHidden = state.toEl.classList.contains('hidden');
         
                     // Measure content rect BEFORE touching any styles
-                    const rect = state.fromEl.getBoundingClientRect();
+                    // Use #content-scroll bounds (fixed chrome means panel top ≠ viewport top)
+                    const _scrollEl = document.getElementById('content-scroll');
+                    const rect = (_scrollEl || state.fromEl).getBoundingClientRect();
                     state.W    = rect.width;
         
-                    // Lock body scroll so page can't drift during horizontal animation
-                    document.body.style.overflowY   = 'hidden';
+                    // Lock content scroll so page can't drift during horizontal animation
+                    if (_scrollEl) _scrollEl.style.overflow = 'hidden';
                     document.body.style.touchAction = 'none';
         
                     // Freeze from-panel in place; park to-panel off screen — NO DOM reparenting
