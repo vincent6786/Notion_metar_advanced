@@ -1939,7 +1939,6 @@
                     overflow-y: auto;
                     background: var(--bg);
                     z-index: 200;
-                    will-change: transform;
                     transition: none;
                     transform: translateX(0);
                     margin: 0;
@@ -1949,7 +1948,6 @@
         
             // Park the incoming panel off-screen (same rect, different translateX).
             function parkOffscreen(el, rect, dir) {
-                // Apply positioning while hidden so it paints in the right spot on reveal
                 el.style.cssText = `
                     position: fixed !important;
                     top:    ${rect.top}px !important;
@@ -1959,7 +1957,6 @@
                     overflow-y: auto;
                     background: var(--bg);
                     z-index: 199;
-                    will-change: transform;
                     transition: none;
                     display: block !important;
                     transform: translateX(${dir < 0 ? rect.width : -rect.width}px);

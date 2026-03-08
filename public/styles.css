@@ -23,10 +23,9 @@
 
         body { overflow-x: hidden; }
         
-        /* Swipe panels */
+        /* Swipe panels — no backface hack needed with fixed chrome layout */
         .view-section {
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
+            contain: layout style;
         }
         /* Suppress re-entry animation after swipe commit */
         .swipe-committed.view-section.active {
@@ -391,11 +390,11 @@
         }
         .view-section.active {
             display: block;
-            animation: tabReveal 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation: tabReveal 0.25s ease forwards;
         }
         @keyframes tabReveal {
-            0%   { opacity: 0; transform: translateY(10px) scale(0.99); }
-            100% { opacity: 1; transform: translateY(0px)  scale(1); }
+            0%   { opacity: 0; }
+            100% { opacity: 1; }
         }
         .hidden { display: none !important; }
         .section-title {

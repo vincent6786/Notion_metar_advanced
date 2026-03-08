@@ -75,7 +75,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version">CLOUD EDITION · v3.6.1</div> 
+        <div class="launch-version">CLOUD EDITION · v3.3.0</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -563,7 +563,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.6.1 · Cloud Edition · Quick reference for all features</div>
+                <div style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v3.3.0 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -1432,554 +1432,7 @@
         </div>
     </div>
 
-    <!-- ================================================================
-         TOOLS EXTENSION PANEL
-    ================================================================ -->
-    <div id="tools-extension-panel" class="view-section" style="display:none;">
-        
-        <!-- Extension Header -->
-        <div id="tools-extension-header" style="position:sticky; top:0; z-index:10; background:var(--bg); padding:12px 0; border-bottom:1px solid #333; margin-bottom:16px;">
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-                <!-- Left: Back to Menu button (shown when viewing a tool) -->
-                <button id="back-to-menu-btn" onclick="showToolsMenu()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; font-size:20px; min-width:50px; justify-content:center; opacity:0; pointer-events:none; transition: opacity 0.2s ease;">
-                    <span>←</span>
-                </button>
-                
-                <!-- Title -->
-                <div id="extension-header-title" style="font-size:15px; font-weight:800; color:#fff;">
-                    Aviation Tools
-                </div>
-                
-                <!-- Right: Close button (always visible) -->
-                <button onclick="closeToolsExtension()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; font-size:20px; min-width:50px; justify-content:center;">
-                    <span>✕</span>
-                </button>
-            </div>
-        </div>
-        
-        <!-- ================================================================
-             TOOLS MENU (Main Extension View)
-        ================================================================ -->
-        <div id="tools-menu">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                
-                <!-- Unit Converter -->
-                <div onclick="openTool('unit-converter')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">📏</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Unit Converter</div>
-                    <div style="font-size:11px; color:var(--sub-text);">10 categories: speed, energy, power, more</div>
-                </div>
-                
-                <!-- E6B Flight Computer -->
-                <div onclick="openTool('e6b-calculator')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">✈️</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Calculator</div>
-                    <div style="font-size:11px; color:var(--sub-text);">DA, TAS, cloud base, freezing</div>
-                </div>
-                
-                <!-- Great Circle -->
-                <div onclick="openTool('great-circle')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">🌍</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Great Circle</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Distance & bearing calc</div>
-                </div>
-                
-                <!-- E6B Trainer -->
-                <div onclick="openTool('e6b-trainer')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">🎓</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Trainer</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Interactive UND trainer</div>
-                </div>
-                
-                <!-- Weather Terms -->
-                <div onclick="openTool('weather-terms')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">🌦️</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Terms</div>
-                    <div style="font-size:11px; color:var(--sub-text);">METAR abbreviations & symbols</div>
-                </div>
-                
-                <!-- Abbreviations -->
-                <div onclick="openTool('abbreviations')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">📖</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Abbreviations</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Aviation terminology</div>
-                </div>
 
-                <!-- Crosswind Calculator -->
-                <div onclick="openTool('crosswind')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">💨</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Crosswind Calc</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Headwind & crosswind components</div>
-                </div>
-                
-            </div>
-        </div>
-        
-        <!-- ================================================================
-             UNIT CONVERTER TOOL
-        ================================================================ -->
-        <div id="tool-unit-converter" class="tool-view" style="display:none;">
-            <div class="info-card">
-                <div class="conv-lbl" style="margin-bottom:8px;">CATEGORY</div>
-                <select id="conv-category" class="stealth-select" onchange="updateUnitSelectors()" style="margin-bottom:16px;">
-                    <option value="distance">Distance</option>
-                    <option value="altitude">Altitude</option>
-                    <option value="speed">Speed / Velocity</option>
-                    <option value="temperature">Temperature</option>
-                    <option value="pressure">Pressure</option>
-                    <option value="fuelVolume">Fuel Volume</option>
-                    <option value="weight">Weight / Mass</option>
-                    <option value="fuelFlow">Fuel Flow Rate</option>
-                    <option value="energy">Energy</option>
-                    <option value="power">Power</option>
-                </select>
-                
-                <div class="conv-lbl" style="margin-bottom:8px;">CONVERT FROM</div>
-                <div class="conv-row" style="margin-bottom:0px;">
-                    <input type="number" id="conv-input" class="conv-inp" placeholder="Enter value" oninput="convertUnit()" style="flex:2;">
-                    <select id="conv-from" class="stealth-select" onchange="convertUnit()" style="flex:1; margin-left:8px;"></select>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
-                    <div style="flex:1; height:1px; background:var(--border);"></div>
-                    <button onclick="swapUnits()" title="Swap FROM / TO"
-                            style="background:#1c1c1e; border:1px solid #444; color:var(--accent);
-                                   width:38px; height:38px; border-radius:50%; font-size:18px;
-                                   cursor:pointer; display:flex; align-items:center; justify-content:center;
-                                   flex-shrink:0; transition:transform 0.25s ease;">⇅</button>
-                    <div style="flex:1; height:1px; background:var(--border);"></div>
-                </div>
-
-                <div class="conv-lbl" style="margin-bottom:8px;">CONVERT TO</div>
-                <select id="conv-to" class="stealth-select" onchange="convertUnit()" style="margin-bottom:16px;"></select>
-                
-                <div style="background:#1c1c1e; padding:20px; border-radius:10px; text-align:center; border:2px solid var(--accent);">
-                    <div style="font-size:11px; color:var(--sub-text); margin-bottom:6px; text-transform:uppercase;">RESULT</div>
-                    <div id="conv-result" style="font-size:32px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">-- --</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ================================================================
-             E6B FLIGHT COMPUTER CALCULATOR
-        ================================================================ -->
-        <div id="tool-e6b-calculator" class="tool-view" style="display:none;">
-            <div class="info-card">
-                <div class="conv-row">
-                    <div style="flex:1">
-                        <div class="conv-lbl">Indicated Alt (ft)</div>
-                        <input type="number" id="e6bAlt" class="conv-inp" placeholder="0" oninput="calcE6B()">
-                    </div>
-                    <div style="flex:1">
-                        <div class="conv-lbl">CAS / IAS (kts)</div>
-                        <input type="number" id="e6bIas" class="conv-inp" placeholder="0" oninput="calcE6B()">
-                    </div>
-                </div>
-                <div class="conv-row" style="align-items:flex-end;">
-                    <div style="flex:1">
-                        <div class="conv-lbl">Altimeter (QNH)</div>
-                        <input type="number" id="e6bQnh" class="conv-inp" placeholder="1013" oninput="calcE6B()">
-                    </div>
-                    <div style="width:80px;">
-                        <select id="unitQnh" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
-                            <option value="hpa">hPa</option>
-                            <option value="inhg">inHg</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="conv-row" style="align-items:flex-end;">
-                    <div style="flex:1">
-                        <div class="conv-lbl">OAT (Temp)</div>
-                        <input type="number" id="e6bTemp" class="conv-inp" placeholder="15" oninput="calcE6B()">
-                    </div>
-                    <div style="flex:1">
-                        <div class="conv-lbl">Dewpoint</div>
-                        <input type="number" id="e6bDew" class="conv-inp" placeholder="10" oninput="calcE6B()">
-                    </div>
-                    <div style="width:80px;">
-                        <select id="unitTemp" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
-                            <option value="c">°C</option>
-                            <option value="f">°F</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; padding-top:15px; border-top:1px solid #333;">
-                    <div onclick="showFormulaModal('pa')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Pressure Alt <span style="font-size:9px; color:#555;">ⓘ</span></div>
-                        <div class="ic-val" id="resPA" style="color:var(--accent);">--</div>
-                    </div>
-                    <div onclick="showFormulaModal('da')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Density Alt <span style="font-size:9px; color:#555;">ⓘ</span></div>
-                        <div class="ic-val" id="resDA" style="color:var(--accent);">--</div>
-                    </div>
-                    <div onclick="showFormulaModal('isa')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">ISA Deviation <span style="font-size:9px; color:#555;">ⓘ</span></div>
-                        <div class="ic-val" id="resISA">--</div>
-                    </div>
-                    <div onclick="showFormulaModal('tas')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">True Airspeed <span style="font-size:9px; color:#555;">ⓘ</span></div>
-                        <div class="ic-val" id="resTAS" style="color:var(--success);">--</div>
-                    </div>
-                    <div onclick="showFormulaModal('cloudbase')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Cloud Base (AGL) <span style="font-size:9px; color:#555;">ⓘ</span></div>
-                        <div class="ic-val" id="resCloud">--</div>
-                    </div>
-                    <div onclick="showFormulaModal('frz')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Freezing Lvl <span style="font-size:9px; color:#555;">ⓘ</span></div>
-                        <div class="ic-val" id="resFrz">--</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ================================================================
-             E6B TRAINER (UND)
-        ================================================================ -->
-        <div id="tool-e6b-trainer" class="tool-view" style="display:none;">
-            <div class="info-card">
-                <div id="e6b-trainer-content">
-                    <!-- Content will be loaded by openUNDE6B() when tool opens -->
-                    <div style="text-align:center; padding:20px;">
-                        <div style="font-size:16px; color:var(--sub-text);">Loading E6B trainer...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ================================================================
-             GREAT CIRCLE DISTANCE CALCULATOR
-        ================================================================ -->
-        <div id="tool-great-circle" class="tool-view" style="display:none;">
-
-            <div class="info-card" style="margin-bottom:12px;">
-                <div class="conv-lbl" style="margin-bottom:6px;">FROM</div>
-                <input type="text" id="gc-from" class="conv-inp"
-                       placeholder="ICAO · IATA · lat, lon"
-                       autocomplete="off" autocorrect="off" spellcheck="false"
-                       oninput="gcResolveInput('gc-from','gc-from-name')"
-                       onkeydown="if(event.key==='Enter')calculateGreatCircle()">
-                <div id="gc-from-name" style="font-size:11px; min-height:18px; padding:3px 2px; color:var(--sub-text); transition:color 0.2s;"></div>
-
-                <div style="text-align:center; margin:10px 0 6px;">
-                    <button onclick="gcSwap()" style="background:#2c2c2e; border:1px solid #444; color:#aaa; padding:5px 22px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:0.5px;">⇅ SWAP</button>
-                </div>
-
-                <div class="conv-lbl" style="margin-bottom:6px;">TO</div>
-                <input type="text" id="gc-to" class="conv-inp"
-                       placeholder="ICAO · IATA · lat, lon"
-                       autocomplete="off" autocorrect="off" spellcheck="false"
-                       oninput="gcResolveInput('gc-to','gc-to-name')"
-                       onkeydown="if(event.key==='Enter')calculateGreatCircle()">
-                <div id="gc-to-name" style="font-size:11px; min-height:18px; padding:3px 2px; color:var(--sub-text); transition:color 0.2s;"></div>
-
-                <button onclick="calculateGreatCircle()" class="tool-btn"
-                        style="margin-top:14px; background:var(--accent); border:none; color:#000; font-weight:700; font-size:14px; padding:13px; letter-spacing:0.5px;">
-                    CALCULATE
-                </button>
-            </div>
-
-            <div id="gc-error" style="display:none; background:rgba(255,69,58,0.12); border:1px solid rgba(255,69,58,0.4); border-radius:8px; padding:10px 14px; font-size:13px; color:#ff453a; margin-bottom:12px;"></div>
-
-            <div id="gc-result" style="display:none;">
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
-                    <div class="info-card" style="text-align:center; padding:12px 8px;">
-                        <div class="ic-lbl">NM</div>
-                        <div id="gc-nm" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
-                    </div>
-                    <div class="info-card" style="text-align:center; padding:12px 8px;">
-                        <div class="ic-lbl">KM</div>
-                        <div id="gc-km" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
-                    </div>
-                    <div class="info-card" style="text-align:center; padding:12px 8px;">
-                        <div class="ic-lbl">MI</div>
-                        <div id="gc-mi" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
-                    </div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
-                    <div class="info-card" style="text-align:center; padding:12px 8px;">
-                        <div class="ic-lbl">Initial Track (True)</div>
-                        <div id="gc-initial" style="font-size:24px; font-weight:800; color:var(--success); margin-top:4px; letter-spacing:-0.5px; font-family:'SF Mono',monospace;">--°</div>
-                    </div>
-                    <div class="info-card" style="text-align:center; padding:12px 8px;">
-                        <div class="ic-lbl">Final Track (True)</div>
-                        <div id="gc-final" style="font-size:24px; font-weight:800; color:var(--success); margin-top:4px; letter-spacing:-0.5px; font-family:'SF Mono',monospace;">--°</div>
-                    </div>
-                </div>
-                <div id="gc-map" style="height:300px; border-radius:10px; overflow:hidden; background:#1c1c1e; border:1px solid #333;"></div>
-                <div id="gc-route-label" style="text-align:center; font-size:11px; color:var(--sub-text); margin-top:8px; letter-spacing:0.3px;"></div>
-            </div>
-        </div>
-        
-        <!-- ================================================================
-             CROSSWIND / HEADWIND CALCULATOR
-        ================================================================ -->
-        <div id="tool-crosswind" class="tool-view" style="display:none;">
-
-            <!-- Mode Toggle -->
-            <div style="display:flex;background:#1a1a1c;border:1px solid #2a2a2a;border-radius:10px;
-                        padding:3px;margin-bottom:14px;">
-                <button id="cw-btn-visual" onclick="cwSetMode('visual')"
-                        style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;
-                               font-weight:700;cursor:pointer;transition:all 0.2s;
-                               background:#0a84ff;color:#fff;">
-                    🧭 Visual
-                </button>
-                <button id="cw-btn-type" onclick="cwSetMode('type')"
-                        style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;
-                               font-weight:700;cursor:pointer;transition:all 0.2s;
-                               background:transparent;color:#555;">
-                    ⌨️ Type In
-                </button>
-            </div>
-
-            <!-- ════════════════════════════════════
-                 VISUAL MODE
-            ════════════════════════════════════ -->
-            <div id="cw-visual-mode">
-
-                <!-- Both runway ends -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                    <div class="info-card" style="padding:10px 12px;border-left:3px solid #0a84ff;">
-                        <div id="cw-rwy1-label" style="font-size:10px;font-weight:800;color:#0a84ff;
-                                                        letter-spacing:0.5px;margin-bottom:5px;">RWY 36</div>
-                        <div id="cw-rwy1-hdw" style="font-size:12px;color:#888;margin-bottom:2px;">Headwind: 0 kt</div>
-                        <div id="cw-rwy1-xw"  style="font-size:12px;color:#888;">X-Wind: 0 kt</div>
-                    </div>
-                    <div class="info-card" style="padding:10px 12px;border-left:3px solid #333;">
-                        <div id="cw-rwy2-label" style="font-size:10px;font-weight:800;color:#444;
-                                                        letter-spacing:0.5px;margin-bottom:5px;">RWY 18</div>
-                        <div id="cw-rwy2-hdw" style="font-size:12px;color:#555;margin-bottom:2px;">Tailwind: 0 kt</div>
-                        <div id="cw-rwy2-xw"  style="font-size:12px;color:#555;">X-Wind: 0 kt</div>
-                    </div>
-                </div>
-
-                <!-- Compass + speed slider -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
-
-                    <canvas id="cw-canvas" style="touch-action:none;display:block;flex-shrink:0;"></canvas>
-
-                    <!-- Vertical speed slider -->
-                    <div style="display:flex;flex-direction:column;align-items:center;
-                                justify-content:space-between;height:240px;flex-shrink:0;">
-                        <div style="font-size:10px;color:#555;font-weight:700;font-family:monospace;">50</div>
-                        <div style="position:relative;height:190px;width:28px;
-                                    display:flex;align-items:center;justify-content:center;">
-                            <input type="range" id="cw-vslider" min="0" max="50" value="0" step="1"
-                                   style="width:180px;cursor:pointer;accent-color:#ff9f0a;
-                                          transform:rotate(-90deg);transform-origin:center center;
-                                          position:absolute;"
-                                   oninput="cwOnSpeedChange(this.value)" />
-                        </div>
-                        <div style="font-size:10px;color:#555;font-weight:700;font-family:monospace;">0</div>
-                    </div>
-                </div>
-
-                <!-- Interaction hint -->
-                <div style="text-align:center;font-size:10px;color:#333;margin-bottom:10px;letter-spacing:0.3px;">
-                    Drag inner disc → runway heading &nbsp;·&nbsp; Drag outer ring → wind direction
-                </div>
-
-                <!-- Wind readout display -->
-                <div id="cw-wind-readout"
-                     style="background:#111;border:1px solid #222;border-radius:10px;
-                            padding:11px 16px;text-align:center;margin-bottom:10px;
-                            font-family:'SF Mono',monospace;font-size:20px;font-weight:800;
-                            color:#ff9f0a;letter-spacing:2px;">
-                    360° / 0 KT
-                </div>
-
-                <!-- Gust + Limit row -->
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                    <div class="conv-lbl" style="margin:0;white-space:nowrap;font-size:12px;">Gust (kt):</div>
-                    <input type="number" id="cw-gust-v" class="conv-inp" placeholder="--" min="0"
-                           style="flex:1;height:34px;font-size:13px;" oninput="cwOnGustChange(this.value)">
-                    <div class="conv-lbl" style="margin:0;white-space:nowrap;font-size:12px;">Limit:</div>
-                    <select id="cw-limit-v" class="stealth-select" onchange="cwOnLimitChange(this.value)"
-                            style="flex:1.5;height:34px;font-size:12px;">
-                        <option value="15">15 kt — EVA Solo</option>
-                        <option value="12">12 kt — EVA Dual</option>
-                        <option value="20">20 kt — C172 POH</option>
-                        <option value="25">25 kt</option>
-                        <option value="0">No limit</option>
-                    </select>
-                </div>
-
-                <!-- GO / NO-GO status -->
-                <div id="cw-status-v"
-                     style="text-align:center;padding:10px 14px;border-radius:10px;font-size:13px;
-                            font-weight:800;letter-spacing:0.5px;display:none;margin-bottom:8px;
-                            background:rgba(255,255,255,0.04);border:1px solid #333;color:#888;">
-                </div>
-
-                <!-- Gust component row (appears when gust entered) -->
-                <div id="cw-gust-result-v" style="display:none;margin-top:6px;">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div class="info-card" style="text-align:center;padding:10px 8px;">
-                            <div class="ic-lbl" id="cw-ghw-lbl-v">Gust Headwind</div>
-                            <div id="cw-ghw-v" style="font-size:20px;font-weight:700;
-                                                       color:var(--accent);font-family:monospace;">--</div>
-                            <div style="font-size:11px;color:var(--sub-text);">kt</div>
-                        </div>
-                        <div class="info-card" style="text-align:center;padding:10px 8px;">
-                            <div id="cw-gxw-lbl-v" class="ic-lbl">Gust Crosswind</div>
-                            <div id="cw-gxw-v" style="font-size:20px;font-weight:700;
-                                                       color:var(--success);font-family:monospace;">--</div>
-                            <div style="font-size:11px;color:var(--sub-text);">kt</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ════════════════════════════════════
-                 TYPE IN MODE
-            ════════════════════════════════════ -->
-            <div id="cw-type-mode" style="display:none;">
-                <div class="info-card" style="margin-bottom:12px;">
-                    <div class="conv-row">
-                        <div style="flex:1">
-                            <div class="conv-lbl" style="margin-bottom:6px;">Runway (°)</div>
-                            <input type="number" id="cw-rwy" class="conv-inp" placeholder="360"
-                                   min="0" max="360" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
-                        </div>
-                        <div style="flex:1">
-                            <div class="conv-lbl" style="margin-bottom:6px;">Wind Dir (°)</div>
-                            <input type="number" id="cw-wdir" class="conv-inp" placeholder="270"
-                                   min="0" max="360" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
-                        </div>
-                    </div>
-                    <div class="conv-row">
-                        <div style="flex:1">
-                            <div class="conv-lbl" style="margin-bottom:6px;">Wind Speed (kt)</div>
-                            <input type="number" id="cw-wspd" class="conv-inp" placeholder="10"
-                                   min="0" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
-                        </div>
-                        <div style="flex:1">
-                            <div class="conv-lbl" style="margin-bottom:6px;">Gust (kt) <span style="color:#555;font-weight:400;">optional</span></div>
-                            <input type="number" id="cw-gust" class="conv-inp" placeholder="--"
-                                   min="0" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
-                        </div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-                        <div class="conv-lbl" style="margin:0;white-space:nowrap;">XWind Limit:</div>
-                        <select id="cw-limit" class="stealth-select" onchange="calcCrosswind()" style="flex:1;height:34px;font-size:13px;">
-                            <option value="15">15 kt — EVA Solo / C172 Demo</option>
-                            <option value="12">12 kt — EVA Dual Student</option>
-                            <option value="20">20 kt — C172 POH Max</option>
-                            <option value="25">25 kt — Custom 25 kt</option>
-                            <option value="0">No limit</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="cw-result" style="display:none;">
-                    <div id="cw-status" style="text-align:center;padding:12px;border-radius:10px;font-size:15px;font-weight:800;letter-spacing:0.5px;margin-bottom:12px;"></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                        <div class="info-card" style="text-align:center;padding:14px 8px;">
-                            <div class="ic-lbl" id="cw-hw-lbl">Headwind</div>
-                            <div id="cw-hw" style="font-size:26px;font-weight:800;color:var(--accent);margin-top:4px;font-family:monospace;">--</div>
-                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
-                        </div>
-                        <div class="info-card" style="text-align:center;padding:14px 8px;">
-                            <div id="cw-xw-lbl" class="ic-lbl">Crosswind</div>
-                            <div id="cw-xw" style="font-size:26px;font-weight:800;color:var(--success);margin-top:4px;font-family:monospace;">--</div>
-                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
-                        </div>
-                    </div>
-                    <div id="cw-gust-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                        <div class="info-card" style="text-align:center;padding:10px 8px;">
-                            <div class="ic-lbl" id="cw-ghw-lbl">Gust Headwind</div>
-                            <div id="cw-ghw" style="font-size:20px;font-weight:700;color:var(--accent);margin-top:4px;font-family:monospace;">--</div>
-                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
-                        </div>
-                        <div class="info-card" style="text-align:center;padding:10px 8px;">
-                            <div id="cw-gxw-lbl" class="ic-lbl">Gust Crosswind</div>
-                            <div id="cw-gxw" style="font-size:20px;font-weight:700;color:var(--success);margin-top:4px;font-family:monospace;">--</div>
-                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
-                        </div>
-                    </div>
-                    <div class="info-card" style="padding:16px;text-align:center;">
-                        <div class="ic-lbl" style="margin-bottom:10px;">Runway Diagram</div>
-                        <svg id="cw-svg" viewBox="0 0 200 200" width="180" height="180"
-                             style="display:block;margin:0 auto;overflow:visible;"></svg>
-                    </div>
-                </div>
-                <div id="cw-empty" style="text-align:center;padding:28px 0;color:var(--sub-text);font-size:13px;">
-                    Enter runway heading and wind to calculate
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ================================================================
-             FORMULA EXPLANATION MODAL
-        ================================================================ -->
-        <div id="formula-modal" onclick="closeFormulaModal()" style="display:none; position:fixed; inset:0; z-index:5000; background:rgba(0,0,0,0.72); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); align-items:flex-end; justify-content:center;">
-            <div onclick="event.stopPropagation()" style="background:#1c1c1e; border-radius:16px 16px 0 0; padding:0 0 env(safe-area-inset-bottom); width:100%; max-width:520px; max-height:80vh; overflow-y:auto; transform:translateY(100%); transition:transform 0.32s cubic-bezier(0.22,1,0.36,1);" id="formula-modal-sheet">
-                <div style="display:flex; justify-content:center; padding:12px 0 0;">
-                    <div style="width:36px; height:4px; background:#444; border-radius:2px;"></div>
-                </div>
-                <button onclick="closeFormulaModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#666; font-size:20px; cursor:pointer; padding:4px 8px;">✕</button>
-                <div id="formula-modal-body" style="padding:16px 20px 24px;"></div>
-            </div>
-        </div>
-
-        <!-- ================================================================
-             WEATHER TERMS LOOKUP
-        ================================================================ -->
-        <div id="tool-weather-terms" class="tool-view" style="display:none;">
-            <div class="info-card">
-                <div class="conv-lbl" style="margin-bottom:8px;">SEARCH WEATHER TERMS</div>
-                <div style="position:relative; margin-bottom:16px;">
-                    <input type="text" id="wx-search" class="conv-inp" placeholder="Search by code or term..." oninput="searchWeatherTerms()" style="padding-left:36px; padding-right:36px;">
-                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">🔍</span>
-                    <button onclick="clearWeatherSearch()" id="wx-clear-btn" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
-                </div>
-                
-                <!-- More Sources Button -->
-                <div style="margin-bottom:16px;">
-                    <button onclick="toggleSourcesMenu()" class="tool-btn" style="width:100%; background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:12px; font-size:12px; font-weight:700; border-radius:8px;">
-                        📚 MORE SOURCES
-                    </button>
-                </div>
-                
-                <!-- Sources Menu (Initially Hidden) -->
-                <div id="sources-menu" style="display:none; margin-bottom:16px; background:#1c1c1e; border:1px solid #333; border-radius:8px; padding:12px;">
-                    <div style="font-size:11px; font-weight:700; color:var(--sub-text); margin-bottom:8px;">REFERENCE MATERIALS</div>
-                    
-                    <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:6px; text-align:left; display:flex; align-items:center; gap:8px;">
-                        <span>📄</span>
-                        <span style="flex:1;">METAR Decode Key (NWS PDF)</span>
-                        <span style="color:var(--sub-text);">↗</span>
-                    </button>
-                    
-                    <button onclick="window.open('https://www.blondsinaviation.com/wp-content/uploads/2019/05/NOAA-Legends-1407.pdf', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:6px; text-align:left; display:flex; align-items:center; gap:8px;">
-                        <span>📄</span>
-                        <span style="flex:1;">NOAA Chart Legends (PDF)</span>
-                        <span style="color:var(--sub-text);">↗</span>
-                    </button>
-                    
-                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; text-align:left; display:flex; align-items:center; gap:8px;">
-                        <span>🌐</span>
-                        <span style="flex:1;">AWC GFA Symbols (Web)</span>
-                        <span style="color:var(--sub-text);">↗</span>
-                    </button>
-                </div>
-                
-                <div id="wx-results" style="max-height:60vh; overflow-y:auto;">
-                    <!-- Results populated by JavaScript -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- ================================================================
-             ABBREVIATIONS TOOL
-        ================================================================ -->
-        <div id="tool-abbreviations" class="tool-view" style="display:none;">
-            <!-- No info-card wrapper — AeroSearch native manages its own layout -->
-            <div id="abbrev-content" style="padding:0 4px;"></div>
-        </div>
-        
-    </div>
 
     <!-- ================================================================
          TAB: SETTINGS
@@ -2544,7 +1997,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.6.1</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 3.3.0</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -2734,6 +2187,555 @@
         <span class="offline-stale" id="offline-stale-time"></span>
     </div>
 
+
+    <!-- ================================================================
+         TOOLS EXTENSION PANEL
+    ================================================================ -->
+    <div id="tools-extension-panel" class="view-section" style="display:none;">
+        
+        <!-- Extension Header -->
+        <div id="tools-extension-header" style="position:sticky; top:0; z-index:10; background:var(--bg); padding:12px 0; border-bottom:1px solid #333; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <!-- Left: Back to Menu button (shown when viewing a tool) -->
+                <button id="back-to-menu-btn" onclick="showToolsMenu()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; font-size:20px; min-width:50px; justify-content:center; opacity:0; pointer-events:none; transition: opacity 0.2s ease;">
+                    <span>←</span>
+                </button>
+                
+                <!-- Title -->
+                <div id="extension-header-title" style="font-size:15px; font-weight:800; color:#fff;">
+                    Aviation Tools
+                </div>
+                
+                <!-- Right: Close button (always visible) -->
+                <button onclick="closeToolsExtension()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; font-size:20px; min-width:50px; justify-content:center;">
+                    <span>✕</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             TOOLS MENU (Main Extension View)
+        ================================================================ -->
+        <div id="tools-menu">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                
+                <!-- Unit Converter -->
+                <div onclick="openTool('unit-converter')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">📏</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Unit Converter</div>
+                    <div style="font-size:11px; color:var(--sub-text);">10 categories: speed, energy, power, more</div>
+                </div>
+                
+                <!-- E6B Flight Computer -->
+                <div onclick="openTool('e6b-calculator')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">✈️</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Calculator</div>
+                    <div style="font-size:11px; color:var(--sub-text);">DA, TAS, cloud base, freezing</div>
+                </div>
+                
+                <!-- Great Circle -->
+                <div onclick="openTool('great-circle')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">🌍</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Great Circle</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Distance & bearing calc</div>
+                </div>
+                
+                <!-- E6B Trainer -->
+                <div onclick="openTool('e6b-trainer')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">🎓</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Trainer</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Interactive UND trainer</div>
+                </div>
+                
+                <!-- Weather Terms -->
+                <div onclick="openTool('weather-terms')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">🌦️</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Terms</div>
+                    <div style="font-size:11px; color:var(--sub-text);">METAR abbreviations & symbols</div>
+                </div>
+                
+                <!-- Abbreviations -->
+                <div onclick="openTool('abbreviations')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">📖</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Abbreviations</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Aviation terminology</div>
+                </div>
+
+                <!-- Crosswind Calculator -->
+                <div onclick="openTool('crosswind')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">💨</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Crosswind Calc</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Headwind & crosswind components</div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             UNIT CONVERTER TOOL
+        ================================================================ -->
+        <div id="tool-unit-converter" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div class="conv-lbl" style="margin-bottom:8px;">CATEGORY</div>
+                <select id="conv-category" class="stealth-select" onchange="updateUnitSelectors()" style="margin-bottom:16px;">
+                    <option value="distance">Distance</option>
+                    <option value="altitude">Altitude</option>
+                    <option value="speed">Speed / Velocity</option>
+                    <option value="temperature">Temperature</option>
+                    <option value="pressure">Pressure</option>
+                    <option value="fuelVolume">Fuel Volume</option>
+                    <option value="weight">Weight / Mass</option>
+                    <option value="fuelFlow">Fuel Flow Rate</option>
+                    <option value="energy">Energy</option>
+                    <option value="power">Power</option>
+                </select>
+                
+                <div class="conv-lbl" style="margin-bottom:8px;">CONVERT FROM</div>
+                <div class="conv-row" style="margin-bottom:0px;">
+                    <input type="number" id="conv-input" class="conv-inp" placeholder="Enter value" oninput="convertUnit()" style="flex:2;">
+                    <select id="conv-from" class="stealth-select" onchange="convertUnit()" style="flex:1; margin-left:8px;"></select>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
+                    <div style="flex:1; height:1px; background:var(--border);"></div>
+                    <button onclick="swapUnits()" title="Swap FROM / TO"
+                            style="background:#1c1c1e; border:1px solid #444; color:var(--accent);
+                                   width:38px; height:38px; border-radius:50%; font-size:18px;
+                                   cursor:pointer; display:flex; align-items:center; justify-content:center;
+                                   flex-shrink:0; transition:transform 0.25s ease;">⇅</button>
+                    <div style="flex:1; height:1px; background:var(--border);"></div>
+                </div>
+
+                <div class="conv-lbl" style="margin-bottom:8px;">CONVERT TO</div>
+                <select id="conv-to" class="stealth-select" onchange="convertUnit()" style="margin-bottom:16px;"></select>
+                
+                <div style="background:#1c1c1e; padding:20px; border-radius:10px; text-align:center; border:2px solid var(--accent);">
+                    <div style="font-size:11px; color:var(--sub-text); margin-bottom:6px; text-transform:uppercase;">RESULT</div>
+                    <div id="conv-result" style="font-size:32px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">-- --</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             E6B FLIGHT COMPUTER CALCULATOR
+        ================================================================ -->
+        <div id="tool-e6b-calculator" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div class="conv-row">
+                    <div style="flex:1">
+                        <div class="conv-lbl">Indicated Alt (ft)</div>
+                        <input type="number" id="e6bAlt" class="conv-inp" placeholder="0" oninput="calcE6B()">
+                    </div>
+                    <div style="flex:1">
+                        <div class="conv-lbl">CAS / IAS (kts)</div>
+                        <input type="number" id="e6bIas" class="conv-inp" placeholder="0" oninput="calcE6B()">
+                    </div>
+                </div>
+                <div class="conv-row" style="align-items:flex-end;">
+                    <div style="flex:1">
+                        <div class="conv-lbl">Altimeter (QNH)</div>
+                        <input type="number" id="e6bQnh" class="conv-inp" placeholder="1013" oninput="calcE6B()">
+                    </div>
+                    <div style="width:80px;">
+                        <select id="unitQnh" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
+                            <option value="hpa">hPa</option>
+                            <option value="inhg">inHg</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="conv-row" style="align-items:flex-end;">
+                    <div style="flex:1">
+                        <div class="conv-lbl">OAT (Temp)</div>
+                        <input type="number" id="e6bTemp" class="conv-inp" placeholder="15" oninput="calcE6B()">
+                    </div>
+                    <div style="flex:1">
+                        <div class="conv-lbl">Dewpoint</div>
+                        <input type="number" id="e6bDew" class="conv-inp" placeholder="10" oninput="calcE6B()">
+                    </div>
+                    <div style="width:80px;">
+                        <select id="unitTemp" class="stealth-select" onchange="calcE6B()" style="height:38px; font-size:13px;">
+                            <option value="c">°C</option>
+                            <option value="f">°F</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; padding-top:15px; border-top:1px solid #333;">
+                    <div onclick="showFormulaModal('pa')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Pressure Alt <span style="font-size:9px; color:#555;">ⓘ</span></div>
+                        <div class="ic-val" id="resPA" style="color:var(--accent);">--</div>
+                    </div>
+                    <div onclick="showFormulaModal('da')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Density Alt <span style="font-size:9px; color:#555;">ⓘ</span></div>
+                        <div class="ic-val" id="resDA" style="color:var(--accent);">--</div>
+                    </div>
+                    <div onclick="showFormulaModal('isa')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">ISA Deviation <span style="font-size:9px; color:#555;">ⓘ</span></div>
+                        <div class="ic-val" id="resISA">--</div>
+                    </div>
+                    <div onclick="showFormulaModal('tas')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">True Airspeed <span style="font-size:9px; color:#555;">ⓘ</span></div>
+                        <div class="ic-val" id="resTAS" style="color:var(--success);">--</div>
+                    </div>
+                    <div onclick="showFormulaModal('cloudbase')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Cloud Base (AGL) <span style="font-size:9px; color:#555;">ⓘ</span></div>
+                        <div class="ic-val" id="resCloud">--</div>
+                    </div>
+                    <div onclick="showFormulaModal('frz')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Freezing Lvl <span style="font-size:9px; color:#555;">ⓘ</span></div>
+                        <div class="ic-val" id="resFrz">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             E6B TRAINER (UND)
+        ================================================================ -->
+        <div id="tool-e6b-trainer" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div id="e6b-trainer-content">
+                    <!-- Content will be loaded by openUNDE6B() when tool opens -->
+                    <div style="text-align:center; padding:20px;">
+                        <div style="font-size:16px; color:var(--sub-text);">Loading E6B trainer...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             GREAT CIRCLE DISTANCE CALCULATOR
+        ================================================================ -->
+        <div id="tool-great-circle" class="tool-view" style="display:none;">
+
+            <div class="info-card" style="margin-bottom:12px;">
+                <div class="conv-lbl" style="margin-bottom:6px;">FROM</div>
+                <input type="text" id="gc-from" class="conv-inp"
+                       placeholder="ICAO · IATA · lat, lon"
+                       autocomplete="off" autocorrect="off" spellcheck="false"
+                       oninput="gcResolveInput('gc-from','gc-from-name')"
+                       onkeydown="if(event.key==='Enter')calculateGreatCircle()">
+                <div id="gc-from-name" style="font-size:11px; min-height:18px; padding:3px 2px; color:var(--sub-text); transition:color 0.2s;"></div>
+
+                <div style="text-align:center; margin:10px 0 6px;">
+                    <button onclick="gcSwap()" style="background:#2c2c2e; border:1px solid #444; color:#aaa; padding:5px 22px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:0.5px;">⇅ SWAP</button>
+                </div>
+
+                <div class="conv-lbl" style="margin-bottom:6px;">TO</div>
+                <input type="text" id="gc-to" class="conv-inp"
+                       placeholder="ICAO · IATA · lat, lon"
+                       autocomplete="off" autocorrect="off" spellcheck="false"
+                       oninput="gcResolveInput('gc-to','gc-to-name')"
+                       onkeydown="if(event.key==='Enter')calculateGreatCircle()">
+                <div id="gc-to-name" style="font-size:11px; min-height:18px; padding:3px 2px; color:var(--sub-text); transition:color 0.2s;"></div>
+
+                <button onclick="calculateGreatCircle()" class="tool-btn"
+                        style="margin-top:14px; background:var(--accent); border:none; color:#000; font-weight:700; font-size:14px; padding:13px; letter-spacing:0.5px;">
+                    CALCULATE
+                </button>
+            </div>
+
+            <div id="gc-error" style="display:none; background:rgba(255,69,58,0.12); border:1px solid rgba(255,69,58,0.4); border-radius:8px; padding:10px 14px; font-size:13px; color:#ff453a; margin-bottom:12px;"></div>
+
+            <div id="gc-result" style="display:none;">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">NM</div>
+                        <div id="gc-nm" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
+                    </div>
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">KM</div>
+                        <div id="gc-km" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
+                    </div>
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">MI</div>
+                        <div id="gc-mi" style="font-size:22px; font-weight:800; color:var(--accent); margin-top:4px; letter-spacing:-0.5px;">--</div>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">Initial Track (True)</div>
+                        <div id="gc-initial" style="font-size:24px; font-weight:800; color:var(--success); margin-top:4px; letter-spacing:-0.5px; font-family:'SF Mono',monospace;">--°</div>
+                    </div>
+                    <div class="info-card" style="text-align:center; padding:12px 8px;">
+                        <div class="ic-lbl">Final Track (True)</div>
+                        <div id="gc-final" style="font-size:24px; font-weight:800; color:var(--success); margin-top:4px; letter-spacing:-0.5px; font-family:'SF Mono',monospace;">--°</div>
+                    </div>
+                </div>
+                <div id="gc-map" style="height:300px; border-radius:10px; overflow:hidden; background:#1c1c1e; border:1px solid #333;"></div>
+                <div id="gc-route-label" style="text-align:center; font-size:11px; color:var(--sub-text); margin-top:8px; letter-spacing:0.3px;"></div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             CROSSWIND / HEADWIND CALCULATOR
+        ================================================================ -->
+        <div id="tool-crosswind" class="tool-view" style="display:none;">
+
+            <!-- Mode Toggle -->
+            <div style="display:flex;background:#1a1a1c;border:1px solid #2a2a2a;border-radius:10px;
+                        padding:3px;margin-bottom:14px;">
+                <button id="cw-btn-visual" onclick="cwSetMode('visual')"
+                        style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;
+                               font-weight:700;cursor:pointer;transition:all 0.2s;
+                               background:#0a84ff;color:#fff;">
+                    🧭 Visual
+                </button>
+                <button id="cw-btn-type" onclick="cwSetMode('type')"
+                        style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;
+                               font-weight:700;cursor:pointer;transition:all 0.2s;
+                               background:transparent;color:#555;">
+                    ⌨️ Type In
+                </button>
+            </div>
+
+            <!-- ════════════════════════════════════
+                 VISUAL MODE
+            ════════════════════════════════════ -->
+            <div id="cw-visual-mode">
+
+                <!-- Both runway ends -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div class="info-card" style="padding:10px 12px;border-left:3px solid #0a84ff;">
+                        <div id="cw-rwy1-label" style="font-size:10px;font-weight:800;color:#0a84ff;
+                                                        letter-spacing:0.5px;margin-bottom:5px;">RWY 36</div>
+                        <div id="cw-rwy1-hdw" style="font-size:12px;color:#888;margin-bottom:2px;">Headwind: 0 kt</div>
+                        <div id="cw-rwy1-xw"  style="font-size:12px;color:#888;">X-Wind: 0 kt</div>
+                    </div>
+                    <div class="info-card" style="padding:10px 12px;border-left:3px solid #333;">
+                        <div id="cw-rwy2-label" style="font-size:10px;font-weight:800;color:#444;
+                                                        letter-spacing:0.5px;margin-bottom:5px;">RWY 18</div>
+                        <div id="cw-rwy2-hdw" style="font-size:12px;color:#555;margin-bottom:2px;">Tailwind: 0 kt</div>
+                        <div id="cw-rwy2-xw"  style="font-size:12px;color:#555;">X-Wind: 0 kt</div>
+                    </div>
+                </div>
+
+                <!-- Compass + speed slider -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
+
+                    <canvas id="cw-canvas" style="touch-action:none;display:block;flex-shrink:0;"></canvas>
+
+                    <!-- Vertical speed slider -->
+                    <div style="display:flex;flex-direction:column;align-items:center;
+                                justify-content:space-between;height:240px;flex-shrink:0;">
+                        <div style="font-size:10px;color:#555;font-weight:700;font-family:monospace;">50</div>
+                        <div style="position:relative;height:190px;width:28px;
+                                    display:flex;align-items:center;justify-content:center;">
+                            <input type="range" id="cw-vslider" min="0" max="50" value="0" step="1"
+                                   style="width:180px;cursor:pointer;accent-color:#ff9f0a;
+                                          transform:rotate(-90deg);transform-origin:center center;
+                                          position:absolute;"
+                                   oninput="cwOnSpeedChange(this.value)" />
+                        </div>
+                        <div style="font-size:10px;color:#555;font-weight:700;font-family:monospace;">0</div>
+                    </div>
+                </div>
+
+                <!-- Interaction hint -->
+                <div style="text-align:center;font-size:10px;color:#333;margin-bottom:10px;letter-spacing:0.3px;">
+                    Drag inner disc → runway heading &nbsp;·&nbsp; Drag outer ring → wind direction
+                </div>
+
+                <!-- Wind readout display -->
+                <div id="cw-wind-readout"
+                     style="background:#111;border:1px solid #222;border-radius:10px;
+                            padding:11px 16px;text-align:center;margin-bottom:10px;
+                            font-family:'SF Mono',monospace;font-size:20px;font-weight:800;
+                            color:#ff9f0a;letter-spacing:2px;">
+                    360° / 0 KT
+                </div>
+
+                <!-- Gust + Limit row -->
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <div class="conv-lbl" style="margin:0;white-space:nowrap;font-size:12px;">Gust (kt):</div>
+                    <input type="number" id="cw-gust-v" class="conv-inp" placeholder="--" min="0"
+                           style="flex:1;height:34px;font-size:13px;" oninput="cwOnGustChange(this.value)">
+                    <div class="conv-lbl" style="margin:0;white-space:nowrap;font-size:12px;">Limit:</div>
+                    <select id="cw-limit-v" class="stealth-select" onchange="cwOnLimitChange(this.value)"
+                            style="flex:1.5;height:34px;font-size:12px;">
+                        <option value="15">15 kt — EVA Solo</option>
+                        <option value="12">12 kt — EVA Dual</option>
+                        <option value="20">20 kt — C172 POH</option>
+                        <option value="25">25 kt</option>
+                        <option value="0">No limit</option>
+                    </select>
+                </div>
+
+                <!-- GO / NO-GO status -->
+                <div id="cw-status-v"
+                     style="text-align:center;padding:10px 14px;border-radius:10px;font-size:13px;
+                            font-weight:800;letter-spacing:0.5px;display:none;margin-bottom:8px;
+                            background:rgba(255,255,255,0.04);border:1px solid #333;color:#888;">
+                </div>
+
+                <!-- Gust component row (appears when gust entered) -->
+                <div id="cw-gust-result-v" style="display:none;margin-top:6px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div class="info-card" style="text-align:center;padding:10px 8px;">
+                            <div class="ic-lbl" id="cw-ghw-lbl-v">Gust Headwind</div>
+                            <div id="cw-ghw-v" style="font-size:20px;font-weight:700;
+                                                       color:var(--accent);font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);">kt</div>
+                        </div>
+                        <div class="info-card" style="text-align:center;padding:10px 8px;">
+                            <div id="cw-gxw-lbl-v" class="ic-lbl">Gust Crosswind</div>
+                            <div id="cw-gxw-v" style="font-size:20px;font-weight:700;
+                                                       color:var(--success);font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);">kt</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════
+                 TYPE IN MODE
+            ════════════════════════════════════ -->
+            <div id="cw-type-mode" style="display:none;">
+                <div class="info-card" style="margin-bottom:12px;">
+                    <div class="conv-row">
+                        <div style="flex:1">
+                            <div class="conv-lbl" style="margin-bottom:6px;">Runway (°)</div>
+                            <input type="number" id="cw-rwy" class="conv-inp" placeholder="360"
+                                   min="0" max="360" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
+                        </div>
+                        <div style="flex:1">
+                            <div class="conv-lbl" style="margin-bottom:6px;">Wind Dir (°)</div>
+                            <input type="number" id="cw-wdir" class="conv-inp" placeholder="270"
+                                   min="0" max="360" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
+                        </div>
+                    </div>
+                    <div class="conv-row">
+                        <div style="flex:1">
+                            <div class="conv-lbl" style="margin-bottom:6px;">Wind Speed (kt)</div>
+                            <input type="number" id="cw-wspd" class="conv-inp" placeholder="10"
+                                   min="0" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
+                        </div>
+                        <div style="flex:1">
+                            <div class="conv-lbl" style="margin-bottom:6px;">Gust (kt) <span style="color:#555;font-weight:400;">optional</span></div>
+                            <input type="number" id="cw-gust" class="conv-inp" placeholder="--"
+                                   min="0" oninput="calcCrosswind()" onkeydown="if(event.key==='Enter')calcCrosswind()">
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                        <div class="conv-lbl" style="margin:0;white-space:nowrap;">XWind Limit:</div>
+                        <select id="cw-limit" class="stealth-select" onchange="calcCrosswind()" style="flex:1;height:34px;font-size:13px;">
+                            <option value="15">15 kt — EVA Solo / C172 Demo</option>
+                            <option value="12">12 kt — EVA Dual Student</option>
+                            <option value="20">20 kt — C172 POH Max</option>
+                            <option value="25">25 kt — Custom 25 kt</option>
+                            <option value="0">No limit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="cw-result" style="display:none;">
+                    <div id="cw-status" style="text-align:center;padding:12px;border-radius:10px;font-size:15px;font-weight:800;letter-spacing:0.5px;margin-bottom:12px;"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                        <div class="info-card" style="text-align:center;padding:14px 8px;">
+                            <div class="ic-lbl" id="cw-hw-lbl">Headwind</div>
+                            <div id="cw-hw" style="font-size:26px;font-weight:800;color:var(--accent);margin-top:4px;font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                        </div>
+                        <div class="info-card" style="text-align:center;padding:14px 8px;">
+                            <div id="cw-xw-lbl" class="ic-lbl">Crosswind</div>
+                            <div id="cw-xw" style="font-size:26px;font-weight:800;color:var(--success);margin-top:4px;font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                        </div>
+                    </div>
+                    <div id="cw-gust-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                        <div class="info-card" style="text-align:center;padding:10px 8px;">
+                            <div class="ic-lbl" id="cw-ghw-lbl">Gust Headwind</div>
+                            <div id="cw-ghw" style="font-size:20px;font-weight:700;color:var(--accent);margin-top:4px;font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                        </div>
+                        <div class="info-card" style="text-align:center;padding:10px 8px;">
+                            <div id="cw-gxw-lbl" class="ic-lbl">Gust Crosswind</div>
+                            <div id="cw-gxw" style="font-size:20px;font-weight:700;color:var(--success);margin-top:4px;font-family:monospace;">--</div>
+                            <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">knots</div>
+                        </div>
+                    </div>
+                    <div class="info-card" style="padding:16px;text-align:center;">
+                        <div class="ic-lbl" style="margin-bottom:10px;">Runway Diagram</div>
+                        <svg id="cw-svg" viewBox="0 0 200 200" width="180" height="180"
+                             style="display:block;margin:0 auto;overflow:visible;"></svg>
+                    </div>
+                </div>
+                <div id="cw-empty" style="text-align:center;padding:28px 0;color:var(--sub-text);font-size:13px;">
+                    Enter runway heading and wind to calculate
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================================================================
+             FORMULA EXPLANATION MODAL
+        ================================================================ -->
+        <div id="formula-modal" onclick="closeFormulaModal()" style="display:none; position:fixed; inset:0; z-index:5000; background:rgba(0,0,0,0.72); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); align-items:flex-end; justify-content:center;">
+            <div onclick="event.stopPropagation()" style="background:#1c1c1e; border-radius:16px 16px 0 0; padding:0 0 env(safe-area-inset-bottom); width:100%; max-width:520px; max-height:80vh; overflow-y:auto; transform:translateY(100%); transition:transform 0.32s cubic-bezier(0.22,1,0.36,1);" id="formula-modal-sheet">
+                <div style="display:flex; justify-content:center; padding:12px 0 0;">
+                    <div style="width:36px; height:4px; background:#444; border-radius:2px;"></div>
+                </div>
+                <button onclick="closeFormulaModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#666; font-size:20px; cursor:pointer; padding:4px 8px;">✕</button>
+                <div id="formula-modal-body" style="padding:16px 20px 24px;"></div>
+            </div>
+        </div>
+
+        <!-- ================================================================
+             WEATHER TERMS LOOKUP
+        ================================================================ -->
+        <div id="tool-weather-terms" class="tool-view" style="display:none;">
+            <div class="info-card">
+                <div class="conv-lbl" style="margin-bottom:8px;">SEARCH WEATHER TERMS</div>
+                <div style="position:relative; margin-bottom:16px;">
+                    <input type="text" id="wx-search" class="conv-inp" placeholder="Search by code or term..." oninput="searchWeatherTerms()" style="padding-left:36px; padding-right:36px;">
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">🔍</span>
+                    <button onclick="clearWeatherSearch()" id="wx-clear-btn" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
+                </div>
+                
+                <!-- More Sources Button -->
+                <div style="margin-bottom:16px;">
+                    <button onclick="toggleSourcesMenu()" class="tool-btn" style="width:100%; background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:12px; font-size:12px; font-weight:700; border-radius:8px;">
+                        📚 MORE SOURCES
+                    </button>
+                </div>
+                
+                <!-- Sources Menu (Initially Hidden) -->
+                <div id="sources-menu" style="display:none; margin-bottom:16px; background:#1c1c1e; border:1px solid #333; border-radius:8px; padding:12px;">
+                    <div style="font-size:11px; font-weight:700; color:var(--sub-text); margin-bottom:8px;">REFERENCE MATERIALS</div>
+                    
+                    <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:6px; text-align:left; display:flex; align-items:center; gap:8px;">
+                        <span>📄</span>
+                        <span style="flex:1;">METAR Decode Key (NWS PDF)</span>
+                        <span style="color:var(--sub-text);">↗</span>
+                    </button>
+                    
+                    <button onclick="window.open('https://www.blondsinaviation.com/wp-content/uploads/2019/05/NOAA-Legends-1407.pdf', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:6px; text-align:left; display:flex; align-items:center; gap:8px;">
+                        <span>📄</span>
+                        <span style="flex:1;">NOAA Chart Legends (PDF)</span>
+                        <span style="color:var(--sub-text);">↗</span>
+                    </button>
+                    
+                    <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; text-align:left; display:flex; align-items:center; gap:8px;">
+                        <span>🌐</span>
+                        <span style="flex:1;">AWC GFA Symbols (Web)</span>
+                        <span style="color:var(--sub-text);">↗</span>
+                    </button>
+                </div>
+                
+                <div id="wx-results" style="max-height:60vh; overflow-y:auto;">
+                    <!-- Results populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- ================================================================
+             ABBREVIATIONS TOOL
+        ================================================================ -->
+        <div id="tool-abbreviations" class="tool-view" style="display:none;">
+            <!-- No info-card wrapper — AeroSearch native manages its own layout -->
+            <div id="abbrev-content" style="padding:0 4px;"></div>
+        </div>
+        
+    </div>
 </body>
 
 <script>
