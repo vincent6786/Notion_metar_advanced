@@ -1980,7 +1980,13 @@ function _aeroInjectUI(container) {
         if (!topBtn && panel) {
             topBtn = document.createElement('button');
             topBtn.id = 'aero-top-btn';
-            topBtn.onclick = _aeroScrollTop;
+            topBtn.onclick = () => {
+                // Hide immediately on tap
+                topBtn.style.opacity = '0';
+                topBtn.style.pointerEvents = 'none';
+                topBtn.style.transform = 'translateY(8px)';
+                _aeroScrollTop();
+            };
             topBtn.textContent = '↑';
             topBtn.style.cssText = `position:fixed;bottom:max(28px,env(safe-area-inset-bottom));
                 left:20px;width:40px;height:40px;border-radius:12px;

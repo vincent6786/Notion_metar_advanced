@@ -1912,6 +1912,7 @@
 
             function blocked(t) {
                 return t.closest('.quick-select-row') ||
+                       t.closest('.tabs') ||
                        t.closest('#tools-extension-panel') ||
                        (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) ||
                        window._sortMode?.active;
