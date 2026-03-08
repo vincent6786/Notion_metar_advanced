@@ -994,6 +994,7 @@ They will be blocked immediately on next refresh.`)) return;
             await checkMultiDashboardEnabled();
             await checkNoGoBannerEnabled();
             loadUnitPreferences();
+            if (typeof loadAeroSearchModeSetting === 'function') loadAeroSearchModeSetting();
 
 
             const savedDefault = await Storage.get('efb_default_station');

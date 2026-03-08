@@ -1856,6 +1856,7 @@ function _aeroInjectStyles() {
 
 // ── Build UI skeleton ─────────────────────────────────────────────────────
 function _aeroInjectUI(container) {
+    const savedMode = localStorage.getItem('aero_search_mode_default') || 'starts';
     const sourcePills = Object.values(AERO_SOURCES).map(s => {
         const c = AERO_SOURCE_COLORS[s.label];
         return `<button class="aero-pill" data-source="${s.label}"
@@ -1899,9 +1900,9 @@ function _aeroInjectUI(container) {
                         style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
                                color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
                                cursor:pointer;outline:none;" onchange="_aeroRender()">
-                    <option value="contains">Contains</option>
-                    <option value="starts">Starts with</option>
-                    <option value="exact">Exact match</option>
+                    <option value="contains" ${savedMode === 'contains' ? 'selected' : ''}>Contains</option>
+                    <option value="starts"   ${savedMode === 'starts'   ? 'selected' : ''}>Starts with</option>
+                    <option value="exact"    ${savedMode === 'exact'    ? 'selected' : ''}>Exact match</option>
                 </select>
                 <select id="aero-sort"
                         style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
@@ -2388,135 +2389,420 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================================
-// CROSSWIND / HEADWIND CALCULATOR
+// CROSSWIND CALCULATOR — Dial + Type-in modes
 // ============================================================================
 
+// ── Shared state ──────────────────────────────────────────────────────────
+const cwState = {
+    rwyHdg:  360,
+    windDir: 360,
+    windSpd: 0,
+    gust:    null,
+    limit:   15,
+    mode:    'dial',    // 'dial' | 'type'
+    drag:    null,      // 'wind' | 'runway' | null
+    dragStartAngle: 0,
+    dragStartHdg:   0,
+};
+
+// Legacy shim — openTool('crosswind') calls calcCrosswind()
 function calcCrosswind() {
-    const rwyRaw  = document.getElementById('cw-rwy')?.value.trim();
-    const wdirRaw = document.getElementById('cw-wdir')?.value.trim();
-    const wspdRaw = document.getElementById('cw-wspd')?.value.trim();
-    const gustRaw = document.getElementById('cw-gust')?.value.trim();
-    const limitEl = document.getElementById('cw-limit');
-    const result  = document.getElementById('cw-result');
-    const empty   = document.getElementById('cw-empty');
+    cwSetMode(cwState.mode);
+    cwRenderCompass();
+    cwCalcAndShow();
+}
 
-    if (!rwyRaw || !wdirRaw || !wspdRaw) {
+// ── Mode switch ───────────────────────────────────────────────────────────
+function cwSetMode(mode) {
+    cwState.mode = mode;
+    const dialSec = document.getElementById('cw-dial-section');
+    const typeSec = document.getElementById('cw-type-section');
+    const dialBtn = document.getElementById('cw-mode-dial');
+    const typeBtn = document.getElementById('cw-mode-type');
+    if (dialSec) dialSec.style.display = mode === 'dial' ? 'block' : 'none';
+    if (typeSec) typeSec.style.display = mode === 'type' ? 'block' : 'none';
+    if (dialBtn) { dialBtn.style.background = mode === 'dial' ? '#0a84ff' : 'transparent'; dialBtn.style.color = mode === 'dial' ? '#fff' : '#555'; }
+    if (typeBtn) { typeBtn.style.background = mode === 'type' ? '#0a84ff' : 'transparent'; typeBtn.style.color = mode === 'type' ? '#fff' : '#555'; }
+    if (mode === 'dial') { cwRenderCompass(); cwInitDialEvents(); }
+    cwCalcAndShow();
+}
+
+// ── Type-in mode input handler ────────────────────────────────────────────
+function cwTypeChange() {
+    const rwy  = parseFloat(document.getElementById('cw-rwy-type')?.value);
+    const wdir = parseFloat(document.getElementById('cw-wdir-type')?.value);
+    const wspd = parseFloat(document.getElementById('cw-wspd-type')?.value) || 0;
+    const gust = document.getElementById('cw-gust-type')?.value;
+    const limit = parseFloat(document.getElementById('cw-limit-type')?.value || '15');
+    if (!isNaN(rwy))  cwState.rwyHdg  = rwy;
+    if (!isNaN(wdir)) cwState.windDir = wdir;
+    cwState.windSpd = wspd;
+    cwState.gust    = gust ? parseFloat(gust) : null;
+    cwState.limit   = limit;
+    cwCalcAndShow();
+}
+
+// ── Dial: speed slider ────────────────────────────────────────────────────
+function cwSpdSliderChange(val) {
+    cwState.windSpd = parseInt(val);
+    const v = document.getElementById('cw-spd-val');
+    if (v) v.textContent = val;
+    cwUpdateWindDisplay();
+    cwCalcAndShow();
+    cwRenderCompass();
+}
+
+function cwUpdateWindDisplay() {
+    const el = document.getElementById('cw-wind-display');
+    if (el) el.textContent = `${cwState.windDir}° / ${cwState.windSpd} KT`;
+}
+function cwUpdateRwyDisplay() {
+    const el = document.getElementById('cw-rwy-display');
+    if (!el) return;
+    const h = Math.round(cwState.rwyHdg);
+    const n = Math.round(h / 10) || 36;
+    const o = n <= 18 ? n + 18 : n - 18;
+    el.textContent = `RWY ${String(n).padStart(2,'0')}/${String(o).padStart(2,'0')}`;
+}
+
+// ── Compass SVG renderer ──────────────────────────────────────────────────
+function cwRenderCompass() {
+    const svg = document.getElementById('cw-compass');
+    if (!svg) return;
+
+    const cx = 140, cy = 140;
+    const outerR = 126, ringR = 110, innerR = 82;
+    const { rwyHdg, windDir, windSpd } = cwState;
+
+    // Components
+    const angleDeg  = windDir - rwyHdg;
+    const angleRad  = angleDeg * Math.PI / 180;
+    const headwind  = windSpd * Math.cos(angleRad);
+    const crosswind = windSpd * Math.sin(angleRad);
+    const hwColor   = headwind >= 0 ? '#30d158' : '#ff453a';
+
+    // Wind triangle tip position on ring
+    const windRad = (windDir - 90) * Math.PI / 180;
+    const tip = {
+        x: cx + Math.cos(windRad) * (ringR + 2),
+        y: cy + Math.sin(windRad) * (ringR + 2),
+    };
+    const triSize = 13;
+    const bl = { x: tip.x + Math.cos(windRad + Math.PI + 0.42) * triSize, y: tip.y + Math.sin(windRad + Math.PI + 0.42) * triSize };
+    const br = { x: tip.x + Math.cos(windRad + Math.PI - 0.42) * triSize, y: tip.y + Math.sin(windRad + Math.PI - 0.42) * triSize };
+
+    // Tick marks
+    let ticks = '';
+    for (let d = 0; d < 360; d += 5) {
+        const major = d % 30 === 0, mid = d % 10 === 0;
+        const len   = major ? 15 : mid ? 9 : 5;
+        const rad   = (d - 90) * Math.PI / 180;
+        const x1 = cx + Math.cos(rad) * outerR,     y1 = cy + Math.sin(rad) * outerR;
+        const x2 = cx + Math.cos(rad) * (outerR - len), y2 = cy + Math.sin(rad) * (outerR - len);
+        ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
+                        stroke="${major ? '#bbb' : mid ? '#666' : '#3a3a3e'}"
+                        stroke-width="${major ? 2 : 1}"/>`;
+    }
+
+    // Degree labels every 30°
+    let labels = '';
+    for (let d = 0; d < 360; d += 30) {
+        const rad = (d - 90) * Math.PI / 180;
+        const lx  = cx + Math.cos(rad) * (outerR - 23);
+        const ly  = cy + Math.sin(rad) * (outerR - 23);
+        labels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}"
+                         text-anchor="middle" dominant-baseline="middle"
+                         fill="#ccc" font-size="11" font-weight="700"
+                         font-family="'SF Mono',monospace">${d === 0 ? '360' : d}</text>`;
+    }
+
+    // Runway numbers
+    const rwyNum = Math.round(rwyHdg / 10) || 36;
+    const oppNum = rwyNum <= 18 ? rwyNum + 18 : rwyNum - 18;
+    const rwyStr = String(rwyNum).padStart(2, '0');
+    const oppStr = String(oppNum).padStart(2, '0');
+
+    // Component arrows (not rotated — fixed to compass orientation)
+    let arrows = '';
+    if (windSpd > 0) {
+        // HW/TW arrow along runway axis
+        const hwRad = (rwyHdg - 90) * Math.PI / 180;
+        const hwLen = Math.min(Math.abs(headwind / windSpd) * 52, 52);
+        const hwDir = headwind >= 0 ? 0 : Math.PI;
+        const hwEx  = cx + Math.cos(hwRad + hwDir) * hwLen;
+        const hwEy  = cy + Math.sin(hwRad + hwDir) * hwLen;
+
+        // XW arrow perpendicular to runway
+        const xwRad = (rwyHdg - 90 + 90) * Math.PI / 180;
+        const xwLen = Math.min(Math.abs(crosswind / windSpd) * 42, 42);
+        const xwDir = crosswind >= 0 ? 0 : Math.PI;
+        const xwEx  = cx + Math.cos(xwRad + xwDir) * xwLen;
+        const xwEy  = cy + Math.sin(xwRad + xwDir) * xwLen;
+
+        arrows = `
+        <defs>
+            <marker id="cwHWArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+                <path d="M0,0 L7,3.5 L0,7 Z" fill="${hwColor}"/></marker>
+            <marker id="cwXWArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+                <path d="M0,0 L7,3.5 L0,7 Z" fill="#0a84ff"/></marker>
+        </defs>
+        <line x1="${cx}" y1="${cy}" x2="${hwEx.toFixed(1)}" y2="${hwEy.toFixed(1)}"
+              stroke="${hwColor}" stroke-width="3.5" stroke-linecap="round"
+              marker-end="url(#cwHWArr)" opacity="0.92"/>
+        <line x1="${cx}" y1="${cy}" x2="${xwEx.toFixed(1)}" y2="${xwEy.toFixed(1)}"
+              stroke="#0a84ff" stroke-width="3.5" stroke-linecap="round"
+              marker-end="url(#cwXWArr)" opacity="0.92"/>`;
+    }
+
+    svg.innerHTML = `
+    <defs>
+        <radialGradient id="cwFace" cx="50%" cy="35%" r="65%">
+            <stop offset="0%"   stop-color="#252530"/>
+            <stop offset="100%" stop-color="#0c0c10"/>
+        </radialGradient>
+        <radialGradient id="cwRing" cx="50%" cy="30%" r="80%">
+            <stop offset="0%"   stop-color="#404048"/>
+            <stop offset="100%" stop-color="#1a1a20"/>
+        </radialGradient>
+        <radialGradient id="cwInner" cx="40%" cy="35%" r="70%">
+            <stop offset="0%"   stop-color="#1e1e24"/>
+            <stop offset="100%" stop-color="#0a0a0e"/>
+        </radialGradient>
+        <filter id="cwGlow">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+    </defs>
+
+    <!-- Outer border -->
+    <circle cx="${cx}" cy="${cy}" r="${outerR + 6}" fill="url(#cwRing)" stroke="#555" stroke-width="1.5"/>
+    <!-- Compass face -->
+    <circle cx="${cx}" cy="${cy}" r="${outerR}" fill="url(#cwFace)"/>
+    <!-- Tick marks -->
+    ${ticks}
+    <!-- Labels -->
+    ${labels}
+    <!-- Inner separator -->
+    <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="url(#cwInner)" stroke="#2a2a32" stroke-width="1.5"/>
+
+    <!-- Runway group (rotates with rwyHdg) -->
+    <g transform="rotate(${rwyHdg}, ${cx}, ${cy})">
+        <!-- Runway body -->
+        <rect x="${cx - 16}" y="${cy - 42}" width="32" height="84"
+              rx="5" fill="#181820" stroke="#555" stroke-width="1.5"/>
+        <!-- Centerline dashes -->
+        <line x1="${cx}" y1="${cy-34}" x2="${cx}" y2="${cy-22}" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <line x1="${cx}" y1="${cy-7}"  x2="${cx}" y2="${cy+7}"  stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <line x1="${cx}" y1="${cy+22}" x2="${cx}" y2="${cy+34}" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <!-- Threshold bars top -->
+        <rect x="${cx-13}" y="${cy-41}" width="5" height="3" fill="#888" rx="1"/>
+        <rect x="${cx-6}"  y="${cy-41}" width="5" height="3" fill="#888" rx="1"/>
+        <rect x="${cx+1}"  y="${cy-41}" width="5" height="3" fill="#888" rx="1"/>
+        <rect x="${cx+8}"  y="${cy-41}" width="5" height="3" fill="#888" rx="1"/>
+        <!-- Threshold bars bottom -->
+        <rect x="${cx-13}" y="${cy+38}" width="5" height="3" fill="#888" rx="1"/>
+        <rect x="${cx-6}"  y="${cy+38}" width="5" height="3" fill="#888" rx="1"/>
+        <rect x="${cx+1}"  y="${cy+38}" width="5" height="3" fill="#888" rx="1"/>
+        <rect x="${cx+8}"  y="${cy+38}" width="5" height="3" fill="#888" rx="1"/>
+        <!-- Runway numbers -->
+        <text x="${cx}" y="${cy-26}" text-anchor="middle" dominant-baseline="middle"
+              fill="#ddd" font-size="10" font-weight="800" font-family="'SF Mono',monospace">${rwyStr}</text>
+        <text x="${cx}" y="${cy+26}" text-anchor="middle" dominant-baseline="middle"
+              fill="#ddd" font-size="10" font-weight="800" font-family="'SF Mono',monospace"
+              transform="rotate(180,${cx},${cy+26})">${oppStr}</text>
+    </g>
+
+    <!-- Component arrows (compass-fixed) -->
+    ${arrows}
+
+    <!-- Center dot -->
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#333" stroke="#555" stroke-width="1.5"/>
+
+    <!-- Wind direction triangle (draggable, on ring) -->
+    <polygon points="${tip.x.toFixed(1)},${tip.y.toFixed(1)} ${bl.x.toFixed(1)},${bl.y.toFixed(1)} ${br.x.toFixed(1)},${br.y.toFixed(1)}"
+             fill="#ff9f0a" stroke="#b87000" stroke-width="1"
+             style="cursor:grab;"
+             filter="url(#cwGlow)"/>
+
+    <!-- Wind speed arc (partial ring showing % of 50kt scale) -->
+    ${windSpd > 0 ? (() => {
+        const pct   = Math.min(windSpd / 50, 1);
+        const arcR  = innerR - 8;
+        const start = -90 * Math.PI / 180;
+        const end   = (pct * 360 - 90) * Math.PI / 180;
+        const laf   = pct > 0.5 ? 1 : 0;
+        const x1 = cx + Math.cos(start) * arcR, y1 = cy + Math.sin(start) * arcR;
+        const x2 = cx + Math.cos(end)   * arcR, y2 = cy + Math.sin(end)   * arcR;
+        return `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${arcR},${arcR} 0 ${laf},1 ${x2.toFixed(1)},${y2.toFixed(1)}"
+                      fill="none" stroke="rgba(255,159,10,0.35)" stroke-width="5" stroke-linecap="round"/>`;
+    })() : ''}
+    `;
+}
+
+// ── Touch / mouse event handling ──────────────────────────────────────────
+function cwInitDialEvents() {
+    const svg = document.getElementById('cw-compass');
+    if (!svg || svg._cwInit) return;
+    svg._cwInit = true;
+
+    const getInfo = (e) => {
+        const rect  = svg.getBoundingClientRect();
+        const scale = rect.width / 280;
+        const pcx   = 140 * scale + rect.left;
+        const pcy   = 140 * scale + rect.top;
+        const pt    = e.touches ? e.touches[0] : e;
+        const dx    = pt.clientX - pcx, dy = pt.clientY - pcy;
+        const dist  = Math.sqrt(dx * dx + dy * dy) / scale;
+        const angle = ((Math.atan2(dy, dx) * 180 / Math.PI) + 90 + 360) % 360;
+        return { dist, angle };
+    };
+
+    const onStart = (e) => {
+        e.preventDefault();
+        const { dist, angle } = getInfo(e);
+        if (dist > 76) {
+            cwState.drag = 'wind';
+        } else {
+            cwState.drag = 'runway';
+            cwState.dragStartAngle = angle;
+            cwState.dragStartHdg   = cwState.rwyHdg;
+        }
+    };
+
+    const onMove = (e) => {
+        if (!cwState.drag) return;
+        e.preventDefault();
+        const { angle } = getInfo(e);
+        if (cwState.drag === 'wind') {
+            cwState.windDir = Math.round(angle) || 360;
+            if (cwState.windDir === 0) cwState.windDir = 360;
+            cwUpdateWindDisplay();
+        } else {
+            const delta  = angle - cwState.dragStartAngle;
+            let newHdg   = ((cwState.dragStartHdg + delta) % 360 + 360) % 360;
+            if (newHdg < 1) newHdg = 360;
+            cwState.rwyHdg = Math.round(newHdg);
+            cwUpdateRwyDisplay();
+        }
+        cwCalcAndShow();
+        cwRenderCompass();
+    };
+
+    const onEnd = () => { cwState.drag = null; };
+
+    svg.addEventListener('touchstart', onStart, { passive: false });
+    svg.addEventListener('touchmove',  onMove,  { passive: false });
+    svg.addEventListener('touchend',   onEnd);
+    svg.addEventListener('mousedown',  onStart);
+    window.addEventListener('mousemove', (e) => { if (cwState.drag) onMove(e); });
+    window.addEventListener('mouseup',   onEnd);
+}
+
+// ── Shared calculation & display ──────────────────────────────────────────
+function cwCalcAndShow() {
+    const rwyHdg  = cwState.rwyHdg;
+    const windDir = cwState.windDir;
+    const windSpd = cwState.windSpd;
+    const gustVal = cwState.mode === 'dial'
+        ? document.getElementById('cw-gust-dial')?.value
+        : document.getElementById('cw-gust-type')?.value;
+    const gust  = gustVal ? parseFloat(gustVal) : null;
+    const limit = cwState.mode === 'dial'
+        ? parseFloat(document.getElementById('cw-limit-dial')?.value || '15')
+        : parseFloat(document.getElementById('cw-limit-type')?.value || '15');
+
+    cwState.gust  = gust;
+    cwState.limit = limit;
+
+    const result = document.getElementById('cw-result');
+    const empty  = document.getElementById('cw-empty');
+
+    // In type-in mode with no speed, stay blank
+    if (!windSpd && cwState.mode === 'type') {
         if (result) result.style.display = 'none';
         if (empty)  empty.style.display  = 'block';
         return;
     }
 
-    const rwy   = parseFloat(rwyRaw);
-    const wdir  = parseFloat(wdirRaw);
-    const wspd  = parseFloat(wspdRaw);
-    const gust  = gustRaw ? parseFloat(gustRaw) : null;
-    const limit = limitEl ? parseFloat(limitEl.value) : 0;
-
-    if (isNaN(rwy) || isNaN(wdir) || isNaN(wspd)) {
-        if (result) result.style.display = 'none';
-        if (empty)  empty.style.display  = 'block';
-        return;
-    }
-
-    const angleDeg = wdir - rwy;
+    const angleDeg = windDir - rwyHdg;
     const angleRad = angleDeg * Math.PI / 180;
-    const headwind  = wspd * Math.cos(angleRad);
-    const crosswind = wspd * Math.sin(angleRad);
+    const headwind  = windSpd * Math.cos(angleRad);
+    const crosswind = windSpd * Math.sin(angleRad);
     const xwAbs     = Math.abs(crosswind);
 
-    // Gust components
     let gustHW = null, gustXW = null;
     if (gust !== null && !isNaN(gust)) {
         gustHW = gust * Math.cos(angleRad);
         gustXW = gust * Math.sin(angleRad);
     }
 
-    // Headwind card
+    // HW card
     const hwEl  = document.getElementById('cw-hw');
     const hwLbl = document.getElementById('cw-hw-lbl');
-    if (hwEl) {
-        hwEl.textContent = Math.abs(headwind).toFixed(1);
-        hwEl.style.color = headwind < 0 ? '#ff453a' : 'var(--accent)';
-    }
+    if (hwEl) { hwEl.textContent = Math.abs(headwind).toFixed(1); hwEl.style.color = headwind < 0 ? '#ff453a' : 'var(--accent)'; }
     if (hwLbl) hwLbl.textContent = headwind >= 0 ? 'Headwind' : 'Tailwind ⚠️';
 
-    // Crosswind card
+    // XW card
     const xwEl  = document.getElementById('cw-xw');
     const xwLbl = document.getElementById('cw-xw-lbl');
-    if (xwEl) {
-        xwEl.textContent = xwAbs.toFixed(1);
-        xwEl.style.color = limit>0 && xwAbs>=limit ? '#ff453a' : limit>0 && xwAbs>=limit*0.85 ? '#ff9f0a' : 'var(--success)';
-    }
+    if (xwEl) { xwEl.textContent = xwAbs.toFixed(1); xwEl.style.color = limit > 0 && xwAbs >= limit ? '#ff453a' : limit > 0 && xwAbs >= limit * 0.85 ? '#ff9f0a' : 'var(--success)'; }
     if (xwLbl) xwLbl.textContent = crosswind >= 0 ? 'Crosswind (from right)' : 'Crosswind (from left)';
 
     // Gust row
     const gustRow = document.getElementById('cw-gust-row');
     if (gustRow && gustHW !== null) {
         gustRow.style.display = 'grid';
-        const ghwEl  = document.getElementById('cw-ghw');
-        const ghwLbl = document.getElementById('cw-ghw-lbl');
-        const gxwEl  = document.getElementById('cw-gxw');
-        const gxwLbl = document.getElementById('cw-gxw-lbl');
+        const ghwEl = document.getElementById('cw-ghw'), ghwLbl = document.getElementById('cw-ghw-lbl');
+        const gxwEl = document.getElementById('cw-gxw'), gxwLbl = document.getElementById('cw-gxw-lbl');
         const gxwAbs = Math.abs(gustXW);
         if (ghwEl)  { ghwEl.textContent = Math.abs(gustHW).toFixed(1); ghwEl.style.color = gustHW < 0 ? '#ff453a' : 'var(--accent)'; }
-        if (ghwLbl) ghwLbl.textContent = gustHW >= 0 ? 'Gust Headwind' : 'Gust Tailwind ⚠️';
-        if (gxwEl)  { gxwEl.textContent = gxwAbs.toFixed(1); gxwEl.style.color = limit>0 && gxwAbs>=limit ? '#ff453a' : 'var(--accent)'; }
-        if (gxwLbl) gxwLbl.textContent = gustXW >= 0 ? 'Gust XW (from right)' : 'Gust XW (from left)';
-    } else if (gustRow) {
-        gustRow.style.display = 'none';
-    }
+        if (ghwLbl) ghwLbl.textContent  = gustHW >= 0 ? 'Gust Headwind' : 'Gust Tailwind ⚠️';
+        if (gxwEl)  { gxwEl.textContent = gxwAbs.toFixed(1); gxwEl.style.color = limit > 0 && gxwAbs >= limit ? '#ff453a' : 'var(--accent)'; }
+        if (gxwLbl) gxwLbl.textContent  = gustXW >= 0 ? 'Gust XW (right)' : 'Gust XW (left)';
+    } else if (gustRow) { gustRow.style.display = 'none'; }
 
-    // GO/NO-GO banner
+    // Status banner
     const statusEl = document.getElementById('cw-status');
     if (statusEl) {
-        const checkXW   = gustHW !== null ? Math.abs(gustXW) : xwAbs;
-        const tailwind  = headwind < 0;
+        const checkXW  = gustHW !== null ? Math.abs(gustXW) : xwAbs;
+        const tailwind = headwind < 0;
+        let txt = '', bg = '', bd = '', col = '';
         if (limit > 0 && checkXW >= limit) {
-            statusEl.textContent = `✗ NO-GO  —  Crosswind ${checkXW.toFixed(1)} kt exceeds ${limit} kt limit`;
-            statusEl.style.cssText += ';background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.5);color:#ff453a;';
+            txt = `✗ NO-GO  —  Crosswind ${checkXW.toFixed(1)} kt exceeds ${limit} kt limit`;
+            bg = 'rgba(255,69,58,0.15)'; bd = 'rgba(255,69,58,0.5)'; col = '#ff453a';
         } else if (tailwind) {
-            statusEl.textContent = `⚠️ TAILWIND  —  ${Math.abs(headwind).toFixed(1)} kt — Check POH limits`;
-            statusEl.style.cssText += ';background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.5);color:#ff9f0a;';
+            txt = `⚠️ TAILWIND  —  ${Math.abs(headwind).toFixed(1)} kt — Check POH limits`;
+            bg = 'rgba(255,159,10,0.15)'; bd = 'rgba(255,159,10,0.5)'; col = '#ff9f0a';
         } else if (limit > 0) {
-            statusEl.textContent = `✓ GO  —  Crosswind ${xwAbs.toFixed(1)} kt within ${limit} kt limit`;
-            statusEl.style.cssText += ';background:rgba(50,215,75,0.12);border:1px solid rgba(50,215,75,0.4);color:var(--success);';
+            txt = `✓ GO  —  Crosswind ${xwAbs.toFixed(1)} kt within ${limit} kt limit`;
+            bg = 'rgba(50,215,75,0.12)'; bd = 'rgba(50,215,75,0.4)'; col = 'var(--success)';
         } else {
-            statusEl.textContent = `Crosswind ${xwAbs.toFixed(1)} kt  ·  ${headwind>=0?'Headwind':'Tailwind'} ${Math.abs(headwind).toFixed(1)} kt`;
-            statusEl.style.cssText += ';background:rgba(255,255,255,0.05);border:1px solid #444;color:#fff;';
+            txt = `Crosswind ${xwAbs.toFixed(1)} kt  ·  ${headwind >= 0 ? 'Headwind' : 'Tailwind'} ${Math.abs(headwind).toFixed(1)} kt`;
+            bg = 'rgba(255,255,255,0.05)'; bd = '#444'; col = '#fff';
         }
+        statusEl.textContent = txt;
+        statusEl.style.cssText = `text-align:center;padding:12px;border-radius:10px;font-size:14px;font-weight:800;letter-spacing:0.5px;margin-bottom:12px;background:${bg};border:1px solid ${bd};color:${col};`;
     }
 
     if (result) result.style.display = 'block';
     if (empty)  empty.style.display  = 'none';
-    cwDrawDiagram(rwy, wdir, wspd, gust);
 }
 
-function cwDrawDiagram(rwyHdg, windDir, windSpd, gust) {
-    const svg = document.getElementById('cw-svg');
-    if (!svg) return;
-    const cx = 100, cy = 100, r = 70;
-    const windFromRad = (windDir - 90) * Math.PI / 180;
-    const arrowLen    = Math.min(58, 18 + windSpd * 1.8);
-    const ax1 = cx + Math.cos(windFromRad) * r * 0.88;
-    const ay1 = cy + Math.sin(windFromRad) * r * 0.88;
-    const ax2 = ax1 + Math.cos(windFromRad + Math.PI) * arrowLen;
-    const ay2 = ay1 + Math.sin(windFromRad + Math.PI) * arrowLen;
-    const speedLabel = `${windSpd}${gust ? 'G' + gust : ''}kt`;
-    svg.innerHTML = `
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#333" stroke-width="1"/>
-        <text x="${cx}" y="${cy-r-6}"   text-anchor="middle" fill="#555" font-size="9" font-family="'SF Mono',monospace">N</text>
-        <text x="${cx}" y="${cy+r+14}"  text-anchor="middle" fill="#555" font-size="9" font-family="'SF Mono',monospace">S</text>
-        <text x="${cx+r+8}" y="${cy+4}" text-anchor="middle" fill="#555" font-size="9" font-family="'SF Mono',monospace">E</text>
-        <text x="${cx-r-8}" y="${cy+4}" text-anchor="middle" fill="#555" font-size="9" font-family="'SF Mono',monospace">W</text>
-        <rect x="${cx-8}" y="${cy-50}" width="16" height="100" rx="3" fill="#2c2c2e" stroke="#555" stroke-width="1.5"
-              transform="rotate(${rwyHdg},${cx},${cy})"/>
-        <line x1="${cx}" y1="${cy-38}" x2="${cx}" y2="${cy-20}" stroke="#777" stroke-width="1" stroke-dasharray="4,4" transform="rotate(${rwyHdg},${cx},${cy})"/>
-        <line x1="${cx}" y1="${cy-8}"  x2="${cx}" y2="${cy+8}"  stroke="#777" stroke-width="1" stroke-dasharray="4,4" transform="rotate(${rwyHdg},${cx},${cy})"/>
-        <line x1="${cx}" y1="${cy+20}" x2="${cx}" y2="${cy+38}" stroke="#777" stroke-width="1" stroke-dasharray="4,4" transform="rotate(${rwyHdg},${cx},${cy})"/>
-        <defs><marker id="cwArrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-            <path d="M0,0 L6,3 L0,6 Z" fill="#0a84ff"/></marker></defs>
-        <line x1="${ax1}" y1="${ay1}" x2="${ax2}" y2="${ay2}" stroke="#0a84ff" stroke-width="2.5" marker-end="url(#cwArrow)"/>
-        <text x="${(ax1+ax2)/2}" y="${(ay1+ay2)/2-7}" text-anchor="middle" fill="#0a84ff"
-              font-size="10" font-family="'SF Mono',monospace" font-weight="700">${speedLabel}</text>
-        <circle cx="${cx}" cy="${cy}" r="3" fill="#555"/>`;
+// Legacy no-op (was called externally)
+function cwDrawDiagram() {}
+
+// ============================================================================
+// AEROSEARCH SETTINGS SYNC
+// ============================================================================
+function saveAeroSearchMode(val) {
+    localStorage.setItem('aero_search_mode_default', val);
 }
+
+function loadAeroSearchModeSetting() {
+    const saved = localStorage.getItem('aero_search_mode_default') || 'starts';
+    const sel   = document.getElementById('aeroSearchModeDefault');
+    if (sel) sel.value = saved;
+    return saved;
+}
+
+
