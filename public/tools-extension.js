@@ -1973,8 +1973,8 @@ function _aeroInjectUI(container) {
         const modeEl = document.getElementById('aero-mode');
         if (modeEl) modeEl.value = savedMode;
 
-        // Scroll-driven collapse: attach to #content-scroll (the app's scroll container)
-        const scrollEl = document.getElementById('content-scroll') || window;
+        // Scroll-driven collapse: attach to tools-extension-panel (the actual scroll container)
+        const scrollEl = document.getElementById('tools-extension-panel') || document.getElementById('content-scroll') || window;
         let _aeroLastScrollY = 0;
         let _aeroFiltersVisible = true;
 
@@ -2020,9 +2020,8 @@ function _aeroInjectUI(container) {
 
 // ── Source filter ─────────────────────────────────────────────────────────
 function _aeroScrollTop() {
-    const el = document.getElementById('content-scroll') || window;
-    if (el.scrollTo) el.scrollTo({ top: 0, behavior: 'smooth' });
-    else window.scrollTo({ top: 0, behavior: 'smooth' });
+    const el = document.getElementById('tools-extension-panel') || document.getElementById('content-scroll');
+    if (el) el.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function _aeroSetSource(source, el) {

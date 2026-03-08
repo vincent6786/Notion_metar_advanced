@@ -1933,8 +1933,8 @@
                 el.style.cssText = `
                     position: fixed !important;
                     top:    ${rect.top}px !important;
-                    left:   ${rect.left}px !important;
-                    width:  ${rect.width}px !important;
+                    left:   0 !important;
+                    width:  100% !important;
                     height: ${window.innerHeight - rect.top}px !important;
                     overflow-y: auto;
                     background: var(--bg);
@@ -1942,6 +1942,8 @@
                     transition: none;
                     transform: translateX(0);
                     margin: 0;
+                    padding: 0 12px;
+                    box-sizing: border-box;
                     -webkit-overflow-scrolling: touch;
                 `;
             }
@@ -1951,16 +1953,18 @@
                 el.style.cssText = `
                     position: fixed !important;
                     top:    ${rect.top}px !important;
-                    left:   ${rect.left}px !important;
-                    width:  ${rect.width}px !important;
+                    left:   0 !important;
+                    width:  100% !important;
                     height: ${window.innerHeight - rect.top}px !important;
                     overflow-y: auto;
                     background: var(--bg);
                     z-index: 199;
                     transition: none;
                     display: block !important;
-                    transform: translateX(${dir < 0 ? rect.width : -rect.width}px);
+                    transform: translateX(${dir < 0 ? window.innerWidth : -window.innerWidth}px);
                     margin: 0;
+                    padding: 0 12px;
+                    box-sizing: border-box;
                     -webkit-overflow-scrolling: touch;
                 `;
                 el.classList.remove('hidden');
@@ -2099,7 +2103,7 @@
                     // Use #content-scroll bounds (fixed chrome means panel top ≠ viewport top)
                     const _scrollEl = document.getElementById('content-scroll');
                     const rect = (_scrollEl || state.fromEl).getBoundingClientRect();
-                    state.W    = rect.width;
+                    state.W    = window.innerWidth; // full viewport for translation
         
                     // Lock content scroll so page can't drift during horizontal animation
                     if (_scrollEl) _scrollEl.style.overflow = 'hidden';
