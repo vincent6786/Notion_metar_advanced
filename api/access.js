@@ -88,6 +88,18 @@ export default async function handler(req, res) {
         return res.json({ users: users.filter(u => u.name).sort((a,b) => a.code.localeCompare(b.code)) });
     }
 
+    // ── UPDATE — edit a user's name ───────────────────────────────────────
+    if (action === 'update') {
+        if (!code) return res.status(400).json({ error: 'Code required' });
+        const key = sanitizeCode(code);
+        const user = await kv.get(`efb:users:${key}`);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        const updates = {};
+        if (name !== undefined) updates.name = (name || '').toString().slice(0, 40);
+        await kv.set(`efb:users:${key}`, { ...user, ...updates });
+        return res.json({ success: true });
+    }
+
     // ── REVOKE — disable a user's access ─────────────────────────────────
     if (action === 'revoke') {
         if (!code) return res.status(400).json({ error: 'Code required' });
