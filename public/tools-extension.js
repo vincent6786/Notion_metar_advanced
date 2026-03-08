@@ -1824,17 +1824,21 @@ function openAbbreviations() {
     const container = document.getElementById('abbrev-content');
     if (!container) return;
 
-    // Clean up previous scroll listener if re-opening
+    // Always clean up previous listener/button before re-attaching
     const oldRoot = document.getElementById('aero-root');
     if (oldRoot?._aeroScrollCleanup) { oldRoot._aeroScrollCleanup(); }
+    document.getElementById('aero-top-btn')?.remove();
 
     if (!_aeroReady) {
         _aeroReady = true;
         _aeroInjectStyles();
         _aeroInjectUI(container);
         _aeroLoadData(false);
-    } else if (_aeroData.length > 0) {
-        _aeroRender();
+    } else {
+        // UI already in DOM — just re-render results
+        if (_aeroData.length > 0) _aeroRender();
+        // Re-attach scroll listener and back-to-top every open
+        _aeroSetupListeners();
     }
 }
 
@@ -1958,93 +1962,94 @@ function _aeroInjectUI(container) {
 
     </div>`;
 
-    setTimeout(() => {
-        document.getElementById('aero-input')?.focus();
-
-        // Restore saved default search mode
-        const savedMode = localStorage.getItem('aero_default_mode') || 'starts';
-        const modeEl = document.getElementById('aero-mode');
-        if (modeEl) modeEl.value = savedMode;
-
-        // Offset sticky header below tools-extension-header
-        const toolsHdr = document.getElementById('tools-extension-header');
-        const aeroHdr  = document.getElementById('aero-header');
-        if (toolsHdr && aeroHdr) {
-            const hdrH = toolsHdr.offsetHeight + 16; // +16 for margin-bottom
-            aeroHdr.style.top = hdrH + 'px';
-        }
-
-        // Inject back-to-top button as sibling inside the panel (not inside scroll content)
-        let topBtn = document.getElementById('aero-top-btn');
-        if (!topBtn) {
-            topBtn = document.createElement('button');
-            topBtn.id = 'aero-top-btn';
-            topBtn.onclick = () => {
-                topBtn.style.opacity = '0';
-                topBtn.style.pointerEvents = 'none';
-                topBtn.style.transform = 'translateY(8px)';
-                _aeroScrollTop();
-            };
-            topBtn.textContent = '↑';
-            topBtn.style.cssText = `position:fixed;bottom:max(28px,env(safe-area-inset-bottom));
-                left:20px;width:40px;height:40px;border-radius:12px;
-                background:#1c1c1e;border:1px solid #444;color:#0a84ff;
-                font-size:18px;font-weight:700;cursor:pointer;z-index:3100;
-                opacity:0;pointer-events:none;
-                transition:opacity 0.2s,transform 0.2s;
-                transform:translateY(8px);
-                display:flex;align-items:center;justify-content:center;`;
-            document.body.appendChild(topBtn);
-        }
-
-        // Scroll-driven collapse + back-to-top
-        const scrollEl = document.getElementById('tools-extension-panel');
-        if (!scrollEl) return;
-        let _aeroLastScrollY = 0;
-        let _aeroFiltersVisible = true;
-
-        function _aeroOnScroll() {
-            const sy    = scrollEl.scrollTop;
-            const going = sy - _aeroLastScrollY;
-            _aeroLastScrollY = sy;
-
-            // Collapse filters on scroll down > 60px
-            if (going > 0 && sy > 60 && _aeroFiltersVisible) {
-                _aeroFiltersVisible = false;
-                const f = document.getElementById('aero-filters');
-                if (f) { f.style.maxHeight = '0'; f.style.opacity = '0'; }
-            }
-            // Expand filters on scroll up or near top
-            if ((going < 0 || sy < 30) && !_aeroFiltersVisible) {
-                _aeroFiltersVisible = true;
-                const f = document.getElementById('aero-filters');
-                if (f) { f.style.maxHeight = '120px'; f.style.opacity = '1'; }
-            }
-
-            // Back-to-top visibility
-            const btn = document.getElementById('aero-top-btn');
-            if (btn) {
-                if (sy > 200) {
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
-                    btn.style.transform = 'translateY(0)';
-                } else {
-                    btn.style.opacity = '0';
-                    btn.style.pointerEvents = 'none';
-                    btn.style.transform = 'translateY(8px)';
-                }
-            }
-        }
-
-        scrollEl.addEventListener('scroll', _aeroOnScroll, { passive: true });
-        // Cleanup ref on root
-        const root = document.getElementById('aero-root');
-        if (root) root._aeroScrollCleanup = () => {
-            scrollEl.removeEventListener('scroll', _aeroOnScroll);
-            document.getElementById('aero-top-btn')?.remove();
-        };
-    }, 120);
+    setTimeout(_aeroSetupListeners, 120);
 }
+
+function _aeroSetupListeners() {
+    document.getElementById('aero-input')?.focus();
+
+    // Restore saved default search mode
+    const savedMode = localStorage.getItem('aero_default_mode') || 'starts';
+    const modeEl = document.getElementById('aero-mode');
+    if (modeEl) modeEl.value = savedMode;
+
+    // Offset sticky header below tools-extension-header
+    const toolsHdr = document.getElementById('tools-extension-header');
+    const aeroHdr  = document.getElementById('aero-header');
+    if (toolsHdr && aeroHdr) {
+        const hdrH = toolsHdr.offsetHeight + 16;
+        aeroHdr.style.top = hdrH + 'px';
+    }
+
+    // Inject back-to-top button into body (position:fixed needs body parent)
+    let topBtn = document.getElementById('aero-top-btn');
+    if (!topBtn) {
+        topBtn = document.createElement('button');
+        topBtn.id = 'aero-top-btn';
+        topBtn.onclick = () => {
+            topBtn.style.opacity = '0';
+            topBtn.style.pointerEvents = 'none';
+            topBtn.style.transform = 'translateY(8px)';
+            _aeroScrollTop();
+        };
+        topBtn.textContent = '↑';
+        topBtn.style.cssText = `position:fixed;bottom:max(28px,env(safe-area-inset-bottom));
+            left:20px;width:40px;height:40px;border-radius:12px;
+            background:#1c1c1e;border:1px solid #444;color:#0a84ff;
+            font-size:18px;font-weight:700;cursor:pointer;z-index:3100;
+            opacity:0;pointer-events:none;
+            transition:opacity 0.2s,transform 0.2s;
+            transform:translateY(8px);
+            display:flex;align-items:center;justify-content:center;`;
+        document.body.appendChild(topBtn);
+    }
+
+    // Scroll-driven: filter collapse + back-to-top visibility
+    const scrollEl = document.getElementById('tools-extension-panel');
+    if (!scrollEl) return;
+    let _aeroLastScrollY = 0;
+    let _aeroFiltersVisible = true;
+
+    function _aeroOnScroll() {
+        const sy    = scrollEl.scrollTop;
+        const going = sy - _aeroLastScrollY;
+        _aeroLastScrollY = sy;
+
+        if (going > 0 && sy > 60 && _aeroFiltersVisible) {
+            _aeroFiltersVisible = false;
+            const f = document.getElementById('aero-filters');
+            if (f) { f.style.maxHeight = '0'; f.style.opacity = '0'; }
+        }
+        if ((going < 0 || sy < 30) && !_aeroFiltersVisible) {
+            _aeroFiltersVisible = true;
+            const f = document.getElementById('aero-filters');
+            if (f) { f.style.maxHeight = '120px'; f.style.opacity = '1'; }
+        }
+
+        const btn = document.getElementById('aero-top-btn');
+        if (btn) {
+            if (sy > 200) {
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+                btn.style.transform = 'translateY(0)';
+            } else {
+                btn.style.opacity = '0';
+                btn.style.pointerEvents = 'none';
+                btn.style.transform = 'translateY(8px)';
+            }
+        }
+    }
+
+    scrollEl.addEventListener('scroll', _aeroOnScroll, { passive: true });
+
+    // Store cleanup — called on every close and reopen
+    const root = document.getElementById('aero-root');
+    if (root) root._aeroScrollCleanup = () => {
+        scrollEl.removeEventListener('scroll', _aeroOnScroll);
+        document.getElementById('aero-top-btn')?.remove();
+    };
+}
+
 
 // ── Source filter ─────────────────────────────────────────────────────────
 function _aeroScrollTop() {
