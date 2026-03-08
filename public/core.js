@@ -1656,14 +1656,26 @@ They will be blocked immediately on next refresh.`)) return;
                 console.error('[loadData] Error:', e);
                 updateHeaderCat('N/A', 'cat-ifr');
                 const ic = document.getElementById('icao').value.toUpperCase();
-                document.getElementById('rawMetar').innerHTML = `
+                const isOffline = !navigator.onLine || (e?.message?.toLowerCase().includes('fetch') || e?.message?.toLowerCase().includes('network'));
+
+                document.getElementById('rawMetar').innerHTML = isOffline ? `
+                    <div style="text-align:center;padding:24px 16px;">
+                        <div style="font-size:32px;margin-bottom:12px;">📡</div>
+                        <div style="color:var(--danger);font-weight:800;margin-bottom:8px;">NO NETWORK</div>
+                        <div style="color:#aaa;font-size:12px;line-height:1.7;margin-bottom:16px;">
+                            Weather data requires an internet connection.<br>
+                            Open the <b style="color:#fff;">Aviation Tools</b> tab — all calculators work offline.
+                        </div>
+                    </div>` : `
                     <div style="text-align:center;padding:20px 10px;">
                         <div style="color:var(--danger);font-weight:800;margin-bottom:15px;">STATION DATA UNAVAILABLE</div>
-                        <a href="https://metar-taf.com/${ic}" target="_blank" class="atc-btn" 
+                        <a href="https://metar-taf.com/${ic}" target="_blank" class="atc-btn"
                            style="justify-content:center;background:var(--accent);border:none;color:#fff;">
                             <span>View on Metar-Taf.com ↗</span>
                         </a>
                     </div>`;
+
+                if (isOffline && window.__efbOffline) window.__efbOffline.showBanner(null);
             }
         }
 

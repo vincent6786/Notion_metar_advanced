@@ -1783,20 +1783,442 @@ function displayAllSymbolCategories() {
 }
 
 // ============================================================================
-// ABBREVIATIONS DATABASE (Link to external tool)
+// AEROSEARCH NATIVE — Offline-first Aviation Abbreviations Database
+// Replaces external iframe. Fetches 5 Google Sheet sources, caches to
+// localStorage (7-day TTL), fully functional offline after first sync.
 // ============================================================================
 
+const AERO_SOURCES = {
+    faa:    { url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTTZQu_pDVoituFYYch_vc9mxKX2KBt4gzY7HHgYmz8x8KrAGDkh4s5KgIxtdVpq_ZuyG_sUNxaA-u0/pub?output=csv', label: 'FAA'    },
+    sofema: { url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQAxE1adAbm_uAC9rK1raBK0Fx9m-dhO8wU9yEb2FziL244tYoovtYSNkGVoLt_R1IXHk2KEC-_AjIb/pub?output=csv',    label: 'SOFEMA' },
+    jepp:   { url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRubNpKZskFJkEOA1_UhEbNUY12mYuhANXemM3CzVPH5tivDKDGEUzg_x-RmHURHMjKmLA0TE-FVUvz/pub?output=csv',    label: 'JEPP'   },
+    notam:  { url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQdYQqsxvlVosMPZmMm8Wb1U6PnZTToHv1LPjtJlIbp3K-_vXpatwCvXtlH_YDrextjdgbNn9heA2gR/pub?output=csv',    label: 'NOTAM'  },
+    g1000:  { url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvvDiyd4kJ9BYpogwiNcJv9j9UE1zrCUZL7oJhXRDkFsEw_nR6AhKtoKXfwfRTZcMGCJw3ktz8qa14/pub?output=csv',    label: 'G1000'  },
+};
+
+const AERO_KEY_DATA  = 'aerosearch_v2_data';
+const AERO_KEY_TS    = 'aerosearch_v2_ts';
+const AERO_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+const AERO_MAX_CARDS = 80;
+
+const AERO_SOURCE_COLORS = {
+    FAA:    { bg: '#1a3a5c', border: '#0a84ff', text: '#0a84ff' },
+    SOFEMA: { bg: '#3a2a00', border: '#ff9f0a', text: '#ff9f0a' },
+    JEPP:   { bg: '#2a1a3a', border: '#bf5af2', text: '#bf5af2' },
+    NOTAM:  { bg: '#3a1a1a', border: '#ff453a', text: '#ff453a' },
+    G1000:  { bg: '#0f2e22', border: '#30d158', text: '#30d158' },
+};
+
+let _aeroData        = [];
+let _aeroReady       = false;
+let _aeroSearchTimer = null;
+let _aeroActiveSource = 'all';
+
+// ── Entry point ───────────────────────────────────────────────────────────
 function openAbbreviations() {
-    const url = 'https://simplify-acronym-search.vercel.app/';
-    const resultEl = document.getElementById('abbrev-content');
-    
-    // Embed the abbreviation tool in an iframe - maximized for full screen usage
-    resultEl.innerHTML = `
-        <iframe src="${url}" 
-                style="width:100%; height:calc(100vh - 120px); border:1px solid #333; border-radius:8px; background:#fff;">
-        </iframe>
-    `;
+    const container = document.getElementById('abbrev-content');
+    if (!container) return;
+
+    if (!_aeroReady) {
+        _aeroReady = true;
+        _aeroInjectStyles();
+        _aeroInjectUI(container);
+        _aeroLoadData(false);
+    } else if (_aeroData.length > 0) {
+        _aeroRender();
+    }
 }
+
+// ── Inject animation + pill styles once ──────────────────────────────────
+function _aeroInjectStyles() {
+    if (document.getElementById('aero-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'aero-styles';
+    s.textContent = `
+        @keyframes aeroCardIn {
+            from { opacity:0; transform:translateY(8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .aero-pill {
+            font-size:11px; font-weight:800; letter-spacing:0.3px;
+            padding:5px 11px; border-radius:20px; cursor:pointer;
+            transition:opacity 0.15s; opacity:0.5;
+            text-transform:uppercase; white-space:nowrap;
+        }
+        .aero-pill-active { opacity:1 !important; }
+        #aero-search-wrap:focus-within {
+            border-color:#0a84ff !important;
+            box-shadow:0 0 0 3px rgba(10,132,255,0.15) !important;
+        }
+    `;
+    document.head.appendChild(s);
+}
+
+// ── Build UI skeleton ─────────────────────────────────────────────────────
+function _aeroInjectUI(container) {
+    const sourcePills = Object.values(AERO_SOURCES).map(s => {
+        const c = AERO_SOURCE_COLORS[s.label];
+        return `<button class="aero-pill" data-source="${s.label}"
+                    style="background:${c.bg};border:1px solid ${c.border};color:${c.text};"
+                    onclick="_aeroSetSource('${s.label}',this)">${s.label}</button>`;
+    }).join('');
+
+    container.innerHTML = `
+    <div id="aero-root" style="display:flex;flex-direction:column;gap:0;">
+
+        <div style="position:sticky;top:0;z-index:10;background:#0a0a0f;padding:0 0 10px;">
+
+            <!-- Search bar -->
+            <div id="aero-search-wrap"
+                 style="display:flex;align-items:center;background:#1c1c1e;
+                        border:1.5px solid #333;border-radius:12px;padding:4px 10px;
+                        margin-bottom:10px;transition:border-color 0.2s,box-shadow 0.2s;">
+                <span style="font-size:14px;margin-right:6px;opacity:0.4;">⌕</span>
+                <input id="aero-input" type="text"
+                       placeholder="Search acronyms or definitions…"
+                       autocomplete="off" autocorrect="off" spellcheck="false"
+                       style="flex:1;border:none;background:transparent;color:#fff;
+                              font-size:15px;font-weight:500;padding:9px 0;outline:none;"
+                       oninput="_aeroOnInput()" />
+                <button id="aero-clear" onclick="_aeroClear()"
+                        style="display:none;border:none;background:none;color:#888;
+                               font-size:18px;padding:4px 6px;cursor:pointer;line-height:1;">×</button>
+            </div>
+
+            <!-- Source pills -->
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="aero-pill aero-pill-active" data-source="all"
+                        style="background:#1a3050;border:1px solid #0a84ff;color:#0a84ff;"
+                        onclick="_aeroSetSource('all',this)">All</button>
+                ${sourcePills}
+            </div>
+
+            <!-- Mode + Sort -->
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+                <select id="aero-mode"
+                        style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
+                               color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
+                               cursor:pointer;outline:none;" onchange="_aeroRender()">
+                    <option value="contains">Contains</option>
+                    <option value="starts">Starts with</option>
+                    <option value="exact">Exact match</option>
+                </select>
+                <select id="aero-sort"
+                        style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
+                               color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
+                               cursor:pointer;outline:none;" onchange="_aeroRender()">
+                    <option value="default">Original order</option>
+                    <option value="az">A → Z</option>
+                    <option value="za">Z → A</option>
+                </select>
+            </div>
+
+            <!-- Count + sync -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">
+                <div id="aero-count" style="font-size:12px;color:#555;font-weight:600;"></div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div id="aero-sync-info" style="font-size:11px;color:#555;"></div>
+                    <button id="aero-sync-btn" onclick="_aeroLoadData(true)"
+                            style="font-size:11px;color:#0a84ff;background:none;border:none;
+                                   cursor:pointer;padding:2px 0;font-weight:700;">↻ Sync</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results list -->
+        <div id="aero-results" style="display:flex;flex-direction:column;gap:8px;padding-bottom:24px;">
+            <div style="text-align:center;padding:40px 0;">
+                <div style="width:28px;height:28px;border:3px solid #222;border-top-color:#0a84ff;
+                            border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 12px;"></div>
+                <div style="font-size:12px;color:#555;">Loading databases…</div>
+            </div>
+        </div>
+
+    </div>`;
+
+    setTimeout(() => document.getElementById('aero-input')?.focus(), 120);
+}
+
+// ── Source filter ─────────────────────────────────────────────────────────
+function _aeroSetSource(source, el) {
+    _aeroActiveSource = source;
+    document.querySelectorAll('.aero-pill').forEach(p => {
+        p.classList.remove('aero-pill-active');
+        p.style.opacity = '0.5';
+    });
+    el.classList.add('aero-pill-active');
+    el.style.opacity = '1';
+    _aeroRender();
+}
+
+function _aeroOnInput() {
+    const val = document.getElementById('aero-input')?.value || '';
+    const clearBtn = document.getElementById('aero-clear');
+    if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+    clearTimeout(_aeroSearchTimer);
+    _aeroSearchTimer = setTimeout(_aeroRender, 150);
+}
+
+function _aeroClear() {
+    const inp = document.getElementById('aero-input');
+    if (inp) { inp.value = ''; inp.focus(); }
+    const clearBtn = document.getElementById('aero-clear');
+    if (clearBtn) clearBtn.style.display = 'none';
+    _aeroRender();
+}
+
+// ── Data loading ──────────────────────────────────────────────────────────
+async function _aeroLoadData(forceRefresh) {
+    if (!forceRefresh) {
+        try {
+            const ts     = parseInt(localStorage.getItem(AERO_KEY_TS) || '0');
+            const cached = localStorage.getItem(AERO_KEY_DATA);
+            if (cached && ts > 0 && (Date.now() - ts) < AERO_CACHE_TTL) {
+                _aeroData = JSON.parse(cached);
+                _aeroUpdateSyncInfo(ts, false);
+                _aeroRender();
+                return;
+            }
+        } catch(e) {}
+    }
+
+    if (!navigator.onLine) {
+        try {
+            const cached = localStorage.getItem(AERO_KEY_DATA);
+            const ts     = parseInt(localStorage.getItem(AERO_KEY_TS) || '0');
+            if (cached) {
+                _aeroData = JSON.parse(cached);
+                _aeroUpdateSyncInfo(ts, true);
+                _aeroRender();
+                return;
+            }
+        } catch(e) {}
+        _aeroShowError('No cached data. Connect to the internet to download the database.');
+        return;
+    }
+
+    _aeroShowLoading();
+    _aeroUpdateSyncBtn('Syncing…', true);
+
+    const keys    = Object.keys(AERO_SOURCES);
+    const results = await Promise.allSettled(keys.map(k => _aeroFetchSource(k)));
+
+    let loaded = [];
+    results.forEach(r => { if (r.status === 'fulfilled') loaded = loaded.concat(r.value); });
+
+    if (loaded.length === 0) {
+        try {
+            const cached = localStorage.getItem(AERO_KEY_DATA);
+            const ts = parseInt(localStorage.getItem(AERO_KEY_TS) || '0');
+            if (cached) {
+                _aeroData = JSON.parse(cached);
+                _aeroUpdateSyncInfo(ts, true);
+                _aeroRender();
+                _aeroUpdateSyncBtn('↻ Sync', false);
+                return;
+            }
+        } catch(e) {}
+        _aeroShowError('Could not load databases. Check your connection and tap ↻ Sync to retry.');
+        _aeroUpdateSyncBtn('↻ Sync', false);
+        return;
+    }
+
+    _aeroData = loaded;
+    try {
+        localStorage.setItem(AERO_KEY_DATA, JSON.stringify(loaded));
+        localStorage.setItem(AERO_KEY_TS, String(Date.now()));
+    } catch(e) { console.warn('[AeroSearch] Cache write failed:', e); }
+
+    _aeroUpdateSyncInfo(Date.now(), false);
+    _aeroUpdateSyncBtn('↻ Sync', false);
+    _aeroRender();
+}
+
+async function _aeroFetchSource(key) {
+    const src = AERO_SOURCES[key];
+    const res  = await fetch(src.url);
+    const text = await res.text();
+    return _aeroParseCSV(text, src.label);
+}
+
+function _aeroParseCSV(text, sourceLabel) {
+    const rows = [];
+    const lines = text.split(/\r?\n/);
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim()) continue;
+        const cols = [];
+        let val = '', inQ = false;
+        for (let j = 0; j < line.length; j++) {
+            const c = line[j];
+            if (c === '"') {
+                if (inQ && line[j+1] === '"') { val += '"'; j++; }
+                else inQ = !inQ;
+            } else if (c === ',' && !inQ) { cols.push(val.trim()); val = ''; }
+            else val += c;
+        }
+        cols.push(val.trim());
+        if (cols.length >= 2 && cols[0]) {
+            rows.push({
+                acronym:  _aeroClean(cols[0]),
+                meaning:  _aeroClean(cols[1]),
+                category: _aeroClean(cols[2]) || 'General',
+                source:   sourceLabel,
+            });
+        }
+    }
+    return rows;
+}
+
+function _aeroClean(s) {
+    if (!s) return '';
+    s = s.trim();
+    if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1,-1).trim();
+    return s;
+}
+
+// ── Render results ────────────────────────────────────────────────────────
+function _aeroRender() {
+    const resultsEl = document.getElementById('aero-results');
+    const countEl   = document.getElementById('aero-count');
+    if (!resultsEl) return;
+
+    const term = (document.getElementById('aero-input')?.value || '').trim().toLowerCase();
+    const mode = document.getElementById('aero-mode')?.value  || 'contains';
+    const sort = document.getElementById('aero-sort')?.value  || 'default';
+
+    let items = _aeroData.slice();
+
+    if (_aeroActiveSource !== 'all') items = items.filter(i => i.source === _aeroActiveSource);
+
+    if (term) {
+        items = items.filter(i => {
+            const a = i.acronym.toLowerCase();
+            const m = i.meaning.toLowerCase();
+            if (mode === 'starts') return a.startsWith(term);
+            if (mode === 'exact')  return a === term;
+            return a.includes(term) || m.includes(term);
+        });
+    }
+
+    if (sort === 'az') items.sort((a,b) => a.acronym.localeCompare(b.acronym));
+    else if (sort === 'za') items.sort((a,b) => b.acronym.localeCompare(a.acronym));
+
+    if (countEl) countEl.innerHTML = items.length > 0
+        ? `<span style="color:#0a84ff;font-weight:800;">${items.length}</span> results`
+        : '0 results';
+
+    if (items.length === 0) {
+        resultsEl.innerHTML = `
+            <div style="text-align:center;padding:50px 20px;">
+                <div style="font-size:36px;opacity:0.3;margin-bottom:12px;">⌕</div>
+                <div style="color:#555;font-size:14px;font-weight:600;">No results</div>
+                <div style="color:#444;font-size:12px;margin-top:4px;">
+                    ${term ? 'Try a different term or search mode' : 'Select a database to browse'}
+                </div>
+            </div>`;
+        return;
+    }
+
+    const frag    = document.createDocumentFragment();
+    const display = items.slice(0, AERO_MAX_CARDS);
+
+    display.forEach((item, idx) => {
+        const c = AERO_SOURCE_COLORS[item.source] || AERO_SOURCE_COLORS.FAA;
+
+        let meaningHTML = _aeroEsc(item.meaning);
+        let acronymHTML = _aeroEsc(item.acronym);
+        if (term && mode === 'contains') {
+            const rx = new RegExp(`(${_aeroEscRx(term)})`, 'gi');
+            const hl = '<mark style="background:rgba(10,132,255,0.2);color:#0a84ff;border-radius:2px;padding:0 2px;">$1</mark>';
+            meaningHTML = meaningHTML.replace(rx, hl);
+            acronymHTML = acronymHTML.replace(rx, hl);
+        }
+
+        const card = document.createElement('div');
+        card.style.cssText = `background:#1c1c1e;border:1px solid #2a2a2a;border-radius:12px;
+                              padding:14px 16px;animation:aeroCardIn 0.25s ease both;`;
+        card.style.animationDelay = `${Math.min(idx * 0.025, 0.5)}s`;
+        card.innerHTML = `
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+                <div style="font-family:monospace;font-weight:800;font-size:15px;
+                            color:#fff;line-height:1.3;word-break:break-all;">${acronymHTML}</div>
+                <span style="flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:0.5px;
+                             text-transform:uppercase;padding:3px 9px;border-radius:6px;
+                             background:${c.bg};border:1px solid ${c.border};color:${c.text};">
+                    ${item.source}
+                </span>
+            </div>
+            <div style="margin-top:7px;font-size:13px;line-height:1.55;color:rgba(255,255,255,0.8);">
+                ${meaningHTML}
+            </div>
+            ${item.category && item.category !== 'General'
+                ? `<div style="display:inline-block;margin-top:8px;font-size:10px;font-weight:700;
+                               color:#555;text-transform:uppercase;letter-spacing:0.5px;
+                               padding:2px 7px;border:1px solid #2a2a2a;border-radius:5px;">
+                       ${_aeroEsc(item.category)}
+                   </div>`
+                : ''}`;
+        frag.appendChild(card);
+    });
+
+    resultsEl.innerHTML = '';
+    resultsEl.appendChild(frag);
+
+    if (items.length > AERO_MAX_CARDS) {
+        const hint = document.createElement('div');
+        hint.style.cssText = 'text-align:center;padding:20px;color:#444;font-size:12px;';
+        hint.textContent = `Showing ${AERO_MAX_CARDS} of ${items.length} — refine your search`;
+        resultsEl.appendChild(hint);
+    }
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────
+function _aeroShowLoading() {
+    const el = document.getElementById('aero-results');
+    if (el) el.innerHTML = `
+        <div style="text-align:center;padding:40px 0;">
+            <div style="width:28px;height:28px;border:3px solid #222;border-top-color:#0a84ff;
+                        border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 12px;"></div>
+            <div style="font-size:12px;color:#555;">Syncing databases…</div>
+        </div>`;
+}
+
+function _aeroShowError(msg) {
+    const el = document.getElementById('aero-results');
+    if (el) el.innerHTML = `
+        <div style="text-align:center;padding:40px 20px;">
+            <div style="font-size:32px;margin-bottom:12px;">📡</div>
+            <div style="color:#ff453a;font-size:13px;font-weight:700;margin-bottom:8px;">Unavailable Offline</div>
+            <div style="color:#555;font-size:12px;line-height:1.6;">${msg}</div>
+        </div>`;
+    const c = document.getElementById('aero-count');
+    if (c) c.textContent = '';
+}
+
+function _aeroUpdateSyncInfo(ts, isStale) {
+    const el = document.getElementById('aero-sync-info');
+    if (!el || !ts) return;
+    const mins = Math.round((Date.now() - ts) / 60000);
+    const age  = mins < 2    ? 'just now'
+               : mins < 60   ? `${mins}m ago`
+               : mins < 1440 ? `${Math.round(mins/60)}h ago`
+               : `${Math.round(mins/1440)}d ago`;
+    el.innerHTML = isStale
+        ? `<span style="color:#ff9f0a;">⚠ Offline · cached ${age}</span>`
+        : `<span style="color:#444;">Synced ${age}</span>`;
+}
+
+function _aeroUpdateSyncBtn(label, disabled) {
+    const btn = document.getElementById('aero-sync-btn');
+    if (!btn) return;
+    btn.textContent = label;
+    btn.style.opacity       = disabled ? '0.4' : '1';
+    btn.style.pointerEvents = disabled ? 'none' : 'auto';
+}
+
+function _aeroEsc(s)   { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _aeroEscRx(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
 // ============================================================================
 // E6B FLIGHT COMPUTER
