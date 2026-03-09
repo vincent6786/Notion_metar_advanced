@@ -609,29 +609,21 @@
                 </div>
                 <div id="adminTabContent"></div>`;
 
-            if (activeTab === 'stats' && apiStatsCache) {
-                renderApiStats(apiStatsCache);
-            } else if (activeTab === 'users') {
-                loadUsersTab(password);
-            } else {
-                loadStatsAndRender(password);
-            }
+            // Always fetch fresh on open — accurate across devices
+            if (activeTab === 'users') loadUsersTab(password);
+            else                       loadStatsAndRender(password);
         }
 
         async function switchAdminTab(tab, password) {
-            // Update button styles
             ['stats','users'].forEach(t => {
                 const btn = document.getElementById(`adminTab-${t}`);
                 if (!btn) return;
                 btn.style.background = t === tab ? 'var(--accent)' : 'transparent';
                 btn.style.color      = t === tab ? '#fff'           : '#8e8e93';
             });
-            if (tab === 'stats') {
-                if (apiStatsCache) renderApiStats(apiStatsCache);
-                else await loadStatsAndRender(password);
-            } else {
-                await loadUsersTab(password);
-            }
+            // Always fetch fresh — ensures stats are current across all devices
+            if (tab === 'stats') await loadStatsAndRender(password);
+            else                 await loadUsersTab(password);
         }
 
         async function loadStatsAndRender(password) {
@@ -664,6 +656,9 @@
             const tabContent = document.getElementById('adminTabContent');
             if (!tabContent) return;
 
+            window._adminUsers   = users;
+            window._adminPwd     = password;
+
             const activeCount  = users.filter(u => u.active).length;
             const revokedCount = users.filter(u => !u.active).length;
             const todayCalls   = users.reduce((sum, u) => sum + (u.calls_today || 0), 0);
@@ -691,7 +686,7 @@
                     <div style="display:flex;gap:8px;margin-bottom:8px;">
                         <input id="newUserName" placeholder="Name (e.g. John)" type="text"
                                style="flex:1;background:#111;border:1px solid #444;color:#fff;padding:9px 10px;border-radius:8px;font-size:13px;outline:none;">
-                        <input id="newUserCode" placeholder="Code (e.g. ALPHA-01)" type="text"
+                        <input id="newUserCode" placeholder="Code" type="text"
                                style="flex:1;background:#111;border:1px solid #444;color:#fff;padding:9px 10px;border-radius:8px;font-size:13px;outline:none;text-transform:uppercase;"
                                oninput="this.value=this.value.toUpperCase()">
                     </div>
@@ -711,31 +706,173 @@
             } else {
                 users.forEach(u => {
                     const statusColor = u.active ? 'var(--success)' : 'var(--danger)';
-                    const statusText  = u.active ? 'ACTIVE'         : 'REVOKED';
+                    const statusBg    = u.active ? 'rgba(50,215,75,0.1)' : 'rgba(255,69,58,0.1)';
+                    const statusText  = u.active ? 'ACTIVE' : 'REVOKED';
                     const created     = u.created ? new Date(u.created).toLocaleDateString() : '—';
                     html += `
-                        <div style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:8px;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <div onclick="openInAppUserDrawer('${u.code}')"
+                             style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;"
+                             onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='#2a2a2a'">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                                 <div>
                                     <span style="font-weight:700;color:#fff;font-family:'SF Mono',monospace;font-size:13px;">${u.code}</span>
                                     <span style="color:#8e8e93;font-size:12px;margin-left:8px;">${u.name}</span>
                                 </div>
-                                <span style="font-size:10px;font-weight:800;color:${statusColor};background:${u.active?'rgba(50,215,75,0.1)':'rgba(255,69,58,0.1)'};padding:2px 8px;border-radius:6px;">${statusText}</span>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#555;">
-                                <span>Created ${created} · ${u.calls_today} calls today</span>
-                                <div style="display:flex;gap:6px;">
-                                    ${u.active
-                                        ? `<button onclick="revokeUser('${u.code}','${password}')" style="background:#2c2c2e;border:1px solid #555;color:var(--danger);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Revoke</button>`
-                                        : `<button onclick="restoreUser('${u.code}','${password}')" style="background:#2c2c2e;border:1px solid #555;color:var(--success);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Restore</button>`}
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span style="font-size:10px;font-weight:800;color:${statusColor};background:${statusBg};padding:2px 8px;border-radius:6px;">${statusText}</span>
+                                    <span style="color:#444;font-size:13px;">›</span>
                                 </div>
                             </div>
+                            <div style="font-size:11px;color:#555;">Created ${created} · ${u.calls_today} calls today</div>
                         </div>`;
                 });
             }
 
+            // In-app drawer (injected once)
+            html += `
+                <div id="inAppDrawerOverlay" onclick="closeInAppDrawer(event)"
+                     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);
+                            backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+                            align-items:flex-end;justify-content:center;">
+                    <div id="inAppDrawer"
+                         style="background:#1a1a1c;border:1px solid #38383a;border-radius:20px 20px 0 0;
+                                width:100%;max-width:460px;
+                                padding:0 0 max(env(safe-area-inset-bottom),24px);
+                                transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);">
+                        <div style="width:36px;height:4px;background:#444;border-radius:2px;margin:12px auto 0;"></div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:1px solid #2a2a2a;">
+                            <div style="font-size:15px;font-weight:800;">Edit User</div>
+                            <div id="inAppDrawerCode" style="font-family:'SF Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.25);padding:3px 10px;border-radius:6px;letter-spacing:1.5px;"></div>
+                        </div>
+                        <div style="padding:16px 18px;">
+                            <div style="font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Name</div>
+                            <div style="display:flex;gap:8px;margin-bottom:4px;">
+                                <input id="inAppDrawerName" type="text" placeholder="User name"
+                                       style="flex:1;background:#2c2c2e;border:1px solid #444;color:#fff;padding:10px 12px;border-radius:8px;font-size:14px;outline:none;">
+                                <button onclick="saveInAppName()" id="inAppSaveBtn"
+                                        style="background:var(--accent);border:none;color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">Save</button>
+                            </div>
+                            <div id="inAppDrawerMsg" style="font-size:12px;min-height:16px;margin-bottom:12px;"></div>
+
+                            <div style="font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Share</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                                <button onclick="inAppCopyCode()" id="inAppCopyCodeBtn"
+                                        style="background:#2c2c2e;border:1px solid #444;color:#fff;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📋 Copy Code</button>
+                                <button onclick="inAppCopyMsg()" id="inAppCopyMsgBtn"
+                                        style="background:#2c2c2e;border:1px solid #444;color:#fff;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">💬 Copy Message</button>
+                            </div>
+
+                            <button id="inAppStatusBtn" onclick="inAppToggleStatus()"
+                                    style="width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;border:1px solid #555;">—</button>
+                            <button onclick="inAppDelete()"
+                                    style="width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.25);color:var(--danger);">🗑 Delete Permanently</button>
+                        </div>
+                    </div>
+                </div>`;
+
             tabContent.innerHTML = html;
         }
+
+        function openInAppUserDrawer(code) {
+            const users = window._adminUsers || [];
+            const u = users.find(x => x.code === code);
+            if (!u) return;
+            window._inAppDrawerCode = code;
+
+            const overlay = document.getElementById('inAppDrawerOverlay');
+            const drawer  = document.getElementById('inAppDrawer');
+            document.getElementById('inAppDrawerCode').textContent  = code;
+            document.getElementById('inAppDrawerName').value        = u.name || '';
+            document.getElementById('inAppDrawerMsg').textContent   = '';
+            document.getElementById('inAppCopyCodeBtn').textContent = '📋 Copy Code';
+            document.getElementById('inAppCopyMsgBtn').textContent  = '💬 Copy Message';
+
+            const statusBtn = document.getElementById('inAppStatusBtn');
+            if (u.active) {
+                statusBtn.textContent = '🔒 Revoke Access';
+                statusBtn.style.cssText = 'width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;background:rgba(255,69,58,0.12);border:1px solid rgba(255,69,58,0.3);color:var(--danger);';
+            } else {
+                statusBtn.textContent = '✅ Restore Access';
+                statusBtn.style.cssText = 'width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;background:rgba(50,215,75,0.12);border:1px solid rgba(50,215,75,0.3);color:var(--success);';
+            }
+
+            overlay.style.display = 'flex';
+            setTimeout(() => { drawer.style.transform = 'translateY(0)'; }, 10);
+        }
+
+        function closeInAppDrawer(e) {
+            if (e && e.target !== document.getElementById('inAppDrawerOverlay')) return;
+            _closeInAppDrawer();
+        }
+        function _closeInAppDrawer() {
+            const overlay = document.getElementById('inAppDrawerOverlay');
+            const drawer  = document.getElementById('inAppDrawer');
+            if (!drawer) return;
+            drawer.style.transform = 'translateY(100%)';
+            setTimeout(() => { if (overlay) overlay.style.display = 'none'; }, 320);
+        }
+
+        async function saveInAppName() {
+            const name = document.getElementById('inAppDrawerName')?.value.trim();
+            const msg  = document.getElementById('inAppDrawerMsg');
+            const btn  = document.getElementById('inAppSaveBtn');
+            if (!name) { msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Name cannot be empty'; return; }
+            btn.disabled = true; btn.textContent = 'Saving…'; msg.textContent = '';
+            try {
+                const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ action:'update', code: window._inAppDrawerCode, name, password: window._adminPwd }) });
+                const data = await res.json();
+                if (data.success) {
+                    msg.style.color = 'var(--success)'; msg.textContent = '✅ Saved';
+                    loadUsersTab(window._adminPwd);
+                } else {
+                    msg.style.color = 'var(--danger)'; msg.textContent = `❌ ${data.error || 'Failed'}`;
+                }
+            } catch(e) { msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Network error'; }
+            btn.disabled = false; btn.textContent = 'Save';
+        }
+
+        function inAppCopyCode() {
+            navigator.clipboard.writeText(window._inAppDrawerCode || '');
+            const btn = document.getElementById('inAppCopyCodeBtn');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy Code', 1500);
+        }
+
+        function inAppCopyMsg() {
+            const users = window._adminUsers || [];
+            const u = users.find(x => x.code === window._inAppDrawerCode);
+            const name = document.getElementById('inAppDrawerName')?.value.trim() || u?.name || '';
+            const appUrl = window.location.origin;
+            const msg = `Hi ${name}! 👋\n\nYou've been given access to METAR GO, a weather app for pilots.\n\n🔑 Your access code: ${window._inAppDrawerCode}\n✈️ Open the app: ${appUrl}\n\nEnter your code on the first screen. Let me know if you need help!`;
+            navigator.clipboard.writeText(msg);
+            const btn = document.getElementById('inAppCopyMsgBtn');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '💬 Copy Message', 1500);
+        }
+
+        async function inAppToggleStatus() {
+            const users  = window._adminUsers || [];
+            const u      = users.find(x => x.code === window._inAppDrawerCode);
+            const action = u?.active ? 'revoke' : 'restore';
+            try {
+                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ action, code: window._inAppDrawerCode, password: window._adminPwd }) });
+                _closeInAppDrawer();
+                setTimeout(() => loadUsersTab(window._adminPwd), 340);
+            } catch(e) { alert('Failed. Check connection.'); }
+        }
+
+        async function inAppDelete() {
+            if (!confirm(`Permanently delete ${window._inAppDrawerCode}?\n\nThis cannot be undone.`)) return;
+            try {
+                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ action:'delete', code: window._inAppDrawerCode, password: window._adminPwd }) });
+                _closeInAppDrawer();
+                setTimeout(() => loadUsersTab(window._adminPwd), 340);
+            } catch(e) { alert('Failed to delete. Check connection.'); }
+        }
+
 
         function generateRandomCode() {
             const adjectives = ['ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM','VICTOR','WHISKEY'];
@@ -767,7 +904,8 @@
                     msg.innerText = `✅ Created: ${data.code}`; msg.style.color = 'var(--success)';
                     document.getElementById('newUserName').value = '';
                     document.getElementById('newUserCode').value = '';
-                    setTimeout(() => loadUsersTab(password), 800);
+                    await loadUsersTab(password);
+                    openInAppUserDrawer(data.code);
                 } else {
                     msg.innerText = `❌ ${data.error || 'Failed'}`; msg.style.color = 'var(--danger)';
                 }
@@ -777,22 +915,6 @@
             btn.disabled = false; btn.innerText = 'Create →';
         }
 
-        async function revokeUser(code, password) {
-            if (!confirm(`Revoke access for ${code}?
-
-They will be blocked immediately on next refresh.`)) return;
-            try {
-                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'revoke', code, password }) });
-                loadUsersTab(password);
-            } catch(e) { alert('Failed to revoke. Check connection.'); }
-        }
-
-        async function restoreUser(code, password) {
-            try {
-                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'restore', code, password }) });
-                loadUsersTab(password);
-            } catch(e) { alert('Failed to restore. Check connection.'); }
-        }
 
         function renderApiStats(data) {
             const content = document.getElementById('adminTabContent') || document.getElementById('apiStatsContent');

@@ -536,7 +536,22 @@ function switchTab(tab) {
   document.getElementById('tabStats').style.display = tab === 'stats' ? 'block' : 'none';
   document.getElementById('tabBtnUsers').classList.toggle('active', tab === 'users');
   document.getElementById('tabBtnStats').classList.toggle('active', tab === 'stats');
-  if (tab === 'stats') renderStats(window._statsData);
+  if (tab === 'stats') loadFreshStats();
+  if (tab === 'users') loadUsers();
+}
+
+async function loadFreshStats() {
+  const el = document.getElementById('statsContent');
+  el.innerHTML = `<div class="empty">⏳ Loading...</div>`;
+  try {
+    const res  = await fetch('/api/api-stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: _password }) });
+    const data = await res.json();
+    window._statsData = data;
+    updateApiUsageBanner(data);
+    renderStats(data);
+  } catch(e) {
+    el.innerHTML = `<div class="empty">⚠️ Failed to load stats</div>`;
+  }
 }
 
 // ── Load users ────────────────────────────────────────────────────────────
