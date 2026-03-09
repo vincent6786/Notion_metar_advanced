@@ -42,11 +42,6 @@ export default async function handler(req, res) {
             return res.status(403).json({ valid: false });
         }
 
-        // Log usage — fire and forget
-        const today = getTodayKey();
-        kv.incr(`efb:users:${key}:calls:${today}`).catch(() => {});
-        kv.expire(`efb:users:${key}:calls:${today}`, 172800).catch(() => {});
-
         return res.json({ valid: true, name: user.name });
     }
 

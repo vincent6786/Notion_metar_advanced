@@ -34,7 +34,6 @@ export default async function handler(req, res) {
         const key2   = await kv.get(`avwx:usage:${today}:key2`) || 0;
         const key3   = await kv.get(`avwx:usage:${today}:key3`) || 0;
         const key4   = await kv.get(`avwx:usage:${today}:key4`) || 0;
-        const total  = await kv.get(`avwx:total:${today}`)      || 0;
 
         const keys = [key1, key2, key3, key4].map((usage, i) => {
             const u = parseInt(usage, 10);
@@ -42,7 +41,7 @@ export default async function handler(req, res) {
         });
 
         const totalLimit = DAILY_LIMIT * 4;
-        const totalUsage = parseInt(total, 10);
+        const totalUsage = keys.reduce((sum, k) => sum + k.usage, 0);
 
         return res.json({
             date: today,
