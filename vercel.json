@@ -1,28 +1,11 @@
 {
   "rewrites": [
-    {
-      "source": "/api/weather",
-      "destination": "/api/weather.js"
-    },
-    {
-      "source": "/api/settings",
-      "destination": "/api/settings.js"
-    },
-    {
-      "source": "/api/awos",
-      "destination": "/api/awos.js"
-    },
-    {
-      "source": "/api/api-stats",
-      "destination": "/api/api-stats.js"
-    },
-    {
-      "source": "/api/status",
-      "destination": "/api/status.js"
-    },
-    {
-      "source": "/api/access",
-      "destination": "/api/access.js"
-    }
+    { "source": "/api/weather",   "destination": "/api/weather.js"   },
+    { "source": "/api/settings",  "destination": "/api/settings.js"  },
+    { "source": "/api/awos",      "destination": "/api/awos.js"      },
+    { "source": "/api/api-stats", "destination": "/api/api-stats.js" },
+    { "source": "/api/status",    "destination": "/api/status.js"    },
+    { "source": "/api/access",    "destination": "/api/access.js"    },
+    { "source": "/api/stream",    "destination": "/api/stream.js"    }
   ]
 }
