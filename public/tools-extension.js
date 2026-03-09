@@ -1008,15 +1008,24 @@ function searchWeatherTerms() {
     
     // Display source link at top
     let html = `
-        <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; padding:10px; background:#1c1c1e; border-radius:8px;">
-            <div style="font-size:11px; color:var(--sub-text);">
-                <strong style="color:var(--accent);">${matches.length}</strong> result${matches.length !== 1 ? 's' : ''} found
+        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                <div style="font-size:11px; color:var(--sub-text);">
+                    <strong style="color:var(--accent);">${matches.length}</strong> result${matches.length !== 1 ? 's' : ''} found
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        METAR KEY ↗
+                    </button>
+                    <button onclick="window.open('https://remotepilot101.com/wp-content/uploads/2016/08/WxSymbols.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:#5e5ce6; border:none; color:#fff; padding:4px 8px; font-size:10px; font-weight:700;">
+                        WX SYMBOLS ↗
+                    </button>
+                </div>
             </div>
-            <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
-                    class="tool-btn" 
-                    style="background:var(--accent); border:none; color:#000; padding:4px 10px; font-size:10px; font-weight:700;">
-                VIEW SOURCE PDF ↗
-            </button>
         </div>
     `;
     
@@ -1057,7 +1066,25 @@ function displayAllWeatherTerms() {
         grouped[item.category].push(item);
     });
     
-    let html = '';
+    let html = `
+        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                <div style="font-size:11px; color:var(--sub-text);">METAR weather code reference</div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        METAR KEY ↗
+                    </button>
+                    <button onclick="window.open('https://remotepilot101.com/wp-content/uploads/2016/08/WxSymbols.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:#5e5ce6; border:none; color:#fff; padding:4px 8px; font-size:10px; font-weight:700;">
+                        WX SYMBOLS ↗
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
     
     // Priority categories to show first
     const priorityCategories = [
@@ -1110,7 +1137,25 @@ function displayAllCategories() {
         grouped[item.category].push(item);
     });
     
-    let html = '';
+    let html = `
+        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                <div style="font-size:11px; color:var(--sub-text);">All weather term categories</div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                        METAR KEY ↗
+                    </button>
+                    <button onclick="window.open('https://remotepilot101.com/wp-content/uploads/2016/08/WxSymbols.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:#5e5ce6; border:none; color:#fff; padding:4px 8px; font-size:10px; font-weight:700;">
+                        WX SYMBOLS ↗
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
     
     // Sort categories alphabetically
     const sortedCategories = Object.keys(grouped).sort();
@@ -1605,6 +1650,11 @@ function searchWeatherSymbols() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
                     </button>
+                    <button onclick="window.open('https://remotepilot101.com/wp-content/uploads/2016/08/WxSymbols.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:#5e5ce6; border:none; color:#fff; padding:4px 8px; font-size:10px; font-weight:700;">
+                        WX SYMBOLS ↗
+                    </button>
                 </div>
             </div>
         </div>
@@ -1668,6 +1718,11 @@ function displayAllWeatherSymbols() {
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
+                    </button>
+                    <button onclick="window.open('https://remotepilot101.com/wp-content/uploads/2016/08/WxSymbols.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:#5e5ce6; border:none; color:#fff; padding:4px 8px; font-size:10px; font-weight:700;">
+                        WX SYMBOLS ↗
                     </button>
                 </div>
             </div>
@@ -1743,6 +1798,11 @@ function displayAllSymbolCategories() {
                             class="tool-btn" 
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         NOAA PDF ↗
+                    </button>
+                    <button onclick="window.open('https://remotepilot101.com/wp-content/uploads/2016/08/WxSymbols.pdf', '_blank')" 
+                            class="tool-btn" 
+                            style="background:#5e5ce6; border:none; color:#fff; padding:4px 8px; font-size:10px; font-weight:700;">
+                        WX SYMBOLS ↗
                     </button>
                 </div>
             </div>
