@@ -1,0 +1,8 @@
+{
+  "name": "metar-plus",
+  "version": "3.8.0",
+  "private": true,
+  "dependencies": {
+    "@upstash/redis": "^1.28.0"
+  }
+}

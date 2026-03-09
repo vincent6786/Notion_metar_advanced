@@ -5,6 +5,11 @@ const kv = new Redis({
     token: process.env.KV_REST_API_TOKEN,
 });
 
+// How long cloud settings persist without activity (1 year rolling TTL)
+const SETTINGS_TTL    = 365 * 24 * 60 * 60;
+// PIN brute-force guard: max attempts per IP per hour
+const PIN_HOURLY_LIMIT = parseInt(process.env.PIN_HOURLY_LIMIT || '30', 10);
+
 function isValidPin(pin) {
     return typeof pin === 'string' && /^\d{4,6}$/.test(pin);
 }
@@ -17,9 +22,53 @@ function setCors(res) {
     if (allowed) res.setHeader('Vary', 'Origin');
 }
 
+function getClientIp(req) {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) return forwarded.split(',')[0].trim();
+    return req.socket?.remoteAddress || 'unknown';
+}
+
+function getHourKey() {
+    const d = new Date();
+    const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+    return `${date}:${String(d.getUTCHours()).padStart(2,'0')}`;
+}
+
+async function checkPinRateLimit(ip) {
+    const key = `efb:pinlimit:${ip}:${getHourKey()}`;
+    try {
+        const count = await kv.incr(key);
+        if (count === 1) await kv.expire(key, 7200); // 2h TTL
+        return count <= PIN_HOURLY_LIMIT;
+    } catch(e) {
+        return true; // fail open on Redis errors
+    }
+}
+
+// Registry helpers — track which keys a PIN has so we never need kv.keys()
+const registryKey = (pin) => `efb:${pin}:_registry`;
+
+async function registryAdd(pin, key) {
+    await kv.sadd(registryKey(pin), key);
+    await kv.expire(registryKey(pin), SETTINGS_TTL);
+}
+
+async function registryRemove(pin, key) {
+    await kv.srem(registryKey(pin), key);
+}
+
+async function registryList(pin) {
+    return (await kv.smembers(registryKey(pin))) || [];
+}
+
 export default async function handler(req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
+
+    // Rate limit all PIN-touching requests
+    const ip = getClientIp(req);
+    const allowed = await checkPinRateLimit(ip);
+    if (!allowed) return res.status(429).json({ error: 'Too many requests. Try again later.' });
 
     try {
         switch (req.method) {
@@ -28,31 +77,33 @@ export default async function handler(req, res) {
                 const { pin, key } = req.query;
                 if (!isValidPin(pin)) return res.status(400).json({ error: 'Invalid PIN' });
 
+                // Single-key fetch (used by updateLastSyncTime, cloudLoad)
                 if (key) {
                     const value = await kv.get(`efb:${pin}:${key}`);
                     return res.json({ value: value ?? null });
                 }
 
-                const allKeys = await kv.keys(`efb:${pin}:*`);
-                if (allKeys.length === 0) return res.json({ found: false, settings: {} });
+                // Full restore — use registry instead of kv.keys()
+                const keys = await registryList(pin);
+                const userKeys = keys.filter(k => !k.startsWith('_'));
+                if (userKeys.length === 0) return res.json({ found: false, settings: {} });
 
-                const values = await Promise.all(allKeys.map(k => kv.get(k)));
+                const values = await Promise.all(userKeys.map(k => kv.get(`efb:${pin}:${k}`)));
                 const settings = {};
-                allKeys.forEach((k, i) => {
-                    const shortKey = k.replace(`efb:${pin}:`, '');
-                    if (!shortKey.startsWith('_')) settings[shortKey] = values[i];
-                });
+                userKeys.forEach((k, i) => { settings[k] = values[i]; });
                 return res.json({ found: true, settings });
             }
 
             case 'POST': {
                 const { pin, key, value } = req.body;
-                if (!isValidPin(pin))                      return res.status(400).json({ error: 'Invalid PIN' });
+                if (!isValidPin(pin))                        return res.status(400).json({ error: 'Invalid PIN' });
                 if (key === undefined || value === undefined) return res.status(400).json({ error: 'Missing key or value' });
-                if (key.startsWith('_'))                    return res.status(400).json({ error: 'Reserved key' });
+                if (key.startsWith('_'))                     return res.status(400).json({ error: 'Reserved key' });
 
-                await kv.set(`efb:${pin}:${key}`, value);
-                await kv.set(`efb:${pin}:_lastUpdated`, new Date().toISOString());
+                // Store value + rolling TTL + update registry
+                await kv.set(`efb:${pin}:${key}`, value, { ex: SETTINGS_TTL });
+                await kv.set(`efb:${pin}:_lastUpdated`, new Date().toISOString(), { ex: SETTINGS_TTL });
+                await registryAdd(pin, key);
                 return res.json({ success: true });
             }
 
@@ -62,11 +113,18 @@ export default async function handler(req, res) {
 
                 if (key) {
                     await kv.del(`efb:${pin}:${key}`);
+                    await registryRemove(pin, key);
                     return res.json({ success: true });
                 }
 
-                const allKeys = await kv.keys(`efb:${pin}:*`);
-                if (allKeys.length > 0) await Promise.all(allKeys.map(k => kv.del(k)));
+                // Full profile delete — use registry to find all keys
+                const keys = await registryList(pin);
+                const allRedisKeys = [
+                    ...keys.map(k => `efb:${pin}:${k}`),
+                    `efb:${pin}:_lastUpdated`,
+                    registryKey(pin),
+                ];
+                if (allRedisKeys.length > 0) await Promise.all(allRedisKeys.map(k => kv.del(k)));
                 return res.json({ success: true });
             }
 

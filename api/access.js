@@ -20,8 +20,32 @@ function getTodayKey() {
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
 }
 
+const VALIDATE_HOURLY_LIMIT = parseInt(process.env.VALIDATE_HOURLY_LIMIT || '60', 10);
+
 function sanitizeCode(raw) {
     return (raw || '').toString().toUpperCase().replace(/[^A-Z0-9\-]/g, '').slice(0, 20);
+}
+
+function getClientIp(req) {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) return forwarded.split(',')[0].trim();
+    return req.socket?.remoteAddress || 'unknown';
+}
+
+function getHourKey() {
+    const d = new Date();
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}:${String(d.getUTCHours()).padStart(2,'0')}`;
+}
+
+async function checkValidateRateLimit(ip) {
+    const key = `efb:validatelimit:${ip}:${getHourKey()}`;
+    try {
+        const count = await kv.incr(key);
+        if (count === 1) await kv.expire(key, 7200);
+        return count <= VALIDATE_HOURLY_LIMIT;
+    } catch(e) {
+        return true; // fail open
+    }
 }
 
 export default async function handler(req, res) {
@@ -34,6 +58,9 @@ export default async function handler(req, res) {
     // ── VALIDATE — called on every app launch & before API calls ─────────
     if (action === 'validate') {
         if (!code) return res.status(400).json({ valid: false, error: 'Code required' });
+        const ip = getClientIp(req);
+        const rateLimitOk = await checkValidateRateLimit(ip);
+        if (!rateLimitOk) return res.status(429).json({ valid: false, error: 'Too many attempts' });
         const key = sanitizeCode(code);
         if (key.length < 4) return res.status(400).json({ valid: false, error: 'Invalid code format' });
 

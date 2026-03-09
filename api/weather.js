@@ -91,15 +91,24 @@ async function incrementKeyUsage(keyIndex) {
 }
 
 async function selectBestKey() {
+    const today = getTodayKey();
+    // Round-robin index stored in Redis so all instances stay in sync
+    const rrKey  = `avwx:rr:${today}`;
     const usages = await Promise.all(API_KEYS.map((_, i) => getKeyUsage(i)));
-    let bestIndex = -1, lowestUsage = DAILY_LIMIT;
-    for (let i = 0; i < API_KEYS.length; i++) {
-        if (usages[i] < DAILY_LIMIT && usages[i] < lowestUsage) {
-            lowestUsage = usages[i];
-            bestIndex   = i;
+
+    // Try up to N keys starting from the round-robin position
+    const startRaw = await kv.get(rrKey);
+    const start    = startRaw ? parseInt(startRaw, 10) % API_KEYS.length : 0;
+
+    for (let offset = 0; offset < API_KEYS.length; offset++) {
+        const i = (start + offset) % API_KEYS.length;
+        if (usages[i] < DAILY_LIMIT) {
+            // Advance the pointer for the next caller
+            await kv.set(rrKey, (i + 1) % API_KEYS.length, { ex: 172800 });
+            return i;
         }
     }
-    return bestIndex;
+    return -1; // all keys exhausted
 }
 
 async function fetchWithKey(keyIndex, url) {
