@@ -3,14 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.8.5',                         // ← bump this on every update
+            version: '3.8.7',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
-                {
-                    icon: '📱',
-                    title: 'Dashboard mode!',
-                    desc: 'Toggle in the settings~ A dahsboard with multi-airport~ New combined METAR + TAF tab when enabled. Switch between views with the pill toggle.'
-                },
+                // {
+                //     icon: '📱',
+                //     title: 'Dashboard mode!',
+                //     desc: 'Toggle in the settings~ A dahsboard with multi-airport~ New combined METAR + TAF tab when enabled. Switch between views with the pill toggle.'
+                // },
                 {
                     icon: '🔨',
                     title: 'Aviation tools: Weather Database updated‼️',
