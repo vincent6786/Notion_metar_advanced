@@ -821,7 +821,7 @@ function searchWeatherTerms() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR KEY ↗
                     </button>
-                    <button onclick="window.open('/METAR_TAF_Abbreviations.pdf', '_blank')" 
+                    <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#34c759; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR/TAF REF ↗
@@ -878,7 +878,7 @@ function displayAllWeatherTerms() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR KEY ↗
                     </button>
-                    <button onclick="window.open('/METAR_TAF_Abbreviations.pdf', '_blank')" 
+                    <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#34c759; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR/TAF REF ↗
@@ -949,7 +949,7 @@ function displayAllCategories() {
                             style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR KEY ↗
                     </button>
-                    <button onclick="window.open('/METAR_TAF_Abbreviations.pdf', '_blank')" 
+                    <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#34c759; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR/TAF REF ↗
