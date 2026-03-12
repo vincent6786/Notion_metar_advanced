@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.8.7',                         // ← bump this on every update
+            version: '3.8.8',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
