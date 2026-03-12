@@ -166,7 +166,7 @@ const metarAbbreviations = [
   { code: "WMO", meaning: "World Meteorological Organization", category: "organization" },
   { code: "WND", meaning: "wind", category: "wind" },
   { code: "WSHFT", meaning: "wind shift", category: "remark" },
-  { code: "Z", meaning: "zulu, i.e., Coordinated Universal Time", category: "time" }
+  { code: "Z", meaning: "zulu, i.e., Coordinated Universal Time", category: "time" },
 
   // ── Added from METAR/TAF Abbreviations (xlsx import) ──────────────────────
 
