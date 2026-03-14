@@ -1715,13 +1715,13 @@ async function e6bFetchCustom() {
 
 function e6bWindFill() {
     const wind = (typeof currentWind !== 'undefined') ? currentWind : null;
-    if (!wind || (!wind.spd && wind.dir === 0)) {
-        return;
-    }
-    const dir = (wind.dir === 'VRB') ? 0 : wind.dir;
-    const spd = wind.spd || 0;
-    document.getElementById('wtWindDir').value = dir;
-    document.getElementById('wtWindSpd').value = spd;
+    if (!wind || (!wind.spd && wind.dir === 0)) return;
+    const mv   = parseFloat(document.getElementById('wtMagVar').value) || 0;
+    const magDir = (wind.dir === 'VRB') ? 0 : wind.dir;
+    // METAR wind is magnetic → convert to True for wind triangle
+    const trueDir = ((magDir + mv) % 360 + 360) % 360;
+    document.getElementById('wtWindDir').value = Math.round(trueDir);
+    document.getElementById('wtWindSpd').value = wind.spd || 0;
     calcWindTriangle();
 }
 
@@ -1736,53 +1736,243 @@ function e6bShowStatus(msg) {
 // WIND TRIANGLE CALCULATOR
 // ============================================================================
 
+function wtMcChanged() {
+    const mc     = parseFloat(document.getElementById('wtMc').value);
+    const magVar = parseFloat(document.getElementById('wtMagVar').value) || 0;
+    if (!isNaN(mc)) {
+        const tc = ((mc + magVar) % 360 + 360) % 360;
+        document.getElementById('wtCourse').value = Math.round(tc);
+    }
+    calcWindTriangle();
+}
+
+function wtTcChanged() {
+    const tc     = parseFloat(document.getElementById('wtCourse').value);
+    const magVar = parseFloat(document.getElementById('wtMagVar').value) || 0;
+    if (!isNaN(tc)) {
+        const mc = ((tc - magVar) % 360 + 360) % 360;
+        document.getElementById('wtMc').value = Math.round(mc);
+    }
+    calcWindTriangle();
+}
+
+function wtFillMagVar() {
+    const stn = (typeof stationData !== 'undefined') ? stationData : null;
+    const mv  = stn?.magnetic_variation;
+    if (mv == null) {
+        const note = document.getElementById('wtMagVarNote');
+        if (note) note.textContent = 'No station loaded — search an airport first.';
+        return;
+    }
+    document.getElementById('wtMagVar').value = mv.toFixed(1);
+    const icao = document.getElementById('icao')?.value?.trim().toUpperCase() || 'airport';
+    const dir  = mv >= 0 ? 'E' : 'W';
+    const note = document.getElementById('wtMagVarNote');
+    if (note) note.textContent = `${icao}: ${Math.abs(mv).toFixed(1)}° ${dir}  (East = +, West = −)`;
+    // sync MC from current TC if set
+    const tc = parseFloat(document.getElementById('wtCourse').value);
+    if (!isNaN(tc)) {
+        document.getElementById('wtMc').value = Math.round(((tc - mv) % 360 + 360) % 360);
+    }
+    calcWindTriangle();
+}
+
 function calcWindTriangle() {
     const tc  = parseFloat(document.getElementById('wtCourse').value);
     const tas = parseFloat(document.getElementById('wtTas').value);
     const wd  = parseFloat(document.getElementById('wtWindDir').value);
     const ws  = parseFloat(document.getElementById('wtWindSpd').value);
+    const mv  = parseFloat(document.getElementById('wtMagVar').value) || 0;
 
     const hdgEl = document.getElementById('resHdg');
+    const mhEl  = document.getElementById('resMh');
     const gsEl  = document.getElementById('resGs');
     const wcaEl = document.getElementById('resWca');
     const weEl  = document.getElementById('resWe');
+    const xwEl  = document.getElementById('resXw');
+
+    const clearAll = () => [hdgEl,mhEl,gsEl,wcaEl,weEl,xwEl].forEach(el => { if (el) el.innerText = '--'; });
 
     if (isNaN(tc) || isNaN(tas) || isNaN(wd) || isNaN(ws) || tas <= 0) {
-        [hdgEl, gsEl, wcaEl, weEl].forEach(el => { if (el) el.innerText = '--'; });
+        clearAll();
+        wtDrawSvg(null);
         return;
     }
 
     const toRad = d => d * Math.PI / 180;
     const toDeg = r => r * 180 / Math.PI;
 
-    // Wind components (into the aircraft's path — positive = headwind)
-    const wdRad  = toRad(wd);
-    const tcRad  = toRad(tc);
-    const hwComp = ws * Math.cos(wdRad - tcRad);   // headwind component
-    const xwComp = ws * Math.sin(wdRad - tcRad);   // crosswind (+ = from right)
+    // Wind vector components in (East, North) space
+    // Wind FROM wd means wind blows TO (wd+180)
+    const wToRad = toRad(wd + 180); // direction wind is blowing TOWARDS
+    const wx = Math.sin(wToRad) * ws; // East component
+    const wy = Math.cos(wToRad) * ws; // North component
 
-    // Wind Correction Angle (WCA)
-    const sinWca = (ws * Math.sin(toRad(wd - tc))) / tas;
+    // True Course unit vector
+    const tcRad = toRad(tc);
+    const tcx = Math.sin(tcRad);
+    const tcy = Math.cos(tcRad);
+
+    // GS vector = TAS heading vector + wind vector
+    // We need to find HDG such that HDG_vector * TAS + wind = TC_direction * GS
+    // sin(WCA) = (wx*tcy - wy*tcx) / tas   [cross product of wind onto perpendicular of TC]
+    const sinWca = (wx * tcy - wy * tcx) / tas;
     if (Math.abs(sinWca) > 1) {
-        [hdgEl, gsEl, wcaEl, weEl].forEach(el => { if (el) el.innerText = 'N/A'; });
+        clearAll();
+        wtDrawSvg(null);
         return;
     }
-    const wca = toDeg(Math.asin(sinWca));
-    const hdg = ((tc + wca) % 360 + 360) % 360;
-    const gs  = Math.sqrt(tas * tas - (ws * Math.sin(toRad(wd - tc))) ** 2) - ws * Math.cos(toRad(wd - tc));
+    const wca  = toDeg(Math.asin(sinWca));
+    const hdg  = ((tc + wca) % 360 + 360) % 360;
+    const mh   = ((hdg - mv) % 360 + 360) % 360;
 
-    if (hdgEl) { hdgEl.innerText = `${Math.round(hdg).toString().padStart(3,'0')}°`; hdgEl.style.color = 'var(--accent)'; }
+    // GS = dot product of (TAS heading + wind) onto TC direction
+    const hdgRad = toRad(hdg);
+    const hx = Math.sin(hdgRad) * tas;
+    const hy = Math.cos(hdgRad) * tas;
+    const gsx = hx + wx;
+    const gsy = hy + wy;
+    const gs  = Math.sqrt(gsx*gsx + gsy*gsy);
+
+    // Crosswind onto TC
+    const xw = ws * Math.sin(toRad(wd - tc));
+
+    // Wind effect vs TAS
+    const effect = gs - tas;
+
+    // ── Populate results ──
+    if (hdgEl) { hdgEl.innerText = `${Math.round(hdg).toString().padStart(3,'0')}°T`; hdgEl.style.color = 'var(--accent)'; }
+    if (mhEl)  { mhEl.innerText  = `${Math.round(mh).toString().padStart(3,'0')}°M`;  mhEl.style.color  = 'var(--accent)'; }
     if (gsEl)  { gsEl.innerText  = `${Math.round(gs)} kt`; gsEl.style.color = gs >= tas ? 'var(--success)' : 'var(--warn)'; }
-    if (wcaEl) {
-        const sign = wca >= 0 ? '+' : '';
-        wcaEl.innerText = `${sign}${wca.toFixed(1)}° (${wca >= 0 ? 'R' : 'L'})`;
-    }
-    if (weEl) {
-        const effect = gs - tas;
-        const sign = effect >= 0 ? '+' : '';
-        weEl.innerText = `${sign}${Math.round(effect)} kt (${effect >= 0 ? 'tailwind' : 'headwind'})`;
+    if (wcaEl) { const s = wca >= 0 ? '+' : ''; wcaEl.innerText = `${s}${wca.toFixed(1)}° (${wca >= 0 ? 'R' : 'L'})`; }
+    if (weEl)  {
+        const s = effect >= 0 ? '+' : '';
+        weEl.innerText = `${s}${Math.round(effect)} kt (${effect >= 0 ? 'tailwind' : 'headwind'})`;
         weEl.style.color = effect >= 0 ? 'var(--success)' : 'var(--warn)';
     }
+    if (xwEl)  {
+        const xwAbs = Math.abs(xw);
+        xwEl.innerText = `${xwAbs.toFixed(1)} kt ${xw > 0 ? 'from R' : 'from L'}`;
+        xwEl.style.color = xwAbs > tas * 0.2 ? 'var(--warn)' : 'var(--text)';
+    }
+
+    // ── Draw SVG ──
+    wtDrawSvg({ tc, hdg, tas, wd, ws, gs, wca });
+}
+
+function wtDrawSvg(d) {
+    const svg = document.getElementById('wtSvg');
+    if (!svg) return;
+
+    if (!d) {
+        svg.innerHTML = `<text x="110" y="118" text-anchor="middle" fill="#2a2a2a"
+            font-size="12" font-family="monospace">Enter values above</text>`;
+        return;
+    }
+
+    const cx = 110, cy = 115, R = 88;
+    const toRad = deg => deg * Math.PI / 180;
+
+    // Auto-scale: longest vector fits inside R
+    const maxSpd = Math.max(d.tas, d.gs, d.ws * 3);
+    const scale  = (R * 0.85) / maxSpd;
+
+    // Vector endpoints (SVG: y increases downward, North = -y)
+    const degToXY = (deg, len) => ({
+        x: cx + Math.sin(toRad(deg)) * len * scale,
+        y: cy - Math.cos(toRad(deg)) * len * scale
+    });
+
+    // TAS vector: origin → tip along HDG
+    const tasVec = degToXY(d.hdg, d.tas);
+
+    // Wind vector: from tip of TAS toward destination (wind blows TO hdg+180)
+    const wToDir = (d.wd + 180) % 360;
+    const windEnd = {
+        x: tasVec.x + Math.sin(toRad(wToDir)) * d.ws * scale,
+        y: tasVec.y - Math.cos(toRad(wToDir)) * d.ws * scale
+    };
+
+    // GS vector: origin → windEnd (should align with TC)
+    const arrowHead = (x2, y2, x1, y1, color, size = 7) => {
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const a1x = x2 - size * Math.cos(angle - 0.45);
+        const a1y = y2 - size * Math.sin(angle - 0.45);
+        const a2x = x2 - size * Math.cos(angle + 0.45);
+        const a2y = y2 - size * Math.sin(angle + 0.45);
+        return `<polygon points="${x2},${y2} ${a1x},${a1y} ${a2x},${a2y}" fill="${color}"/>`;
+    };
+
+    // Compass tick marks
+    let ticks = '';
+    for (let i = 0; i < 36; i++) {
+        const a = toRad(i * 10);
+        const inner = i % 3 === 0 ? R - 10 : R - 5;
+        ticks += `<line x1="${cx + Math.sin(a) * inner}" y1="${cy - Math.cos(a) * inner}"
+                        x2="${cx + Math.sin(a) * R}"     y2="${cy - Math.cos(a) * R}"
+                        stroke="#2a2a2a" stroke-width="${i % 9 === 0 ? 1.5 : 0.8}"/>`;
+    }
+
+    // Cardinal labels
+    const cardinals = [['N',0],['E',90],['S',180],['W',270]];
+    let cardHtml = cardinals.map(([lbl, deg]) => {
+        const lR = R - 18;
+        const x  = cx + Math.sin(toRad(deg)) * lR;
+        const y  = cy - Math.cos(toRad(deg)) * lR + 4;
+        return `<text x="${x}" y="${y}" text-anchor="middle" fill="#3a3a3a"
+                      font-size="9" font-family="monospace" font-weight="700">${lbl}</text>`;
+    }).join('');
+
+    // Wind direction tick (where wind blows FROM)
+    const wFromX1 = cx + Math.sin(toRad(d.wd)) * (R - 2);
+    const wFromY1 = cy - Math.cos(toRad(d.wd)) * (R - 2);
+    const wFromX2 = cx + Math.sin(toRad(d.wd)) * (R + 6);
+    const wFromY2 = cy - Math.cos(toRad(d.wd)) * (R + 6);
+
+    // TC dashed guide line across full circle
+    const tcEnd = degToXY(d.tc, maxSpd * 1.0);
+    const tcOpp = { x: cx - (tcEnd.x - cx), y: cy - (tcEnd.y - cy) };
+
+    svg.innerHTML = `
+        <!-- Compass ring -->
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#1e1e1e" stroke-width="1"/>
+        ${ticks}
+        ${cardHtml}
+
+        <!-- TC guide (dashed) -->
+        <line x1="${tcOpp.x}" y1="${tcOpp.y}" x2="${tcEnd.x}" y2="${tcEnd.y}"
+              stroke="#32d74b" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.35"/>
+
+        <!-- Wind source tick -->
+        <line x1="${wFromX1}" y1="${wFromY1}" x2="${wFromX2}" y2="${wFromY2}"
+              stroke="#ff453a" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- GS vector (green, origin → windEnd) -->
+        <line x1="${cx}" y1="${cy}" x2="${windEnd.x}" y2="${windEnd.y}"
+              stroke="#32d74b" stroke-width="2" stroke-linecap="round"/>
+        ${arrowHead(windEnd.x, windEnd.y, cx, cy, '#32d74b', 8)}
+
+        <!-- TAS / HDG vector (blue, origin → tasVec) -->
+        <line x1="${cx}" y1="${cy}" x2="${tasVec.x}" y2="${tasVec.y}"
+              stroke="#0a84ff" stroke-width="2" stroke-linecap="round"/>
+        ${arrowHead(tasVec.x, tasVec.y, cx, cy, '#0a84ff', 8)}
+
+        <!-- Wind vector (red, tasVec → windEnd) -->
+        <line x1="${tasVec.x}" y1="${tasVec.y}" x2="${windEnd.x}" y2="${windEnd.y}"
+              stroke="#ff453a" stroke-width="2" stroke-linecap="round" stroke-dasharray="5,2"/>
+        ${arrowHead(windEnd.x, windEnd.y, tasVec.x, tasVec.y, '#ff453a', 7)}
+
+        <!-- Origin dot -->
+        <circle cx="${cx}" cy="${cy}" r="3" fill="#555"/>
+
+        <!-- Speed labels -->
+        <text x="${(cx + tasVec.x)/2 - 8}" y="${(cy + tasVec.y)/2}"
+              fill="#0a84ff" font-size="9" font-family="monospace">${Math.round(d.tas)}kt</text>
+        <text x="${(tasVec.x + windEnd.x)/2 + 4}" y="${(tasVec.y + windEnd.y)/2}"
+              fill="#ff453a" font-size="9" font-family="monospace">${Math.round(d.ws)}kt</text>
+        <text x="${windEnd.x + 6}" y="${windEnd.y + 4}"
+              fill="#32d74b" font-size="9" font-family="monospace">${Math.round(Math.sqrt((windEnd.x-cx)**2+(windEnd.y-cy)**2)/scale)}kt</text>
+    `;
 }
 
 // ============================================================================

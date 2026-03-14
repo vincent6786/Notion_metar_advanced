@@ -2431,19 +2431,53 @@
             <!-- ── SECTION 2: WIND TRIANGLE ── -->
             <div class="info-card" style="margin-bottom:12px;">
                 <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:12px;">WIND TRIANGLE · HEADING &amp; GROUND SPEED</div>
+
+                <!-- Mag Var row -->
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; padding:8px 10px; background:#111; border-radius:8px; border:1px solid #2a2a2a;">
+                    <div style="font-size:10px; color:var(--sub-text); font-weight:700; flex:1;">MAG VARIATION</div>
+                    <input type="number" id="wtMagVar" class="conv-inp"
+                           placeholder="0" step="0.1"
+                           style="width:72px; text-align:center; padding:5px 8px; font-size:13px;"
+                           oninput="calcWindTriangle()">
+                    <div style="font-size:11px; color:#555; width:20px;">°</div>
+                    <button onclick="wtFillMagVar()"
+                            style="background:#1c1c1e; border:1px solid #3a3a3c; color:var(--accent);
+                                   padding:6px 10px; border-radius:7px; font-size:10px; font-weight:700;
+                                   cursor:pointer; white-space:nowrap;">
+                        Airport ↓
+                    </button>
+                </div>
+                <div style="font-size:10px; color:#555; margin-bottom:12px; padding:0 2px;">
+                    <span id="wtMagVarNote">Enter mag var or tap Airport ↓ to fill from loaded station. East = positive (+), West = negative (−).</span>
+                </div>
+
+                <!-- Course inputs: MC and TC linked -->
                 <div class="conv-row">
                     <div style="flex:1">
-                        <div class="conv-lbl">True Course (°)</div>
-                        <input type="number" id="wtCourse" class="conv-inp" placeholder="360" min="0" max="360" oninput="calcWindTriangle()">
+                        <div class="conv-lbl">Mag Course (°)</div>
+                        <input type="number" id="wtMc" class="conv-inp" placeholder="--" min="0" max="360"
+                               oninput="wtMcChanged()">
                     </div>
+                    <div style="flex:1">
+                        <div class="conv-lbl">True Course (°)</div>
+                        <input type="number" id="wtCourse" class="conv-inp" placeholder="360" min="0" max="360"
+                               oninput="wtTcChanged()">
+                    </div>
+                </div>
+
+                <!-- TAS -->
+                <div class="conv-row">
                     <div style="flex:1">
                         <div class="conv-lbl">TAS (kts)</div>
                         <input type="number" id="wtTas" class="conv-inp" placeholder="100" oninput="calcWindTriangle()">
                     </div>
+                    <div style="flex:1"></div>
                 </div>
+
+                <!-- Wind row -->
                 <div class="conv-row">
                     <div style="flex:1">
-                        <div class="conv-lbl">Wind FROM (°)</div>
+                        <div class="conv-lbl">Wind FROM (°T)</div>
                         <input type="number" id="wtWindDir" class="conv-inp" placeholder="270" min="0" max="360" oninput="calcWindTriangle()">
                     </div>
                     <div style="flex:1">
@@ -2452,15 +2486,36 @@
                     </div>
                 </div>
                 <button onclick="e6bWindFill()"
-                        style="width:100%; margin:4px 0 12px; background:#1c1c1e; border:1px solid #3a3a3c;
+                        style="width:100%; margin:4px 0 14px; background:#1c1c1e; border:1px solid #3a3a3c;
                                color:var(--sub-text); padding:8px; border-radius:8px; font-size:11px;
                                font-weight:700; cursor:pointer;">
                     ↓ Fill wind from current METAR
                 </button>
+
+                <!-- ── SVG DIAGRAM ── -->
+                <div style="position:relative; margin-bottom:14px;">
+                    <svg id="wtSvg" viewBox="0 0 220 220" width="100%"
+                         style="display:block; background:#0a0a0c; border-radius:10px; border:1px solid #1e1e1e;">
+                        <text x="110" y="118" text-anchor="middle" fill="#2a2a2a"
+                              font-size="12" font-family="monospace">Enter values above</text>
+                    </svg>
+                    <!-- Legend -->
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; font-size:10px; color:var(--sub-text); padding:0 2px;">
+                        <span><span style="color:#0a84ff;">━</span> TAS / Heading</span>
+                        <span><span style="color:#ff453a;">━</span> Wind vector</span>
+                        <span><span style="color:#32d74b;">━</span> Ground speed / Track</span>
+                    </div>
+                </div>
+
+                <!-- Results grid -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-top:12px; border-top:1px solid #333;">
                     <div>
                         <div class="ic-lbl">True Heading</div>
                         <div class="ic-val" id="resHdg" style="color:var(--accent);">--</div>
+                    </div>
+                    <div>
+                        <div class="ic-lbl">Mag Heading</div>
+                        <div class="ic-val" id="resMh" style="color:var(--accent);">--</div>
                     </div>
                     <div>
                         <div class="ic-lbl">Ground Speed</div>
@@ -2473,6 +2528,10 @@
                     <div>
                         <div class="ic-lbl">Wind Effect</div>
                         <div class="ic-val" id="resWe">--</div>
+                    </div>
+                    <div>
+                        <div class="ic-lbl">Crosswind</div>
+                        <div class="ic-val" id="resXw">--</div>
                     </div>
                 </div>
             </div>
