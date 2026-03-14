@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.9.1',                         // ← bump this on every update
+            version: '3.9.0',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -513,12 +513,15 @@
 
         async function finalizePinSetup(pin) {
             localStorage.setItem('efb_cloud_pin', pin);
-            await EFB_DB.set('_efb_cloud_pin', pin);   // ← ADD THIS LINE
+            await EFB_DB.set('_efb_cloud_pin', pin);
             await Storage.setMode('cloud');
             const restored = await cloudRestoreAll();
             document.getElementById('pinSetup').style.display    = 'none';
             document.getElementById('storageSetup').style.display = 'none';
             showToast(restored ? '☁️ Backup restored successfully!' : '✅ Cloud Backup activated!');
+            // Prevent initApp from running a second redundant cloudRestoreAll
+            // which would race against the data we just wrote into IndexedDB
+            if (restored) sessionStorage.setItem('_efb_just_restored', '1');
             initApp();
             if (!restored) showOnboarding();
         }
@@ -1105,7 +1108,10 @@
             if (!ready) return;
 
             const mode = localStorage.getItem('efb_storage_mode');
-            if (mode === 'cloud' && navigator.onLine) await cloudRestoreAll();
+            if (mode === 'cloud' && navigator.onLine && !sessionStorage.getItem('_efb_just_restored')) {
+                await cloudRestoreAll();
+            }
+            sessionStorage.removeItem('_efb_just_restored');
 
             renderStorageModeUI();
             updateApiQuickStats();
