@@ -1775,66 +1775,68 @@
         // ================================================================
         // 27. LAUNCH ANIMATION & STARTUP
         // ================================================================
+        // ── Returns status only — does NOT touch the splash screen ──────────
         async function runLaunchAnimation() {
-          return new Promise((resolve) => {
             const screen = document.getElementById('launchScreen');
-            if (!screen) { resolve(); return; }
+            if (!screen) return { maintenance: false };
 
             if (sessionStorage.getItem('admin_bypass') === 'true') {
-              console.log('[Admin] Bypass active — skipping maintenance check');
+                console.log('[Admin] Bypass active — skipping maintenance check');
             }
 
-            // Start status fetch immediately in parallel with the splash timer
-            const statusPromise = fetch('/api/status')
-              .then(r => r.json())
-              .catch(() => ({ maintenance: false }));
+            // Fetch status immediately in parallel with everything else
+            try {
+                const res = await fetch('/api/status');
+                return await res.json();
+            } catch {
+                return { maintenance: false };
+            }
+        }
 
-            // Minimum visible splash 1200ms (was 3600ms).
-            // Status fetch usually completes in ~300ms so no extra wait in practice.
-            const minSplash = new Promise(r => setTimeout(r, 1200));
+        // ── Dismiss the splash with a smooth fade ────────────────────────
+        function dismissSplash() {
+            const screen = document.getElementById('launchScreen');
+            if (!screen) return;
+            screen.classList.add('fade-out');
+            setTimeout(() => { screen.style.display = 'none'; }, 420);
+        }
 
-            Promise.all([minSplash, statusPromise]).then(([, status]) => {
-              const adminBypassed = sessionStorage.getItem('admin_bypass') === 'true';
+        document.addEventListener('DOMContentLoaded', async () => {
+            const screen = document.getElementById('launchScreen');
 
-              if (status.maintenance && !adminBypassed) {
+            // Minimum splash visibility (800ms) + status check — run in parallel
+            const [status] = await Promise.all([
+                runLaunchAnimation(),
+                new Promise(r => setTimeout(r, 800))
+            ]);
+
+            // Maintenance redirect — before anything else
+            const adminBypassed = sessionStorage.getItem('admin_bypass') === 'true';
+            if (status.maintenance && !adminBypassed) {
                 document.body.style.transition = 'opacity 0.4s ease';
                 document.body.style.opacity = '0';
                 setTimeout(() => window.location.replace('/maintenance.html'), 400);
                 return;
-              }
+            }
 
-              // Resolve immediately so initApp starts — fade runs in background
-              resolve();
-              screen.classList.add('fade-out');
-              setTimeout(() => { screen.style.display = 'none'; }, 420);
-            });
-          });
-        }
-
-        async function checkCodeAvailability(code) {
-            try {
-                const res  = await fetch(`/api/settings?pin=${code}`);
-                const data = await res.json();
-                return data.found;
-            } catch(e) { return false; }
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            await Promise.all([
-                runLaunchAnimation(),
-                new Promise(r => setTimeout(r, 100))
-            ]);
-
-            // ── Access gate check ──────────────────────────────────
-            // If ACCESS_GATE is disabled (no env var set), skip straight to initApp
-            // The gate is enabled server-side via ACCESS_GATE_ENABLED=true in Vercel
+            // ── Access gate check ──────────────────────────────────────────
             const gateEl = document.getElementById('accessGate');
             if (gateEl) {
                 const hasAccess = await checkAccessGate();
-                if (!hasAccess) return; // initApp called later from submitAccessCode
+                if (!hasAccess) {
+                    // Splash dismissed, access gate shown instead
+                    dismissSplash();
+                    return;
+                }
             }
 
-            initApp();
+            // ── Run initApp — splash stays visible the whole time ──────────
+            // initApp sets up Storage, settings, tabs, restores last ICAO,
+            // kicks off loadData(). Once it returns the UI is fully ready.
+            await initApp();
+
+            // ── App is ready — now dismiss splash ──────────────────────────
+            dismissSplash();
 
             window.addEventListener('resize', () => {
                 if (meteoDataCache) drawMeteogram(meteoDataCache);

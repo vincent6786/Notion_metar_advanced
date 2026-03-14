@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.9.0',                         // ← bump this on every update
+            version: '3.8.7',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -2773,108 +2773,89 @@
             body.innerHTML = '<div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:14px;padding-right:32px;">'
                            + title + '</div>' + bodyHTML;
             modal.style.display = 'flex';
-            sheet.getBoundingClientRect(); // force reflow so CSS transition fires
+            sheet.getBoundingClientRect();
             sheet.style.transform = 'translateY(0)';
         }
 
-        // ── Compute PA/DA/ISA numbers from live state ─────────────────────
         function _getAtmoNumbers() {
             if (!stationData) return null;
-            const elev = stationData.elevation_ft;
-            const temp = currentMetar.temp;
+            const elev = stationData.elevation_ft, temp = currentMetar.temp;
             let qnhHpa = currentMetar.alt;
             if (currentMetar.altUnit === 'inHg') qnhHpa = currentMetar.alt * 33.8639;
-            const dev        = +(1013.25 - qnhHpa).toFixed(2);
-            const correction = +(dev * 30).toFixed(0);
-            const pa         = Math.round(elev + correction);
-            const isaTemp    = +(15 - (2 * pa / 1000)).toFixed(1);
-            const isaDev     = Math.round(temp - isaTemp);
-            const daDiff     = Math.round(120 * (temp - isaTemp));
+            const dev = +(1013.25 - qnhHpa).toFixed(2), correction = +(dev * 30).toFixed(0);
+            const pa = Math.round(elev + correction), isaTemp = +(15 - (2 * pa / 1000)).toFixed(1);
+            const isaDev = Math.round(temp - isaTemp), daDiff = Math.round(120 * (temp - isaTemp));
             return { elev, temp, qnhHpa: +qnhHpa.toFixed(2), qnhRaw: currentMetar.alt,
-                     unit: currentMetar.altUnit, dev, correction, pa, isaTemp, isaDev,
-                     daDiff, da: Math.round(pa + daDiff) };
+                     unit: currentMetar.altUnit, dev, correction, pa, isaTemp, isaDev, daDiff,
+                     da: Math.round(pa + daDiff) };
         }
 
-        // ── Mini helpers for detail sheet layout ──────────────────────────
         function _iRow(label, value, color) {
-            return '<div style="display:flex;justify-content:space-between;align-items:baseline;'
-                 + 'padding:8px 0;border-bottom:1px solid #2a2a2a;">'
+            return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #2a2a2a;">'
                  + '<div style="font-size:12px;color:var(--sub-text);">' + label + '</div>'
-                 + '<div style="font-size:13px;font-weight:700;color:' + (color || '#fff') + ';'
-                 + 'font-family:\'SF Mono\',monospace;">' + value + '</div></div>';
+                 + '<div style="font-size:13px;font-weight:700;color:' + (color||'#fff') + ';font-family:\'SF Mono\',monospace;">' + value + '</div></div>';
         }
         function _iFormula(lines) {
             return '<div style="background:#111;border-radius:8px;padding:10px 14px;font-size:12px;'
-                 + 'font-family:\'SF Mono\',monospace;color:var(--accent);line-height:1.9;'
-                 + 'margin:12px 0;white-space:pre;">' + lines + '</div>';
+                 + 'font-family:\'SF Mono\',monospace;color:var(--accent);line-height:1.9;margin:12px 0;white-space:pre;">' + lines + '</div>';
         }
         function _iResult(label, value, color) {
             return '<div style="display:flex;justify-content:space-between;align-items:center;'
                  + 'background:rgba(10,132,255,0.08);border:1px solid rgba(10,132,255,0.2);'
                  + 'border-radius:10px;padding:12px 16px;margin-top:14px;">'
-                 + '<div style="font-size:12px;font-weight:700;color:var(--sub-text);'
-                 + 'text-transform:uppercase;letter-spacing:0.5px;">' + label + '</div>'
-                 + '<div style="font-size:22px;font-weight:800;color:' + (color || 'var(--accent)') + ';'
-                 + 'font-family:\'SF Mono\',monospace;">' + value + '</div></div>';
+                 + '<div style="font-size:12px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;">' + label + '</div>'
+                 + '<div style="font-size:22px;font-weight:800;color:' + (color||'var(--accent)') + ';font-family:\'SF Mono\',monospace;">' + value + '</div></div>';
         }
         function _iNote(html) {
             return '<div style="font-size:11px;color:#555;margin-top:10px;line-height:1.6;">' + html + '</div>';
         }
 
-        // ── Tap handlers wired to Info tab cards ──────────────────────────
         function showPADetail() {
             const n = _getAtmoNumbers();
             if (!n) { if (typeof showToast === 'function') showToast('Load an airport first'); return; }
-            const s  = n.dev >= 0 ? '+' : '';
-            const cs = n.correction >= 0 ? '+' : '';
+            const s = n.dev >= 0 ? '+' : '', cs = n.correction >= 0 ? '+' : '';
             _openInfoModal('Pressure Altitude',
-                _iRow('Field Elevation',   n.elev + ' ft') +
+                _iRow('Field Elevation', n.elev + ' ft') +
                 _iRow('QNH', (n.unit === 'inHg' ? n.qnhRaw + ' inHg / ' : '') + n.qnhHpa + ' hPa') +
                 _iRow('Standard Pressure', '1013.25 hPa') +
-                _iRow('QNH Deviation',     s + n.dev + ' hPa') +
+                _iRow('QNH Deviation', s + n.dev + ' hPa') +
                 '<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;">Formula</div>' +
                 _iFormula('PA = Elevation + (1013.25 - QNH) x 30\nPA = ' + n.elev + ' + (' + s + n.dev + ') x 30\nPA = ' + n.elev + ' ' + cs + n.correction) +
                 _iResult('Pressure Altitude', n.pa + ' ft') +
-                _iNote('Each 1 hPa below standard = +30 ft PA &nbsp;&middot;&nbsp; Each 1 hPa above = -30 ft PA')
-            );
+                _iNote('Each 1 hPa below standard = +30 ft &nbsp;&middot;&nbsp; Each 1 hPa above = -30 ft'));
         }
 
         function showDADetail() {
             const n = _getAtmoNumbers();
             if (!n) { if (typeof showToast === 'function') showToast('Load an airport first'); return; }
-            const is = n.isaDev >= 0 ? '+' : '';
-            const ds = n.daDiff  >= 0 ? '+' : '';
+            const is = n.isaDev >= 0 ? '+' : '', ds = n.daDiff >= 0 ? '+' : '';
             const daColor = n.da > n.elev + 2000 ? 'var(--warn)' : 'var(--accent)';
             _openInfoModal('Density Altitude',
                 _iRow('Pressure Altitude', n.pa + ' ft') +
-                _iRow('ISA Temp at PA',    n.isaTemp + '\u00b0C') +
-                _iRow('Actual OAT',        n.temp    + '\u00b0C') +
+                _iRow('ISA Temp at PA', n.isaTemp + '\u00b0C') +
+                _iRow('Actual OAT', n.temp + '\u00b0C') +
                 _iRow('ISA Deviation', is + n.isaDev + '\u00b0C', n.isaDev > 0 ? 'var(--warn)' : '#32d74b') +
                 '<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;">Formula</div>' +
                 _iFormula('ISA Temp = 15 - (2 x PA / 1000)\n        = 15 - (2 x ' + n.pa + ' / 1000) = ' + n.isaTemp + 'C\n\nDA = PA + 120 x (OAT - ISA)\nDA = ' + n.pa + ' + 120 x (' + n.temp + ' - ' + n.isaTemp + ')\nDA = ' + n.pa + ' ' + ds + n.daDiff) +
                 _iResult('Density Altitude', n.da + ' ft', daColor) +
                 _iNote(n.isaDev > 0
-                    ? 'ISA+' + n.isaDev + '\u00b0C warmer than standard &mdash; air is less dense, performance degraded.'
-                    : 'ISA' + n.isaDev + '\u00b0C cooler than standard &mdash; denser air, better performance.')
-            );
+                    ? 'ISA+' + n.isaDev + '\u00b0C warmer than standard \u2014 less dense air, performance degraded.'
+                    : 'ISA' + n.isaDev + '\u00b0C cooler than standard \u2014 denser air, better performance.'));
         }
 
         function showISADetail() {
             const n = _getAtmoNumbers();
             if (!n) { if (typeof showToast === 'function') showToast('Load an airport first'); return; }
-            const s     = n.isaDev >= 0 ? '+' : '';
+            const s = n.isaDev >= 0 ? '+' : '';
             const color = n.isaDev > 5 ? 'var(--warn)' : n.isaDev < -5 ? '#0a84ff' : '#32d74b';
             _openInfoModal('ISA Deviation',
-                _iRow('Pressure Altitude', n.pa   + ' ft') +
-                _iRow('Actual OAT',        n.temp + '\u00b0C') +
+                _iRow('Pressure Altitude', n.pa + ' ft') +
+                _iRow('Actual OAT', n.temp + '\u00b0C') +
                 '<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;">Formula</div>' +
                 _iFormula('ISA Temp = 15 - (2 x PA / 1000)\n        = 15 - (2 x ' + n.pa + ' / 1000)\n        = ' + n.isaTemp + 'C\n\nISA Dev = OAT - ISA Temp\n        = ' + n.temp + ' - ' + n.isaTemp + ' = ' + s + n.isaDev + 'C') +
                 _iResult('ISA Deviation', s + n.isaDev + '\u00b0C', color) +
                 _iNote('ISA: 15\u00b0C at sea level, -2\u00b0C per 1,000 ft.<br>' +
-                    (n.isaDev > 0
-                        ? 'ISA+' + n.isaDev + ' &mdash; warmer than standard. Higher DA, reduced performance.'
-                        : n.isaDev < 0
-                        ? 'ISA' + n.isaDev + ' &mdash; cooler than standard. Denser air, better performance.'
-                        : 'ISA+0 &mdash; exactly standard conditions.'))
-            );
+                    (n.isaDev > 0 ? 'ISA+' + n.isaDev + ' \u2014 warmer than standard. Higher DA, reduced performance.'
+                    : n.isaDev < 0 ? 'ISA' + n.isaDev + ' \u2014 cooler than standard. Denser air, better performance.'
+                    : 'ISA+0 \u2014 exactly standard conditions.')));
         }
