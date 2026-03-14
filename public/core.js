@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.8.8',                         // ← bump this on every update
+            version: '3.8.7',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -1678,10 +1678,17 @@
             const icao = icaoVal.toUpperCase();
             addToHistory(icao);
             localStorage.setItem('efb_last_load_ts', Date.now());
+            localStorage.setItem('efb_last_icao', icao);
             document.getElementById('icao').blur();
             dismissWelcomeOverlay(); 
             document.getElementById('linkSkyVector').href = `https://skyvector.com/airport/${icao}`;
             updateHeaderCat('Loading', '');
+
+            // ── Reset shared state so no stale data from the previous airport
+            // leaks into renders or checkMins during the loading window ──────────
+            currentWind  = { dir: 0, spd: 0 };
+            currentMetar = { temp: 15, alt: 1013, altUnit: 'hPa' };
+            lastMetarObj = null;
             
             // Show skeletons immediately for instant feedback
             showLoadingSkeletons();
@@ -1726,6 +1733,10 @@
                         let altVal = m.altimeter?.value || 1013;
                         let altUnit = altVal < 200 ? 'inHg' : 'hPa';
                         currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit };
+
+                        // Re-render Info tab PA/DA/ISA now that real QNH + OAT are available
+                        // (renderInfo was called in Phase 1 before METAR arrived)
+                        if (stationData) renderInfo(stationData);
                         
                         renderMetar(m);
                         renderSkyVisuals(m);
@@ -2753,4 +2764,88 @@
             const daEl = document.getElementById('calcDA');
             if (da > elev + 2000) { daEl.style.color = "var(--warn)"; daEl.innerHTML = `${da} ft ⚠️`; }
             else { daEl.style.color = "var(--text)"; }
+        }
+
+        // ── Shared helper — compute all numbers used in PA/DA/ISA ────────
+        function _getAtmoNumbers() {
+            if (!stationData) return null;
+            const elev    = stationData.elevation_ft;
+            const temp    = currentMetar.temp;
+            let qnhHpa    = currentMetar.alt;
+            if (currentMetar.altUnit === 'inHg') qnhHpa = currentMetar.alt * 33.8639;
+            const qnhRaw  = currentMetar.alt;
+            const unit    = currentMetar.altUnit;
+            const dev     = +(1013.25 - qnhHpa).toFixed(2);
+            const correction = +(dev * 30).toFixed(0);
+            const pa      = Math.round(elev + correction);
+            const isaTemp = +(15 - (2 * pa / 1000)).toFixed(1);
+            const isaDev  = Math.round(temp - isaTemp);
+            const daDiff  = Math.round(120 * (temp - isaTemp));
+            const da      = Math.round(pa + daDiff);
+            return { elev, temp, qnhHpa: +qnhHpa.toFixed(2), qnhRaw, unit, dev, correction, pa, isaTemp, isaDev, daDiff, da };
+        }
+
+        function _row(label, value, highlight) {
+            return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid #2a2a2a;"><div style="font-size:12px;color:var(--sub-text);">${label}</div><div style="font-size:13px;font-weight:700;color:${highlight||'#fff'};font-family:'SF Mono',monospace;">${value}</div></div>`;
+        }
+        function _formula(expr) {
+            return `<div style="background:#111;border-radius:8px;padding:10px 14px;font-size:12px;font-family:'SF Mono',monospace;color:var(--accent);line-height:1.8;margin:10px 0;">${expr}</div>`;
+        }
+        function _result(label, value, color) {
+            return `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(10,132,255,0.08);border:1px solid rgba(10,132,255,0.2);border-radius:10px;padding:12px 16px;margin-top:12px;"><div style="font-size:12px;font-weight:700;color:var(--sub-text);text-transform:uppercase;">${label}</div><div style="font-size:22px;font-weight:800;color:${color||'var(--accent)'};font-family:'SF Mono',monospace;">${value}</div></div>`;
+        }
+
+        function showPADetail() {
+            const n = _getAtmoNumbers();
+            if (!n) { showToast('Load an airport first'); return; }
+            const sign = n.dev >= 0 ? '+' : '';
+            openFormulaModal({
+                title: '📐 Pressure Altitude',
+                body: `
+                    ${_row('Field Elevation', `${n.elev} ft`)}
+                    ${_row('QNH', `${n.unit === 'inHg' ? n.qnhRaw + ' inHg / ' : ''}${n.qnhHpa} hPa`)}
+                    ${_row('Standard Pressure', '1013.25 hPa')}
+                    ${_row('QNH Deviation', `${sign}${n.dev} hPa`)}
+                    <div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Formula</div>
+                    ${_formula(`PA = Elevation + (1013.25 − QNH) × 30\nPA = ${n.elev} + (${sign}${n.dev}) × 30\nPA = ${n.elev} ${n.correction >= 0 ? '+' : ''}${n.correction}`)}
+                    ${_result('Pressure Altitude', `${n.pa} ft`)}
+                    <div style="font-size:11px;color:#555;margin-top:10px;line-height:1.6;">Each 1 hPa below standard = +30 ft PA · Each 1 hPa above = −30 ft PA</div>`
+            });
+        }
+
+        function showDADetail() {
+            const n = _getAtmoNumbers();
+            if (!n) { showToast('Load an airport first'); return; }
+            const isaSign = n.isaDev >= 0 ? '+' : '';
+            const daSign  = n.daDiff >= 0 ? '+' : '';
+            const daColor = n.da > n.elev + 2000 ? 'var(--warn)' : 'var(--accent)';
+            openFormulaModal({
+                title: '🌡 Density Altitude',
+                body: `
+                    ${_row('Pressure Altitude', `${n.pa} ft`)}
+                    ${_row('ISA Temp at PA', `${n.isaTemp}°C`)}
+                    ${_row('Actual OAT', `${n.temp}°C`)}
+                    ${_row('ISA Deviation', `${isaSign}${n.isaDev}°C`, n.isaDev > 0 ? 'var(--warn)' : '#32d74b')}
+                    <div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Formula</div>
+                    ${_formula(`ISA Temp = 15 − (2 × PA / 1000)\n        = 15 − (2 × ${n.pa} / 1000) = ${n.isaTemp}°C\n\nDA = PA + 120 × (OAT − ISA)\nDA = ${n.pa} + 120 × (${n.temp} − ${n.isaTemp})\nDA = ${n.pa} ${daSign}${n.daDiff}`)}
+                    ${_result('Density Altitude', `${n.da} ft`, daColor)}
+                    <div style="font-size:11px;color:#555;margin-top:10px;line-height:1.6;">${n.isaDev > 0 ? `⚠️ ISA+${n.isaDev}°C — warmer than standard. Air column expanded, performance degraded.` : `✅ ISA${n.isaDev}°C — cooler than standard. Denser air, better performance.`}</div>`
+            });
+        }
+
+        function showISADetail() {
+            const n = _getAtmoNumbers();
+            if (!n) { showToast('Load an airport first'); return; }
+            const sign  = n.isaDev >= 0 ? '+' : '';
+            const color = n.isaDev > 5 ? 'var(--warn)' : n.isaDev < -5 ? '#0a84ff' : '#32d74b';
+            openFormulaModal({
+                title: '🌐 ISA Deviation',
+                body: `
+                    ${_row('Pressure Altitude', `${n.pa} ft`)}
+                    ${_row('Actual OAT', `${n.temp}°C`)}
+                    <div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Formula</div>
+                    ${_formula(`ISA Temp = 15 − (2°C / 1,000ft × PA)\n        = 15 − (2 × ${n.pa} / 1000)\n        = ${n.isaTemp}°C\n\nISA Dev = OAT − ISA Temp\n        = ${n.temp} − ${n.isaTemp} = ${sign}${n.isaDev}°C`)}
+                    ${_result('ISA Deviation', `${sign}${n.isaDev}°C`, color)}
+                    <div style="font-size:11px;color:#555;margin-top:10px;line-height:1.6;">ISA assumes 15°C at sea level, decreasing 2°C per 1,000 ft.<br>${n.isaDev > 0 ? `ISA+${n.isaDev} — warmer than standard. Expect higher DA and reduced engine/lift performance.` : n.isaDev < 0 ? `ISA${n.isaDev} — cooler than standard. Denser air, better performance than standard conditions.` : 'ISA±0 — exactly standard conditions.'}</div>`
+            });
         }
