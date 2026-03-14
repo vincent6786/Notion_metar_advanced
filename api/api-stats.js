@@ -29,18 +29,26 @@ export default async function handler(req, res) {
     if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
-        const today  = getTodayKey();
-        const key1   = await kv.get(`avwx:usage:${today}:key1`) || 0;
-        const key2   = await kv.get(`avwx:usage:${today}:key2`) || 0;
-        const key3   = await kv.get(`avwx:usage:${today}:key3`) || 0;
-        const key4   = await kv.get(`avwx:usage:${today}:key4`) || 0;
+        const today    = getTodayKey();
+        const keyCount = Object.keys(process.env)
+            .filter(k => /^AVWX_KEY_\d+$/.test(k) && process.env[k])
+            .length;
 
-        const keys = [key1, key2, key3, key4].map((usage, i) => {
-            const u = parseInt(usage, 10);
-            return { id: i+1, usage: u, limit: DAILY_LIMIT, remaining: DAILY_LIMIT - u, percentage: Math.round((u / DAILY_LIMIT) * 100) };
-        });
+        const usages = await Promise.all(
+            Array.from({ length: keyCount }, (_, i) =>
+                kv.get(`avwx:usage:${today}:key${i + 1}`).then(v => parseInt(v, 10) || 0)
+            )
+        );
 
-        const totalLimit = DAILY_LIMIT * 4;
+        const keys = usages.map((u, i) => ({
+            id:         i + 1,
+            usage:      u,
+            limit:      DAILY_LIMIT,
+            remaining:  DAILY_LIMIT - u,
+            percentage: Math.round((u / DAILY_LIMIT) * 100)
+        }));
+
+        const totalLimit = DAILY_LIMIT * keyCount;
         const totalUsage = keys.reduce((sum, k) => sum + k.usage, 0);
 
         return res.json({
