@@ -1014,142 +1014,45 @@
 
         // ================================================================
         // 21. COCKPIT TIMER
-        // Persistent across backgrounding + cold restarts.
-        // Corrects for elapsed wall-clock time on resume.
-        // Fires browser Notification (where supported) on expiry.
         // ================================================================
-        let fuelInterval   = null;
-        let fuelSeconds    = 1800;
+        let fuelInterval  = null;
+        let fuelSeconds   = 1800;
         let fuelStartValue = 1800;
-        let isFuelRunning  = false;
+        let isFuelRunning = false;
 
-        // ── Persistence helpers ──────────────────────────────────────────
-        function _timerSave() {
-            localStorage.setItem('efb_timer_seconds',    fuelSeconds);
-            localStorage.setItem('efb_timer_start',      fuelStartValue);
-            localStorage.setItem('efb_timer_running',    isFuelRunning ? '1' : '0');
-            localStorage.setItem('efb_timer_epoch',      Date.now());
-        }
-        function _timerClear() {
-            ['efb_timer_seconds','efb_timer_start','efb_timer_running','efb_timer_epoch']
-                .forEach(k => localStorage.removeItem(k));
-        }
-
-        // ── Notification permission (requested lazily on first START) ────
-        function _requestNotifPermission() {
-            if (!('Notification' in window)) return;
-            if (Notification.permission === 'default') Notification.requestPermission();
-        }
-        function _sendTimerNotification() {
-            if (!('Notification' in window) || Notification.permission !== 'granted') return;
-            new Notification('⏱ Cockpit Timer', {
-                body: 'Timer expired — check fuel / holding!',
-                icon: '/appicon.png',
-                tag:  'cockpit-timer',
-                requireInteraction: true
-            });
-        }
-
-        // ── Restore timer state on load / resume ────────────────────────
-        function restoreTimerState() {
-            const savedSec     = parseInt(localStorage.getItem('efb_timer_seconds') || '0');
-            const savedStart   = parseInt(localStorage.getItem('efb_timer_start')   || '1800');
-            const wasRunning   = localStorage.getItem('efb_timer_running') === '1';
-            const savedEpoch   = parseInt(localStorage.getItem('efb_timer_epoch')   || '0');
-
-            if (!savedSec && !wasRunning) return; // nothing to restore
-
-            fuelStartValue = savedStart;
-
-            // If it was running, correct for wall-clock time that passed
-            if (wasRunning && savedEpoch) {
-                const elapsed = Math.floor((Date.now() - savedEpoch) / 1000);
-                fuelSeconds = Math.max(0, savedSec - elapsed);
-            } else {
-                fuelSeconds = savedSec;
-            }
-
-            updateFuelDisplay();
-
-            // Re-highlight the correct preset chip
-            const presetMin = Math.round(savedStart / 60);
-            document.querySelectorAll('#btnFuel15,#btnFuel30,#btnFuel45,#btnFuel60')
-                .forEach(b => b.classList.remove('active-fuel'));
-            document.getElementById(`btnFuel${presetMin}`)?.classList.add('active-fuel');
-
-            if (fuelSeconds <= 0) {
-                // Expired while in background
-                isFuelRunning = false;
-                _timerClear();
-                fuelAlert();
-            } else if (wasRunning) {
-                // Resume counting from corrected value
-                isFuelRunning = false; // toggleFuelTimer flips it
-                toggleFuelTimer();
-            } else {
-                // Was paused — show paused state
-                const btn = document.getElementById('btnFuelStart');
-                if (btn) { btn.innerText = 'RESUME'; btn.style.background = 'var(--warn)'; }
-            }
-        }
-
-        // ── Core timer functions ─────────────────────────────────────────
         function setFuelTime(minutes) {
             if (isFuelRunning) toggleFuelTimer();
-            fuelStartValue = minutes * 60;
-            fuelSeconds    = fuelStartValue;
+            fuelStartValue = minutes * 60; fuelSeconds = fuelStartValue;
             updateFuelDisplay();
-            document.querySelectorAll('#btnFuel15,#btnFuel30,#btnFuel45,#btnFuel60')
-                .forEach(b => b.classList.remove('active-fuel'));
+            document.querySelectorAll('#btnFuel15,#btnFuel30,#btnFuel45,#btnFuel60').forEach(b => b.classList.remove('active-fuel'));
             document.getElementById(`btnFuel${minutes}`)?.classList.add('active-fuel');
             resetFuelVisuals();
-            _timerClear();
         }
 
         function toggleFuelTimer() {
             const btn = document.getElementById('btnFuelStart');
             if (isFuelRunning) {
-                clearInterval(fuelInterval);
-                isFuelRunning = false;
-                btn.innerText = 'RESUME';
-                btn.style.background = 'var(--warn)';
-                _timerSave(); // save paused state
+                clearInterval(fuelInterval); isFuelRunning = false;
+                btn.innerText = "RESUME"; btn.style.background = "var(--warn)";
             } else {
-                _requestNotifPermission();
-                isFuelRunning = true;
-                btn.innerText = 'PAUSE';
-                btn.style.background = 'var(--mvfr)';
-                _timerSave(); // save running state + epoch
+                isFuelRunning = true; btn.innerText = "PAUSE"; btn.style.background = "var(--mvfr)";
                 fuelInterval = setInterval(() => {
-                    if (fuelSeconds > 0) {
-                        fuelSeconds--;
-                        updateFuelDisplay();
-                        // Save every 5 s to keep epoch fresh without hammering storage
-                        if (fuelSeconds % 5 === 0) _timerSave();
-                    } else {
-                        clearInterval(fuelInterval);
-                        isFuelRunning = false;
-                        _timerClear();
-                        fuelAlert();
-                    }
+                    if (fuelSeconds > 0) { fuelSeconds--; updateFuelDisplay(); }
+                    else { clearInterval(fuelInterval); isFuelRunning = false; fuelAlert(); }
                 }, 1000);
             }
         }
 
         function resetFuelTimer() {
-            clearInterval(fuelInterval);
-            isFuelRunning  = false;
-            fuelSeconds    = fuelStartValue;
-            resetFuelVisuals();
-            updateFuelDisplay();
-            _timerClear();
+            clearInterval(fuelInterval); isFuelRunning = false;
+            fuelSeconds = fuelStartValue; resetFuelVisuals(); updateFuelDisplay();
         }
 
         function resetFuelVisuals() {
-            document.getElementById('btnFuelStart').innerText = 'START';
-            document.getElementById('btnFuelStart').style.background = 'var(--success)';
-            document.getElementById('fuelCard').style.background = 'var(--card-bg)';
-            document.getElementById('fuelDisplay').style.color = 'var(--text)';
+            document.getElementById('btnFuelStart').innerText = "START";
+            document.getElementById('btnFuelStart').style.background = "var(--success)";
+            document.getElementById('fuelCard').style.background = "var(--card-bg)";
+            document.getElementById('fuelDisplay').style.color = "var(--text)";
         }
 
         function updateFuelDisplay() {
@@ -1159,11 +1062,10 @@
         }
 
         function fuelAlert() {
-            document.getElementById('fuelCard').style.background = 'var(--danger)';
-            document.getElementById('fuelDisplay').innerText = 'CHECK';
-            document.getElementById('fuelDisplay').style.color = '#fff';
+            document.getElementById('fuelCard').style.background = "var(--danger)";
+            document.getElementById('fuelDisplay').innerText = "CHECK";
+            document.getElementById('fuelDisplay').style.color = "#fff";
             if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-            _sendTimerNotification();
         }
 
         // ================================================================
@@ -1269,8 +1171,6 @@
                     });
                     if (name === 'world') updateClock();
                     if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
-                    // Persist last active tab (skip transient/system tabs)
-                    if (!['dashboard'].includes(name)) localStorage.setItem('efb_last_tab', name);
                 }
 
         async function checkMultiDashboardEnabled() {
@@ -1795,27 +1695,6 @@
         // ── AUTO-REFRESH ON APP REOPEN ──────────────────────────────────────────
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState !== 'visible') return;
-
-            // ── Timer drift correction ───────────────────────────────────
-            if (isFuelRunning && fuelInterval) {
-                // Interval may have been throttled; recompute from saved epoch
-                const savedEpoch = parseInt(localStorage.getItem('efb_timer_epoch') || '0');
-                if (savedEpoch) {
-                    const savedSec = parseInt(localStorage.getItem('efb_timer_seconds') || String(fuelSeconds));
-                    const elapsed  = Math.floor((Date.now() - savedEpoch) / 1000);
-                    fuelSeconds = Math.max(0, savedSec - elapsed);
-                    updateFuelDisplay();
-                    if (fuelSeconds <= 0) {
-                        clearInterval(fuelInterval);
-                        isFuelRunning = false;
-                        _timerClear();
-                        fuelAlert();
-                        return;
-                    }
-                }
-            }
-
-            // ── Auto weather refresh ─────────────────────────────────────
             const icao = document.getElementById('icao').value.trim();
             if (!icao) return;
             const lastLoad = parseInt(localStorage.getItem('efb_last_load_ts') || '0');
@@ -1900,40 +1779,35 @@
           return new Promise((resolve) => {
             const screen = document.getElementById('launchScreen');
             if (!screen) { resolve(); return; }
-        
-            // ── Check admin bypass FIRST before fetching status ──
+
             if (sessionStorage.getItem('admin_bypass') === 'true') {
               console.log('[Admin] Bypass active — skipping maintenance check');
             }
-        
+
+            // Start status fetch immediately in parallel with the splash timer
             const statusPromise = fetch('/api/status')
               .then(r => r.json())
               .catch(() => ({ maintenance: false }));
-        
-            setTimeout(async () => {
-              screen.classList.add('fade-out');
-        
-              const [, status] = await Promise.all([
-                new Promise(r => setTimeout(r, 800)),
-                statusPromise
-              ]);
-        
-              screen.style.display = 'none';
-        
-              // ── Skip redirect if admin bypassed ──
+
+            // Minimum visible splash 1200ms (was 3600ms).
+            // Status fetch usually completes in ~300ms so no extra wait in practice.
+            const minSplash = new Promise(r => setTimeout(r, 1200));
+
+            Promise.all([minSplash, statusPromise]).then(([, status]) => {
               const adminBypassed = sessionStorage.getItem('admin_bypass') === 'true';
-        
+
               if (status.maintenance && !adminBypassed) {
                 document.body.style.transition = 'opacity 0.4s ease';
                 document.body.style.opacity = '0';
-                setTimeout(() => {
-                  window.location.replace('/maintenance.html');
-                }, 400);
+                setTimeout(() => window.location.replace('/maintenance.html'), 400);
                 return;
               }
-        
+
+              // Resolve immediately so initApp starts — fade runs in background
               resolve();
-            }, 3600);
+              screen.classList.add('fade-out');
+              setTimeout(() => { screen.style.display = 'none'; }, 420);
+            });
           });
         }
 
