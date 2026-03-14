@@ -2473,6 +2473,7 @@ function amRender() {
                         <div style="font-size:11px; font-weight:700; color:#ddd; line-height:1.55;">${r.cloud}</div>
                     </div>
                 </div>
+                ${amCloudSVG(r.cloud)}
             </div>`).join('');
 
         return `
@@ -2490,4 +2491,61 @@ function amRender() {
             </div>
         </div>`;
     }).join('');
+}
+
+function amCloudSVG(cloud) {
+    const isClear = cloud === 'Clear of clouds';
+    const isHigh  = cloud.includes('1 SM horiz');
+    const belowLbl = isHigh ? '1,000 ft' : '500 ft';
+    const aboveLbl = '1,000 ft';
+    const horizLbl = isHigh ? '1 SM' : '2,000 ft';
+
+    if (isClear) {
+        return `<div style="margin:8px 0 2px; padding:10px 12px; background:#0d1f0d; border-radius:8px; border:1px solid #1a3a1a; text-align:center;">
+            <span style="font-size:11px; color:#32d74b; font-weight:700; letter-spacing:0.4px;">CLEAR OF CLOUDS — no separation required</span>
+        </div>`;
+    }
+
+    return `<div style="margin:10px 0 2px;">
+        <div style="font-size:9px; color:#3a3a3a; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;">CLEARANCE DIAGRAM</div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 118" width="100%" style="display:block; overflow:visible;">
+            <!-- Cloud above -->
+            <ellipse cx="82" cy="13" rx="28" ry="9"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+            <ellipse cx="65" cy="19" rx="18" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+            <ellipse cx="99" cy="19" rx="18" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+            <text x="82" y="17" text-anchor="middle" fill="#4a4a60" font-size="8" font-family="monospace">CLOUD</text>
+
+            <!-- Dashed line: aircraft to cloud above -->
+            <line x1="82" y1="27" x2="82" y2="50" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="90" y="37" fill="#ff9f0a" font-size="9" font-family="monospace" font-weight="700">${belowLbl}</text>
+            <text x="90" y="48" fill="#555" font-size="8" font-family="monospace">below</text>
+
+            <!-- Aircraft (top-down silhouette) -->
+            <rect x="58" y="54" width="50" height="8" rx="4" fill="#0a84ff"/>
+            <rect x="67" y="48" width="10" height="18" rx="2" fill="#0a84ff"/>
+            <polygon points="108,55 108,63 117,59" fill="#5ac8fa"/>
+            <text x="82" y="78" text-anchor="middle" fill="#3a72cc" font-size="8" font-family="monospace">YOU</text>
+
+            <!-- Dashed line: aircraft to cloud below -->
+            <line x1="82" y1="82" x2="82" y2="99" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="90" y="90" fill="#ff9f0a" font-size="9" font-family="monospace" font-weight="700">${aboveLbl}</text>
+            <text x="90" y="100" fill="#555" font-size="8" font-family="monospace">above</text>
+
+            <!-- Cloud below -->
+            <ellipse cx="82" cy="107" rx="28" ry="9"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+            <ellipse cx="65" cy="101" rx="18" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+            <ellipse cx="99" cy="101" rx="18" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+            <text x="82" y="110" text-anchor="middle" fill="#4a4a60" font-size="8" font-family="monospace">CLOUD</text>
+
+            <!-- Horizontal dashed line to side cloud -->
+            <line x1="120" y1="59" x2="226" y2="59" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="172" y="53" text-anchor="middle" fill="#ff9f0a" font-size="9" font-family="monospace" font-weight="700">${horizLbl}</text>
+            <text x="172" y="72" text-anchor="middle" fill="#555" font-size="8" font-family="monospace">horizontal</text>
+
+            <!-- Side cloud -->
+            <ellipse cx="249" cy="59" rx="23" ry="9"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+            <ellipse cx="235" cy="53" rx="16" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+            <ellipse cx="261" cy="53" rx="16" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+        </svg>
+    </div>`;
 }
