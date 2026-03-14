@@ -3,7 +3,7 @@
 // Offline-first for static assets, network-first for API calls
 // ================================================================
 
-const CACHE_VERSION = 'metar-go-v3.8.8';
+const CACHE_VERSION = 'metar-go-v3.8.9';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
