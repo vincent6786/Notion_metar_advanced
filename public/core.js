@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.8.7',                         // ← bump this on every update
+            version: '3.8.9',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -16,11 +16,11 @@
                     title: 'Aviation tools: Weather Database updated‼️',
                     desc: 'New update for weather terms: check more sources'
                 },
-                // {
-                //     icon: '📊',
-                //     title: 'Data sources updated',
-                //     desc: 'See more in the Help section~'
-                // },
+                {
+                    icon: '📊',
+                    title: 'Data sources updated',
+                    desc: 'See more in the Help section~'
+                },
                 // {
                 //     icon: '🔤',
                 //     title: 'IATA codes in Dashboard',
