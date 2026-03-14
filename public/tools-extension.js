@@ -1599,12 +1599,248 @@ function calcE6B() {
     if (dewC !== null) { cloudBase = `${Math.round(((tempC - dewC) / 2.5) * 1000)} ft`; }
     if (tempC > 0) { freezingLvl = `${Math.round(alt + (tempC / 2) * 1000)} ft`; } else { freezingLvl = "Surface"; }
 
+    const paEl = document.getElementById('resPA');
+    if (paEl) paEl.innerText = `${Math.round(pa)} ft`;
+
+    const isaDev = tempC - isaTemp;
+    const isaEl  = document.getElementById('resISA');
+    if (isaEl) {
+        const sign = isaDev >= 0 ? '+' : '';
+        isaEl.innerText = `${sign}${isaDev.toFixed(1)}°C`;
+        isaEl.style.color = Math.abs(isaDev) > 15 ? 'var(--warn)' : 'var(--text)';
+    }
+
     document.getElementById('resDA').innerText    = `${Math.round(da)} ft`;
     document.getElementById('resTAS').innerText   = `${Math.round(tas)} kt`;
     document.getElementById('resCloud').innerText = cloudBase;
     document.getElementById('resFrz').innerText   = freezingLvl;
     const daEl = document.getElementById('resDA');
     daEl.style.color = da > alt + 2000 ? "var(--warn)" : "var(--accent)";
+
+    // Also sync TAS into wind triangle TAS field if blank
+    if (ias > 0 && !document.getElementById('wtTas').value) {
+        document.getElementById('wtTas').value = Math.round(tas);
+        calcWindTriangle();
+    }
+}
+
+// ============================================================================
+// E6B AUTOFILL
+// ============================================================================
+
+function e6bAutofillCurrent() {
+    // Read from the globally available METAR state in core.js scope
+    const m   = (typeof lastMetarObj !== 'undefined') ? lastMetarObj : null;
+    const stn = (typeof stationData  !== 'undefined') ? stationData  : null;
+    const icao = document.getElementById('icao')?.value?.trim().toUpperCase() || '';
+
+    if (!m) {
+        e6bShowStatus('No METAR loaded — search an airport first.');
+        return;
+    }
+
+    // Temp / dewpoint
+    const tempC = m.temperature?.value;
+    const dewC  = m.dewpoint?.value;
+    // QNH
+    const altRaw = m.altimeter?.value;
+    const altUnit = (altRaw !== null && altRaw < 200) ? 'inhg' : 'hpa';
+    // Elevation → use as indicated altitude
+    const elev = stn?.elevation_ft ?? 0;
+
+    const uQnh  = document.getElementById('unitQnh');
+    const uTemp = document.getElementById('unitTemp');
+    if (uQnh)  uQnh.value  = altUnit;
+    if (uTemp) uTemp.value = 'c';
+
+    if (elev !== null)   document.getElementById('e6bAlt').value  = Math.round(elev);
+    if (altRaw !== null) document.getElementById('e6bQnh').value  = altUnit === 'inhg' ? parseFloat(altRaw).toFixed(2) : Math.round(altRaw);
+    if (tempC !== null && tempC !== undefined)  document.getElementById('e6bTemp').value = tempC;
+    if (dewC  !== null && dewC  !== undefined)  document.getElementById('e6bDew').value  = dewC;
+
+    // Update button label
+    const lbl = document.getElementById('e6bAutofillLabel');
+    if (lbl) lbl.textContent = `Filled from ${icao || 'current airport'}`;
+
+    calcE6B();
+}
+
+function e6bCustomFill() {
+    const row = document.getElementById('e6bCustomRow');
+    if (row) row.style.display = row.style.display === 'none' ? 'block' : 'none';
+}
+
+async function e6bFetchCustom() {
+    const input  = document.getElementById('e6bCustomIcao');
+    const status = document.getElementById('e6bCustomStatus');
+    const icao   = input?.value?.trim().toUpperCase();
+    if (!icao || icao.length < 3) { if (status) status.textContent = 'Enter a valid ICAO code.'; return; }
+    if (status) status.textContent = 'Fetching…';
+
+    try {
+        const [metarRes, stnRes] = await Promise.all([
+            fetch(`/api/weather?type=metar&station=${icao}`).then(r => r.json()),
+            fetch(`/api/weather?type=station&station=${icao}`).then(r => r.json())
+        ]);
+
+        const m   = metarRes?.value || metarRes;
+        const stn = stnRes;
+        if (!m || m.error) { if (status) status.textContent = `No METAR found for ${icao}.`; return; }
+
+        const tempC  = m.temperature?.value;
+        const dewC   = m.dewpoint?.value;
+        const altRaw = m.altimeter?.value;
+        const altUnit = (altRaw !== null && altRaw < 200) ? 'inhg' : 'hpa';
+        const elev   = stn?.elevation_ft ?? 0;
+
+        const uQnh  = document.getElementById('unitQnh');
+        const uTemp = document.getElementById('unitTemp');
+        if (uQnh)  uQnh.value  = altUnit;
+        if (uTemp) uTemp.value = 'c';
+
+        if (elev    != null) document.getElementById('e6bAlt').value  = Math.round(elev);
+        if (altRaw  != null) document.getElementById('e6bQnh').value  = altUnit === 'inhg' ? parseFloat(altRaw).toFixed(2) : Math.round(altRaw);
+        if (tempC   != null) document.getElementById('e6bTemp').value = tempC;
+        if (dewC    != null) document.getElementById('e6bDew').value  = dewC;
+
+        if (status) status.textContent = `✓ Filled from ${icao}`;
+        const lbl = document.getElementById('e6bAutofillLabel');
+        if (lbl) lbl.textContent = `Filled from ${icao}`;
+        document.getElementById('e6bCustomRow').style.display = 'none';
+        calcE6B();
+    } catch(err) {
+        if (status) status.textContent = 'Fetch failed — check connection.';
+    }
+}
+
+function e6bWindFill() {
+    const wind = (typeof currentWind !== 'undefined') ? currentWind : null;
+    if (!wind || (!wind.spd && wind.dir === 0)) {
+        return;
+    }
+    const dir = (wind.dir === 'VRB') ? 0 : wind.dir;
+    const spd = wind.spd || 0;
+    document.getElementById('wtWindDir').value = dir;
+    document.getElementById('wtWindSpd').value = spd;
+    calcWindTriangle();
+}
+
+function e6bShowStatus(msg) {
+    const status = document.getElementById('e6bCustomStatus');
+    const row    = document.getElementById('e6bCustomRow');
+    if (row)    row.style.display = 'block';
+    if (status) { status.textContent = msg; status.style.color = 'var(--warn)'; }
+}
+
+// ============================================================================
+// WIND TRIANGLE CALCULATOR
+// ============================================================================
+
+function calcWindTriangle() {
+    const tc  = parseFloat(document.getElementById('wtCourse').value);
+    const tas = parseFloat(document.getElementById('wtTas').value);
+    const wd  = parseFloat(document.getElementById('wtWindDir').value);
+    const ws  = parseFloat(document.getElementById('wtWindSpd').value);
+
+    const hdgEl = document.getElementById('resHdg');
+    const gsEl  = document.getElementById('resGs');
+    const wcaEl = document.getElementById('resWca');
+    const weEl  = document.getElementById('resWe');
+
+    if (isNaN(tc) || isNaN(tas) || isNaN(wd) || isNaN(ws) || tas <= 0) {
+        [hdgEl, gsEl, wcaEl, weEl].forEach(el => { if (el) el.innerText = '--'; });
+        return;
+    }
+
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+
+    // Wind components (into the aircraft's path — positive = headwind)
+    const wdRad  = toRad(wd);
+    const tcRad  = toRad(tc);
+    const hwComp = ws * Math.cos(wdRad - tcRad);   // headwind component
+    const xwComp = ws * Math.sin(wdRad - tcRad);   // crosswind (+ = from right)
+
+    // Wind Correction Angle (WCA)
+    const sinWca = (ws * Math.sin(toRad(wd - tc))) / tas;
+    if (Math.abs(sinWca) > 1) {
+        [hdgEl, gsEl, wcaEl, weEl].forEach(el => { if (el) el.innerText = 'N/A'; });
+        return;
+    }
+    const wca = toDeg(Math.asin(sinWca));
+    const hdg = ((tc + wca) % 360 + 360) % 360;
+    const gs  = Math.sqrt(tas * tas - (ws * Math.sin(toRad(wd - tc))) ** 2) - ws * Math.cos(toRad(wd - tc));
+
+    if (hdgEl) { hdgEl.innerText = `${Math.round(hdg).toString().padStart(3,'0')}°`; hdgEl.style.color = 'var(--accent)'; }
+    if (gsEl)  { gsEl.innerText  = `${Math.round(gs)} kt`; gsEl.style.color = gs >= tas ? 'var(--success)' : 'var(--warn)'; }
+    if (wcaEl) {
+        const sign = wca >= 0 ? '+' : '';
+        wcaEl.innerText = `${sign}${wca.toFixed(1)}° (${wca >= 0 ? 'R' : 'L'})`;
+    }
+    if (weEl) {
+        const effect = gs - tas;
+        const sign = effect >= 0 ? '+' : '';
+        weEl.innerText = `${sign}${Math.round(effect)} kt (${effect >= 0 ? 'tailwind' : 'headwind'})`;
+        weEl.style.color = effect >= 0 ? 'var(--success)' : 'var(--warn)';
+    }
+}
+
+// ============================================================================
+// FUEL ENDURANCE CALCULATOR
+// ============================================================================
+
+function calcFuel() {
+    const qty     = parseFloat(document.getElementById('fuelQty').value);
+    const burn    = parseFloat(document.getElementById('fuelBurn').value);
+    const resMin  = parseFloat(document.getElementById('fuelRes').value) || 0;
+    const gs      = parseFloat(document.getElementById('fuelGs').value);
+    const fUnit   = document.getElementById('fuelUnit').value;
+    const bUnit   = document.getElementById('fuelBurnUnit').value;
+
+    const totalEl   = document.getElementById('resFuelTotal');
+    const usableEl  = document.getElementById('resFuelUsable');
+    const rangeEl   = document.getElementById('resFuelRange');
+    const resEl     = document.getElementById('resFuelReserve');
+
+    if (isNaN(qty) || isNaN(burn) || burn <= 0) {
+        [totalEl, usableEl, rangeEl, resEl].forEach(el => { if (el) el.innerText = '--'; });
+        return;
+    }
+
+    // Normalise everything to US gallons for calculation
+    const toGal = { usg:1, l:0.264172, lbs:0.166667, kg:0.367346 };
+    const burnGphMap = { gph:1, lph:0.264172, pph:0.166667, kgh:0.367346 };
+
+    const qtyGal  = qty  * (toGal[fUnit]      || 1);
+    const burnGph = burn * (burnGphMap[bUnit]  || 1);
+    const resGal  = burnGph * (resMin / 60);
+
+    const totalHrs  = qtyGal / burnGph;
+    const usableHrs = Math.max(0, (qtyGal - resGal) / burnGph);
+
+    const fmtTime = h => {
+        const hrs = Math.floor(h);
+        const min = Math.round((h - hrs) * 60);
+        return `${hrs}h ${min.toString().padStart(2,'0')}m`;
+    };
+
+    if (totalEl)  totalEl.innerText  = fmtTime(totalHrs);
+    if (usableEl) {
+        usableEl.innerText = fmtTime(usableHrs);
+        usableEl.style.color = usableHrs > 0.5 ? 'var(--success)' : 'var(--warn)';
+    }
+    if (resEl) {
+        const resQty = resGal / (toGal[fUnit] || 1);
+        resEl.innerText = `${resQty.toFixed(1)} ${fUnit.toUpperCase()}`;
+    }
+    if (rangeEl) {
+        if (!isNaN(gs) && gs > 0) {
+            rangeEl.innerText = `${Math.round(usableHrs * gs)} NM`;
+        } else {
+            rangeEl.innerText = 'Enter GS';
+            rangeEl.style.color = 'var(--sub-text)';
+        }
+    }
 }
 
 function openUNDE6B() {

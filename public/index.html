@@ -2327,7 +2327,41 @@
              E6B FLIGHT COMPUTER CALCULATOR
         ================================================================ -->
         <div id="tool-e6b-calculator" class="tool-view" style="display:none;">
-            <div class="info-card">
+
+            <!-- ── AUTOFILL BAR ── -->
+            <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
+                <button onclick="e6bAutofillCurrent()"
+                        style="flex:1; background:#0a2a40; border:1px solid var(--accent); color:var(--accent);
+                               padding:10px 12px; border-radius:10px; font-size:12px; font-weight:700;
+                               cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <span>📡</span><span id="e6bAutofillLabel">Fill from current airport</span>
+                </button>
+                <button onclick="e6bCustomFill()"
+                        style="background:#1c1c1e; border:1px solid #3a3a3c; color:var(--sub-text);
+                               padding:10px 12px; border-radius:10px; font-size:12px; font-weight:700;
+                               cursor:pointer; white-space:nowrap;">
+                    Custom ↗
+                </button>
+            </div>
+            <!-- Custom ICAO input (hidden by default) -->
+            <div id="e6bCustomRow" style="display:none; margin-bottom:10px;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" id="e6bCustomIcao" class="conv-inp"
+                           placeholder="ICAO (e.g. KLAX)" maxlength="4"
+                           autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"
+                           style="flex:1; text-transform:uppercase;">
+                    <button onclick="e6bFetchCustom()"
+                            style="background:var(--accent); border:none; color:#fff;
+                                   padding:10px 16px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">
+                        Fetch
+                    </button>
+                </div>
+                <div id="e6bCustomStatus" style="font-size:11px; color:var(--sub-text); margin-top:5px; min-height:16px;"></div>
+            </div>
+
+            <!-- ── SECTION 1: ATMOSPHERE ── -->
+            <div class="info-card" style="margin-bottom:12px;">
+                <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:12px;">ATMOSPHERE · DENSITY · PERFORMANCE</div>
                 <div class="conv-row">
                     <div style="flex:1">
                         <div class="conv-lbl">Indicated Alt (ft)</div>
@@ -2393,6 +2427,117 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ── SECTION 2: WIND TRIANGLE ── -->
+            <div class="info-card" style="margin-bottom:12px;">
+                <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:12px;">WIND TRIANGLE · HEADING &amp; GROUND SPEED</div>
+                <div class="conv-row">
+                    <div style="flex:1">
+                        <div class="conv-lbl">True Course (°)</div>
+                        <input type="number" id="wtCourse" class="conv-inp" placeholder="360" min="0" max="360" oninput="calcWindTriangle()">
+                    </div>
+                    <div style="flex:1">
+                        <div class="conv-lbl">TAS (kts)</div>
+                        <input type="number" id="wtTas" class="conv-inp" placeholder="100" oninput="calcWindTriangle()">
+                    </div>
+                </div>
+                <div class="conv-row">
+                    <div style="flex:1">
+                        <div class="conv-lbl">Wind FROM (°)</div>
+                        <input type="number" id="wtWindDir" class="conv-inp" placeholder="270" min="0" max="360" oninput="calcWindTriangle()">
+                    </div>
+                    <div style="flex:1">
+                        <div class="conv-lbl">Wind Speed (kts)</div>
+                        <input type="number" id="wtWindSpd" class="conv-inp" placeholder="15" oninput="calcWindTriangle()">
+                    </div>
+                </div>
+                <button onclick="e6bWindFill()"
+                        style="width:100%; margin:4px 0 12px; background:#1c1c1e; border:1px solid #3a3a3c;
+                               color:var(--sub-text); padding:8px; border-radius:8px; font-size:11px;
+                               font-weight:700; cursor:pointer;">
+                    ↓ Fill wind from current METAR
+                </button>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-top:12px; border-top:1px solid #333;">
+                    <div>
+                        <div class="ic-lbl">True Heading</div>
+                        <div class="ic-val" id="resHdg" style="color:var(--accent);">--</div>
+                    </div>
+                    <div>
+                        <div class="ic-lbl">Ground Speed</div>
+                        <div class="ic-val" id="resGs" style="color:var(--success);">--</div>
+                    </div>
+                    <div>
+                        <div class="ic-lbl">Wind Correction</div>
+                        <div class="ic-val" id="resWca">--</div>
+                    </div>
+                    <div>
+                        <div class="ic-lbl">Wind Effect</div>
+                        <div class="ic-val" id="resWe">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── SECTION 3: FUEL ENDURANCE ── -->
+            <div class="info-card">
+                <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:12px;">FUEL ENDURANCE &amp; RANGE</div>
+                <div class="conv-row">
+                    <div style="flex:1">
+                        <div class="conv-lbl">Fuel on Board</div>
+                        <input type="number" id="fuelQty" class="conv-inp" placeholder="40" oninput="calcFuel()">
+                    </div>
+                    <div style="width:80px;">
+                        <select id="fuelUnit" class="stealth-select" onchange="calcFuel()" style="height:38px; font-size:13px;">
+                            <option value="usg">USG</option>
+                            <option value="l">L</option>
+                            <option value="lbs">lbs</option>
+                            <option value="kg">kg</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="conv-row">
+                    <div style="flex:1">
+                        <div class="conv-lbl">Burn Rate</div>
+                        <input type="number" id="fuelBurn" class="conv-inp" placeholder="8.5" oninput="calcFuel()">
+                    </div>
+                    <div style="width:80px;">
+                        <select id="fuelBurnUnit" class="stealth-select" onchange="calcFuel()" style="height:38px; font-size:13px;">
+                            <option value="gph">GPH</option>
+                            <option value="lph">LPH</option>
+                            <option value="pph">PPH</option>
+                            <option value="kgh">KG/H</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="conv-row">
+                    <div style="flex:1">
+                        <div class="conv-lbl">Reserve (min)</div>
+                        <input type="number" id="fuelRes" class="conv-inp" placeholder="45" oninput="calcFuel()">
+                    </div>
+                    <div style="flex:1">
+                        <div class="conv-lbl">Ground Speed (kts)</div>
+                        <input type="number" id="fuelGs" class="conv-inp" placeholder="90" oninput="calcFuel()">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; padding-top:15px; border-top:1px solid #333;">
+                    <div>
+                        <div class="ic-lbl">Total Endurance</div>
+                        <div class="ic-val" id="resFuelTotal" style="color:var(--accent);">--</div>
+                    </div>
+                    <div>
+                        <div class="ic-lbl">Usable (after res.)</div>
+                        <div class="ic-val" id="resFuelUsable" style="color:var(--success);">--</div>
+                    </div>
+                    <div>
+                        <div class="ic-lbl">Max Range</div>
+                        <div class="ic-val" id="resFuelRange">--</div>
+                    </div>
+                    <div>
+                        <div class="ic-lbl">Reserve Fuel</div>
+                        <div class="ic-val" id="resFuelReserve">--</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
         
         <!-- ================================================================
