@@ -353,7 +353,8 @@ function openTool(toolName) {
             'weather-terms': 'Present Weather Terms',
             'e6b-calculator': 'E6B Flight Computer',
             'e6b-trainer': 'E6B Trainer (UND)',
-            'crosswind': 'Crosswind Calculator'
+            'crosswind': 'Crosswind Calculator',
+            'airspace-mins': 'VFR Airspace Minimums'
         };
         updateExtensionHeader(toolTitles[toolName] || 'Tool', true);
         
@@ -372,6 +373,8 @@ function openTool(toolName) {
             cwInit();
         } else if (toolName === 'great-circle') {
             gcInitMap();
+        } else if (toolName === 'airspace-mins') {
+            initAirspaceMins();
         }
     }
 }
@@ -778,41 +781,7 @@ function gcRenderMap(from,to,lat1r,lon1r,lat2r,lon2r,angDist) {
 // WEATHER TERMS DATABASE → see metar-db.js
 // ============================================================================
 
-// ── External search buttons (Google + ChatGPT) — shown only when online ──────
-function _extSearchButtons(term, prefix) {
-    if (!navigator.onLine) return '';
-    const q = encodeURIComponent(`${prefix} "${term}" meaning`);
-    const gUrl   = `https://www.google.com/search?q=${q}`;
-    const gptUrl = `https://chatgpt.com/?q=${q}`;
-    return `
-        <div style="display:flex;gap:5px;margin-top:8px;">
-            <button onclick="event.stopPropagation();window.open('${gUrl}','_blank')"
-                    title="Search on Google"
-                    style="display:flex;align-items:center;gap:4px;background:rgba(66,133,244,0.1);
-                           border:1px solid rgba(66,133,244,0.3);border-radius:6px;
-                           padding:3px 8px;font-size:10px;font-weight:700;
-                           color:#4285f4;cursor:pointer;line-height:1.4;white-space:nowrap;">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Google
-            </button>
-            <button onclick="event.stopPropagation();window.open('${gptUrl}','_blank')"
-                    title="Ask ChatGPT"
-                    style="display:flex;align-items:center;gap:4px;background:rgba(16,163,127,0.1);
-                           border:1px solid rgba(16,163,127,0.3);border-radius:6px;
-                           padding:3px 8px;font-size:10px;font-weight:700;
-                           color:#10a37f;cursor:pointer;line-height:1.4;white-space:nowrap;">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;">
-                    <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
-                </svg>
-                ChatGPT
-            </button>
-        </div>`;
-}
+
 
 function searchWeatherTerms() {
     const searchInputEl = document.getElementById('wx-search');
@@ -873,7 +842,6 @@ function searchWeatherTerms() {
                     <div style="font-size:10px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.5px;">${item.category.replace(/_/g, ' ')}</div>
                 </div>
                 <div style="font-size:12px; color:#fff; line-height:1.5;">${item.meaning}</div>
-                ${_extSearchButtons(item.code, 'METAR aviation weather')}
             </div>
         `;
     });
@@ -944,7 +912,6 @@ function displayAllWeatherTerms() {
                                 <div style="font-size:12px; color:#fff;">${item.meaning}</div>
                             </div>
                         </div>
-                        ${_extSearchButtons(item.code, 'METAR aviation weather')}
                     </div>
                 `;
             });
@@ -1011,7 +978,6 @@ function displayAllCategories() {
                             <div style="font-size:12px; color:#fff;">${item.meaning}</div>
                         </div>
                     </div>
-                    ${_extSearchButtons(item.code, 'METAR aviation weather')}
                 </div>
             `;
         });
@@ -1538,8 +1504,7 @@ function _aeroRender() {
                                padding:2px 7px;border:1px solid #2a2a2a;border-radius:5px;">
                        ${_aeroEsc(item.category)}
                    </div>`
-                : ''}
-            ${_extSearchButtons(item.acronym, 'aviation abbreviation')}`;
+                : ''}`;
         frag.appendChild(card);
     });
 
@@ -2354,4 +2319,175 @@ function cwDrawDiagram(rwyHdg, windDir, windSpd, gust) {
         <text x="${(ax1+ax2)/2}" y="${(ay1+ay2)/2-7}" text-anchor="middle" fill="#0a84ff"
               font-size="10" font-family="monospace" font-weight="700">${lbl}</text>
         <circle cx="${cx}" cy="${cy}" r="3" fill="#555"/>`;
+}
+
+// ============================================================================
+// AIRSPACE MINIMUMS TOOL  (FAR 91.155)
+// ============================================================================
+
+const AM_DATA = [
+    {
+        cls: 'A', color: '#ff453a',
+        altitude: 'FL180 – FL600',
+        special: 'IFR ONLY — VFR flight is not permitted in Class A airspace.',
+        rows: []
+    },
+    {
+        cls: 'B', color: '#0a84ff',
+        altitude: 'SFC – 10,000 ft MSL (varies by location)',
+        rows: [
+            { modes: ['day','night'], label: 'All operations', vis: '3 SM', cloud: 'Clear of clouds' }
+        ]
+    },
+    {
+        cls: 'C', color: '#ff6b8a',
+        altitude: 'SFC – 4,000 ft AGL (approx.)',
+        rows: [
+            { modes: ['day','night'], label: 'All altitudes', vis: '3 SM', cloud: '500 below · 1,000 above · 2,000 horiz' }
+        ]
+    },
+    {
+        cls: 'D', color: '#5ac8fa',
+        altitude: 'SFC – 2,500 ft AGL (approx.)',
+        rows: [
+            { modes: ['day','night'], label: 'All altitudes', vis: '3 SM', cloud: '500 below · 1,000 above · 2,000 horiz' }
+        ]
+    },
+    {
+        cls: 'E', color: '#bf5af2',
+        altitude: 'Varies (700/1,200 ft AGL – FL180)',
+        rows: [
+            { modes: ['day','night'], label: 'Below 10,000 ft MSL',    vis: '3 SM', cloud: '500 below · 1,000 above · 2,000 horiz' },
+            { modes: ['day','night'], label: 'At/above 10,000 ft MSL', vis: '5 SM', cloud: '1,000 below · 1,000 above · 1 SM horiz' }
+        ]
+    },
+    {
+        cls: 'G', color: '#ffd60a',
+        altitude: 'SFC – base of overlying Class E',
+        rows: [
+            { modes: ['day'],         label: 'Day · Below 1,200 ft AGL',               vis: '1 SM',  cloud: 'Clear of clouds' },
+            { modes: ['night'],       label: 'Night · Below 1,200 ft AGL ⚠️',           vis: '3 SM',  cloud: '500 below · 1,000 above · 2,000 horiz' },
+            { modes: ['day'],         label: 'Day · 1,200 ft AGL to 10,000 ft MSL',    vis: '1 SM',  cloud: '500 below · 1,000 above · 2,000 horiz' },
+            { modes: ['night'],       label: 'Night · 1,200 ft AGL to 10,000 ft MSL',  vis: '3 SM',  cloud: '500 below · 1,000 above · 2,000 horiz' },
+            { modes: ['day','night'], label: 'At/above 10,000 ft MSL',                 vis: '5 SM',  cloud: '1,000 below · 1,000 above · 1 SM horiz' }
+        ]
+    }
+];
+
+let amState = { mode: 'day', filter: 'ALL' };
+
+function initAirspaceMins() {
+    amState = { mode: 'day', filter: 'ALL' };
+
+    const filtersEl = document.getElementById('amClassFilters');
+    if (filtersEl) {
+        filtersEl.innerHTML = ['ALL','A','B','C','D','E','G'].map(c => `
+            <button id="amFilter-${c}" onclick="amFilter('${c}')"
+                style="padding:5px 12px; border-radius:20px;
+                       border:1px solid ${c === 'ALL' ? 'var(--accent)' : '#3a3a3c'};
+                       background:${c === 'ALL' ? 'var(--accent)' : '#1c1c1e'};
+                       color:${c === 'ALL' ? '#fff' : 'var(--sub-text)'};
+                       font-size:11px; font-weight:700; cursor:pointer; transition:all 0.15s; white-space:nowrap;">
+                ${c === 'ALL' ? 'ALL' : 'CLASS ' + c}
+            </button>`).join('');
+    }
+
+    const dayBtn   = document.getElementById('amDayBtn');
+    const nightBtn = document.getElementById('amNightBtn');
+    if (dayBtn)   { dayBtn.style.background = 'var(--accent)'; dayBtn.style.color = '#fff'; }
+    if (nightBtn) { nightBtn.style.background = 'transparent'; nightBtn.style.color = 'var(--sub-text)'; }
+
+    amRender();
+}
+
+function amSetMode(mode) {
+    amState.mode = mode;
+    const dayBtn   = document.getElementById('amDayBtn');
+    const nightBtn = document.getElementById('amNightBtn');
+    if (dayBtn && nightBtn) {
+        dayBtn.style.background   = mode === 'day'   ? 'var(--accent)' : 'transparent';
+        dayBtn.style.color        = mode === 'day'   ? '#fff'          : 'var(--sub-text)';
+        nightBtn.style.background = mode === 'night' ? 'var(--accent)' : 'transparent';
+        nightBtn.style.color      = mode === 'night' ? '#fff'          : 'var(--sub-text)';
+    }
+    amRender();
+}
+
+function amFilter(cls) {
+    amState.filter = cls;
+    ['ALL','A','B','C','D','E','G'].forEach(c => {
+        const btn = document.getElementById('amFilter-' + c);
+        if (!btn) return;
+        const active = (c === cls);
+        btn.style.background  = active ? 'var(--accent)' : '#1c1c1e';
+        btn.style.color       = active ? '#fff'          : 'var(--sub-text)';
+        btn.style.borderColor = active ? 'var(--accent)' : '#3a3a3c';
+    });
+    amRender();
+}
+
+function amRender() {
+    const container = document.getElementById('amResults');
+    if (!container) return;
+
+    const list = amState.filter === 'ALL'
+        ? AM_DATA
+        : AM_DATA.filter(d => d.cls === amState.filter);
+
+    container.innerHTML = list.map(d => {
+        const c = d.color;
+        const textColor = d.cls === 'G' ? '#000' : '#fff';
+
+        if (d.special) {
+            return `
+            <div style="border-radius:12px; border:1px solid ${c}33; overflow:hidden;">
+                <div style="padding:14px 16px; background:${c}18; display:flex; align-items:center; gap:12px;">
+                    <div style="width:36px; height:36px; border-radius:8px; background:${c}; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">A</div>
+                    <div>
+                        <div style="font-size:13px; font-weight:800; color:#fff; margin-bottom:2px;">Class A</div>
+                        <div style="font-size:11px; color:var(--sub-text);">${d.altitude}</div>
+                    </div>
+                </div>
+                <div style="padding:14px 16px; background:#0a0a0c;">
+                    <div style="display:flex; align-items:center; gap:10px; background:${c}15; border:1px solid ${c}33; border-radius:8px; padding:11px 14px;">
+                        <span style="font-size:18px; flex-shrink:0;">🚫</span>
+                        <span style="font-size:12px; color:${c}; font-weight:700; line-height:1.4;">${d.special}</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        const allSame = d.rows.length > 0 && d.rows.every(r => r.modes.includes('day') && r.modes.includes('night'));
+        const visRows  = d.rows.filter(r => r.modes.includes(amState.mode));
+
+        const rowsHtml = visRows.map((r, i) => `
+            <div style="padding:12px 16px; ${i > 0 ? 'border-top:1px solid #1e1e1e;' : ''}">
+                <div style="font-size:10px; color:${c}; font-weight:700; margin-bottom:9px; letter-spacing:0.4px; text-transform:uppercase; opacity:0.9;">${r.label}</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div style="background:#161618; border-radius:8px; padding:10px 12px; border:1px solid #222;">
+                        <div style="font-size:9px; color:#555; font-weight:700; letter-spacing:0.6px; margin-bottom:5px;">VISIBILITY</div>
+                        <div style="font-size:20px; font-weight:900; color:#fff; font-family:'SF Mono',monospace; letter-spacing:-0.5px;">${r.vis}</div>
+                    </div>
+                    <div style="background:#161618; border-radius:8px; padding:10px 12px; border:1px solid #222;">
+                        <div style="font-size:9px; color:#555; font-weight:700; letter-spacing:0.6px; margin-bottom:5px;">CLOUD CLEARANCE</div>
+                        <div style="font-size:11px; font-weight:700; color:#ddd; line-height:1.55;">${r.cloud}</div>
+                    </div>
+                </div>
+            </div>`).join('');
+
+        return `
+        <div style="border-radius:12px; border:1px solid ${c}33; overflow:hidden;">
+            <div style="padding:14px 16px; background:${c}18; display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; border-radius:8px; background:${c}; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:${textColor}; flex-shrink:0;">${d.cls}</div>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:13px; font-weight:800; color:#fff; margin-bottom:2px;">Class ${d.cls}</div>
+                    <div style="font-size:11px; color:var(--sub-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.altitude}</div>
+                </div>
+                ${allSame ? `<div style="font-size:10px; color:var(--sub-text); background:#2a2a2c; border-radius:4px; padding:3px 8px; font-weight:700; flex-shrink:0; white-space:nowrap;">DAY = NIGHT</div>` : ''}
+            </div>
+            <div style="background:#0a0a0c;">
+                ${rowsHtml || `<div style="padding:14px 16px; font-size:12px; color:var(--sub-text); text-align:center;">No ${amState.mode}-specific rows.</div>`}
+            </div>
+        </div>`;
+    }).join('');
 }

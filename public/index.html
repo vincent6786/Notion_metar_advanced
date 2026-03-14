@@ -2267,6 +2267,13 @@
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Crosswind Calc</div>
                     <div style="font-size:11px; color:var(--sub-text);">Headwind & crosswind components</div>
                 </div>
+
+                <!-- Airspace Minimums -->
+                <div onclick="openTool('airspace-mins')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">📋</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Airspace Mins</div>
+                    <div style="font-size:11px; color:var(--sub-text);">VFR cloud &amp; vis requirements</div>
+                </div>
                 
             </div>
         </div>
@@ -2719,6 +2726,46 @@
         <div id="tool-abbreviations" class="tool-view" style="display:none;">
             <!-- No info-card wrapper — AeroSearch native manages its own layout -->
             <div id="abbrev-content" style="padding:0 4px;"></div>
+        </div>
+
+        <!-- ================================================================
+             AIRSPACE MINIMUMS TOOL  (FAR 91.155)
+        ================================================================ -->
+        <div id="tool-airspace-mins" class="tool-view" style="display:none;">
+            <div style="padding:0 2px;">
+
+                <!-- Class Filter Chips -->
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; align-items:center;">
+                    <span style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; flex-shrink:0;">CLASS:</span>
+                    <div id="amClassFilters" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+                </div>
+
+                <!-- Day / Night Toggle -->
+                <div style="display:flex; gap:4px; margin-bottom:18px; background:#1c1c1e; border-radius:10px; padding:4px; border:1px solid #333;">
+                    <button id="amDayBtn" onclick="amSetMode('day')"
+                            style="flex:1; padding:9px; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:all 0.2s;">
+                        ☀️ DAY
+                    </button>
+                    <button id="amNightBtn" onclick="amSetMode('night')"
+                            style="flex:1; padding:9px; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; background:transparent; color:var(--sub-text); transition:all 0.2s;">
+                        🌙 NIGHT
+                    </button>
+                </div>
+
+                <!-- Airspace Cards (rendered by JS) -->
+                <div id="amResults" style="display:flex; flex-direction:column; gap:12px;"></div>
+
+                <!-- FAR Reference Footer -->
+                <div style="margin-top:18px; padding:12px 14px; background:#111; border-radius:10px; border:1px solid #2a2a2a;">
+                    <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:6px;">REGULATORY REFERENCE</div>
+                    <div style="font-size:11px; color:#555; line-height:1.7;">
+                        FAR 91.155 — Basic VFR weather minimums<br>
+                        Values shown are minimums. Always comply with instructor guidance &amp; NOTAMs.<br>
+                        <span style="color:#ff9f0a;">★</span> Class G night below 1,200 ft AGL is the most commonly missed on the PPL written.
+                    </div>
+                </div>
+
+            </div>
         </div>
         
     </div>
