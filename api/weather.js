@@ -11,6 +11,11 @@ const API_KEYS = [
     process.env.AVWX_KEY_2,
     process.env.AVWX_KEY_3,
     process.env.AVWX_KEY_4,
+    process.env.AVWX_KEY_5,
+    process.env.AVWX_KEY_6,
+    process.env.AVWX_KEY_7,
+    process.env.AVWX_KEY_8,
+    process.env.AVWX_KEY_9,
 ].filter(Boolean);
 
 const DAILY_LIMIT    = parseInt(process.env.AVWX_DAILY_LIMIT    || '4000', 10);
