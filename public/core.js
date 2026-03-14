@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.9.2',                         // ← bump this on every update
+            version: '3.9.0',                         // ← bump this on every update
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -428,6 +428,17 @@
             if (window._pinEntry.length >= 6) return;
             window._pinEntry += val;
             updatePinDots(window._pinEntry.length);
+        }
+
+        // Returns true if this PIN already has cloud backup data (so user is warned before overwriting)
+        async function checkCodeAvailability(pin) {
+            try {
+                const res  = await fetch(`/api/settings?pin=${pin}`);
+                const data = await res.json();
+                return data.found === true;
+            } catch(e) {
+                return false; // fail open — don't block new backup creation on network errors
+            }
         }
 
         async function submitPinEntry() {

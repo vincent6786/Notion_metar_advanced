@@ -1777,7 +1777,7 @@ function wtTcChanged() {
     calcWindTriangle();
 }
 
-function wtFillMagVar() {
+async function wtFillMagVar() {
     const stn  = (typeof stationData !== 'undefined') ? stationData : null;
     const note = document.getElementById('wtMagVarNote');
 
@@ -1786,28 +1786,60 @@ function wtFillMagVar() {
         return;
     }
 
-    const mv   = stn.magnetic_variation;
     const icao = document.getElementById('icao')?.value?.trim().toUpperCase() || 'Airport';
+    let mv = stn.magnetic_variation;
+
+    // AVWX sometimes omits magnetic_variation — fall back to NOAA WMM API
+    if (mv == null && stn.latitude != null && stn.longitude != null) {
+        if (note) note.innerHTML = `⏳ Fetching declination for ${icao} from NOAA…`;
+        try {
+            const url  = `https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1=${stn.latitude}&lon1=${stn.longitude}&resultFormat=json`;
+            const res  = await fetch(url);
+            const data = await res.json();
+            const raw  = data?.result?.[0]?.declination;
+            if (raw != null) mv = parseFloat(parseFloat(raw).toFixed(1));
+        } catch(e) {
+            if (note) note.innerHTML = `⚠️ NOAA lookup failed. Enter manually, e.g. <b style="color:#888;">14W</b> or <b style="color:#888;">3E</b>.`;
+            return;
+        }
+    }
 
     if (mv == null) {
-        if (note) note.innerHTML = `⚠️ ${icao} has no mag var data. Enter manually, e.g. <b style="color:#888;">14W</b>.`;
+        if (note) note.innerHTML = `⚠️ No mag var data for ${icao}. Enter manually, e.g. <b style="color:#888;">14W</b>.`;
         return;
     }
 
-    // Display in W/E format, store as signed number string
     const dir     = mv >= 0 ? 'E' : 'W';
     const display = `${Math.abs(mv).toFixed(1)}${dir}`;
     document.getElementById('wtMagVar').value = display;
 
     if (note) note.innerHTML = `<b style="color:#32d74b;">✓ ${icao}:</b> ${Math.abs(mv).toFixed(1)}° ${dir} — ${mv >= 0 ? 'East is least (TC &lt; MC)' : 'West is best (TC &gt; MC)'}`;
 
-    // Sync MC ↔ TC
+    // Sync MC from TC if TC is set, else TC from MC
     const tc = parseFloat(document.getElementById('wtCourse').value);
+    const mc = parseFloat(document.getElementById('wtMc').value);
     if (!isNaN(tc)) {
         document.getElementById('wtMc').value = Math.round(((tc - mv) % 360 + 360) % 360);
+    } else if (!isNaN(mc)) {
+        document.getElementById('wtCourse').value = Math.round(((mc + mv) % 360 + 360) % 360);
     }
     calcWindTriangle();
 }
+
+// Called whenever the mag var field is edited — keep MC↔TC in sync
+function wtMagVarChanged() {
+    const mv = parseMagVar(document.getElementById('wtMagVar').value);
+    const tc = parseFloat(document.getElementById('wtCourse').value);
+    const mc = parseFloat(document.getElementById('wtMc').value);
+    if (!isNaN(tc)) {
+        document.getElementById('wtMc').value = Math.round(((tc - mv) % 360 + 360) % 360);
+    } else if (!isNaN(mc)) {
+        document.getElementById('wtCourse').value = Math.round(((mc + mv) % 360 + 360) % 360);
+    }
+    calcWindTriangle();
+}
+
+
 
 function calcWindTriangle() {
     const tc  = parseFloat(document.getElementById('wtCourse').value);
@@ -2782,12 +2814,16 @@ const AM_DATA = [
     {
         cls: 'A', color: '#ff453a',
         altitude: 'FL180 – FL600',
+        chart: { color: 'Not depicted on VFR sectionals', stroke: 'none', shape: 'IFR en-route charts only (blue horizontal lines)' },
+        qualifications: ['Instrument Rating required', 'IFR flight plan filed & ATC clearance', 'Mode C transponder & encoder', 'RVSM equipment above FL290'],
         special: 'IFR ONLY — VFR flight is not permitted in Class A airspace.',
         rows: []
     },
     {
         cls: 'B', color: '#0a84ff',
-        altitude: 'SFC – 10,000 ft MSL (varies by location)',
+        altitude: 'SFC – 10,000 ft MSL (individually tailored)',
+        chart: { color: 'Solid blue lines', stroke: 'solid', shape: 'Inverted wedding cake — multiple arcs around busiest airports (e.g. LAX, JFK, ORD)' },
+        qualifications: ['Student Pilot Certificate minimum (with endorsement)', 'Explicit ATC clearance required ("cleared into Bravo")', 'Two-way radio communication', 'Mode C transponder within 30 NM of Bravo airport', 'Sport/Rec pilots need specific endorsement'],
         rows: [
             { modes: ['day','night'], label: 'All operations', vis: '3 SM', cloud: 'Clear of clouds' }
         ]
@@ -2795,6 +2831,8 @@ const AM_DATA = [
     {
         cls: 'C', color: '#ff6b8a',
         altitude: 'SFC – 4,000 ft AGL (approx.)',
+        chart: { color: 'Solid magenta lines', stroke: 'solid', shape: 'Two concentric solid magenta circles — inner 5 NM (SFC), outer 10 NM (1,200 ft AGL floor)' },
+        qualifications: ['Any certificated pilot (student solo needs logbook endorsement)', 'Two-way radio contact established before entry — not a clearance', 'Mode C transponder required', 'No explicit ATC clearance needed'],
         rows: [
             { modes: ['day','night'], label: 'All altitudes', vis: '3 SM', cloud: '500 below · 1,000 above · 2,000 horiz' }
         ]
@@ -2802,6 +2840,8 @@ const AM_DATA = [
     {
         cls: 'D', color: '#5ac8fa',
         altitude: 'SFC – 2,500 ft AGL (approx.)',
+        chart: { color: 'Dashed blue lines', stroke: 'dashed', shape: 'Single dashed blue circle (or rectangle) around tower-controlled airport' },
+        qualifications: ['Any certificated pilot (student solo needs logbook endorsement)', 'Two-way radio contact established before entry', 'No transponder required (Mode C veil may apply nearby)', 'No ATC clearance — contact suffices'],
         rows: [
             { modes: ['day','night'], label: 'All altitudes', vis: '3 SM', cloud: '500 below · 1,000 above · 2,000 horiz' }
         ]
@@ -2809,6 +2849,8 @@ const AM_DATA = [
     {
         cls: 'E', color: '#bf5af2',
         altitude: 'Varies (700/1,200 ft AGL – FL180)',
+        chart: { color: 'Magenta vignette / dashed magenta', stroke: 'vignette', shape: 'Dashed magenta circle = surface E. Faded magenta edge (vignette) = 700 ft AGL floor. No marking = 1,200 ft AGL floor' },
+        qualifications: ['Any certificated pilot — no special requirements for VFR', 'Student pilots may fly solo', 'No radio, transponder, or ATC clearance required for VFR', 'IFR requires ATC clearance'],
         rows: [
             { modes: ['day','night'], label: 'Below 10,000 ft MSL',    vis: '3 SM', cloud: '500 below · 1,000 above · 2,000 horiz' },
             { modes: ['day','night'], label: 'At/above 10,000 ft MSL', vis: '5 SM', cloud: '1,000 below · 1,000 above · 1 SM horiz' }
@@ -2817,6 +2859,8 @@ const AM_DATA = [
     {
         cls: 'G', color: '#ffd60a',
         altitude: 'SFC – base of overlying Class E',
+        chart: { color: 'No marking (white space on sectional)', stroke: 'none', shape: 'Depicted by absence of Class E markings. Fills all remaining uncontrolled airspace.' },
+        qualifications: ['All pilots — most permissive airspace', 'Student pilots may fly solo without endorsement', 'No radio, transponder, or ATC clearance required', 'No ATC separation provided'],
         rows: [
             { modes: ['day'],         label: 'Day · Below 1,200 ft AGL',               vis: '1 SM',  cloud: 'Clear of clouds' },
             { modes: ['night'],       label: 'Night · Below 1,200 ft AGL ⚠️',           vis: '3 SM',  cloud: '500 below · 1,000 above · 2,000 horiz' },
@@ -2891,6 +2935,21 @@ function amRender() {
         const c = d.color;
         const textColor = d.cls === 'G' ? '#000' : '#fff';
 
+        // Chart appearance mini-badge
+        const strokeIcon = d.chart.stroke === 'solid'   ? '━━━'
+                         : d.chart.stroke === 'dashed'  ? '┄┄┄'
+                         : d.chart.stroke === 'vignette'? '░▒▓'
+                         : '· · ·';
+        const chartBadge = `<span style="font-family:'SF Mono',monospace; color:${c}; font-size:13px; font-weight:700; letter-spacing:1px;">${strokeIcon}</span>`;
+
+        // Qualifications bullets
+        const qualHtml = d.qualifications.map(q =>
+            `<div style="display:flex; gap:6px; align-items:flex-start; margin-bottom:5px;">
+                <span style="color:${c}; font-size:10px; margin-top:1px; flex-shrink:0;">▸</span>
+                <span style="font-size:11px; color:#aaa; line-height:1.45;">${q}</span>
+            </div>`
+        ).join('');
+
         if (d.special) {
             return `
             <div style="border-radius:12px; border:1px solid ${c}33; overflow:hidden;">
@@ -2901,10 +2960,14 @@ function amRender() {
                         <div style="font-size:11px; color:var(--sub-text);">${d.altitude}</div>
                     </div>
                 </div>
-                <div style="padding:14px 16px; background:#0a0a0c;">
+                <div style="padding:14px 16px; background:#0a0a0c; display:flex; flex-direction:column; gap:12px;">
                     <div style="display:flex; align-items:center; gap:10px; background:${c}15; border:1px solid ${c}33; border-radius:8px; padding:11px 14px;">
                         <span style="font-size:18px; flex-shrink:0;">🚫</span>
                         <span style="font-size:12px; color:${c}; font-weight:700; line-height:1.4;">${d.special}</span>
+                    </div>
+                    <div style="background:#111; border-radius:8px; padding:10px 12px; border:1px solid #1e1e1e;">
+                        <div style="font-size:9px; color:#555; font-weight:700; letter-spacing:0.6px; margin-bottom:8px;">PILOT QUALIFICATIONS</div>
+                        ${qualHtml}
                     </div>
                 </div>
             </div>`;
@@ -2940,7 +3003,21 @@ function amRender() {
                 ${allSame ? `<div style="font-size:10px; color:var(--sub-text); background:#2a2a2c; border-radius:4px; padding:3px 8px; font-weight:700; flex-shrink:0; white-space:nowrap;">DAY = NIGHT</div>` : ''}
             </div>
             <div style="background:#0a0a0c;">
+                <!-- Chart appearance -->
+                <div style="padding:10px 16px; border-bottom:1px solid #1a1a1a; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div style="flex-shrink:0;">${chartBadge}</div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:9px; color:#555; font-weight:700; letter-spacing:0.5px; margin-bottom:2px;">SECTIONAL CHART</div>
+                        <div style="font-size:11px; color:#888; line-height:1.4;">${d.chart.color} — ${d.chart.shape}</div>
+                    </div>
+                </div>
+                <!-- Weather rows -->
                 ${rowsHtml || `<div style="padding:14px 16px; font-size:12px; color:var(--sub-text); text-align:center;">No ${amState.mode}-specific rows.</div>`}
+                <!-- Qualifications -->
+                <div style="padding:10px 16px 14px; border-top:1px solid #1a1a1a;">
+                    <div style="font-size:9px; color:#555; font-weight:700; letter-spacing:0.5px; margin-bottom:8px;">PILOT QUALIFICATIONS</div>
+                    ${qualHtml}
+                </div>
             </div>
         </div>`;
     }).join('');
