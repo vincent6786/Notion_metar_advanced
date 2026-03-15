@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: '3.9.3',                         // ← bump this on every update
+            version: window.APP_VERSION || '3.9.3',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -116,6 +116,14 @@
             const first = document.querySelector('#helpWhatsNewSection');
             if (first) first.classList.add('open');
         }
+
+        function initVersionLabels() {
+            const v = window.APP_VERSION || '—';
+            const launch = document.getElementById('launchVersion');
+            const help   = document.getElementById('helpVersionLabel');
+            if (launch) launch.textContent = `CLOUD EDITION · v${v}`;
+            if (help)   help.textContent   = `v${v} · Cloud Edition · Quick reference for all features`;
+        }
     
         // ================================================================
         // 1. INDEXEDDB LAYER
@@ -218,11 +226,20 @@
                 const res = await fetch(`/api/settings?pin=${pin}`);
                 const data = await res.json();
                 if (!data.found) return false;
-                for (const [key, value] of Object.entries(data.settings)) {
+
+                const entries = Object.entries(data.settings || {});
+                if (entries.length === 0 && data.migrated) {
+                    // Old backup confirmed to exist in Redis but no recoverable data —
+                    // this means the account exists but settings were stored in a legacy
+                    // format we can't read. Treat as a fresh cloud-linked account.
+                    console.warn('[Cloud] Backup found but no recoverable data (legacy format).');
+                    return 'empty';
+                }
+
+                for (const [key, value] of entries) {
                     await EFB_DB.set(key, value);
                 }
-                console.log('✅ Cloud restore complete');
-                return true;
+                return entries.length > 0;
             } catch(e) {
                 console.warn('Cloud restore failed:', e);
                 return false;
@@ -529,10 +546,14 @@
             const restored = await cloudRestoreAll();
             document.getElementById('pinSetup').style.display    = 'none';
             document.getElementById('storageSetup').style.display = 'none';
-            showToast(restored ? '☁️ Backup restored successfully!' : '✅ Cloud Backup activated!');
-            // Prevent initApp from running a second redundant cloudRestoreAll
-            // which would race against the data we just wrote into IndexedDB
-            if (restored) sessionStorage.setItem('_efb_just_restored', '1');
+            if (restored === true) {
+                showToast('☁️ Backup restored successfully!');
+                sessionStorage.setItem('_efb_just_restored', '1');
+            } else if (restored === 'empty') {
+                showToast('☁️ Cloud linked — no prior data found');
+            } else {
+                showToast('✅ Cloud Backup activated!');
+            }
             initApp();
             if (!restored) showOnboarding();
         }
@@ -1179,6 +1200,7 @@
                 }
             }, 600000);
             initHelpAccordion();
+            initVersionLabels();
         }
 
         // ================================================================

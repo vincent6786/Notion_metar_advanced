@@ -698,7 +698,7 @@
             }
         }
 
-        function switchMinsProfile(profile) {
+        async function switchMinsProfile(profile) {
             // Safety check - prevent crashes if profile is undefined/null
             if (!profile || typeof profile !== 'string') {
                 profile = 'solo';
@@ -735,9 +735,9 @@
 
             // Load profile or custom
             if (profile === 'custom') {
-                const saved = Storage.get('efb_mins_custom');
+                const saved = await Storage.get('efb_mins_custom');
                 if (saved) {
-                    activeMinsProfile = JSON.parse(saved);
+                    activeMinsProfile = typeof saved === 'string' ? JSON.parse(saved) : saved;
                     document.getElementById('customMinCeil').value = activeMinsProfile.minCeil || '';
                     document.getElementById('customMinVis').value = activeMinsProfile.minVis || '';
                     document.getElementById('customMaxSteady').value = activeMinsProfile.maxSteady || '';
@@ -751,7 +751,7 @@
                 activeMinsProfile = MINS_PROFILES[profile];
             }
 
-            Storage.set('efb_mins_active_profile', profile);
+            await Storage.set('efb_mins_active_profile', profile);
             updateMinsDisplay();
             checkMins();
         }
@@ -906,8 +906,8 @@
         }
 
         // Initialize on load
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedProfile = Storage.get('efb_mins_active_profile') || 'solo';
+        window.addEventListener('DOMContentLoaded', async () => {
+            const savedProfile = (await Storage.get('efb_mins_active_profile')) || 'solo';
             switchMinsProfile(savedProfile);
         });
 
