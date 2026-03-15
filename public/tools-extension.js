@@ -3038,44 +3038,111 @@ function amCloudSVG(cloud) {
 
     return `<div style="margin:10px 0 2px;">
         <div style="font-size:9px; color:#3a3a3a; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;">CLEARANCE DIAGRAM</div>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 118" width="100%" style="display:block; overflow:visible;">
-            <!-- Cloud above -->
-            <ellipse cx="82" cy="13" rx="28" ry="9"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
-            <ellipse cx="65" cy="19" rx="18" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
-            <ellipse cx="99" cy="19" rx="18" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
-            <text x="82" y="17" text-anchor="middle" fill="#4a4a60" font-size="8" font-family="monospace">CLOUD</text>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 132" width="100%" style="display:block; overflow:visible;">
+          <defs>
+            <!-- Cloud body gradient — top cloud -->
+            <radialGradient id="acg-t" cx="48%" cy="38%" r="62%">
+              <stop offset="0%"   stop-color="#3e5580"/>
+              <stop offset="55%"  stop-color="#1e2e4a"/>
+              <stop offset="100%" stop-color="#0e1624" stop-opacity="0.55"/>
+            </radialGradient>
+            <!-- Cloud body gradient — bottom cloud (flipped) -->
+            <radialGradient id="acg-b" cx="48%" cy="62%" r="62%">
+              <stop offset="0%"   stop-color="#3e5580"/>
+              <stop offset="55%"  stop-color="#1e2e4a"/>
+              <stop offset="100%" stop-color="#0e1624" stop-opacity="0.55"/>
+            </radialGradient>
+            <!-- Cloud body gradient — side cloud -->
+            <radialGradient id="acg-s" cx="48%" cy="38%" r="62%">
+              <stop offset="0%"   stop-color="#3e5580"/>
+              <stop offset="55%"  stop-color="#1e2e4a"/>
+              <stop offset="100%" stop-color="#0e1624" stop-opacity="0.55"/>
+            </radialGradient>
+            <!-- Soft volumetric glow on clouds -->
+            <filter id="acf-cld" x="-35%" y="-35%" width="170%" height="170%">
+              <feGaussianBlur stdDeviation="2.2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <!-- Blue glow behind aircraft -->
+            <filter id="acf-plane" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feFlood flood-color="#0a84ff" flood-opacity="0.35" result="clr"/>
+              <feComposite in="clr" in2="blur" operator="in" result="glow"/>
+              <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
 
-            <!-- Dashed line: aircraft to cloud above -->
-            <line x1="82" y1="27" x2="82" y2="50" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="3,2"/>
-            <text x="90" y="37" fill="#ff9f0a" font-size="9" font-family="monospace" font-weight="700">${belowLbl}</text>
-            <text x="90" y="48" fill="#555" font-size="8" font-family="monospace">below</text>
+          <!-- ══ CLOUD ABOVE ══ -->
+          <g filter="url(#acf-cld)">
+            <!-- depth shadow -->
+            <ellipse cx="83" cy="22" rx="32" ry="11" fill="#090e18" opacity="0.6"/>
+            <!-- left puff -->
+            <ellipse cx="62"  cy="21" rx="22" ry="10" fill="url(#acg-t)"/>
+            <!-- right puff -->
+            <ellipse cx="103" cy="21" rx="22" ry="10" fill="url(#acg-t)"/>
+            <!-- dome -->
+            <ellipse cx="82"  cy="13" rx="30" ry="12" fill="url(#acg-t)"/>
+            <!-- top shimmer highlight -->
+            <ellipse cx="78"  cy="10" rx="13" ry="4.5" fill="#6080b0" opacity="0.22"/>
+            <!-- outline strokes -->
+            <ellipse cx="82"  cy="13" rx="30" ry="12"  fill="none" stroke="#4a6590" stroke-width="0.8" opacity="0.55"/>
+            <ellipse cx="62"  cy="21" rx="22" ry="10"  fill="none" stroke="#3a5070" stroke-width="0.6" opacity="0.4"/>
+            <ellipse cx="103" cy="21" rx="22" ry="10"  fill="none" stroke="#3a5070" stroke-width="0.6" opacity="0.4"/>
+            <text x="82" y="16" text-anchor="middle" fill="#6888b8" font-size="7" font-family="monospace" font-weight="700" letter-spacing="0.8">CLOUD</text>
+          </g>
 
-            <!-- Aircraft (top-down silhouette) -->
-            <rect x="58" y="54" width="50" height="8" rx="4" fill="#0a84ff"/>
-            <rect x="67" y="48" width="10" height="18" rx="2" fill="#0a84ff"/>
-            <polygon points="108,55 108,63 117,59" fill="#5ac8fa"/>
-            <text x="82" y="78" text-anchor="middle" fill="#3a72cc" font-size="8" font-family="monospace">YOU</text>
+          <!-- ══ VERTICAL MEASURE — above aircraft ══ -->
+          <line x1="82" y1="28" x2="82" y2="52" stroke="#ff9f0a" stroke-width="1.2" stroke-dasharray="3,2.5" opacity="0.9"/>
+          <!-- tick marks -->
+          <line x1="78" y1="28" x2="86" y2="28" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
+          <line x1="78" y1="52" x2="86" y2="52" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
+          <text x="91" y="39" fill="#ff9f0a" font-size="9.5" font-family="monospace" font-weight="800">${belowLbl}</text>
+          <text x="91" y="51" fill="#4a5060"  font-size="8"   font-family="monospace">below</text>
 
-            <!-- Dashed line: aircraft to cloud below -->
-            <line x1="82" y1="82" x2="82" y2="99" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="3,2"/>
-            <text x="90" y="90" fill="#ff9f0a" font-size="9" font-family="monospace" font-weight="700">${aboveLbl}</text>
-            <text x="90" y="100" fill="#555" font-size="8" font-family="monospace">above</text>
+          <!-- ══ AIRCRAFT (diamond.png) ══ -->
+          <g filter="url(#acf-plane)">
+            <image href="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/diamond.png" x="69" y="52" width="26" height="26" opacity="0.97"/>
+          </g>
 
-            <!-- Cloud below -->
-            <ellipse cx="82" cy="107" rx="28" ry="9"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
-            <ellipse cx="65" cy="101" rx="18" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
-            <ellipse cx="99" cy="101" rx="18" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
-            <text x="82" y="110" text-anchor="middle" fill="#4a4a60" font-size="8" font-family="monospace">CLOUD</text>
+          <!-- ══ VERTICAL MEASURE — below aircraft ══ -->
+          <line x1="82" y1="80" x2="82" y2="104" stroke="#ff9f0a" stroke-width="1.2" stroke-dasharray="3,2.5" opacity="0.9"/>
+          <line x1="78" y1="80"  x2="86" y2="80"  stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
+          <line x1="78" y1="104" x2="86" y2="104" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
+          <text x="91" y="91"  fill="#ff9f0a" font-size="9.5" font-family="monospace" font-weight="800">${aboveLbl}</text>
+          <text x="91" y="102" fill="#4a5060"  font-size="8"   font-family="monospace">above</text>
 
-            <!-- Horizontal dashed line to side cloud -->
-            <line x1="120" y1="59" x2="226" y2="59" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="3,2"/>
-            <text x="172" y="53" text-anchor="middle" fill="#ff9f0a" font-size="9" font-family="monospace" font-weight="700">${horizLbl}</text>
-            <text x="172" y="72" text-anchor="middle" fill="#555" font-size="8" font-family="monospace">horizontal</text>
+          <!-- ══ CLOUD BELOW ══ -->
+          <g filter="url(#acf-cld)">
+            <ellipse cx="83" cy="110" rx="32" ry="11" fill="#090e18" opacity="0.6"/>
+            <ellipse cx="62"  cy="111" rx="22" ry="10" fill="url(#acg-b)"/>
+            <ellipse cx="103" cy="111" rx="22" ry="10" fill="url(#acg-b)"/>
+            <ellipse cx="82"  cy="119" rx="30" ry="12" fill="url(#acg-b)"/>
+            <!-- bottom shadow rim -->
+            <ellipse cx="82"  cy="122" rx="20" ry="4" fill="#090e18" opacity="0.35"/>
+            <ellipse cx="82"  cy="119" rx="30" ry="12" fill="none" stroke="#4a6590" stroke-width="0.8" opacity="0.55"/>
+            <ellipse cx="62"  cy="111" rx="22" ry="10" fill="none" stroke="#3a5070" stroke-width="0.6" opacity="0.4"/>
+            <ellipse cx="103" cy="111" rx="22" ry="10" fill="none" stroke="#3a5070" stroke-width="0.6" opacity="0.4"/>
+            <text x="82" y="118" text-anchor="middle" fill="#6888b8" font-size="7" font-family="monospace" font-weight="700" letter-spacing="0.8">CLOUD</text>
+          </g>
 
-            <!-- Side cloud -->
-            <ellipse cx="249" cy="59" rx="23" ry="9"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
-            <ellipse cx="235" cy="53" rx="16" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
-            <ellipse cx="261" cy="53" rx="16" ry="8"  fill="#1a1a26" stroke="#3a3a50" stroke-width="0.8"/>
+          <!-- ══ HORIZONTAL MEASURE — side cloud ══ -->
+          <line x1="120" y1="65" x2="222" y2="65" stroke="#ff9f0a" stroke-width="1.2" stroke-dasharray="3,2.5" opacity="0.9"/>
+          <line x1="120" y1="61" x2="120" y2="69" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
+          <line x1="222" y1="61" x2="222" y2="69" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
+          <text x="171" y="58" text-anchor="middle" fill="#ff9f0a" font-size="9.5" font-family="monospace" font-weight="800">${horizLbl}</text>
+          <text x="171" y="76" text-anchor="middle" fill="#4a5060"  font-size="8"   font-family="monospace">horizontal</text>
+
+          <!-- ══ SIDE CLOUD ══ -->
+          <g filter="url(#acf-cld)">
+            <ellipse cx="250" cy="66" rx="28" ry="11" fill="#090e18" opacity="0.6"/>
+            <ellipse cx="234" cy="63" rx="20" ry="10" fill="url(#acg-s)"/>
+            <ellipse cx="265" cy="63" rx="20" ry="10" fill="url(#acg-s)"/>
+            <ellipse cx="249" cy="56" rx="25" ry="11" fill="url(#acg-s)"/>
+            <ellipse cx="246" cy="53" rx="11" ry="4"  fill="#6080b0" opacity="0.18"/>
+            <ellipse cx="249" cy="56" rx="25" ry="11" fill="none" stroke="#4a6590" stroke-width="0.8" opacity="0.55"/>
+            <ellipse cx="234" cy="63" rx="20" ry="10" fill="none" stroke="#3a5070" stroke-width="0.6" opacity="0.4"/>
+            <ellipse cx="265" cy="63" rx="20" ry="10" fill="none" stroke="#3a5070" stroke-width="0.6" opacity="0.4"/>
+          </g>
         </svg>
     </div>`;
 }
