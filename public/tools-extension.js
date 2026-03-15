@@ -2935,12 +2935,74 @@ function amRender() {
         const c = d.color;
         const textColor = d.cls === 'G' ? '#000' : '#fff';
 
-        // Chart appearance mini-badge
-        const strokeIcon = d.chart.stroke === 'solid'   ? '━━━'
-                         : d.chart.stroke === 'dashed'  ? '┄┄┄'
-                         : d.chart.stroke === 'vignette'? '░▒▓'
-                         : '· · ·';
-        const chartBadge = `<span style="font-family:'SF Mono',monospace; color:${c}; font-size:13px; font-weight:700; letter-spacing:1px;">${strokeIcon}</span>`;
+        // Chart appearance mini-badge — matches actual sectional symbology
+        let chartBadge;
+        switch (d.cls) {
+            case 'A':
+                chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="64" height="22" rx="4" fill="#1a0a0a"/>
+                    <text x="32" y="15" text-anchor="middle" fill="#ff453a" font-size="9" font-family="monospace" font-weight="800" letter-spacing="0.5">IFR ONLY</text>
+                </svg>`;
+                break;
+            case 'B':
+                // Solid thick blue bar — matches sectional solid blue line
+                chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="64" height="22" rx="4" fill="#070f1a"/>
+                    <rect x="6" y="7" width="52" height="8" rx="1.5" fill="#1a6fba"/>
+                    <rect x="6" y="8" width="52" height="3" rx="1" fill="#3a9fff" opacity="0.5"/>
+                </svg>`;
+                break;
+            case 'C':
+                // Solid thick magenta/crimson bar — matches sectional solid magenta line
+                chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="64" height="22" rx="4" fill="#120a0e"/>
+                    <rect x="6" y="7" width="52" height="8" rx="1.5" fill="#8b1a42"/>
+                    <rect x="6" y="8" width="52" height="3" rx="1" fill="#cc3366" opacity="0.45"/>
+                </svg>`;
+                break;
+            case 'D':
+                // Dashed blue line — matches sectional dashed blue circle
+                chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="64" height="22" rx="4" fill="#070f1a"/>
+                    <line x1="6" y1="11" x2="58" y2="11" stroke="#1a6fba" stroke-width="3" stroke-dasharray="6,4" stroke-linecap="round"/>
+                </svg>`;
+                break;
+            case 'E':
+                // Three-layer badge: dashed magenta (sfc E) + two vignette swatches
+                chartBadge = `<svg width="64" height="58" viewBox="0 0 64 58" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="vigPink" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%"   stop-color="#c0607a" stop-opacity="0.9"/>
+                            <stop offset="70%"  stop-color="#c0607a" stop-opacity="0.2"/>
+                            <stop offset="100%" stop-color="#c0607a" stop-opacity="0"/>
+                        </linearGradient>
+                        <linearGradient id="vigBlue" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%"   stop-color="#7aabcc" stop-opacity="0.8"/>
+                            <stop offset="70%"  stop-color="#7aabcc" stop-opacity="0.2"/>
+                            <stop offset="100%" stop-color="#7aabcc" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Row 1: dashed magenta (sfc E) -->
+                    <rect width="64" height="18" rx="4" fill="#120a0e"/>
+                    <line x1="6" y1="9" x2="58" y2="9" stroke="#8b1a42" stroke-width="2.5" stroke-dasharray="5,3.5" stroke-linecap="round"/>
+                    <!-- Row 2: 700 ft vignette (pink fade) -->
+                    <rect y="20" width="64" height="18" rx="4" fill="#120a10"/>
+                    <rect x="6" y="24" width="52" height="10" rx="2" fill="url(#vigPink)"/>
+                    <!-- Row 3: 1200 ft vignette (blue fade) -->
+                    <rect y="40" width="64" height="18" rx="4" fill="#090e14"/>
+                    <rect x="6" y="44" width="52" height="10" rx="2" fill="url(#vigBlue)"/>
+                </svg>`;
+                break;
+            case 'G':
+                // "CLASS G" bold text — matches the sectional label treatment
+                chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="64" height="22" rx="4" fill="#f5f5ee"/>
+                    <text x="32" y="15" text-anchor="middle" fill="#1a5fa8" font-size="9.5" font-family="Arial,sans-serif" font-weight="900" letter-spacing="0.3">CLASS G</text>
+                </svg>`;
+                break;
+            default:
+                chartBadge = `<span style="font-family:'SF Mono',monospace; color:${c}; font-size:13px; font-weight:700;">· · ·</span>`;
+        }
 
         // Qualifications bullets
         const qualHtml = d.qualifications.map(q =>
@@ -3004,8 +3066,8 @@ function amRender() {
             </div>
             <div style="background:#0a0a0c;">
                 <!-- Chart appearance -->
-                <div style="padding:10px 16px; border-bottom:1px solid #1a1a1a; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <div style="flex-shrink:0;">${chartBadge}</div>
+                <div style="padding:10px 16px; border-bottom:1px solid #1a1a1a; display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+                    <div style="flex-shrink:0; margin-top:1px;">${chartBadge}</div>
                     <div style="flex:1; min-width:0;">
                         <div style="font-size:9px; color:#555; font-weight:700; letter-spacing:0.5px; margin-bottom:2px;">SECTIONAL CHART</div>
                         <div style="font-size:11px; color:#888; line-height:1.4;">${d.chart.color} — ${d.chart.shape}</div>
