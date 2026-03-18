@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '3.9.7',  // ← set once in index.html
+            version: window.APP_VERSION || '3.9.5',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -1011,6 +1011,7 @@
         let stationSunTimes = null;
         let useMetric       = true;
         let tafDataCache    = null;
+        let tafUnitsCache   = {};
         let lastMetarObj    = null;
         let meteoDataCache  = null;
         let cityList        = [];
@@ -2226,7 +2227,7 @@
                 const record = {
                     ts: Date.now(),
                     ceil: metar.ceiling?.value || 99999,
-                    vis: metar.visibility?.value || 10,
+                    vis: visToSM(metar.visibility?.value, metar.units?.visibility) ?? 10,
                     windSpd: metar.wind_speed?.value || 0
                 };
                 
@@ -2427,7 +2428,7 @@
             document.getElementById('labelCeilVal').innerText = ceiling === 99999 ? 'Unlimited' : `${ceiling} ft`;
             document.getElementById('labelCeilVal').style.color = cStats.color;
             const visBar  = document.getElementById('gaugeVis'); visBar.style.width  = vStats.width; visBar.style.backgroundColor = vStats.color;
-            document.getElementById('labelVisVal').innerText = `${vis} sm`;
+            document.getElementById('labelVisVal').innerText = formatVisDisplay(vis);
             document.getElementById('labelVisVal').style.color = vStats.color;
             const rule  = m.flight_rules;
             const msgEl = document.getElementById('frMessage');
