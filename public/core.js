@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.1.5',  // ← set once in index.html
+            version: window.APP_VERSION || '4.1.6',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -3086,6 +3086,7 @@
         function renderInfoFrequencies(d, fContainer) {
             const icao = (d.icao || '').toUpperCase();
             if (!icao || !fContainer) return;
+            console.log(`[FreqDB] Looking up ${icao}...`);
 
             // Phone container
             const phoneContainer = document.getElementById('atisPhones');
@@ -3094,6 +3095,7 @@
             let dbFreqs = null;
             try {
                 dbFreqs = (typeof lookupFrequencies === 'function') ? lookupFrequencies(icao) : null;
+                console.log(`[FreqDB] ${icao}: lookupFrequencies=${typeof lookupFrequencies}, result=${dbFreqs ? dbFreqs.length + ' freqs' : 'null'}`);
             } catch(e) {
                 console.warn('[FreqDB] Lookup error:', e);
             }
@@ -3185,11 +3187,9 @@
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
             checkDAWarning(da, elev);
 
-            // ── FREQUENCIES — only populate on first call (not on METAR re-render) ──
+            // ── FREQUENCIES ──
             const fContainer = document.getElementById('freqContainer');
-            if (fContainer && fContainer.children.length === 0) {
-                renderInfoFrequencies(d, fContainer);
-            }
+            if (fContainer) renderInfoFrequencies(d, fContainer);
 
             updateSunDisplay();
             const sunEl = document.getElementById('infoSun');
