@@ -3,33 +3,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.1.3',  // ← set once in index.html
+            version: window.APP_VERSION || '4.1.4',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
+                    icon: '🎨',
+                    title: 'Contrast overhaul',
+                    desc: 'All tools now use amber highlights, darker backgrounds and thicker borders for better cockpit readability.'
+                },
+                {
                     icon: '📡',
-                    title: 'Morse Code Trainer',
-                    desc: 'New trainer in the Tools menu — Learn mode (tap any character to hear it), Listen mode (identify what you hear), and Quiz mode (10-question scored session). Essential for VOR/NDB station identification.'
-                },
-                {
-                    icon: '💨',
-                    title: 'Winds Aloft Table',
-                    desc: 'Upper-level winds and temperatures now displayed below the meteogram — ~3,000 ft (925 hPa), ~5,000 ft (850 hPa), and ~10,000 ft (700 hPa). Includes icing and strong-wind warnings. Zero extra API cost.'
-                },
-                {
-                    icon: '🌦',
-                    title: 'METAR card educational detail',
-                    desc: 'Tap any METAR card (Wind, Visibility, Ceiling, Altimeter, Present Weather, Temp/Dew) for a detailed explanation — sky cover oktas, flight category thresholds, weather codes, cloud base estimate, and more.'
-                },
-                {
-                    icon: '🌍',
-                    title: 'SIGMET / AIRMET viewer',
-                    desc: 'Active SIGMETs and AIRMETs shown below NOTAMs for US airports. For international airports, a direct link to the correct national authority is shown (ANWS Taiwan, JMA Japan, DWD Germany, etc.).'
-                },
-                {
-                    icon: '🔧',
-                    title: 'Visibility & wind unit fixes',
-                    desc: 'Visibility now displays the raw METAR value (5000m, 10SM, etc.) without conversion. Wind speed is normalised to knots for non-US airports that report in m/s. Gust values now shown in the Wind card.'
+                    title: 'Morse Trainer + Frequency DB',
+                    desc: 'New Morse WORDS mode for sentence practice. Airport frequencies for 8,341 airports now load instantly from an embedded database.'
                 }
             ]
         };

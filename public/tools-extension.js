@@ -816,15 +816,15 @@ function searchWeatherTerms() {
     
     // Display source link at top
     let html = `
-        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+        <div style="margin-bottom:16px; padding:10px; background:#111; border-radius:8px; border:1px solid #2a2a2a;">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
                 <div style="font-size:11px; color:var(--sub-text);">
-                    <strong style="color:var(--accent);">${matches.length}</strong> result${matches.length !== 1 ? 's' : ''} found
+                    <strong style="color:#e8a020;">${matches.length}</strong> result${matches.length !== 1 ? 's' : ''} found
                 </div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
                     <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
                             class="tool-btn" 
-                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                            style="background:#e8a020; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR KEY ↗
                     </button>
                     <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
@@ -839,9 +839,9 @@ function searchWeatherTerms() {
     
     matches.forEach(item => {
         html += `
-            <div style="background:#1c1c1e; padding:12px; border-radius:8px; margin-bottom:8px;">
+            <div style="background:#111; padding:12px; border-radius:8px; border:1px solid #2a2a2a; margin-bottom:8px;">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                    <div style="font-size:14px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">${item.code}</div>
+                    <div style="font-size:14px; font-weight:800; color:#e8a020; font-family:'SF Mono',monospace;">${item.code}</div>
                     <div style="font-size:10px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.5px;">${item.category.replace(/_/g, ' ')}</div>
                 </div>
                 <div style="font-size:12px; color:#fff; line-height:1.5;">${item.meaning}</div>
@@ -875,13 +875,13 @@ function displayAllWeatherTerms() {
     });
     
     let html = `
-        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+        <div style="margin-bottom:16px; padding:10px; background:#111; border-radius:8px; border:1px solid #2a2a2a;">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
                 <div style="font-size:11px; color:var(--sub-text);">METAR weather code reference</div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
                     <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
                             class="tool-btn" 
-                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                            style="background:#e8a020; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR KEY ↗
                     </button>
                     <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
@@ -904,13 +904,13 @@ function displayAllWeatherTerms() {
     priorityCategories.forEach(category => {
         if (grouped[category]) {
             const label = categoryLabels[category] || category.toUpperCase();
-            html += `<div style="font-size:13px; font-weight:700; color:var(--accent); margin:20px 0 12px 0;">${label}</div>`;
+            html += `<div style="font-size:13px; font-weight:700; color:#e8a020; margin:20px 0 12px 0;">${label}</div>`;
             
             grouped[category].forEach(item => {
                 html += `
-                    <div style="background:#1c1c1e; padding:10px; border-radius:6px; margin-bottom:6px;">
+                    <div style="background:#111; padding:10px; border-radius:8px; margin-bottom:6px; border:1px solid #2a2a2a;">
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <div style="font-size:13px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace; min-width:50px;">${item.code}</div>
+                            <div style="font-size:13px; font-weight:800; color:#e8a020; font-family:'SF Mono',monospace; min-width:50px;">${item.code}</div>
                             <div style="flex:1;">
                                 <div style="font-size:12px; color:#fff;">${item.meaning}</div>
                             </div>
@@ -924,7 +924,7 @@ function displayAllWeatherTerms() {
     // Add "Show All Categories" button
     html += `
         <div style="margin-top:20px; text-align:center;">
-            <button onclick="displayAllCategories()" class="tool-btn" style="background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:10px 20px; font-size:12px; font-weight:700;">
+            <button onclick="displayAllCategories()" class="tool-btn" style="background:#111; border:2px solid #444; color:#e8a020; padding:10px 20px; font-size:12px; font-weight:700;">
                 SHOW ALL CATEGORIES ↓
             </button>
         </div>
@@ -946,13 +946,13 @@ function displayAllCategories() {
     });
     
     let html = `
-        <div style="margin-bottom:16px; padding:10px; background:#1c1c1e; border-radius:8px;">
+        <div style="margin-bottom:16px; padding:10px; background:#111; border-radius:8px; border:1px solid #2a2a2a;">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
                 <div style="font-size:11px; color:var(--sub-text);">All weather term categories</div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
                     <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
                             class="tool-btn" 
-                            style="background:var(--accent); border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
+                            style="background:#e8a020; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
                         METAR KEY ↗
                     </button>
                     <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
@@ -970,13 +970,13 @@ function displayAllCategories() {
     
     sortedCategories.forEach(category => {
         const label = categoryLabels[category] || category.toUpperCase();
-        html += `<div style="font-size:13px; font-weight:700; color:var(--accent); margin:20px 0 12px 0;">${label} (${grouped[category].length})</div>`;
+        html += `<div style="font-size:13px; font-weight:700; color:#e8a020; margin:20px 0 12px 0;">${label} (${grouped[category].length})</div>`;
         
         grouped[category].forEach(item => {
             html += `
-                <div style="background:#1c1c1e; padding:10px; border-radius:6px; margin-bottom:6px;">
+                <div style="background:#111; padding:10px; border-radius:8px; margin-bottom:6px; border:1px solid #2a2a2a;">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="font-size:13px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace; min-width:50px;">${item.code}</div>
+                        <div style="font-size:13px; font-weight:800; color:#e8a020; font-family:'SF Mono',monospace; min-width:50px;">${item.code}</div>
                         <div style="flex:1;">
                             <div style="font-size:12px; color:#fff;">${item.meaning}</div>
                         </div>
@@ -989,7 +989,7 @@ function displayAllCategories() {
     // Add button to return to main view
     html += `
         <div style="margin-top:20px; text-align:center;">
-            <button onclick="displayAllWeatherTerms()" class="tool-btn" style="background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:10px 20px; font-size:12px; font-weight:700;">
+            <button onclick="displayAllWeatherTerms()" class="tool-btn" style="background:#111; border:2px solid #444; color:#e8a020; padding:10px 20px; font-size:12px; font-weight:700;">
                 ← BACK TO MAIN VIEW
             </button>
         </div>
@@ -1120,8 +1120,8 @@ function _aeroInjectUI(container) {
 
             <!-- Search bar — always visible -->
             <div id="aero-search-wrap"
-                 style="display:flex;align-items:center;background:#1c1c1e;
-                        border:1.5px solid #333;border-radius:12px;padding:4px 10px;
+                 style="display:flex;align-items:center;background:#111;
+                        border:2px solid #444;border-radius:12px;padding:4px 10px;
                         margin-bottom:8px;transition:border-color 0.2s,box-shadow 0.2s;">
                 <span style="font-size:14px;margin-right:6px;opacity:0.4;">⌕</span>
                 <input id="aero-input" type="text"
@@ -1144,7 +1144,7 @@ function _aeroInjectUI(container) {
                 <!-- Source pills -->
                 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
                     <button class="aero-pill aero-pill-active" data-source="all"
-                            style="background:#1a3050;border:1px solid #0a84ff;color:#0a84ff;"
+                            style="background:#1a1600;border:2px solid #e8a020;color:#e8a020;"
                             onclick="_aeroSetSource('all',this)">All</button>
                     ${sourcePills}
                 </div>
@@ -1152,7 +1152,7 @@ function _aeroInjectUI(container) {
                 <!-- Mode + Sort -->
                 <div style="display:flex;gap:8px;margin-bottom:6px;">
                     <select id="aero-mode"
-                            style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
+                            style="flex:1;background:#111;border:2px solid #444;border-radius:8px;
                                    color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
                                    cursor:pointer;outline:none;" onchange="_aeroRender()">
                         <option value="contains">Contains</option>
@@ -1160,7 +1160,7 @@ function _aeroInjectUI(container) {
                         <option value="exact">Exact match</option>
                     </select>
                     <select id="aero-sort"
-                            style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;
+                            style="flex:1;background:#111;border:2px solid #444;border-radius:8px;
                                    color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
                                    cursor:pointer;outline:none;" onchange="_aeroRender()">
                         <option value="default">Original order</option>
@@ -1177,7 +1177,7 @@ function _aeroInjectUI(container) {
                 <div style="display:flex;align-items:center;gap:8px;">
                     <div id="aero-sync-info" style="font-size:11px;color:#555;"></div>
                     <button id="aero-sync-btn" onclick="_aeroLoadData(true)"
-                            style="font-size:11px;color:#0a84ff;background:none;border:none;
+                            style="font-size:11px;color:#e8a020;background:none;border:none;
                                    cursor:pointer;padding:2px 0;font-weight:700;">↻ Sync</button>
                 </div>
             </div>
@@ -1186,7 +1186,7 @@ function _aeroInjectUI(container) {
         <!-- Results list -->
         <div id="aero-results" style="display:flex;flex-direction:column;gap:8px;padding-bottom:60px;">
             <div style="text-align:center;padding:40px 0;">
-                <div style="width:28px;height:28px;border:3px solid #222;border-top-color:#0a84ff;
+                <div style="width:28px;height:28px;border:3px solid #333;border-top-color:#e8a020;
                             border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 12px;"></div>
                 <div style="font-size:12px;color:#555;">Loading databases…</div>
             </div>
@@ -1454,7 +1454,7 @@ function _aeroRender() {
     else if (sort === 'za') items.sort((a,b) => b.acronym.localeCompare(a.acronym));
 
     if (countEl) countEl.innerHTML = items.length > 0
-        ? `<span style="color:#0a84ff;font-weight:800;">${items.length}</span> results`
+        ? `<span style="color:#e8a020;font-weight:800;">${items.length}</span> results`
         : '0 results';
 
     if (items.length === 0) {
@@ -1479,13 +1479,13 @@ function _aeroRender() {
         let acronymHTML = _aeroEsc(item.acronym);
         if (term && mode === 'contains') {
             const rx = new RegExp(`(${_aeroEscRx(term)})`, 'gi');
-            const hl = '<mark style="background:rgba(10,132,255,0.2);color:#0a84ff;border-radius:2px;padding:0 2px;">$1</mark>';
+            const hl = '<mark style="background:rgba(232,160,32,0.2);color:#e8a020;border-radius:2px;padding:0 2px;">$1</mark>';
             meaningHTML = meaningHTML.replace(rx, hl);
             acronymHTML = acronymHTML.replace(rx, hl);
         }
 
         const card = document.createElement('div');
-        card.style.cssText = `background:#1c1c1e;border:1px solid #2a2a2a;border-radius:12px;
+        card.style.cssText = `background:#111;border:2px solid #333;border-radius:12px;
                               padding:14px 16px;animation:aeroCardIn 0.25s ease both;`;
         card.style.animationDelay = `${Math.min(idx * 0.025, 0.5)}s`;
         card.innerHTML = `
@@ -1504,7 +1504,7 @@ function _aeroRender() {
             ${item.category && item.category !== 'General'
                 ? `<div style="display:inline-block;margin-top:8px;font-size:10px;font-weight:700;
                                color:#555;text-transform:uppercase;letter-spacing:0.5px;
-                               padding:2px 7px;border:1px solid #2a2a2a;border-radius:5px;">
+                               padding:2px 7px;border:1px solid #444;border-radius:5px;">
                        ${_aeroEsc(item.category)}
                    </div>`
                 : ''}`;
@@ -1527,7 +1527,7 @@ function _aeroShowLoading() {
     const el = document.getElementById('aero-results');
     if (el) el.innerHTML = `
         <div style="text-align:center;padding:40px 0;">
-            <div style="width:28px;height:28px;border:3px solid #222;border-top-color:#0a84ff;
+            <div style="width:28px;height:28px;border:3px solid #333;border-top-color:#e8a020;
                         border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 12px;"></div>
             <div style="font-size:12px;color:#555;">Syncing databases…</div>
         </div>`;
@@ -1618,7 +1618,7 @@ function calcE6B() {
     document.getElementById('resCloud').innerText = cloudBase;
     document.getElementById('resFrz').innerText   = freezingLvl;
     const daEl = document.getElementById('resDA');
-    daEl.style.color = da > alt + 2000 ? "var(--warn)" : "var(--accent)";
+    daEl.style.color = da > alt + 2000 ? "var(--warn)" : "#e8a020";
 
     // Also sync TAS into wind triangle TAS field if blank
     if (ias > 0 && !document.getElementById('wtTas').value) {
@@ -1897,8 +1897,8 @@ function calcWindTriangle() {
     const xw     = ws * Math.sin(toRad(wd - tc));   // + = from right
 
     // ── Results ──
-    if (hdgEl) { hdgEl.innerText = `${Math.round(hdg).toString().padStart(3,'0')}°T`; hdgEl.style.color = '#0a84ff'; }
-    if (mhEl)  { mhEl.innerText  = `${Math.round(mh).toString().padStart(3,'0')}°M`;  mhEl.style.color  = '#0a84ff'; }
+    if (hdgEl) { hdgEl.innerText = `${Math.round(hdg).toString().padStart(3,'0')}°T`; hdgEl.style.color = '#e8a020'; }
+    if (mhEl)  { mhEl.innerText  = `${Math.round(mh).toString().padStart(3,'0')}°M`;  mhEl.style.color  = '#e8a020'; }
     if (gsEl)  { gsEl.innerText  = `${Math.round(gs)} kt`; gsEl.style.color = '#32d74b'; }
     if (wcaEl) {
         const s = wca >= 0 ? '+' : '';
@@ -2029,7 +2029,7 @@ function wtDrawSvg(d) {
 
         <!-- Speed labels -->
         <text x="${(cx+P1.x)/2 + 8}" y="${(cy+P1.y)/2 - 6}"
-              fill="#0a84ff" font-size="9" font-family="monospace" font-weight="700">${Math.round(d.tas)}kt</text>
+              fill="#e8a020" font-size="9" font-family="monospace" font-weight="700">${Math.round(d.tas)}kt</text>
         <text x="${(P1.x+P2.x)/2 + 7}" y="${(P1.y+P2.y)/2}"
               fill="#ff453a" font-size="9" font-family="monospace" font-weight="700">${Math.round(d.ws)}kt</text>
         <text x="${gsLx}" y="${gsLy}"
@@ -2269,7 +2269,7 @@ function cwSetMode(mode, skipSave) {
     const btnV = document.getElementById('cw-btn-visual');
     const btnT = document.getElementById('cw-btn-type');
 
-    const activeStyle  = 'background:#0a84ff;color:#fff;';
+    const activeStyle  = 'background:#e8a020;color:#000;';
     const inactiveStyle = 'background:transparent;color:#555;';
 
     if (mode === 'visual') {
@@ -2539,7 +2539,7 @@ function cwUpdateStats() {
     if (r1l) { r1l.textContent = `RWY ${String(rn1).padStart(2,'0')}  HDG ${_cw.rwyHdg}°`; }
     if (r1h) {
         r1h.textContent = `${hw1 >= 0 ? 'Headwind' : 'Tailwind'}: ${Math.abs(hw1).toFixed(1)} kt`;
-        r1h.style.color = hw1 < 0 ? '#ff453a' : '#0a84ff';
+        r1h.style.color = hw1 < 0 ? '#ff453a' : '#e8a020';
     }
     if (r1x) {
         r1x.textContent = `X-Wind: ${xw1a.toFixed(1)} kt (${xw1 >= 0 ? 'Right' : 'Left'})`;
@@ -2599,7 +2599,7 @@ function cwUpdateStats() {
             gRow.style.display = 'block';
             const ghe = document.getElementById('cw-ghw-v'), ghl = document.getElementById('cw-ghw-lbl-v');
             const gxe = document.getElementById('cw-gxw-v'), gxl = document.getElementById('cw-gxw-lbl-v');
-            if (ghe)  { ghe.textContent = Math.abs(ghw).toFixed(1); ghe.style.color = ghw < 0 ? '#ff453a' : 'var(--accent)'; }
+            if (ghe)  { ghe.textContent = Math.abs(ghw).toFixed(1); ghe.style.color = ghw < 0 ? '#ff453a' : '#e8a020'; }
             if (ghl) ghl.textContent = ghw >= 0 ? 'Gust Headwind' : 'Gust Tailwind ⚠️';
             if (gxe)  { gxe.textContent = gxa.toFixed(1); gxe.style.color = (limit > 0 && gxa >= limit) ? '#ff453a' : 'var(--success)'; }
             if (gxl) gxl.textContent = gxw >= 0 ? 'Gust XW (Right)' : 'Gust XW (Left)';
@@ -2754,9 +2754,9 @@ function calcCrosswind() {
         const gxa = Math.abs(gustXW);
         const ghe = document.getElementById('cw-ghw'), ghl = document.getElementById('cw-ghw-lbl');
         const gxe = document.getElementById('cw-gxw'), gxl = document.getElementById('cw-gxw-lbl');
-        if (ghe) { ghe.textContent = Math.abs(gustHW).toFixed(1); ghe.style.color = gustHW < 0 ? '#ff453a' : 'var(--accent)'; }
+        if (ghe) { ghe.textContent = Math.abs(gustHW).toFixed(1); ghe.style.color = gustHW < 0 ? '#ff453a' : '#e8a020'; }
         if (ghl) ghl.textContent = gustHW >= 0 ? 'Gust Headwind' : 'Gust Tailwind ⚠️';
-        if (gxe) { gxe.textContent = gxa.toFixed(1); gxe.style.color = limit>0 && gxa>=limit ? '#ff453a' : 'var(--accent)'; }
+        if (gxe) { gxe.textContent = gxa.toFixed(1); gxe.style.color = limit>0 && gxa>=limit ? '#ff453a' : '#e8a020'; }
         if (gxl) gxl.textContent = gustXW >= 0 ? 'Gust XW (from right)' : 'Gust XW (from left)';
     } else if (gustRow) { gustRow.style.display = 'none'; }
 
@@ -3398,7 +3398,7 @@ function nextMorseQuiz() {
         const opts = [correct, ...wrongs].sort(() => Math.random()-0.5);
         if (optEl) optEl.innerHTML = opts.map(o => `
             <button onclick="answerMorseQuiz('${o}','${correct}','char2code')"
-                    style="background:#1c1c1e;border:1px solid #333;border-radius:8px;padding:12px;font-size:16px;font-family:'SF Mono',monospace;color:#fff;cursor:pointer;letter-spacing:4px;transition:all 0.15s;">${o}</button>`).join('');
+                    style="background:#111;border:2px solid #444;border-radius:8px;padding:12px;font-size:16px;font-family:'SF Mono',monospace;color:#fff;cursor:pointer;letter-spacing:4px;transition:all 0.15s;">${o}</button>`).join('');
     } else {
         if (promptEl) promptEl.textContent = 'Which character is this code?';
         if (charEl) charEl.textContent = correct;
@@ -3408,7 +3408,7 @@ function nextMorseQuiz() {
         const opts = [_morseQuizChar, ...wrongs].sort(() => Math.random()-0.5);
         if (optEl) optEl.innerHTML = opts.map(o => `
             <button onclick="answerMorseQuiz('${o}','${_morseQuizChar}','code2char')"
-                    style="background:#1c1c1e;border:1px solid #333;border-radius:8px;padding:12px;font-size:22px;font-family:'SF Mono',monospace;color:#fff;cursor:pointer;transition:all 0.15s;">${o}</button>`).join('');
+                    style="background:#111;border:2px solid #444;border-radius:8px;padding:12px;font-size:22px;font-family:'SF Mono',monospace;color:#fff;cursor:pointer;transition:all 0.15s;">${o}</button>`).join('');
     }
 }
 

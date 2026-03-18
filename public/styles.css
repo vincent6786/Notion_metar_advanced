@@ -676,15 +676,16 @@
             border-bottom: 1px solid #333;
         }
         select.stealth-select {
-            background: #2c2c2e;
-            border: 1px solid var(--border);
+            background: #111;
+            border: 2px solid #444;
             color: #fff;
             padding: 6px;
-            border-radius: 6px;
+            border-radius: 8px;
             width: 100%;
             font-weight: 600;
             outline: none;
         }
+        select.stealth-select:focus { border-color: #e8a020; }
 
         /* ============================================================
            16. TAF VISUALIZATION
@@ -864,6 +865,8 @@
             margin-top: 4px;
             font-weight: 600;
         }
+        .tool-card { transition: border-color 0.15s, background 0.15s; }
+        .tool-card:hover { border-color: #e8a020 !important; background: #1a1600 !important; }
 
         /* ============================================================
            19. NEARBY STATIONS
@@ -937,14 +940,17 @@
         .conv-lbl { font-size: 10px; color: var(--sub-text); margin-bottom: 4px; text-transform: uppercase; }
         .conv-inp {
             width: 100%;
-            background: #333;
-            border: 1px solid #555;
+            background: #111;
+            border: 2px solid #444;
             color: #fff;
             padding: 8px;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
+            outline: none;
+            transition: border-color 0.15s;
         }
+        .conv-inp:focus { border-color: #e8a020; }
 
         /* ============================================================
            23. CRAFT PAD

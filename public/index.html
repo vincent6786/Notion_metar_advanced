@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.1.3';</script>
+    <script>window.APP_VERSION = '4.1.4';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -77,7 +77,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">CLOUD EDITION · v4.1.3</div> 
+        <div class="launch-version" id="launchVersion">CLOUD EDITION · v4.1.4</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -658,7 +658,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.1.3 · Cloud Edition · Quick reference for all features</div>
+                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.1.4 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -2092,7 +2092,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 4.1.3</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 4.1.4</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -2315,56 +2315,56 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 
                 <!-- Unit Converter -->
-                <div onclick="openTool('unit-converter')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('unit-converter')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📏</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Unit Converter</div>
                     <div style="font-size:11px; color:var(--sub-text);">10 categories: speed, energy, power, more</div>
                 </div>
                 
                 <!-- E6B Flight Computer -->
-                <div onclick="openTool('e6b-calculator')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('e6b-calculator')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">✈️</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Calculator</div>
                     <div style="font-size:11px; color:var(--sub-text);">DA, TAS, cloud base, freezing</div>
                 </div>
                 
                 <!-- Great Circle -->
-                <div onclick="openTool('great-circle')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('great-circle')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">🌍</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Great Circle</div>
                     <div style="font-size:11px; color:var(--sub-text);">Distance & bearing calc</div>
                 </div>
                 
                 <!-- E6B Trainer -->
-                <div onclick="openTool('e6b-trainer')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('e6b-trainer')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">🎓</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Trainer</div>
                     <div style="font-size:11px; color:var(--sub-text);">Interactive UND trainer</div>
                 </div>
                 
                 <!-- Weather Terms -->
-                <div onclick="openTool('weather-terms')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('weather-terms')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">🌦️</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Terms</div>
                     <div style="font-size:11px; color:var(--sub-text);">METAR abbreviations & symbols</div>
                 </div>
                 
                 <!-- Abbreviations -->
-                <div onclick="openTool('abbreviations')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('abbreviations')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📖</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Abbreviations</div>
                     <div style="font-size:11px; color:var(--sub-text);">Aviation terminology</div>
                 </div>
 
                 <!-- Crosswind Calculator -->
-                <div onclick="openTool('crosswind')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('crosswind')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">💨</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Crosswind Calc</div>
                     <div style="font-size:11px; color:var(--sub-text);">Headwind & crosswind components</div>
                 </div>
 
                 <!-- Airspace Minimums -->
-                <div onclick="openTool('airspace-mins')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('airspace-mins')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📋</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Airspace Mins</div>
                     <div style="font-size:11px; color:var(--sub-text);">VFR cloud &amp; vis requirements</div>
@@ -2377,7 +2377,7 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
 
                 <!-- Morse Code Trainer -->
-                <div onclick="openTool('morse-trainer')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('morse-trainer')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📡</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Morse Code</div>
                     <div style="font-size:11px; color:var(--sub-text);">Learn &amp; practice aviation Morse</div>
@@ -2527,7 +2527,7 @@
                 <div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
                     <div style="flex:1; height:1px; background:var(--border);"></div>
                     <button onclick="swapUnits()" title="Swap FROM / TO"
-                            style="background:#1c1c1e; border:1px solid #444; color:var(--accent);
+                            style="background:#111; border:2px solid #555; color:#e8a020;
                                    width:38px; height:38px; border-radius:50%; font-size:18px;
                                    cursor:pointer; display:flex; align-items:center; justify-content:center;
                                    flex-shrink:0; transition:transform 0.25s ease;">⇅</button>
@@ -2537,9 +2537,9 @@
                 <div class="conv-lbl" style="margin-bottom:8px;">CONVERT TO</div>
                 <select id="conv-to" class="stealth-select" onchange="convertUnit()" style="margin-bottom:16px;"></select>
                 
-                <div style="background:#1c1c1e; padding:20px; border-radius:10px; text-align:center; border:2px solid var(--accent);">
+                <div style="background:#111; padding:20px; border-radius:10px; text-align:center; border:2px solid #e8a020;">
                     <div style="font-size:11px; color:var(--sub-text); margin-bottom:6px; text-transform:uppercase;">RESULT</div>
-                    <div id="conv-result" style="font-size:32px; font-weight:800; color:var(--accent); font-family:'SF Mono',monospace;">-- --</div>
+                    <div id="conv-result" style="font-size:32px; font-weight:800; color:#e8a020; font-family:'SF Mono',monospace;">-- --</div>
                 </div>
             </div>
         </div>
@@ -3121,13 +3121,13 @@
                 
                 <!-- More Sources Button -->
                 <div style="margin-bottom:16px;">
-                    <button onclick="toggleSourcesMenu()" class="tool-btn" style="width:100%; background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:12px; font-size:12px; font-weight:700; border-radius:8px;">
+                    <button onclick="toggleSourcesMenu()" class="tool-btn" style="width:100%; background:#111; border:2px solid #444; color:#e8a020; padding:12px; font-size:12px; font-weight:700; border-radius:8px;">
                         🌐 REFERENCE MATERIALS
                     </button>
                 </div>
                 
                 <!-- Sources Menu (Initially Hidden) -->
-                <div id="sources-menu" style="display:none; margin-bottom:16px; background:#1c1c1e; border:1px solid #333; border-radius:8px; padding:12px;">
+                <div id="sources-menu" style="display:none; margin-bottom:16px; background:#111; border:2px solid #333; border-radius:8px; padding:12px;">
                     
                     <div style="font-size:11px; font-weight:700; color:var(--sub-text); margin-bottom:8px; letter-spacing:0.5px;">REFERENCE MATERIALS</div>
                     <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:8px; text-align:left; display:flex; align-items:center; gap:8px;">
