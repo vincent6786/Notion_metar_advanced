@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '3.9.9',  // ← set once in index.html
+            version: window.APP_VERSION || '4.0.1',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -1069,7 +1069,9 @@
             }
             // Statute miles
             if (smValue >= 10) return 'P6SM';
-            return `${smValue} sm`;
+            // Round to nearest quarter-mile for clean display (e.g. 1.75 → 1¾ SM)
+            const rounded = Math.round(smValue * 4) / 4;
+            return `${rounded} SM`;
         }
         
         /** Format Celsius temperature according to user's unit preference */
@@ -2512,7 +2514,15 @@
             document.getElementById('labelCeilVal').innerText = ceiling === 99999 ? 'Unlimited' : `${ceiling} ft`;
             document.getElementById('labelCeilVal').style.color = cStats.color;
             const visBar  = document.getElementById('gaugeVis'); visBar.style.width  = vStats.width; visBar.style.backgroundColor = vStats.color;
-            document.getElementById('labelVisVal').innerText = formatVisDisplay(vis);
+            // Show raw METAR visibility value (same as the card above — no unit conversion)
+            const rawVisUnit = (m.units?.visibility || 'sm').toLowerCase();
+            let visLabel = '--';
+            if (m.visibility?.value != null) {
+                if (rawVisUnit === 'm')       visLabel = m.visibility.value >= 9999 ? '10km+' : `${m.visibility.value}m`;
+                else if (rawVisUnit === 'km') visLabel = m.visibility.value >= 10   ? '10km+' : `${m.visibility.value}km`;
+                else                         visLabel = m.visibility.value >= 10    ? 'P6SM'  : `${m.visibility.value} SM`;
+            }
+            document.getElementById('labelVisVal').innerText = visLabel;
             document.getElementById('labelVisVal').style.color = vStats.color;
             const rule  = m.flight_rules;
             const msgEl = document.getElementById('frMessage');
