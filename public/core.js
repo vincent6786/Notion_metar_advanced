@@ -3,43 +3,33 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.0.7',  // ← set once in index.html
+            version: window.APP_VERSION || '4.0.8',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
-                // {
-                //     icon: '📱',
-                //     title: 'Dashboard mode!',
-                //     desc: 'Toggle in the settings~ A dahsboard with multi-airport~ New combined METAR + TAF tab when enabled. Switch between views with the pill toggle.'
-                // },
                 {
-                    icon: '🔨',
-                    title: 'Aviation tools: Weather Database updated‼️',
-                    desc: 'New update for weather terms, E6B wind traingle, also the new airspace min. ref.'
+                    icon: '📡',
+                    title: 'Morse Code Trainer',
+                    desc: 'New trainer in the Tools menu — Learn mode (tap any character to hear it), Listen mode (identify what you hear), and Quiz mode (10-question scored session). Essential for VOR/NDB station identification.'
                 },
-                // {
-                //     icon: '📊',
-                //     title: 'Data sources updated',
-                //     desc: 'See more in the Help section~'
-                // },
-                // {
-                //     icon: '🔤',
-                //     title: 'IATA codes in Dashboard',
-                //     desc: 'Add airports by IATA code (e.g. JFK) — auto-resolves to ICAO.'
-                // },
-                // {
-                //     icon: '🛬',
-                //     title: 'Prefered runway~',
-                //     desc: 'When setting default airport, you can either select auto or rwy needed!'
-                // },
-                // {
-                //     icon: '📋',
-                //     title: 'Raw data switch in Dashborad',
-                //     desc: 'Switch between raw data and easy view in Dashboard 😎'
-                // },
                 {
-                    icon: '✅',
-                    title: 'Bug fixed',
-                    desc: 'Faster UI and smoothness clean up~~'
+                    icon: '💨',
+                    title: 'Winds Aloft Table',
+                    desc: 'Upper-level winds and temperatures now displayed below the meteogram — ~3,000 ft (925 hPa), ~5,000 ft (850 hPa), and ~10,000 ft (700 hPa). Includes icing and strong-wind warnings. Zero extra API cost.'
+                },
+                {
+                    icon: '🌦',
+                    title: 'METAR card educational detail',
+                    desc: 'Tap any METAR card (Wind, Visibility, Ceiling, Altimeter, Present Weather, Temp/Dew) for a detailed explanation — sky cover oktas, flight category thresholds, weather codes, cloud base estimate, and more.'
+                },
+                {
+                    icon: '🌍',
+                    title: 'SIGMET / AIRMET viewer',
+                    desc: 'Active SIGMETs and AIRMETs shown below NOTAMs for US airports. For international airports, a direct link to the correct national authority is shown (ANWS Taiwan, JMA Japan, DWD Germany, etc.).'
+                },
+                {
+                    icon: '🔧',
+                    title: 'Visibility & wind unit fixes',
+                    desc: 'Visibility now displays the raw METAR value (5000m, 10SM, etc.) without conversion. Wind speed is normalised to knots for non-US airports that report in m/s. Gust values now shown in the Wind card.'
                 }
             ]
         };
@@ -2111,8 +2101,18 @@
             const container = document.getElementById(containerId);
             if (!container) return;
 
+            // Update "checked at" timestamp on both tabs
+            const nowStr = new Date().toLocaleTimeString('en-GB', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hour12: false }) + 'Z';
+            ['sigairmetCheckedAt', 'sigairmetCheckedAt2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = `checked ${nowStr} · ~240nm`;
+            });
+
             if (!items || items.length === 0) {
-                container.innerHTML = '<div style="color:#555;font-style:italic;padding:8px 0;">No active SIGMETs or AIRMETs in the area.</div>';
+                container.innerHTML = `<div style="color:#555;font-style:italic;padding:6px 0;font-size:11px;">
+                    ✅ No active SIGMETs or AIRMETs in the area.<br>
+                    <span style="font-size:10px;color:#444;">AIRMETs are issued at 03, 09, 15, 21Z. SIGMETs only when hazardous conditions exist.</span>
+                </div>`;
                 return;
             }
 
@@ -2164,7 +2164,41 @@
         }
 
 
-        function updateAudioSection(icao) {
+        /** Force re-fetch SIGMET/AIRMET — busts 10-min cache */
+        async function refreshSigairmet() {
+            if (!stationData?.latitude || !stationData?.longitude) {
+                showToast('Load an airport first');
+                return;
+            }
+            const icao = document.getElementById('icao').value.toUpperCase();
+            if (!isUSAirspace(icao)) return; // non-US: link-only, nothing to refresh
+
+            // Bust cache
+            const cacheKey = `cache_sigairmet_${stationData.latitude.toFixed(1)}_${stationData.longitude.toFixed(1)}`;
+            localStorage.removeItem(cacheKey);
+
+            ['sigairmetList', 'sigairmetList2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '<div style="color:#555;font-style:italic;padding:8px 0;">Refreshing...</div>';
+            });
+            ['sigairmetCheckedAt', 'sigairmetCheckedAt2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = 'checking...';
+            });
+
+            try {
+                const data = await fetchSigairmet(stationData.latitude, stationData.longitude);
+                renderSigairmet(data, 'sigairmetList');
+                renderSigairmet(data, 'sigairmetList2');
+            } catch(e) {
+                ['sigairmetList', 'sigairmetList2'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = '<div style="color:var(--danger);font-size:11px;padding:8px 0;">⚠ Failed to refresh. Check connection.</div>';
+                });
+            }
+        }
+
+
             const container   = document.getElementById('audioPlayerTarget');
             const label       = document.getElementById('audioLabel');
             const liveAtcBtn = document.getElementById('btnLiveAtc');
