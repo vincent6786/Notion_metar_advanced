@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.0.1',  // ← set once in index.html
+            version: window.APP_VERSION || '4.0.3',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -1722,6 +1722,12 @@
                         <div class="skeleton-text" style="width:75%;"></div>
                     </div>`;
             });
+
+            // SIGMET/AIRMET skeleton
+            ['sigairmetList', 'sigairmetList2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = `<div class="skeleton-text" style="width:70%;"></div>`;
+            });
         }
     
 // ================================================================
@@ -1786,11 +1792,14 @@
                 const weatherPromises = Promise.allSettled([
                     secureFetch(`/api/weather?type=metar&station=${icao}`),
                     secureFetch(`/api/weather?type=taf&station=${icao}`),
-                    fetchNotamsFAA(icao)
+                    fetchNotamsFAA(icao),
+                    stationData?.latitude && stationData?.longitude && isUSAirspace(icao)
+                        ? fetchSigairmet(stationData.latitude, stationData.longitude)
+                        : Promise.resolve(null)
                 ]);
                 
                 // Process results as they arrive
-                weatherPromises.then(([metarRes, tafRes, notamRes]) => {
+                weatherPromises.then(([metarRes, tafRes, notamRes, sigairmetRes]) => {
                     try {
                     // METAR
                     if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
@@ -1852,6 +1861,26 @@
                         document.getElementById('notamList').innerHTML = 
                             '<div style="color:#555;font-style:italic;padding:8px;">No NOTAMs available.</div>';
                     }
+
+                    // SIGMET / AIRMET
+                    const usAirspace = isUSAirspace(icao);
+                    const sigData = sigairmetRes?.status === 'fulfilled' ? sigairmetRes.value : null;
+                    ['sigairmetList', 'sigairmetList2'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        const section = el.closest('.sigairmet-section') || el.parentElement;
+                        if (!usAirspace) {
+                            const authority = getSigairmetAuthority(icao);
+                            el.innerHTML = `<div style="color:#555;font-size:11px;padding:4px 0;line-height:1.6;">
+                                SIGMET/AIRMET via AWC covers US airspace only.<br>
+                                For this airport, check <a href="${authority.url}" target="_blank"
+                                    style="color:var(--accent);text-decoration:none;font-weight:700;">${authority.name} ↗</a>.
+                            </div>`;
+                        } else {
+                            renderSigairmet(sigData, id);
+                        }
+                    });
+
                     showSourceFooters();   
                     updateUSAirportLinks(icao);
                     mirrorToWeatherTab();
@@ -1992,8 +2021,149 @@
         }
     
         // ================================================================
-        // 14. AUDIO SECTION
+        // 13c. SIGMET / AIRMET FETCH & RENDER (aviationweather.gov — free, no key)
         // ================================================================
+        /**
+         * Returns true for US domestic airspace ICAO prefixes:
+         * K = contiguous US, P = Pacific (PHXX Hawaii, PAXX Alaska, PGXX Guam), C = Canada border airports
+         */
+        function isUSAirspace(icao) {
+            if (!icao) return false;
+            const prefix = icao.charAt(0).toUpperCase();
+            return prefix === 'K' || prefix === 'P';
+        }
+
+        /**
+         * Returns the relevant national SIGMET/AIRMET authority for a given ICAO.
+         * Used to surface the right link for non-US airports.
+         */
+        function getSigairmetAuthority(icao) {
+            if (!icao) return { name: 'your national MET authority', url: 'https://www.icao.int/safety/meteorology/Pages/default.aspx' };
+            const prefix = icao.substring(0, 2).toUpperCase();
+            const first  = icao.charAt(0).toUpperCase();
+            const map = {
+                // Taiwan
+                RC: { name: 'CAA Taiwan (sigmet.caa.gov.tw)', url: 'https://sigmet.caa.gov.tw' },
+                // Japan
+                RJ: { name: 'JMA Japan (www.jma.go.jp)', url: 'https://www.jma.go.jp/bosai/map.html#5/34/137/&elem=sigmet' },
+                RO: { name: 'JMA Japan (www.jma.go.jp)', url: 'https://www.jma.go.jp/bosai/map.html#5/34/137/&elem=sigmet' },
+                // South Korea
+                RK: { name: 'KMA Korea (global.amo.go.kr)', url: 'https://global.amo.go.kr/awo/sigmet' },
+                // Hong Kong
+                VH: { name: 'HKO (weather.gov.hk)', url: 'https://www.weather.gov.hk/en/aviat/aviation-info.htm' },
+                // China
+                ZB: { name: 'CAAC China (www.caac.gov.cn)', url: 'http://www.caac.gov.cn' },
+                ZG: { name: 'CAAC China (www.caac.gov.cn)', url: 'http://www.caac.gov.cn' },
+                ZS: { name: 'CAAC China (www.caac.gov.cn)', url: 'http://www.caac.gov.cn' },
+                ZU: { name: 'CAAC China (www.caac.gov.cn)', url: 'http://www.caac.gov.cn' },
+                ZW: { name: 'CAAC China (www.caac.gov.cn)', url: 'http://www.caac.gov.cn' },
+                ZY: { name: 'CAAC China (www.caac.gov.cn)', url: 'http://www.caac.gov.cn' },
+                // UK
+                EG: { name: 'UK Met Office (www.metoffice.gov.uk)', url: 'https://www.metoffice.gov.uk/aviation/sigmet' },
+                // Germany / Europe
+                ED: { name: 'DWD Germany (www.dwd.de)', url: 'https://www.dwd.de/EN/specialusers/aviation/aviation_node.html' },
+                // Australia
+                YS: { name: 'BoM Australia (www.bom.gov.au)', url: 'https://www.bom.gov.au/aviation/' },
+                YM: { name: 'BoM Australia (www.bom.gov.au)', url: 'https://www.bom.gov.au/aviation/' },
+                // Canada
+                CY: { name: 'Nav Canada (flightplanning.navcanada.ca)', url: 'https://flightplanning.navcanada.ca' },
+                CZ: { name: 'Nav Canada (flightplanning.navcanada.ca)', url: 'https://flightplanning.navcanada.ca' },
+            };
+            // Try 2-letter prefix first, then fall back to ICAO region (first letter)
+            const regionFallback = {
+                E: { name: 'EUROCONTROL (www.eurocontrol.int)', url: 'https://www.eurocontrol.int/service/in-flight-weather' },
+                L: { name: 'EUROCONTROL (www.eurocontrol.int)', url: 'https://www.eurocontrol.int/service/in-flight-weather' },
+                V: { name: 'ICAO Asia-Pacific MET (www.icao.int)', url: 'https://www.icao.int/APAC/Pages/default.aspx' },
+                R: { name: 'ICAO Asia-Pacific MET (www.icao.int)', url: 'https://www.icao.int/APAC/Pages/default.aspx' },
+                F: { name: 'ICAO AFI MET (www.icao.int)', url: 'https://www.icao.int/WACAF/Pages/default.aspx' },
+                H: { name: 'ICAO AFI MET (www.icao.int)', url: 'https://www.icao.int/WACAF/Pages/default.aspx' },
+                S: { name: 'ICAO SAM MET (www.icao.int)', url: 'https://www.icao.int/SAM/Pages/default.aspx' },
+                T: { name: 'ICAO CAR/SAM MET (www.icao.int)', url: 'https://www.icao.int/NACC/Pages/default.aspx' },
+            };
+            return map[prefix] || regionFallback[first] || { name: 'your national MET authority', url: 'https://www.icao.int/safety/meteorology/Pages/default.aspx' };
+        }
+
+        async function fetchSigairmet(lat, lon) {
+            // Build a bounding box ~4° around the airport (roughly 240nm)
+            const bbox = [
+                (lon - 4).toFixed(2),
+                (lat - 4).toFixed(2),
+                (lon + 4).toFixed(2),
+                (lat + 4).toFixed(2)
+            ].join(',');
+            const url      = `https://aviationweather.gov/api/data/airsigmet?format=json&bbox=${bbox}`;
+            const cacheKey = `cache_sigairmet_${lat.toFixed(1)}_${lon.toFixed(1)}`;
+
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                const c = JSON.parse(cached);
+                if (Date.now() - c.ts < 600000) return c.data; // 10 min cache
+            }
+
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`AWC SIGMET/AIRMET: ${res.status}`);
+            const data = await res.json();
+            localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+            return data;
+        }
+
+        function renderSigairmet(items, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            if (!items || items.length === 0) {
+                container.innerHTML = '<div style="color:#555;font-style:italic;padding:8px 0;">No active SIGMETs or AIRMETs in the area.</div>';
+                return;
+            }
+
+            // Categorise
+            const sigmets  = items.filter(i => (i.airSigmetType || '').toUpperCase() === 'SIGMET');
+            const sierras  = items.filter(i => (i.airSigmetType || '').toUpperCase() === 'AIRMET' && /SIERRA|MTN|IFR|MOUNTAIN/.test((i.hazard || i.rawAirSigmet || '').toUpperCase()));
+            const tangos   = items.filter(i => (i.airSigmetType || '').toUpperCase() === 'AIRMET' && /TANGO|TURB|TURBULENCE/.test((i.hazard || i.rawAirSigmet || '').toUpperCase()));
+            const zulus    = items.filter(i => (i.airSigmetType || '').toUpperCase() === 'AIRMET' && /ZULU|ICE|ICING|FREEZ/.test((i.hazard || i.rawAirSigmet || '').toUpperCase()));
+            const other    = items.filter(i => !sigmets.includes(i) && !sierras.includes(i) && !tangos.includes(i) && !zulus.includes(i));
+
+            const fmtTime = iso => {
+                if (!iso) return '';
+                try {
+                    const d = new Date(iso);
+                    return `${d.getUTCDate().toString().padStart(2,'0')}/${(d.getUTCMonth()+1).toString().padStart(2,'0')} ${d.getUTCHours().toString().padStart(2,'0')}:${d.getUTCMinutes().toString().padStart(2,'0')}Z`;
+                } catch(e) { return iso; }
+            };
+
+            const renderGroup = (list, label, color, bg) => {
+                if (!list.length) return '';
+                return `
+                    <div style="color:${color};font-weight:800;font-size:11px;text-transform:uppercase;margin:12px 0 5px;">${label} (${list.length})</div>
+                    ${list.map(item => {
+                        const raw   = item.rawAirSigmet || item.rawMessage || '';
+                        const from  = fmtTime(item.validTimeFrom);
+                        const to    = fmtTime(item.validTimeTo);
+                        const alt   = item.altitudeLow1 != null
+                            ? `${item.altitudeLow1}–${item.altitudeHi1 ?? '?'} ft`
+                            : '';
+                        const hazard = item.hazard || item.phenomenon || '';
+                        return `
+                        <div style="margin-bottom:8px;border-left:3px solid ${color};background:${bg};border-radius:4px;padding:7px 10px;">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
+                                <span style="color:${color};font-size:10px;font-weight:800;">${item.airSigmetType || ''}${hazard ? ' · ' + hazard : ''}</span>
+                                <span style="color:#555;font-size:9px;white-space:nowrap;">${from}${to ? ' → ' + to : ''}</span>
+                            </div>
+                            ${alt ? `<div style="color:#888;font-size:10px;margin-bottom:4px;">✈ ${alt}</div>` : ''}
+                            <div style="font-size:11px;font-family:'SF Mono',monospace;line-height:1.5;color:#ccc;white-space:pre-wrap;word-break:break-word;">${raw}</div>
+                        </div>`;
+                    }).join('')}`;
+            };
+
+            container.innerHTML =
+                renderGroup(sigmets, '🔴 SIGMET',        '#ff453a', 'rgba(255,69,58,0.06)')  +
+                renderGroup(sierras, '🟡 AIRMET SIERRA', '#ff9f0a', 'rgba(255,159,10,0.06)') +
+                renderGroup(tangos,  '🟢 AIRMET TANGO',  '#30d158', 'rgba(48,209,88,0.06)')  +
+                renderGroup(zulus,   '🔵 AIRMET ZULU',   '#0a84ff', 'rgba(10,132,255,0.06)') +
+                renderGroup(other,   'ℹ️ OTHER',          '#8e8e93', 'rgba(255,255,255,0.03)');
+        }
+
+
         function updateAudioSection(icao) {
             const container   = document.getElementById('audioPlayerTarget');
             const label       = document.getElementById('audioLabel');

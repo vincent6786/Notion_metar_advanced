@@ -905,7 +905,7 @@
                 
                 // Check if NO-GO banner is enabled in settings (use localStorage for immediate sync access)
                 const bannerEnabledStr = localStorage.getItem('efb_no_go_banner_enabled');
-                const bannerEnabled = bannerEnabledStr === null ? true : bannerEnabledStr === 'true';
+                const bannerEnabled = bannerEnabledStr === null ? false : bannerEnabledStr === 'true';
                 
                 if (bannerEnabled) {
                     banner.className = '';
@@ -1219,7 +1219,7 @@
                 }
 
         async function checkNoGoBannerEnabled() {
-                    const enabled = await Storage.get('efb_no_go_banner_enabled', true); // Default to true
+                    const enabled = await Storage.get('efb_no_go_banner_enabled', false); // Default to false
                     const toggle = document.getElementById('toggleNoGoBanner');
                     if (toggle) toggle.checked = !!enabled;
                 }
@@ -1339,7 +1339,7 @@
                 ['rawMetar','rawMetar2'], ['rawTaf','rawTaf2'],
                 ['frMessage','frMessage2'], ['labelCeilVal','labelCeilVal2'],
                 ['labelVisVal','labelVisVal2'], ['tafIssued','tafIssued2'],
-                ['notamList','notamList2']
+                ['notamList','notamList2'], ['sigairmetList','sigairmetList2']
             ];
             mirrors.forEach(([orig, copy]) => {
                 const o = document.getElementById(orig);
