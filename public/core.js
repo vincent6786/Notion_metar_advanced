@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '3.9.8',  // ← set once in index.html
+            version: window.APP_VERSION || '3.9.9',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -2368,7 +2368,20 @@
             
             // ── VISIBILITY with trend ──
             const visSM = visToSM(d.visibility?.value, d.units?.visibility);
-            const visText = visSM != null ? formatVisDisplay(visSM) : '--';
+            // Display raw value as the METAR gives it (e.g. "3500m", "10SM", "9999m")
+            const rawVisUnit = (d.units?.visibility || 'sm').toLowerCase();
+            let visText = '--';
+            if (d.visibility?.value != null) {
+                if (rawVisUnit === 'm') {
+                    // Meters: show as-is (e.g. "3500m") or "10km+" if ≥9999m
+                    visText = d.visibility.value >= 9999 ? '10km+' : `${d.visibility.value}m`;
+                } else if (rawVisUnit === 'km') {
+                    visText = d.visibility.value >= 10 ? '10km+' : `${d.visibility.value}km`;
+                } else {
+                    // Statute miles
+                    visText = d.visibility.value >= 10 ? 'P6SM' : `${d.visibility.value}SM`;
+                }
+            }
             const visTrend = analyzeTrend(icao, 'vis', visSM ?? 10);
             document.getElementById('mVis').innerHTML = visText + getTrendBadge(visTrend);
             
