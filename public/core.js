@@ -2199,6 +2199,7 @@
         }
 
 
+        function updateAudioSection(icao) {
             const container   = document.getElementById('audioPlayerTarget');
             const label       = document.getElementById('audioLabel');
             const liveAtcBtn = document.getElementById('btnLiveAtc');
