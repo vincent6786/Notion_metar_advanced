@@ -331,7 +331,7 @@
             const s = new Date(f.start_time.dt), e = new Date(f.end_time.dt);
             const timeStr  = `${s.getUTCHours()}z ➔ ${e.getUTCHours()}z`;
             const windStr  = `${f.wind_direction?.value || 'VRB'}° / ${f.wind_speed?.value || 0}kt`;
-            const visStr   = f.visibility ? `${f.visibility.value} sm` : 'P6SM';
+            const visStr   = f.visibility ? formatVisDisplay(visToSM(f.visibility.value, f.units?.visibility)) : 'P6SM';
             const wxStr    = f.wx_codes ? f.wx_codes.map(x => x.repr).join(' ') : 'NSW';
             let cStr = 'SKC';
             if (f.clouds && f.clouds.length > 0) cStr = f.clouds.map(c => `${c.type}${c.altitude.toString().padStart(3, '0')}`).join(' ');
@@ -2442,7 +2442,7 @@
                 </svg>` : '';
         
             // ── Visibility ──
-            const vis = formatVisDisplay(m.visibility?.value);
+            const vis = formatVisDisplay(visToSM(m.visibility?.value, m.units?.visibility));
         
             // ── Clouds ──
             const cloudStr = decodeCloudLayer(m.clouds);

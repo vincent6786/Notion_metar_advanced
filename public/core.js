@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '3.9.6',  // ← set once in index.html
+            version: window.APP_VERSION || '3.9.5',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -1027,6 +1027,21 @@
         function getTempUnit()     { return localStorage.getItem('efb_temp_unit')       || 'c';  }
         function getDashCardStyle(){ return localStorage.getItem('efb_dash_card_style') || 'raw'; }
         
+        /**
+         * Normalise an AVWX visibility value to statute miles.
+         * AVWX returns visibility in 'sm', 'm', or 'km' depending on the airport.
+         * @param {number} value  - raw value from d.visibility.value
+         * @param {string} [unit] - from d.units?.visibility ('sm'|'m'|'km'), default 'sm'
+         */
+        function visToSM(value, unit) {
+            if (value == null) return null;
+            switch ((unit || 'sm').toLowerCase()) {
+                case 'm':  return value / 1609.34;
+                case 'km': return value / 1.60934;
+                default:   return value;             // already sm
+            }
+        }
+
         /** Format visibility value (in SM) according to user's unit preference */
         function formatVisDisplay(smValue) {
             if (smValue == null) return '--';
@@ -2318,8 +2333,9 @@
             document.getElementById('mWind').innerHTML = windText + getTrendBadge(windTrend);
             
             // ── VISIBILITY with trend ──
-            const visText = d.visibility ? `${d.visibility.value} sm` : '--';
-            const visTrend = analyzeTrend(icao, 'vis', d.visibility?.value || 10);
+            const visSM = visToSM(d.visibility?.value, d.units?.visibility);
+            const visText = visSM != null ? formatVisDisplay(visSM) : '--';
+            const visTrend = analyzeTrend(icao, 'vis', visSM ?? 10);
             document.getElementById('mVis').innerHTML = visText + getTrendBadge(visTrend);
             
             // ── CEILING with trend ──
@@ -2386,7 +2402,7 @@
             let ceiling = 99999;
             const ceilLayer = m.clouds?.find(c => ['BKN','OVC','VV'].includes(c.type));
             if (ceilLayer) ceiling = ceilLayer.altitude * 100;
-            let vis = m.visibility ? m.visibility.value : 10;
+            let vis = visToSM(m.visibility?.value, m.units?.visibility) ?? 10;
 
             const getStats = (val, type) => {
                 let pct = 0, color = 'var(--success)';
@@ -2592,7 +2608,7 @@
                     const wind = m.wind_direction?.repr === 'VRB'
                         ? `VRB / ${m.wind_speed?.value || 0}kt`
                         : `${String(m.wind_direction?.value ?? 0).padStart(3,'0')}° / ${m.wind_speed?.value || 0}kt`;
-                    const vis   = m.visibility ? `${m.visibility.value} sm` : '--';
+                    const vis   = m.visibility ? formatVisDisplay(visToSM(m.visibility.value, m.units?.visibility)) : '--';
                     const ceil  = m.clouds?.[0] ? `${m.clouds[0].type} ${m.clouds[0].altitude * 100}'` : 'CLR';
                     const temp  = m.temperature?.value != null ? `${m.temperature.value}°C` : '--';
                     const alt   = m.altimeter?.value
