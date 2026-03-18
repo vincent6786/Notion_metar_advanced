@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.1.4',  // ← set once in index.html
+            version: window.APP_VERSION || '4.1.5',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -1658,6 +1658,11 @@
         // 11b. LOADING SKELETONS
         // ================================================================
         function showLoadingSkeletons() {
+            // Reset freq container so renderInfo repopulates on next load
+            const fc = document.getElementById('freqContainer');
+            if (fc) fc.innerHTML = '';
+            const ap = document.getElementById('atisPhones');
+            if (ap) ap.innerHTML = '<div style="color:#555;font-size:12px;padding:8px;">Loading...</div>';
             // Mirror IDs for weather tab (suffix '2')
             const pairs = [
                 ['rawMetar', 'rawMetar2'],
@@ -3078,6 +3083,90 @@
             }
         }
     
+        function renderInfoFrequencies(d, fContainer) {
+            const icao = (d.icao || '').toUpperCase();
+            if (!icao || !fContainer) return;
+
+            // Phone container
+            const phoneContainer = document.getElementById('atisPhones');
+
+            // ── Layer 1: embedded FREQ_DB ──
+            let dbFreqs = null;
+            try {
+                dbFreqs = (typeof lookupFrequencies === 'function') ? lookupFrequencies(icao) : null;
+            } catch(e) {
+                console.warn('[FreqDB] Lookup error:', e);
+            }
+
+            if (dbFreqs && dbFreqs.length > 0) {
+                fContainer.innerHTML = '';
+                dbFreqs.forEach(f => {
+                    const card = document.createElement('div'); card.className = 'freq-card';
+                    const label = f.d ? `${f.t}<br><span style="font-size:9px;color:#555;font-weight:400;">${f.d}</span>` : f.t;
+                    card.innerHTML = `<div class="freq-type">${label}</div><div class="freq-val">${f.f}</div>`;
+                    fContainer.appendChild(card);
+                });
+                const note = document.createElement('div');
+                note.style.cssText = 'grid-column:1/-1;font-size:9px;color:#444;text-align:right;margin-top:4px;';
+                note.innerHTML = `<a href="https://ourairports.com/airports/${icao}/frequencies.html" target="_blank" style="color:#555;text-decoration:none;">OurAirports ↗</a>`;
+                fContainer.appendChild(note);
+            } else {
+                // ── Layer 2: AVWX frequencies[] ──
+                const avwxFreqs = (d.frequencies || []).slice(0, 12);
+                if (avwxFreqs.length > 0) {
+                    fContainer.innerHTML = '';
+                    avwxFreqs.forEach(f => {
+                        const card = document.createElement('div'); card.className = 'freq-card';
+                        card.innerHTML = `<div class="freq-type">${f.type || '--'}</div><div class="freq-val">${f.frequency || '--'}</div>`;
+                        fContainer.appendChild(card);
+                    });
+                } else {
+                    // ── Layer 3: aviationweather.gov ──
+                    fContainer.innerHTML = '<div style="color:#555;font-size:11px;padding:6px;">Checking online…</div>';
+                    fetchAirportSupplementary(icao).then(awData => {
+                        const awFreqs = awData?.comms || [];
+                        if (awFreqs.length > 0) {
+                            fContainer.innerHTML = '';
+                            awFreqs.forEach(f => {
+                                const card = document.createElement('div'); card.className = 'freq-card';
+                                card.innerHTML = `<div class="freq-type">${f.type || '--'}</div><div class="freq-val">${f.frequency || '--'}</div>`;
+                                fContainer.appendChild(card);
+                            });
+                        } else {
+                            fContainer.innerHTML = `
+                                <div style="grid-column:1/-1;font-size:11px;color:#555;padding:8px;text-align:center;">
+                                    No frequency data available.
+                                    <a href="https://ourairports.com/airports/${icao}/frequencies.html" target="_blank"
+                                       style="color:#e8a020;margin-left:6px;text-decoration:none;">OurAirports ↗</a>
+                                </div>`;
+                        }
+                    });
+                }
+            }
+
+            // ── ATIS/AWOS phones ──
+            if (phoneContainer) {
+                const atisEntry = dbFreqs?.find(f => f.t === 'ATIS');
+                let phones = [];
+                if (d.communications && Array.isArray(d.communications)) {
+                    phones = d.communications
+                        .filter(c => ['ATIS','AWOS','ASOS'].includes((c.type||'').toUpperCase()) && c.phone)
+                        .map(c => ({ type: c.type.toUpperCase(), phone: c.phone, freq: c.frequency ? `${c.frequency} MHz` : '' }));
+                }
+                if (phones.length > 0) {
+                    phoneContainer.innerHTML = phones.map(p => `
+                        <div class="phone-card">
+                            <div class="phone-label">${p.type}${p.freq ? ' · ' + p.freq : ''}</div>
+                            <a href="tel:${p.phone.replace(/[^\d+]/g,'')}" class="phone-number">📞 ${p.phone}</a>
+                        </div>`).join('');
+                } else if (atisEntry) {
+                    phoneContainer.innerHTML = `<div style="color:#555;font-size:12px;padding:8px;">ATIS ${atisEntry.f} MHz — no phone on file</div>`;
+                } else {
+                    phoneContainer.innerHTML = `<div style="color:#555;font-size:12px;padding:8px;">No phone data — <a href="https://www.airnav.com/airport/${icao}" target="_blank" style="color:#e8a020;text-decoration:none;">AirNav ↗</a></div>`;
+                }
+            }
+        }
+
         function renderInfo(d) {
             document.getElementById('infoName').innerText   = d.name;
             document.getElementById('infoLoc').innerText    = `${d.city || ''}, ${d.country || ''} (${d.icao})`;
@@ -3095,98 +3184,13 @@
             document.getElementById('calcDA').innerText  = `${da} ft`;
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
             checkDAWarning(da, elev);
+
+            // ── FREQUENCIES — only populate on first call (not on METAR re-render) ──
             const fContainer = document.getElementById('freqContainer');
-                        fContainer.innerHTML = '<div style="color:#555;font-size:12px;padding:4px;">Loading frequencies...</div>';
-            
-                        // Phone numbers
-                        const phoneContainer = document.getElementById('atisPhones');
-                        if (phoneContainer) {
-                            phoneContainer.innerHTML = '<div style="color:#555;font-size:12px;padding:8px;">Loading...</div>';
-                        }
+            if (fContainer && fContainer.children.length === 0) {
+                renderInfoFrequencies(d, fContainer);
+            }
 
-                        // ── FREQUENCIES — Layer 1: embedded FREQ_DB (from OurAirports CSV) ──
-                        const dbFreqs = (typeof lookupFrequencies === 'function') ? lookupFrequencies(d.icao) : null;
-                        if (dbFreqs && dbFreqs.length > 0) {
-                            fContainer.innerHTML = '';
-                            dbFreqs.forEach(f => {
-                                const card = document.createElement('div'); card.className = 'freq-card';
-                                const label = f.d && f.d !== f.t ? `${f.t}<br><span style="font-size:9px;color:#555;font-weight:400;">${f.d}</span>` : f.t;
-                                card.innerHTML = `<div class="freq-type">${label}</div><div class="freq-val">${f.f}</div>`;
-                                fContainer.appendChild(card);
-                            });
-                            // Add source note
-                            const note = document.createElement('div');
-                            note.style.cssText = 'grid-column:1/-1;font-size:9px;color:#444;text-align:right;margin-top:4px;';
-                            note.innerHTML = `Source: <a href="https://ourairports.com/airports/${d.icao}/frequencies.html" target="_blank" style="color:#555;text-decoration:none;">OurAirports ↗</a>`;
-                            fContainer.appendChild(note);
-                        } else {
-                            // ── Layer 2: AVWX station data ──
-                            const avwxFreqs = (d.frequencies || []).slice(0, 12);
-                            if (avwxFreqs.length > 0) {
-                                fContainer.innerHTML = '';
-                                avwxFreqs.forEach(f => {
-                                    const card = document.createElement('div'); card.className = 'freq-card';
-                                    card.innerHTML = `<div class="freq-type">${f.type || '--'}</div><div class="freq-val">${f.frequency || '--'}</div>`;
-                                    fContainer.appendChild(card);
-                                });
-                            } else {
-                                // ── Layer 3: aviationweather.gov supplementary ──
-                                fetchAirportSupplementary(d.icao).then(awData => {
-                                    const awFreqs = awData?.comms || [];
-                                    fContainer.innerHTML = '';
-                                    if (awFreqs.length > 0) {
-                                        awFreqs.forEach(f => {
-                                            const card = document.createElement('div'); card.className = 'freq-card';
-                                            card.innerHTML = `<div class="freq-type">${f.type || '--'}</div><div class="freq-val">${f.frequency || '--'}</div>`;
-                                            fContainer.appendChild(card);
-                                        });
-                                    } else {
-                                        fContainer.innerHTML = `
-                                            <div style="grid-column:span 3;color:#555;font-size:12px;padding:8px;text-align:center;">
-                                                No frequency data available.
-                                                <a href="https://ourairports.com/airports/${d.icao}/frequencies.html" target="_blank"
-                                                   style="color:var(--accent);margin-left:6px;text-decoration:none;">OurAirports ↗</a>
-                                                <a href="https://skyvector.com/airport/${d.icao}" target="_blank"
-                                                   style="color:var(--accent);margin-left:8px;text-decoration:none;">SkyVector ↗</a>
-                                            </div>`;
-                                    }
-                                });
-                            }
-                        }
-
-                        // ── ATIS/AWOS PHONES ──
-                        if (phoneContainer) {
-                            // Pull ATIS frequency from FREQ_DB for quick reference
-                            const atisEntry = dbFreqs?.find(f => f.t === 'ATIS');
-                            let phones = [];
-
-                            // Check AVWX communications field
-                            if (d.communications && Array.isArray(d.communications)) {
-                                phones = d.communications
-                                    .filter(c => ['ATIS','AWOS','ASOS'].includes((c.type||'').toUpperCase()) && c.phone)
-                                    .map(c => ({ type: c.type.toUpperCase(), phone: c.phone, freq: c.frequency ? `${c.frequency} MHz` : '' }));
-                            }
-
-                            if (phones.length > 0) {
-                                phoneContainer.innerHTML = phones.map(p => `
-                                    <div class="phone-card">
-                                        <div class="phone-label">${p.type}${p.freq ? ' · ' + p.freq : ''}</div>
-                                        <a href="tel:${p.phone.replace(/[^\d+]/g,'')}" class="phone-number">
-                                            📞 ${p.phone}
-                                        </a>
-                                    </div>`).join('');
-                            } else if (atisEntry) {
-                                phoneContainer.innerHTML = `<div style="color:#555;font-size:12px;padding:8px;">ATIS ${atisEntry.f} MHz — no phone number available</div>`;
-                            } else {
-                                phoneContainer.innerHTML = `
-                                    <div style="color:#555;font-size:12px;padding:8px;line-height:1.6;">
-                                        No phone data available for ${d.icao}.<br>
-                                        <a href="https://www.airnav.com/airport/${d.icao}" target="_blank"
-                                           style="color:var(--accent);text-decoration:none;">Check AirNav ↗</a>
-                                    </div>`;
-                            }
-                        }
-            
             updateSunDisplay();
             const sunEl = document.getElementById('infoSun');
             sunEl.style.cursor = "pointer"; sunEl.style.textDecoration = "underline"; sunEl.style.textDecorationColor = "#555";
