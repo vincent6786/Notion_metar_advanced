@@ -292,7 +292,22 @@
                 if (f.flight_rules === 'VFR')  col = 'var(--success)';
                 if (f.flight_rules === 'MVFR') col = 'var(--mvfr)';
                 if (f.flight_rules === 'IFR')  col = 'var(--danger)';
-                block.style.backgroundColor = col; block.innerText = f.type;
+                if (f.flight_rules === 'LIFR') col = 'var(--lifr)';
+                block.style.backgroundColor = col;
+
+                // Check if this period is currently active
+                const fStart = new Date(f.start_time.dt);
+                const fEnd   = new Date(f.end_time.dt);
+                const isActive = now >= fStart && now < fEnd;
+                if (isActive) {
+                    block.style.outline = '2px solid #fff';
+                    block.style.outlineOffset = '-2px';
+                    block.style.zIndex = '1';
+                    block.style.position = 'relative';
+                    block.innerHTML = `<span style="font-size:9px;font-weight:900;letter-spacing:0.3px;display:block;">${f.type}</span><span style="font-size:8px;opacity:0.85;">NOW</span>`;
+                } else {
+                    block.innerText = f.type;
+                }
                 block.setAttribute('onclick', `showTafDetail(${index}, '${col}')`);
                 bar.appendChild(block);
                 if (index % 2 === 0) {
@@ -301,6 +316,21 @@
                     lbl.innerText = `${s.getUTCHours()}z`; axis.appendChild(lbl);
                 }
             });
+
+            // Auto-expand the currently active forecast period
+            const activeIdx = d.forecast.findIndex(f => {
+                const s = new Date(f.start_time.dt), e = new Date(f.end_time.dt);
+                return now >= s && now < e;
+            });
+            if (activeIdx !== -1) {
+                const activeForecast = d.forecast[activeIdx];
+                let activeCol = '#555';
+                if (activeForecast.flight_rules === 'VFR')  activeCol = 'var(--success)';
+                if (activeForecast.flight_rules === 'MVFR') activeCol = 'var(--mvfr)';
+                if (activeForecast.flight_rules === 'IFR')  activeCol = 'var(--danger)';
+                if (activeForecast.flight_rules === 'LIFR') activeCol = 'var(--lifr)';
+                showTafDetail(activeIdx, activeCol);
+            }
             if (stationSunTimes) updateTafSkyGradient(startT, endT);
         }
 
@@ -1305,6 +1335,7 @@
                 ['mWind','mWind2'], ['mVis','mVis2'], ['mCeil','mCeil2'],
                 ['mAlt','mAlt2'], ['mTempC','mTempC2'], ['mTempF','mTempF2'],
                 ['mAge','mAge2'], ['mSpread','mSpread2'], ['mHumidity','mHumidity2'],
+                ['mWx','mWx2'], ['mSpeciBadge','mSpeciBadge2'],
                 ['rawMetar','rawMetar2'], ['rawTaf','rawTaf2'],
                 ['frMessage','frMessage2'], ['labelCeilVal','labelCeilVal2'],
                 ['labelVisVal','labelVisVal2'], ['tafIssued','tafIssued2'],

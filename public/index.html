@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '3.9.7';</script>
+    <script>window.APP_VERSION = '3.9.5';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -226,6 +226,10 @@
             <div class="metar-card"><div class="m-label">CEILING</div><div class="m-value" id="mCeil">--</div></div>
             <div class="metar-card"><div class="m-label">ALTIMETER</div><div class="m-value" id="mAlt">--</div></div>
             <div class="metar-card full-width">
+                <div class="m-label">PRESENT WEATHER</div>
+                <div class="m-value" id="mWx" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;"><span style="color:var(--sub-text);font-size:12px;">--</span></div>
+            </div>
+            <div class="metar-card full-width">
                 <div class="m-label">TEMP / DEWPOINT</div>
                 <div class="m-value">
                     <span id="mTempC">--</span>
@@ -235,7 +239,10 @@
         </div>
     
         <div class="section-header-row">
-            <div class="section-title" style="margin:0;">RAW METAR</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div class="section-title" style="margin:0;">RAW METAR</div>
+                <span id="mSpeciBadge"></span>
+            </div>
             <div style="display:flex;gap:6px;align-items:center;">
                 <button class="copy-btn"
                         onclick="openDecodedMetar()"
@@ -429,6 +436,10 @@
                 <div class="metar-card"><div class="m-label">CEILING</div><div class="m-value" id="mCeil2">--</div></div>
                 <div class="metar-card"><div class="m-label">ALTIMETER</div><div class="m-value" id="mAlt2">--</div></div>
                 <div class="metar-card full-width">
+                    <div class="m-label">PRESENT WEATHER</div>
+                    <div class="m-value" id="mWx2" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;"><span style="color:var(--sub-text);font-size:12px;">--</span></div>
+                </div>
+                <div class="metar-card full-width">
                     <div class="m-label">TEMP / DEWPOINT</div>
                     <div class="m-value">
                         <span id="mTempC2">--</span>
@@ -437,7 +448,10 @@
                 </div>
             </div>
             <div class="section-header-row">
-                <div class="section-title" style="margin:0;">RAW METAR</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="section-title" style="margin:0;">RAW METAR</div>
+                    <span id="mSpeciBadge2"></span>
+                </div>
                 <div style="display:flex;gap:6px;align-items:center;">
                     <button class="copy-btn"
                             onclick="openDecodedMetar()"

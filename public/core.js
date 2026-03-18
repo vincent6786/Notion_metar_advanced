@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '3.9.7',  // ← set once in index.html
+            version: window.APP_VERSION || '3.9.5',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -1029,6 +1029,21 @@
         function getDashCardStyle(){ return localStorage.getItem('efb_dash_card_style') || 'raw'; }
         
         /**
+         * Normalise an AVWX wind speed/gust value to knots.
+         * AVWX returns wind in 'kt', 'm_s', or 'km_h' depending on airport.
+         * @param {number} value - raw value from d.wind_speed.value / d.wind_gust.value
+         * @param {string} [unit] - from d.units?.wind_speed ('kt'|'m_s'|'km_h'), default 'kt'
+         */
+        function windToKt(value, unit) {
+            if (value == null) return null;
+            switch ((unit || 'kt').toLowerCase()) {
+                case 'm_s':  return Math.round(value * 1.94384);
+                case 'km_h': return Math.round(value / 1.852);
+                default:     return value;
+            }
+        }
+
+        /**
          * Normalise an AVWX visibility value to statute miles.
          * AVWX returns visibility in 'sm', 'm', or 'km' depending on the airport.
          * @param {number} value  - raw value from d.visibility.value
@@ -1783,7 +1798,12 @@
                         lastMetarObj = m;
                         let dirVal = m.wind_direction?.value;
                         if (m.wind_direction?.repr === 'VRB' || (dirVal === null && m.wind_speed?.value > 0)) dirVal = 'VRB';
-                        currentWind = { dir: dirVal === null ? 0 : dirVal, spd: m.wind_speed?.value || 0 };
+                        const windUnit = m.units?.wind_speed;
+                        currentWind = {
+                            dir:  dirVal === null ? 0 : dirVal,
+                            spd:  windToKt(m.wind_speed?.value, windUnit) || 0,
+                            gust: windToKt(m.wind_gust?.value,  windUnit) || 0
+                        };
                         let altVal = m.altimeter?.value || 1013;
                         let altUnit = altVal < 200 ? 'inHg' : 'hPa';
                         currentMetar = { temp: m.temperature?.value || 15, alt: altVal, altUnit };
@@ -2228,7 +2248,12 @@
                     ts: Date.now(),
                     ceil: metar.ceiling?.value || 99999,
                     vis: visToSM(metar.visibility?.value, metar.units?.visibility) ?? 10,
-                    windSpd: metar.wind_speed?.value || 0
+                    windSpd: windToKt(metar.wind_speed?.value, metar.units?.wind_speed) || 0,
+                    alt: (() => {
+                        const v = metar.altimeter?.value;
+                        if (!v) return 1013;
+                        return v < 200 ? Math.round(v * 33.8639) : v; // always store hPa
+                    })()
                 };
                 
                 history.unshift(record);
@@ -2283,6 +2308,13 @@
                     const worsening = currentValue > compareValue + threshold;
                     if (improving) return 'improving';
                     if (worsening) return 'worsening';
+                } else if (param === 'alt') {
+                    // Rising pressure = improving (fair weather); falling = worsening
+                    threshold = 2; // 2 hPa
+                    improving = currentValue > compareValue + threshold;
+                    const worsening = currentValue < compareValue - threshold;
+                    if (improving) return 'improving';
+                    if (worsening) return 'worsening';
                 }
                 
                 return 'steady';
@@ -2329,7 +2361,8 @@
             const icao = document.getElementById('icao').value.toUpperCase();
             
             // ── WIND with trend ──
-            const windText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}kt`;
+            const gustStr = currentWind.gust > 0 ? `G${currentWind.gust}` : '';
+            const windText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}${gustStr}kt`;
             const windTrend = analyzeTrend(icao, 'windSpd', currentWind.spd);
             document.getElementById('mWind').innerHTML = windText + getTrendBadge(windTrend);
             
@@ -2346,11 +2379,13 @@
             const ceilTrend = analyzeTrend(icao, 'ceil', ceilValue);
             document.getElementById('mCeil').innerHTML = ceilText + getTrendBadge(ceilTrend);
             
-            // ── REST OF FUNCTION (unchanged) ──
+            // ── ALTIMETER with trend ──
             const alt = d.altimeter?.value;
             if (alt) {
-                if (currentMetar.altUnit === 'hPa') { const inHg = (alt * 0.02953).toFixed(2); document.getElementById('mAlt').innerText = `Q${alt} / A${inHg}`; }
-                else { const hPa = Math.round(alt * 33.8639); document.getElementById('mAlt').innerText = `Q${hPa} / A${alt.toFixed(2)}`; }
+                const altHpa = currentMetar.altUnit === 'inHg' ? Math.round(alt * 33.8639) : alt;
+                const altTrend = analyzeTrend(icao, 'alt', altHpa);
+                if (currentMetar.altUnit === 'hPa') { const inHg = (alt * 0.02953).toFixed(2); document.getElementById('mAlt').innerHTML = `Q${alt} / A${inHg}` + getTrendBadge(altTrend); }
+                else { const hPa = Math.round(alt * 33.8639); document.getElementById('mAlt').innerHTML = `Q${hPa} / A${alt.toFixed(2)}` + getTrendBadge(altTrend); }
             }
             const t = d.temperature?.value, dew = d.dewpoint?.value;
             if (t != null) {
@@ -2377,9 +2412,45 @@
                 }
             }
             const ageEl = document.getElementById('mAge');
-            ageEl.innerText = `${minAgo}m ago`;
-            ageEl.style.color      = minAgo > 60 ? 'var(--danger)' : 'var(--sub-text)';
+            const obsTime = `${metarTime.getUTCHours().toString().padStart(2,'0')}${metarTime.getUTCMinutes().toString().padStart(2,'0')}Z`;
+            ageEl.innerText    = `${obsTime} · ${minAgo}m ago`;
+            ageEl.style.color      = minAgo > 60 ? 'var(--danger)' : minAgo > 45 ? 'var(--warn)' : 'var(--sub-text)';
             ageEl.style.fontWeight = minAgo > 60 ? '700' : '400';
+
+            // ── SPECI / COR badge ──
+            const speciBadge = document.getElementById('mSpeciBadge');
+            if (speciBadge) {
+                const type = (d.type || '').toUpperCase();
+                if (type === 'SPECI') {
+                    speciBadge.innerHTML = '<span style="background:rgba(255,159,10,0.15);border:1px solid var(--warn);color:var(--warn);font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:0.5px;animation:lightPulse 1.5s infinite;">⚡ SPECI</span>';
+                    speciBadge.title = 'Special observation — sudden significant change in conditions';
+                } else if (type === 'COR') {
+                    speciBadge.innerHTML = '<span style="background:rgba(10,132,255,0.1);border:1px solid var(--accent);color:var(--accent);font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:0.5px;">✎ COR</span>';
+                    speciBadge.title = 'Corrected observation';
+                } else {
+                    speciBadge.innerHTML = '';
+                }
+            }
+
+            // ── PRESENT WEATHER (wx_codes) ──
+            const wxEl = document.getElementById('mWx');
+            if (wxEl) {
+                const wxCodes = d.wx_codes || [];
+                if (wxCodes.length === 0) {
+                    wxEl.innerHTML = '<span style="color:var(--sub-text);font-size:12px;">NSW</span>';
+                } else {
+                    const wxColor = (repr) => {
+                        if (/^[\+]?TS/.test(repr) || repr.includes('TS')) return 'var(--danger)';
+                        if (/FG|FZFG|FZRA|FZDZ|IC|PL|SQ|FC/.test(repr))   return 'var(--warn)';
+                        if (/SN|SG|GS|GR|BLSN|DRSN/.test(repr))            return '#85B7EB';
+                        return 'var(--text)';
+                    };
+                    wxEl.innerHTML = wxCodes.map(wx => {
+                        const col = wxColor(wx.repr);
+                        return `<span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:${col};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:0.3px;">${wx.repr}</span>`;
+                    }).join(' ');
+                }
+            }
 
         }
 
