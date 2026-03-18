@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.0.5',  // ← set once in index.html
+            version: window.APP_VERSION || '4.0.6',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -3085,6 +3085,137 @@
         }
 
         // ── Opens formula-modal with dynamic title + body ─────────────────
+        function showMetarCardDetail(card) {
+            const sep = () => '<div style="height:1px;background:#1e1e1e;margin:10px 0;"></div>';
+            const div = (html, style='') => `<div style="${style}">${html}</div>`;
+            const sky = (code, oktas, desc, color) =>
+                `<div style="display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid #1e1e1e;">
+                    <span style="font-family:'SF Mono',monospace;font-size:13px;font-weight:800;color:${color};min-width:36px;">${code}</span>
+                    <span style="font-size:11px;color:#666;min-width:80px;">${oktas}</span>
+                    <span style="font-size:12px;color:#ccc;">${desc}</span>
+                </div>`;
+
+            switch (card) {
+
+                case 'wind':
+                    _openInfoModal('Wind', `
+                        ${_iRow('Format', 'DDD/SSkt  or  VRB/SSkt')}
+                        ${_iRow('DDD', 'True direction wind is coming FROM (°)')}
+                        ${_iRow('SS', 'Speed in knots (kt)')}
+                        ${_iRow('Gust', 'e.g. 28015G28KT = 150° at 15kt gusting 28kt')}
+                        ${_iRow('VRB', 'Variable — direction shifts >60° at ≤6kt')}
+                        ${_iRow('CALM', '00000KT — no significant wind')}
+                        ${sep()}
+                        ${div('Wind in a METAR is <b style="color:#fff;">True north</b>. On the ground, ATC uses <b style="color:#fff;">magnetic</b>. Apply mag variation to align with your runway heading.', 'font-size:11px;color:#888;line-height:1.7;')}
+                        ${_iNote('Rule of thumb: a 90° crosswind at half the stall speed is typically at your limit. Always check your POH for the certified crosswind component.')}
+                    `); break;
+
+                case 'vis':
+                    _openInfoModal('Visibility', `
+                        ${_iRow('P6SM', 'Prevailing vis > 6 statute miles (US)')}
+                        ${_iRow('SM', 'Statute miles — used in US & Canada')}
+                        ${_iRow('m', 'Meters — used internationally (ICAO)')}
+                        ${_iRow('9999', '10 km or more (ICAO standard ceiling)')}
+                        ${sep()}
+                        ${div('<b style="color:#fff;font-size:11px;">VFR FLIGHT CATEGORY THRESHOLDS</b>', 'font-size:11px;margin-bottom:4px;')}
+                        ${_iRow('VFR',  '> 5 SM',  'var(--success)')}
+                        ${_iRow('MVFR', '3 – 5 SM',  'var(--mvfr)')}
+                        ${_iRow('IFR',  '1 – 3 SM',  'var(--danger)')}
+                        ${_iRow('LIFR', '< 1 SM',  'var(--lifr)')}
+                        ${sep()}
+                        ${_iNote('Prevailing visibility is the greatest distance seen over at least half the horizon. RVR (Runway Visual Range) may supplement this for low-vis approaches.')}
+                    `); break;
+
+                case 'ceil':
+                    _openInfoModal('Sky Cover & Ceiling', `
+                        ${div('<b style="color:#fff;font-size:11px;">SKY COVER CODES (OKTAS = eighths of sky)</b>', 'font-size:11px;margin-bottom:2px;')}
+                        ${sky('SKC', '0 / 8', 'Sky clear — human observer. No clouds.', 'var(--success)')}
+                        ${sky('CLR', '0 / 8', 'Clear below 12,000 ft — automated station.', 'var(--success)')}
+                        ${sky('FEW', '1–2 / 8', 'Few clouds. VFR maintained. Not a ceiling.', '#30d158')}
+                        ${sky('SCT', '3–4 / 8', 'Scattered. Sky 3–4 eighths covered. Not a ceiling.', '#ff9f0a')}
+                        ${sky('BKN', '5–7 / 8', 'Broken. More sky covered than not — IS a ceiling.', 'var(--danger)')}
+                        ${sky('OVC', '8 / 8', 'Overcast. Total coverage — always a ceiling.', '#ff453a')}
+                        ${sky('VV',  '—', 'Vertical visibility into obscured sky (fog/smoke/dust).', '#8e8e93')}
+                        ${sep()}
+                        ${div('<b style="color:#fff;">What is a Ceiling?</b><br>The lowest <b style="color:var(--danger);">BKN</b> or <b style="color:#ff453a;">OVC</b> layer, or a VV obscuration. FEW and SCT are <em>not</em> ceilings. Altitude is in hundreds of feet <b style="color:#fff;">AGL</b>.', 'font-size:11px;color:#888;line-height:1.7;')}
+                        ${sep()}
+                        ${div('<b style="color:#fff;font-size:11px;">CEILING FLIGHT CATEGORIES</b>', 'font-size:11px;margin-bottom:4px;')}
+                        ${_iRow('VFR',  '> 3,000 ft AGL',  'var(--success)')}
+                        ${_iRow('MVFR', '1,000 – 3,000 ft', 'var(--mvfr)')}
+                        ${_iRow('IFR',  '500 – 1,000 ft',   'var(--danger)')}
+                        ${_iRow('LIFR', '< 500 ft AGL',     'var(--lifr)')}
+                        ${_iNote('Both ceiling AND visibility determine flight category — whichever gives the lower category wins.')}
+                    `); break;
+
+                case 'alt':
+                    _openInfoModal('Altimeter Setting', `
+                        ${_iRow('QNH (hPa/mb)', 'Sea-level pressure — ICAO standard')}
+                        ${_iRow('A (inHg)', 'US format — e.g. A2992 = 29.92 inHg')}
+                        ${_iRow('Standard ATM', '1013.25 hPa / 29.92 inHg')}
+                        ${sep()}
+                        ${div('<b style="color:#fff;">Why it matters:</b> Setting QNH makes your altimeter read altitude <b style="color:#fff;">above mean sea level (MSL)</b>. Terrain on your chart is also in MSL — so a correct altimeter setting keeps terrain clearance accurate.', 'font-size:11px;color:#888;line-height:1.7;')}
+                        ${sep()}
+                        ${_iRow('QNH > 1013 hPa', 'High pressure → altimeter reads HIGH (denser air)', 'var(--success)')}
+                        ${_iRow('QNH < 1013 hPa', 'Low pressure → altimeter reads LOW (less dense)', 'var(--warn)')}
+                        ${sep()}
+                        ${div('📌 <b style="color:#fff;">"High to Low, Look Out Below"</b> — flying into lower QNH without resetting means you are <em>lower</em> than your altimeter shows.', 'font-size:11px;color:#888;line-height:1.7;')}
+                        ${_iNote('Pressure altitude (PA) uses standard 1013.25 hPa and is used for density altitude and performance calculations — see the E6B tool.')}
+                    `); break;
+
+                case 'wx': {
+                    _openInfoModal('Present Weather', `
+                        ${div('<b style="color:#fff;font-size:11px;">INTENSITY PREFIX</b>', 'font-size:11px;margin-bottom:4px;')}
+                        ${_iRow('–  (light)', 'Below moderate intensity')}
+                        ${_iRow('(none)', 'Moderate — default when no prefix')}
+                        ${_iRow('+  (heavy)', 'Heavy intensity', 'var(--danger)')}
+                        ${_iRow('VC', 'In the vicinity — 5 to 10 SM from airport')}
+                        ${sep()}
+                        ${div('<b style="color:#fff;font-size:11px;">PHENOMENA</b>', 'font-size:11px;margin-bottom:4px;')}
+                        ${_iRow('RA', 'Rain')}
+                        ${_iRow('SN', 'Snow', '#85B7EB')}
+                        ${_iRow('DZ', 'Drizzle')}
+                        ${_iRow('GR / GS', 'Hail / Small hail (graupel)', 'var(--warn)')}
+                        ${_iRow('TS', 'Thunderstorm — e.g. +TSRA = heavy TS/rain', 'var(--danger)')}
+                        ${_iRow('SH', 'Shower descriptor — e.g. SHRA = rain showers')}
+                        ${_iRow('FG', 'Fog — vis < 1,000 m', 'var(--warn)')}
+                        ${_iRow('BR', 'Mist — vis 1,000–9,999 m, RH ≥ 95%')}
+                        ${_iRow('HZ', 'Haze — dry visibility reduction')}
+                        ${_iRow('FZ', 'Freezing descriptor — e.g. FZRA = freezing rain', 'var(--warn)')}
+                        ${_iRow('BLSN', 'Blowing snow')}
+                        ${_iRow('NSW', 'No significant weather at this time')}
+                        ${_iNote('Groups are concatenated: RASN = rain and snow. Descriptors (FZ, SH, TS, BL…) always precede the phenomenon.')}
+                    `);
+                    break;
+                }
+
+                case 'temp': {
+                    const t = lastMetarObj?.temperature?.value;
+                    const d = lastMetarObj?.dewpoint?.value;
+                    const spread = (t != null && d != null) ? +(t - d).toFixed(1) : null;
+                    const rh = (t != null && d != null)
+                        ? Math.round(100 * Math.exp((17.625*d)/(243.04+d)) / Math.exp((17.625*t)/(243.04+t)))
+                        : null;
+                    const spreadColor = spread != null ? (spread <= 2 ? 'var(--danger)' : spread <= 4 ? 'var(--warn)' : 'var(--success)') : '#fff';
+                    _openInfoModal('Temperature & Dewpoint', `
+                        ${_iRow('Temperature (OAT)', t != null ? `${t}°C  /  ${Math.round(t*1.8+32)}°F` : '--')}
+                        ${_iRow('Dewpoint', d != null ? `${d}°C  /  ${Math.round(d*1.8+32)}°F` : '--')}
+                        ${_iRow('Spread (T − Dp)', spread != null ? `${spread}°C` : '--', spreadColor)}
+                        ${_iRow('Rel. Humidity', rh != null ? `${rh}%` : '--')}
+                        ${sep()}
+                        ${div('<b style="color:#fff;font-size:11px;">CLOUD BASE ESTIMATE (rule of thumb)</b>', 'font-size:11px;margin-bottom:4px;')}
+                        ${div('Cloud base ≈ Spread ÷ 2.5 × 1,000 ft AGL<br>' + (spread != null ? `→ ${spread}°C spread ≈ <b style="color:var(--accent);">${Math.round(spread/2.5*1000).toLocaleString()} ft AGL</b>` : '(load an airport for a live estimate)'), 'font-size:12px;color:#888;font-family:\'SF Mono\',monospace;line-height:1.8;background:#111;padding:10px 14px;border-radius:8px;margin:8px 0;')}
+                        ${sep()}
+                        ${div('<b style="color:#fff;font-size:11px;">SPREAD WARNINGS</b>', 'font-size:11px;margin-bottom:4px;')}
+                        ${_iRow('≤ 2°C spread', 'Fog / low cloud imminent — monitor closely', 'var(--danger)')}
+                        ${_iRow('≤ 4°C spread', 'High humidity, possible visibility reduction', 'var(--warn)')}
+                        ${_iRow('OAT ≤ 0°C + moisture', 'Structural icing possible', 'var(--warn)')}
+                        ${_iNote('Dewpoint is the temperature at which the air reaches saturation (RH = 100%) and condensation begins. When OAT = Dp, you are in cloud or fog.')}
+                    `);
+                    break;
+                }
+            }
+        }
+
         function _openInfoModal(title, bodyHTML) {
             const modal = document.getElementById('formula-modal');
             const sheet = document.getElementById('formula-modal-sheet');
