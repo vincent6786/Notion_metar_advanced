@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.0.6';</script>
+    <script>window.APP_VERSION = '4.0.7';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -77,7 +77,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">CLOUD EDITION · v4.0.6</div> 
+        <div class="launch-version" id="launchVersion">CLOUD EDITION · v4.0.7</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -299,6 +299,35 @@
             <div id="meteoLoading" class="sky-no-data"
                  style="position:absolute; top:50%; left:0; right:0; text-align:center;">Select Airport</div>
         </div>
+
+        <!-- WINDS ALOFT TABLE -->
+        <div style="margin-top:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div style="font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;">Winds Aloft</div>
+                <span style="font-size:9px;color:#444;font-weight:600;letter-spacing:0.4px;">NWP MODEL · ADVISORY</span>
+            </div>
+            <div id="windsAloftTable" style="display:grid;grid-template-columns:auto 1fr 1fr auto;gap:0;border:1px solid #222;border-radius:8px;overflow:hidden;font-size:12px;">
+                <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Level</div>
+                <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Wind</div>
+                <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Temp</div>
+                <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Note</div>
+                <!-- 3,000 ft / 925 hPa -->
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~3k ft</div>
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind3k">--</div>
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp3k">--</div>
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note3k">--</div>
+                <!-- 5,000 ft / 850 hPa -->
+                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~5k ft</div>
+                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind5k">--</div>
+                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp5k">--</div>
+                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note5k">--</div>
+                <!-- 10,000 ft / 700 hPa -->
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~10k ft</div>
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind10k">--</div>
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp10k">--</div>
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note10k">--</div>
+            </div>
+        </div>
         <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
             <div style="display:flex; align-items:center; gap:6px;">
                 <span>Official Forecast Visualization</span>
@@ -515,6 +544,32 @@
                 <div id="meteoLoading2" class="sky-no-data"
                      style="position:absolute; top:50%; left:0; right:0; text-align:center;">Select Airport</div>
             </div>
+
+            <!-- WINDS ALOFT TABLE (mirror) -->
+            <div style="margin-top:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <div style="font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;">Winds Aloft</div>
+                    <span style="font-size:9px;color:#444;font-weight:600;letter-spacing:0.4px;">NWP MODEL · ADVISORY</span>
+                </div>
+                <div id="windsAloftTable2" style="display:grid;grid-template-columns:auto 1fr 1fr auto;gap:0;border:1px solid #222;border-radius:8px;overflow:hidden;font-size:12px;">
+                    <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Level</div>
+                    <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Wind</div>
+                    <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Temp</div>
+                    <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Note</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~3k ft</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind3k2">--</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp3k2">--</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note3k2">--</div>
+                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~5k ft</div>
+                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind5k2">--</div>
+                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp5k2">--</div>
+                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note5k2">--</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~10k ft</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind10k2">--</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp10k2">--</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note10k2">--</div>
+                </div>
+            </div>
             <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
                 <div style="display:flex; align-items:center; gap:6px;">
                     <span>Official Forecast Visualization</span>
@@ -597,7 +652,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.0.6 · Cloud Edition · Quick reference for all features</div>
+                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.0.7 · Cloud Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -2031,7 +2086,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 4.0.6</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 4.0.7</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -2310,8 +2365,84 @@
                 </div>
                 
             </div>
+
+            <!-- TRAINERS SECTION -->
+            <div style="margin-top:20px;margin-bottom:10px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;">Trainers</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+
+                <!-- Morse Code Trainer -->
+                <div onclick="openTool('morse-trainer')" class="tool-card" style="background:#1c1c1e; padding:20px; border-radius:12px; cursor:pointer; border:1px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">📡</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Morse Code</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Learn &amp; practice aviation Morse</div>
+                </div>
+
+            </div>
         </div>
         
+        <!-- ================================================================
+             MORSE CODE TRAINER
+        ================================================================ -->
+        <div id="tool-morse-trainer" class="tool-view" style="display:none;">
+            <!-- Mode selector -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#1c1c1e;border-radius:10px;padding:3px;gap:2px;border:1px solid #2a2a2a;margin-bottom:16px;">
+                <button id="morseBtn-learn" onclick="setMorseMode('learn')"
+                        style="padding:9px 4px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.2s;">LEARN</button>
+                <button id="morseBtn-listen" onclick="setMorseMode('listen')"
+                        style="padding:9px 4px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--sub-text);transition:all 0.2s;">LISTEN</button>
+                <button id="morseBtn-quiz" onclick="setMorseMode('quiz')"
+                        style="padding:9px 4px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--sub-text);transition:all 0.2s;">QUIZ</button>
+            </div>
+
+            <!-- LEARN mode -->
+            <div id="morseLearnPanel">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <input id="morseSearchInput" type="text" placeholder="Search letter or code (e.g. A or .-)"
+                           oninput="filterMorseTable(this.value)"
+                           style="flex:1;background:#1c1c1e;border:1px solid #333;border-radius:8px;color:#fff;padding:8px 12px;font-size:13px;outline:none;">
+                    <select id="morseFilterCat" onchange="filterMorseTable(document.getElementById('morseSearchInput').value)"
+                            style="background:#1c1c1e;border:1px solid #333;border-radius:8px;color:#fff;padding:8px;font-size:12px;outline:none;">
+                        <option value="all">All</option>
+                        <option value="letter">Letters</option>
+                        <option value="number">Numbers</option>
+                        <option value="nav">VOR/NDB IDs</option>
+                    </select>
+                </div>
+                <div id="morseTableGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;max-height:420px;overflow-y:auto;"></div>
+            </div>
+
+            <!-- LISTEN mode -->
+            <div id="morseListenPanel" style="display:none;text-align:center;">
+                <div style="font-size:13px;color:var(--sub-text);margin-bottom:20px;">Press Play to hear a character. Type what you hear.</div>
+                <div id="morseListenDisplay" style="font-size:56px;font-weight:800;font-family:'SF Mono',monospace;color:var(--accent);min-height:80px;display:flex;align-items:center;justify-content:center;letter-spacing:8px;margin-bottom:16px;">?</div>
+                <button onclick="playMorseListenChar()"
+                        style="background:var(--accent);border:none;color:#fff;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;">▶ Play</button>
+                <input id="morseListenInput" type="text" maxlength="1" placeholder="Type the letter/number you heard"
+                       oninput="checkMorseListenAnswer(this.value)"
+                       style="width:100%;background:#1c1c1e;border:1px solid #333;border-radius:8px;color:#fff;padding:12px;font-size:16px;text-align:center;font-family:'SF Mono',monospace;letter-spacing:4px;text-transform:uppercase;outline:none;margin-bottom:8px;">
+                <div id="morseListenFeedback" style="font-size:13px;min-height:20px;font-weight:700;"></div>
+            </div>
+
+            <!-- QUIZ mode -->
+            <div id="morseQuizPanel" style="display:none;text-align:center;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+                    <div style="font-size:11px;color:var(--sub-text);">Score: <span id="morseScore" style="color:#fff;font-weight:700;">0</span></div>
+                    <div style="font-size:11px;color:var(--sub-text);">Streak: <span id="morseStreak" style="color:var(--accent);font-weight:700;">0</span></div>
+                    <div style="font-size:11px;color:var(--sub-text);">Q <span id="morseQNum" style="color:#fff;font-weight:700;">1</span>/10</div>
+                </div>
+                <div style="font-size:13px;color:var(--sub-text);margin-bottom:12px;" id="morseQuizPrompt">What is the Morse code for:</div>
+                <div id="morseQuizChar" style="font-size:72px;font-weight:800;font-family:'SF Mono',monospace;color:#fff;margin-bottom:8px;">A</div>
+                <button onclick="playMorseQuizHint()" style="background:#2c2c2e;border:1px solid #444;color:var(--accent);padding:7px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:20px;">🔊 Hear it</button>
+                <div id="morseQuizOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+                <div id="morseQuizFeedback" style="margin-top:14px;font-size:13px;font-weight:700;min-height:20px;"></div>
+                <button id="morseNextBtn" onclick="nextMorseQuiz()" style="display:none;margin-top:14px;background:var(--accent);border:none;color:#fff;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">Next →</button>
+            </div>
+
+            <div style="margin-top:16px;padding:10px 12px;background:rgba(10,132,255,0.07);border-radius:8px;border:1px solid rgba(10,132,255,0.15);font-size:11px;color:#555;line-height:1.6;">
+                💡 <b style="color:#888;">Aviation use:</b> VOR and NDB stations broadcast their 2–3 letter identifier in Morse code on their navigation frequency. Pilots verify the station by listening to the ident before using it for navigation.
+            </div>
+        </div>
+
         <!-- ================================================================
              UNIT CONVERTER TOOL
         ================================================================ -->

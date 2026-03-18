@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.0.6',  // ← set once in index.html
+            version: window.APP_VERSION || '4.0.7',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -2295,14 +2295,42 @@
                     const now = new Date();
                     const idx = now.getUTCHours();
                     const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-                    const fmtW = (d, s) => `${d}° / ${Math.round(s)}kt`;
+                    const setColor = (id, col) => { const el = document.getElementById(id); if (el) el.style.color = col; };
+                    const fmtW = (d, s) => `${Math.round(d)}° / ${Math.round(s)}kt`;
                     const fmtT = t => `${Math.round(t)}°C`;
-                    setEl('wind3k',  fmtW(data.hourly.winddirection_925hPa[idx], data.hourly.windspeed_925hPa[idx]));
-                    setEl('temp3k',  fmtT(data.hourly.temperature_925hPa[idx]));
-                    setEl('wind5k',  fmtW(data.hourly.winddirection_850hPa[idx], data.hourly.windspeed_850hPa[idx]));
-                    setEl('temp5k',  fmtT(data.hourly.temperature_850hPa[idx]));
-                    setEl('wind10k', fmtW(data.hourly.winddirection_700hPa[idx], data.hourly.windspeed_700hPa[idx]));
-                    setEl('temp10k', fmtT(data.hourly.temperature_700hPa[idx]));
+                    const windNote = (t, s) => {
+                        const notes = [];
+                        if (t <= 0 && t > -20) notes.push('❄ Icing possible');
+                        else if (t <= -20) notes.push('Ice crystals');
+                        if (s >= 50) notes.push('⚠ Strong winds');
+                        else if (s >= 30) notes.push('Mod winds');
+                        return notes[0] || 'Normal';
+                    };
+                    const noteColor = (t, s) => {
+                        if (t <= 0 && t > -20) return 'var(--warn)';
+                        if (s >= 50) return 'var(--danger)';
+                        if (s >= 30) return 'var(--mvfr)';
+                        return 'var(--sub-text)';
+                    };
+                    const w3dir = data.hourly.winddirection_925hPa[idx], w3spd = data.hourly.windspeed_925hPa[idx], t3 = data.hourly.temperature_925hPa[idx];
+                    const w5dir = data.hourly.winddirection_850hPa[idx], w5spd = data.hourly.windspeed_850hPa[idx], t5 = data.hourly.temperature_850hPa[idx];
+                    const w10dir = data.hourly.winddirection_700hPa[idx], w10spd = data.hourly.windspeed_700hPa[idx], t10 = data.hourly.temperature_700hPa[idx];
+
+                    ['', '2'].forEach(sfx => {
+                        setEl('wind3k' + sfx,  fmtW(w3dir,  w3spd));
+                        setEl('temp3k' + sfx,  fmtT(t3));
+                        setEl('wind5k' + sfx,  fmtW(w5dir,  w5spd));
+                        setEl('temp5k' + sfx,  fmtT(t5));
+                        setEl('wind10k' + sfx, fmtW(w10dir, w10spd));
+                        setEl('temp10k' + sfx, fmtT(t10));
+                        setEl('note3k' + sfx,  windNote(t3,  w3spd));  setColor('note3k' + sfx,  noteColor(t3,  w3spd));
+                        setEl('note5k' + sfx,  windNote(t5,  w5spd));  setColor('note5k' + sfx,  noteColor(t5,  w5spd));
+                        setEl('note10k' + sfx, windNote(t10, w10spd)); setColor('note10k' + sfx, noteColor(t10, w10spd));
+                        // Colour-code temp cells
+                        setColor('temp3k' + sfx,  t3 <= 0  ? 'var(--warn)' : '#ccc');
+                        setColor('temp5k' + sfx,  t5 <= 0  ? 'var(--warn)' : '#ccc');
+                        setColor('temp10k' + sfx, t10 <= 0 ? 'var(--warn)' : '#ccc');
+                    });
                 }
             } catch(e) { console.error("Meteo Error:", e); loader.style.display = 'block'; loader.innerText = "⚠️ Model Data Unavailable"; }
         }

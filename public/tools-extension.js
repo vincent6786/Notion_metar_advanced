@@ -353,6 +353,7 @@ function openTool(toolName) {
             'weather-terms': 'Present Weather Terms',
             'e6b-calculator': 'E6B Flight Computer',
             'e6b-trainer': 'E6B Trainer (UND)',
+            'morse-trainer': 'Morse Code Trainer',
             'crosswind': 'Crosswind Calculator',
             'airspace-mins': 'VFR Airspace Minimums'
         };
@@ -369,6 +370,8 @@ function openTool(toolName) {
             calcE6B(); // Initialize E6B calculations
         } else if (toolName === 'e6b-trainer') {
             openUNDE6B(); // Load UND E6B trainer
+        } else if (toolName === 'morse-trainer') {
+            initMorseTrainer();
         } else if (toolName === 'crosswind') {
             cwInit();
         } else if (toolName === 'great-circle') {
@@ -3208,3 +3211,227 @@ function amCloudSVG(cloud) {
         </svg>
     </div>`;
 }
+
+// ================================================================
+// MORSE CODE TRAINER
+// ================================================================
+const MORSE_TABLE = {
+    'A':'.-',   'B':'-...',  'C':'-.-.',  'D':'-..',   'E':'.',
+    'F':'..-.',  'G':'--.',   'H':'....',  'I':'..',    'J':'.---',
+    'K':'-.-',   'L':'.-..',  'M':'--',    'N':'-.',    'O':'---',
+    'P':'.--.',  'Q':'--.-',  'R':'.-.',   'S':'...',   'T':'-',
+    'U':'..-',   'V':'...-',  'W':'.--',   'X':'-..-',  'Y':'-.--',
+    'Z':'--..',
+    '0':'-----', '1':'.----', '2':'..---', '3':'...--', '4':'....-',
+    '5':'.....', '6':'-....', '7':'--...', '8':'---..',  '9':'----.'
+};
+
+const MORSE_CAT = {
+    'A':'letter','B':'letter','C':'letter','D':'letter','E':'letter',
+    'F':'letter','G':'letter','H':'letter','I':'letter','J':'letter',
+    'K':'letter','L':'letter','M':'letter','N':'letter','O':'letter',
+    'P':'letter','Q':'letter','R':'letter','S':'letter','T':'letter',
+    'U':'letter','V':'letter','W':'letter','X':'letter','Y':'letter','Z':'letter',
+    '0':'number','1':'number','2':'number','3':'number','4':'number',
+    '5':'number','6':'number','7':'number','8':'number','9':'number'
+};
+
+const MORSE_VOR = ['VOR','NDB','RCT','TPE','RJT','LAX','SFO','ORD','JFK'];
+
+let _morseMode = 'learn';
+let _morseListenChar = 'A';
+let _morseQuizChar = 'A';
+let _morseScore = 0;
+let _morseStreak = 0;
+let _morseQNum = 0;
+let _morseAudioCtx = null;
+
+function initMorseTrainer() {
+    renderMorseTable();
+}
+
+function setMorseMode(mode) {
+    _morseMode = mode;
+    ['learn','listen','quiz'].forEach(m => {
+        const btn = document.getElementById('morseBtn-' + m);
+        const panel = document.getElementById('morse' + m.charAt(0).toUpperCase() + m.slice(1) + 'Panel');
+        if (btn) btn.style.background = m === mode ? 'var(--accent)' : 'transparent';
+        if (btn) btn.style.color = m === mode ? '#fff' : 'var(--sub-text)';
+        if (panel) panel.style.display = m === mode ? '' : 'none';
+    });
+    if (mode === 'quiz') startMorseQuiz();
+    if (mode === 'listen') {
+        newMorseListenChar();
+        const inp = document.getElementById('morseListenInput');
+        if (inp) { inp.value = ''; inp.focus(); }
+    }
+}
+
+// ── LEARN ────────────────────────────────────────────────────────────
+function renderMorseTable(filter = '', cat = 'all') {
+    const grid = document.getElementById('morseTableGrid');
+    if (!grid) return;
+    const entries = Object.entries(MORSE_TABLE).filter(([k]) => {
+        const catOk = cat === 'all' || MORSE_CAT[k] === cat;
+        const fOk   = !filter || k.includes(filter.toUpperCase()) || MORSE_TABLE[k].includes(filter);
+        return catOk && fOk;
+    });
+    grid.innerHTML = entries.map(([char, code]) => `
+        <div onclick="playMorse('${code}')"
+             style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:border-color 0.15s;"
+             onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='#2a2a2a'">
+            <div style="font-size:22px;font-weight:800;color:#fff;font-family:'SF Mono',monospace;">${char}</div>
+            <div style="font-size:14px;letter-spacing:3px;color:var(--accent);margin:4px 0;font-family:'SF Mono',monospace;">${code}</div>
+            <div style="font-size:9px;color:#555;letter-spacing:1px;">${code.replace(/\./g,'DI-').replace(/-/g,'DAH ').replace(/DI-/g,'DIT ').trim()}</div>
+        </div>`).join('');
+}
+
+function filterMorseTable(val) {
+    const cat = document.getElementById('morseFilterCat')?.value || 'all';
+    renderMorseTable(val, cat);
+}
+
+// ── AUDIO ────────────────────────────────────────────────────────────
+function getMorseAudioCtx() {
+    if (!_morseAudioCtx) _morseAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_morseAudioCtx.state === 'suspended') _morseAudioCtx.resume();
+    return _morseAudioCtx;
+}
+
+async function playMorse(code, freq = 700, wpm = 15) {
+    const ctx = getMorseAudioCtx();
+    const unit = 1.2 / wpm; // seconds per dot
+    let t = ctx.currentTime + 0.05;
+    for (const sym of code) {
+        const dur = sym === '.' ? unit : unit * 3;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = freq;
+        osc.connect(gain); gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.4, t + 0.005);
+        gain.gain.setValueAtTime(0.4, t + dur - 0.005);
+        gain.gain.linearRampToValueAtTime(0, t + dur);
+        osc.start(t); osc.stop(t + dur + 0.01);
+        t += dur + unit; // inter-element gap
+    }
+}
+
+function playMorseChar(char) {
+    const code = MORSE_TABLE[char.toUpperCase()];
+    if (code) playMorse(code);
+}
+
+// ── LISTEN ───────────────────────────────────────────────────────────
+function newMorseListenChar() {
+    const keys = Object.keys(MORSE_TABLE);
+    _morseListenChar = keys[Math.floor(Math.random() * keys.length)];
+    const disp = document.getElementById('morseListenDisplay');
+    if (disp) disp.textContent = '?';
+    const fb = document.getElementById('morseListenFeedback');
+    if (fb) { fb.textContent = ''; fb.style.color = ''; }
+    const inp = document.getElementById('morseListenInput');
+    if (inp) inp.value = '';
+}
+
+function playMorseListenChar() {
+    playMorseChar(_morseListenChar);
+}
+
+function checkMorseListenAnswer(val) {
+    if (!val) return;
+    const fb = document.getElementById('morseListenFeedback');
+    const disp = document.getElementById('morseListenDisplay');
+    const inp = document.getElementById('morseListenInput');
+    if (val.toUpperCase() === _morseListenChar) {
+        if (fb) { fb.textContent = '✓ Correct! — ' + MORSE_TABLE[_morseListenChar]; fb.style.color = 'var(--success)'; }
+        if (disp) disp.textContent = _morseListenChar;
+        setTimeout(() => { newMorseListenChar(); if (inp) inp.value = ''; }, 1200);
+    } else if (val.length >= 1) {
+        if (fb) { fb.textContent = '✗ Try again'; fb.style.color = 'var(--danger)'; }
+        setTimeout(() => { if (inp) inp.value = ''; }, 400);
+    }
+}
+
+// ── QUIZ ─────────────────────────────────────────────────────────────
+function startMorseQuiz() {
+    _morseScore = 0; _morseStreak = 0; _morseQNum = 0;
+    updateMorseQuizStats();
+    nextMorseQuiz();
+}
+
+function updateMorseQuizStats() {
+    const s = document.getElementById('morseScore'); if (s) s.textContent = _morseScore;
+    const st = document.getElementById('morseStreak'); if (st) st.textContent = _morseStreak;
+    const q = document.getElementById('morseQNum'); if (q) q.textContent = _morseQNum + 1;
+}
+
+function nextMorseQuiz() {
+    const keys = Object.keys(MORSE_TABLE);
+    _morseQuizChar = keys[Math.floor(Math.random() * keys.length)];
+    _morseQNum++;
+    updateMorseQuizStats();
+
+    const charEl = document.getElementById('morseQuizChar');
+    const fb = document.getElementById('morseQuizFeedback');
+    const nextBtn = document.getElementById('morseNextBtn');
+    const optEl = document.getElementById('morseQuizOptions');
+    const promptEl = document.getElementById('morseQuizPrompt');
+
+    if (charEl) charEl.textContent = _morseQuizChar;
+    if (fb) { fb.textContent = ''; }
+    if (nextBtn) nextBtn.style.display = 'none';
+
+    // Decide question direction (50/50): char→code or code→char
+    const mode = Math.random() > 0.5 ? 'char2code' : 'code2char';
+    const correct = MORSE_TABLE[_morseQuizChar];
+
+    if (mode === 'char2code') {
+        if (promptEl) promptEl.textContent = 'What is the Morse code for:';
+        if (charEl) charEl.textContent = _morseQuizChar;
+        // 4 options: correct + 3 wrong codes
+        const wrongs = keys.filter(k => k !== _morseQuizChar).sort(() => Math.random()-0.5).slice(0,3).map(k => MORSE_TABLE[k]);
+        const opts = [correct, ...wrongs].sort(() => Math.random()-0.5);
+        if (optEl) optEl.innerHTML = opts.map(o => `
+            <button onclick="answerMorseQuiz('${o}','${correct}','char2code')"
+                    style="background:#1c1c1e;border:1px solid #333;border-radius:8px;padding:12px;font-size:16px;font-family:'SF Mono',monospace;color:#fff;cursor:pointer;letter-spacing:4px;transition:all 0.15s;">${o}</button>`).join('');
+    } else {
+        if (promptEl) promptEl.textContent = 'Which character is this code?';
+        if (charEl) charEl.textContent = correct;
+        charEl.style.fontSize = correct.length > 4 ? '28px' : '40px';
+        charEl.style.letterSpacing = '6px';
+        const wrongs = keys.filter(k => k !== _morseQuizChar).sort(() => Math.random()-0.5).slice(0,3);
+        const opts = [_morseQuizChar, ...wrongs].sort(() => Math.random()-0.5);
+        if (optEl) optEl.innerHTML = opts.map(o => `
+            <button onclick="answerMorseQuiz('${o}','${_morseQuizChar}','code2char')"
+                    style="background:#1c1c1e;border:1px solid #333;border-radius:8px;padding:12px;font-size:22px;font-family:'SF Mono',monospace;color:#fff;cursor:pointer;transition:all 0.15s;">${o}</button>`).join('');
+    }
+}
+
+function answerMorseQuiz(chosen, correct, mode) {
+    const fb = document.getElementById('morseQuizFeedback');
+    const nextBtn = document.getElementById('morseNextBtn');
+    const opts = document.querySelectorAll('#morseQuizOptions button');
+    opts.forEach(b => b.disabled = true);
+
+    if (chosen === correct) {
+        _morseScore++; _morseStreak++;
+        if (fb) { fb.textContent = '✓ Correct!'; fb.style.color = 'var(--success)'; }
+        opts.forEach(b => { if (b.textContent.trim() === correct) b.style.background = 'rgba(48,209,88,0.2)'; });
+        playMorseChar(_morseQuizChar);
+    } else {
+        _morseStreak = 0;
+        if (fb) { fb.textContent = `✗ It was: ${correct}`; fb.style.color = 'var(--danger)'; }
+        opts.forEach(b => {
+            if (b.textContent.trim() === chosen) b.style.background = 'rgba(255,69,58,0.2)';
+            if (b.textContent.trim() === correct) b.style.background = 'rgba(48,209,88,0.15)';
+        });
+    }
+    updateMorseQuizStats();
+    if (nextBtn) nextBtn.style.display = '';
+    if (_morseQNum >= 10) {
+        if (nextBtn) { nextBtn.textContent = `Finish (${_morseScore}/10)`; nextBtn.onclick = () => { _morseQNum = 0; startMorseQuiz(); }; }
+    }
+}
+
+function playMorseQuizHint() { playMorseChar(_morseQuizChar); }
