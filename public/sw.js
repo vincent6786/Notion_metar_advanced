@@ -3,7 +3,7 @@
 // Offline-first for static assets, network-first for API calls
 // ================================================================
 
-const CACHE_VERSION = 'metar-go-v4.0.9';
+const CACHE_VERSION = 'metar-go-v4.1.3';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
@@ -16,6 +16,7 @@ const STATIC_ASSETS = [
     '/core.js',
     '/app.js',
     '/airport-db.js',
+    '/airportfrequencies.js',
     '/metar-db.js',
     '/tools-extension.js',
     '/appicon.png',

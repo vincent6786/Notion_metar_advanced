@@ -3252,14 +3252,17 @@ function initMorseTrainer() {
 
 function setMorseMode(mode) {
     _morseMode = mode;
-    ['learn','listen','quiz'].forEach(m => {
-        const btn = document.getElementById('morseBtn-' + m);
+    ['learn','listen','quiz','words'].forEach(m => {
+        const btn   = document.getElementById('morseBtn-' + m);
         const panel = document.getElementById('morse' + m.charAt(0).toUpperCase() + m.slice(1) + 'Panel');
-        if (btn) btn.style.background = m === mode ? 'var(--accent)' : 'transparent';
-        if (btn) btn.style.color = m === mode ? '#fff' : 'var(--sub-text)';
+        if (btn) {
+            btn.style.background = m === mode ? '#e8a020' : 'transparent';
+            btn.style.color      = m === mode ? '#000'    : '#888';
+        }
         if (panel) panel.style.display = m === mode ? '' : 'none';
     });
-    if (mode === 'quiz') startMorseQuiz();
+    if (mode === 'quiz')   startMorseQuiz();
+    if (mode === 'words')  initMorseWords();
     if (mode === 'listen') {
         newMorseListenChar();
         const inp = document.getElementById('morseListenInput');
@@ -3278,11 +3281,12 @@ function renderMorseTable(filter = '', cat = 'all') {
     });
     grid.innerHTML = entries.map(([char, code]) => `
         <div onclick="playMorse('${code}')"
-             style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:border-color 0.15s;"
-             onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='#2a2a2a'">
-            <div style="font-size:22px;font-weight:800;color:#fff;font-family:'SF Mono',monospace;">${char}</div>
-            <div style="font-size:14px;letter-spacing:3px;color:var(--accent);margin:4px 0;font-family:'SF Mono',monospace;">${code}</div>
-            <div style="font-size:9px;color:#555;letter-spacing:1px;">${code.replace(/\./g,'DI-').replace(/-/g,'DAH ').replace(/DI-/g,'DIT ').trim()}</div>
+             style="background:#111;border:2px solid #333;border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.15s;"
+             onmouseover="this.style.borderColor='#e8a020';this.style.background='#1a1600'"
+             onmouseout="this.style.borderColor='#333';this.style.background='#111'">
+            <div style="font-size:22px;font-weight:900;color:#fff;font-family:'SF Mono',monospace;">${char}</div>
+            <div style="font-size:14px;letter-spacing:3px;color:#e8a020;margin:4px 0;font-family:'SF Mono',monospace;">${code}</div>
+            <div style="font-size:9px;color:#666;letter-spacing:1px;">${code.replace(/\./g,'DI-').replace(/-/g,'DAH ').replace(/DI-/g,'DIT ').trim()}</div>
         </div>`).join('');
 }
 
@@ -3435,3 +3439,121 @@ function answerMorseQuiz(chosen, correct, mode) {
 }
 
 function playMorseQuizHint() { playMorseChar(_morseQuizChar); }
+
+// ── WORDS MODE ────────────────────────────────────────────────────────────
+const MORSE_WORD_LISTS = {
+    aviation: [
+        'METAR','ATIS','SIGMET','AIRMET','NOTAM','TACAN','VORTAC',
+        'CLEARANCE','DEPARTURE','APPROACH','TOWER','GROUND','CENTER',
+        'SQUAWK','TRANSPONDER','IFR','VFR','LIFR','MVFR',
+        'RCTP','RJTT','EDDM','EGLL','KMHR','WSSS','VHHH',
+    ],
+    alphabet: [
+        'ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF',
+        'HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER',
+        'OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM',
+        'VICTOR','WHISKEY','XRAY','YANKEE','ZULU',
+    ],
+    callsign: [
+        'UNITED','DELTA','CATHAY','CHINA','JAPAN','KOREAN','EVA',
+        'SINGAPORE','EMIRATES','LUFTHANSA','BRITISH','AIR FRANCE',
+        'N12345','B18101','JA8088','HL7700','9V STD',
+    ],
+};
+
+let _morseWordsCat    = 'aviation';
+let _morseCurrentWord = '';
+let _morseWordsScore  = 0;
+
+function setWordsCat(cat) {
+    _morseWordsCat = cat;
+    document.querySelectorAll('[id^="mwCat-"]').forEach(btn => {
+        const active = btn.id === 'mwCat-' + cat;
+        btn.style.background    = active ? '#e8a020' : 'transparent';
+        btn.style.color         = active ? '#000'    : '#888';
+        btn.style.borderColor   = active ? '#e8a020' : '#444';
+    });
+    const customRow = document.getElementById('morseWordsCustomRow');
+    if (customRow) customRow.style.display = cat === 'custom' ? 'flex' : 'none';
+    if (cat !== 'custom') newMorseWord();
+}
+
+function initMorseWords() {
+    _morseWordsScore = 0;
+    updateWordsScore();
+    setWordsCat('aviation');
+}
+
+function newMorseWord() {
+    const list = MORSE_WORD_LISTS[_morseWordsCat] || MORSE_WORD_LISTS.aviation;
+    _morseCurrentWord = list[Math.floor(Math.random() * list.length)].replace(/\s+/g,' ').toUpperCase();
+    const disp = document.getElementById('morseWordsDisplay');
+    const inp  = document.getElementById('morseWordsInput');
+    const fb   = document.getElementById('morseWordsFeedback');
+    if (disp) disp.innerHTML = '<span style="font-size:32px;letter-spacing:6px;font-family:\'SF Mono\',monospace;color:#e8a020;font-weight:900;">?</span>';
+    if (inp)  { inp.value = ''; }
+    if (fb)   { fb.textContent = ''; fb.style.color = ''; }
+}
+
+function playMorseWord() {
+    if (!_morseCurrentWord) return;
+    const wpm = parseInt(document.getElementById('morseWpmInput')?.value || '12', 10);
+    const ctx  = getMorseAudioCtx();
+    const unit = 1.2 / wpm;
+    let t = ctx.currentTime + 0.1;
+    for (const char of _morseCurrentWord) {
+        if (char === ' ') { t += unit * 7; continue; }
+        const code = MORSE_TABLE[char];
+        if (!code) { t += unit * 3; continue; }
+        for (const sym of code) {
+            const dur = sym === '.' ? unit : unit * 3;
+            const osc  = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.value = 700;
+            osc.connect(gain); gain.connect(ctx.destination);
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.4, t + 0.005);
+            gain.gain.setValueAtTime(0.4, t + dur - 0.005);
+            gain.gain.linearRampToValueAtTime(0, t + dur);
+            osc.start(t); osc.stop(t + dur + 0.01);
+            t += dur + unit;
+        }
+        t += unit * 2; // inter-char gap (unit * 3 total with the intra-char gap)
+    }
+}
+
+function playWordsCustom() {
+    const val = document.getElementById('morseWordsCustomInput')?.value.trim().toUpperCase();
+    if (!val) return;
+    _morseCurrentWord = val;
+    const disp = document.getElementById('morseWordsDisplay');
+    if (disp) disp.innerHTML = '<span style="font-size:32px;letter-spacing:6px;font-family:\'SF Mono\',monospace;color:#666;font-weight:900;">▶ Playing...</span>';
+    playMorseWord();
+}
+
+function checkMorseWordAnswer(inp) {
+    const val = inp.value.toUpperCase().trim();
+    const fb  = document.getElementById('morseWordsFeedback');
+    const disp = document.getElementById('morseWordsDisplay');
+    if (!val || !_morseCurrentWord) return;
+    if (val === _morseCurrentWord) {
+        _morseWordsScore++;
+        updateWordsScore();
+        if (fb) { fb.textContent = `✓ Correct! — ${_morseCurrentWord}`; fb.style.color = '#30d158'; }
+        if (disp) disp.innerHTML = `<span style="font-size:28px;letter-spacing:4px;font-family:'SF Mono',monospace;color:#30d158;font-weight:900;">${_morseCurrentWord}</span>`;
+        setTimeout(() => { inp.value = ''; newMorseWord(); }, 1400);
+    }
+}
+
+function skipMorseWord() {
+    const fb   = document.getElementById('morseWordsFeedback');
+    const disp = document.getElementById('morseWordsDisplay');
+    if (fb) { fb.textContent = `Answer: ${_morseCurrentWord}`; fb.style.color = '#ff9f0a'; }
+    if (disp) disp.innerHTML = `<span style="font-size:28px;letter-spacing:4px;font-family:'SF Mono',monospace;color:#ff9f0a;font-weight:900;">${_morseCurrentWord}</span>`;
+    setTimeout(() => newMorseWord(), 1800);
+}
+
+function updateWordsScore() {
+    const el = document.getElementById('morseWordsScore');
+    if (el) el.textContent = _morseWordsScore;
+}

@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.0.9',  // ← set once in index.html
+            version: window.APP_VERSION || '4.1.3',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -978,8 +978,34 @@
         async function updateApiQuickStats() {
             const label = document.getElementById('apiStatusLabel');
             if (!label) return;
-            label.innerText = '✅ Active';
-            label.style.color = 'var(--success)';
+            try {
+                const res = await fetch('/api/status');
+                if (!res.ok) throw new Error(`${res.status}`);
+                const data = await res.json();
+                // Show key usage if available
+                if (data.keys) {
+                    const total = data.keys.reduce((s, k) => s + (k.usage || 0), 0);
+                    const limit = data.keys.reduce((s, k) => s + (k.limit || 0), 0);
+                    const pct   = limit > 0 ? Math.round(total / limit * 100) : 0;
+                    const exhausted = data.keys.every(k => (k.usage || 0) >= (k.limit || 1));
+                    if (exhausted) {
+                        label.innerText = '⚠️ Keys exhausted';
+                        label.style.color = 'var(--danger)';
+                    } else {
+                        label.innerText = `✅ Active (${total}/${limit} calls today)`;
+                        label.style.color = pct > 80 ? 'var(--warn)' : 'var(--success)';
+                    }
+                } else if (data.maintenance) {
+                    label.innerText = '🔧 Maintenance';
+                    label.style.color = 'var(--warn)';
+                } else {
+                    label.innerText = '✅ Active';
+                    label.style.color = 'var(--success)';
+                }
+            } catch(e) {
+                label.innerText = '⚠️ API unreachable';
+                label.style.color = 'var(--warn)';
+            }
         }
 
         function toggleShowCode() {
@@ -1764,10 +1790,43 @@
             try {
                 // ── PHASE 1: Station data (fastest, ~100ms) ──
                 stationData = await secureFetch(`/api/weather?type=station&station=${icao}`);
-                if (stationData._meta) console.log(`%c[AVWX] Station - Key #${stationData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
-                
-                renderInfo(stationData);
-                updateAudioSection(icao);
+
+                // Guard: AVWX may return {error: "..."} on key exhaustion / 500
+                if (!stationData || stationData.error) {
+                    const errMsg = stationData?.error || 'No response';
+                    console.error(`[AVWX] Station error for ${icao}: ${errMsg}`);
+                    // Show error state in INFO tab
+                    ['infoName','infoLoc','infoCodes','infoElev','infoCoords',
+                     'calcPA','calcDA','calcISA','infoSun'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerText = '--';
+                    });
+                    document.getElementById('freqContainer').innerHTML =
+                        `<div style="grid-column:1/-1;color:var(--warn);font-size:12px;padding:8px;">
+                            ⚠️ Station data unavailable (${errMsg}).
+                            <a href="https://ourairports.com/airports/${icao}/frequencies.html"
+                               target="_blank" style="color:var(--accent);margin-left:6px;text-decoration:none;">
+                                OurAirports ↗
+                            </a>
+                        </div>`;
+                    // Still try frequencies from local DB
+                    const dbFreqs = (typeof lookupFrequencies === 'function') ? lookupFrequencies(icao) : null;
+                    if (dbFreqs?.length) {
+                        const fc = document.getElementById('freqContainer');
+                        fc.innerHTML = '';
+                        dbFreqs.forEach(f => {
+                            const card = document.createElement('div'); card.className = 'freq-card';
+                            card.innerHTML = `<div class="freq-type">${f.t}</div><div class="freq-val">${f.f}</div>`;
+                            fc.appendChild(card);
+                        });
+                    }
+                    // Null out stationData so downstream guards don't crash
+                    stationData = null;
+                } else {
+                    if (stationData._meta) console.log(`%c[AVWX] Station - Key #${stationData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
+                    renderInfo(stationData);
+                    updateAudioSection(icao);
+                }
                 
                 // ── PHASE 2: Start slow tasks in background (don't block) ──
                 if (stationData?.latitude != null && stationData?.longitude != null) {
@@ -1775,7 +1834,7 @@
                     fetchMeteogram(stationData.latitude, stationData.longitude);
                 } else {
                     document.getElementById('nearList').innerHTML =
-                        '<span style="color:#555;font-size:12px;">No coordinates for this station.</span>';
+                        '<span style="color:#555;font-size:12px;">No station data — coordinates unavailable.</span>';
                 }
                 
                 // ── PHASE 3: Weather data in parallel - render each as it completes ──
@@ -1816,6 +1875,9 @@
                         renderSkyVisuals(m);
                         renderFlightRuleBar(m);
                         setupRunwaySelect();
+                        // Redraw wind rose with a small delay to ensure canvas is visible
+                        // (iOS Safari discards draws on display:none canvases)
+                        setTimeout(() => { if (document.getElementById('rwySelect').value) drawWindRose(); }, 80);
                         
                         // Store for trend analysis
                         storeMetarForTrend(icao, m);
@@ -3056,69 +3118,89 @@
                         if (phoneContainer) {
                             phoneContainer.innerHTML = '<div style="color:#555;font-size:12px;padding:8px;">Loading...</div>';
                         }
-            
-                        // Fetch supplementary data from aviationweather.gov
-                        fetchAirportSupplementary(d.icao).then(awData => {
-                            // ── FREQUENCIES ──
+
+                        // ── FREQUENCIES — Layer 1: embedded FREQ_DB (from OurAirports CSV) ──
+                        const dbFreqs = (typeof lookupFrequencies === 'function') ? lookupFrequencies(d.icao) : null;
+                        if (dbFreqs && dbFreqs.length > 0) {
                             fContainer.innerHTML = '';
-                            const avwxFreqs = (d.frequencies || []).slice(0, 8);
-                            const awFreqs   = awData?.comms || [];
-            
-                            const allFreqs = avwxFreqs.length > 0 ? avwxFreqs.map(f => ({
-                                type: f.type, frequency: f.frequency
-                            })) : awFreqs;
-            
-                            if (allFreqs.length > 0) {
-                                allFreqs.slice(0, 9).forEach(f => {
+                            dbFreqs.forEach(f => {
+                                const card = document.createElement('div'); card.className = 'freq-card';
+                                const label = f.d && f.d !== f.t ? `${f.t}<br><span style="font-size:9px;color:#555;font-weight:400;">${f.d}</span>` : f.t;
+                                card.innerHTML = `<div class="freq-type">${label}</div><div class="freq-val">${f.f}</div>`;
+                                fContainer.appendChild(card);
+                            });
+                            // Add source note
+                            const note = document.createElement('div');
+                            note.style.cssText = 'grid-column:1/-1;font-size:9px;color:#444;text-align:right;margin-top:4px;';
+                            note.innerHTML = `Source: <a href="https://ourairports.com/airports/${d.icao}/frequencies.html" target="_blank" style="color:#555;text-decoration:none;">OurAirports ↗</a>`;
+                            fContainer.appendChild(note);
+                        } else {
+                            // ── Layer 2: AVWX station data ──
+                            const avwxFreqs = (d.frequencies || []).slice(0, 12);
+                            if (avwxFreqs.length > 0) {
+                                fContainer.innerHTML = '';
+                                avwxFreqs.forEach(f => {
                                     const card = document.createElement('div'); card.className = 'freq-card';
-                                    card.innerHTML = `<div class="freq-type">${f.type || f.frequencyType || '--'}</div><div class="freq-val">${f.frequency || f.freq || '--'}</div>`;
+                                    card.innerHTML = `<div class="freq-type">${f.type || '--'}</div><div class="freq-val">${f.frequency || '--'}</div>`;
                                     fContainer.appendChild(card);
                                 });
                             } else {
-                                fContainer.innerHTML = `
-                                    <div style="grid-column:span 3;color:#555;font-size:12px;padding:8px;text-align:center;">
-                                        No frequency data available.
-                                        <a href="https://skyvector.com/airport/${d.icao}" target="_blank" 
-                                           style="color:var(--accent);margin-left:6px;text-decoration:none;">
-                                            View on SkyVector ↗
+                                // ── Layer 3: aviationweather.gov supplementary ──
+                                fetchAirportSupplementary(d.icao).then(awData => {
+                                    const awFreqs = awData?.comms || [];
+                                    fContainer.innerHTML = '';
+                                    if (awFreqs.length > 0) {
+                                        awFreqs.forEach(f => {
+                                            const card = document.createElement('div'); card.className = 'freq-card';
+                                            card.innerHTML = `<div class="freq-type">${f.type || '--'}</div><div class="freq-val">${f.frequency || '--'}</div>`;
+                                            fContainer.appendChild(card);
+                                        });
+                                    } else {
+                                        fContainer.innerHTML = `
+                                            <div style="grid-column:span 3;color:#555;font-size:12px;padding:8px;text-align:center;">
+                                                No frequency data available.
+                                                <a href="https://ourairports.com/airports/${d.icao}/frequencies.html" target="_blank"
+                                                   style="color:var(--accent);margin-left:6px;text-decoration:none;">OurAirports ↗</a>
+                                                <a href="https://skyvector.com/airport/${d.icao}" target="_blank"
+                                                   style="color:var(--accent);margin-left:8px;text-decoration:none;">SkyVector ↗</a>
+                                            </div>`;
+                                    }
+                                });
+                            }
+                        }
+
+                        // ── ATIS/AWOS PHONES ──
+                        if (phoneContainer) {
+                            // Pull ATIS frequency from FREQ_DB for quick reference
+                            const atisEntry = dbFreqs?.find(f => f.t === 'ATIS');
+                            let phones = [];
+
+                            // Check AVWX communications field
+                            if (d.communications && Array.isArray(d.communications)) {
+                                phones = d.communications
+                                    .filter(c => ['ATIS','AWOS','ASOS'].includes((c.type||'').toUpperCase()) && c.phone)
+                                    .map(c => ({ type: c.type.toUpperCase(), phone: c.phone, freq: c.frequency ? `${c.frequency} MHz` : '' }));
+                            }
+
+                            if (phones.length > 0) {
+                                phoneContainer.innerHTML = phones.map(p => `
+                                    <div class="phone-card">
+                                        <div class="phone-label">${p.type}${p.freq ? ' · ' + p.freq : ''}</div>
+                                        <a href="tel:${p.phone.replace(/[^\d+]/g,'')}" class="phone-number">
+                                            📞 ${p.phone}
                                         </a>
+                                    </div>`).join('');
+                            } else if (atisEntry) {
+                                phoneContainer.innerHTML = `<div style="color:#555;font-size:12px;padding:8px;">ATIS ${atisEntry.f} MHz — no phone number available</div>`;
+                            } else {
+                                phoneContainer.innerHTML = `
+                                    <div style="color:#555;font-size:12px;padding:8px;line-height:1.6;">
+                                        No phone data available for ${d.icao}.<br>
+                                        <a href="https://www.airnav.com/airport/${d.icao}" target="_blank"
+                                           style="color:var(--accent);text-decoration:none;">Check AirNav ↗</a>
                                     </div>`;
                             }
-            
-                            // ── ATIS/AWOS PHONES ──
-                            if (phoneContainer) {
-                                // Hardcoded Taiwan ATIS phone numbers (most reliable)
-                                const twAtisPhones = {};
-            
-                                let phones = twAtisPhones[d.icao] || [];
-            
-                                // Also check AVWX communications field
-                                if (phones.length === 0 && d.communications && Array.isArray(d.communications)) {
-                                    phones = d.communications
-                                        .filter(c => ['ATIS','AWOS','ASOS'].includes((c.type||'').toUpperCase()) && c.phone)
-                                        .map(c => ({ type: c.type.toUpperCase(), phone: c.phone, freq: c.frequency ? `${c.frequency} MHz` : '' }));
-                                }
-            
-                                if (phones.length > 0) {
-                                    phoneContainer.innerHTML = phones.map(p => `
-                                        <div class="phone-card">
-                                            <div class="phone-label">${p.type}${p.freq ? ' · ' + p.freq : ''}</div>
-                                            <a href="tel:${p.phone.replace(/[^\d+]/g,'')}" class="phone-number">
-                                                📞 ${p.phone}
-                                            </a>
-                                        </div>`).join('');
-                                } else {
-                                    phoneContainer.innerHTML = `
-                                        <div style="color:#555;font-size:12px;padding:8px;line-height:1.6;">
-                                            No phone data available for ${d.icao}.<br>
-                                            <a href="https://www.airnav.com/airport/${d.icao}" target="_blank" 
-                                               style="color:var(--accent);text-decoration:none;">
-                                                Check AirNav ↗
-                                            </a>
-                                        </div>`;
-                                }
-                            }
-                        });
+                        }
             
             updateSunDisplay();
             const sunEl = document.getElementById('infoSun');
