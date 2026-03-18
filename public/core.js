@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.0.3',  // ← set once in index.html
+            version: window.APP_VERSION || '4.0.4',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 // {
@@ -1195,10 +1195,10 @@
             const dashEnabled  = await Storage.get('efb_multi_dashboard_enabled', false);
     
             // ── Apply correct starting tab BEFORE loading data ──
-            // This prevents any flash of the METAR tab when dashboard mode is on
+            // This prevents any flash of the METAR tab when dashboard mode is on.
+            // Land on 'dashboard' (multi-airport grid) so restored airports are visible immediately.
             if (dashEnabled) {
-                setTab('weather');
-                switchWeatherPane('metar');
+                setTab('dashboard');
             }
     
             if (savedDefault) {
@@ -2043,7 +2043,7 @@
             const first  = icao.charAt(0).toUpperCase();
             const map = {
                 // Taiwan
-                RC: { name: 'CAA Taiwan (sigmet.caa.gov.tw)', url: 'https://sigmet.caa.gov.tw' },
+                RC: { name: 'ANWS Taiwan (www.anws.gov.tw)', url: 'https://www.anws.gov.tw/English/' },
                 // Japan
                 RJ: { name: 'JMA Japan (www.jma.go.jp)', url: 'https://www.jma.go.jp/bosai/map.html#5/34/137/&elem=sigmet' },
                 RO: { name: 'JMA Japan (www.jma.go.jp)', url: 'https://www.jma.go.jp/bosai/map.html#5/34/137/&elem=sigmet' },

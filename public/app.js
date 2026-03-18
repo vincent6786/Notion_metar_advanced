@@ -1259,6 +1259,9 @@
             const enabled = toggle?.checked || false;
             const banner  = document.getElementById('minBanner');
             
+            // Write to both Storage (cloud/IndexedDB) AND localStorage so
+            // the synchronous checkMins() read is always in sync
+            localStorage.setItem('efb_no_go_banner_enabled', String(enabled));
             await Storage.set('efb_no_go_banner_enabled', enabled);
             
             // Immediately update banner visibility
