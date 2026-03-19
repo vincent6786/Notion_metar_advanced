@@ -55,6 +55,7 @@ const KNOWN_KEYS = [
     'efb_mins_active_profile',
     'efb_mins_custom',
     'efb_night_mode',
+    'efb_theme',
     'efb_multi_dashboard_enabled',
 ];
 
