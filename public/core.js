@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.2.0',  // ← set once in index.html
+            version: window.APP_VERSION || '4.2.1',  // ← set once in index.html
             title: 'METAR GO — Theme Edition',
             changes: [
                 {
@@ -12,9 +12,9 @@
                     desc: '6 app themes — Default, Cockpit Night, Sectional (VFR), IFR Enroute, Phosphor (CRT), and High Contrast. Syncs to cloud backup.'
                 },
                 {
-                    icon: '📡',
-                    title: 'Morse Trainer + Frequency DB',
-                    desc: 'New Morse WORDS mode for sentence practice. Airport frequencies for 8,341 airports now load instantly from an embedded database.'
+                    icon: '📖',
+                    title: 'Updated User Guide',
+                    desc: 'Help tab now covers all 9 aviation tools, SIGMET/AIRMET viewer, frequency fallback system, and theme selection.'
                 }
             ]
         };

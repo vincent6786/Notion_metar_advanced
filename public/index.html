@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.2.0';</script>
+    <script>window.APP_VERSION = '4.2.1';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -761,6 +761,10 @@
                         <div class="help-a">Colour-coded notices: <span style="color:#ff453a;font-weight:800;">⛔ Critical</span> (closures, unserviceable navaids), <span style="color:#ff9f0a;font-weight:800;">⚠️ Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">ℹ️ Info</span> (general). Data from FAA aviationweather.gov — updated every 10 minutes.</div>
                     </div>
                     <div class="help-item">
+                        <div class="help-q">🌩️ SIGMET / AIRMET</div>
+                        <div class="help-a">Displays active SIGMETs (severe weather — turbulence, icing, volcanic ash, thunderstorms) and AIRMETs (moderate-level hazards) for the loaded airport's region. US coverage via aviationweather.gov. For non-US airports, a link to the relevant national authority is shown. Tap <b>↻</b> to manually refresh. Timestamps show when data was last checked.</div>
+                    </div>
+                    <div class="help-item">
                         <div class="help-q">📋 Copy Button</div>
                         <div class="help-a">Copies the full raw TAF text to clipboard.</div>
                     </div>
@@ -782,7 +786,7 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">Frequencies</div>
-                        <div class="help-a">Loaded from AVWX and supplemented by aviationweather.gov. If no data is available, a link to SkyVector is shown. Up to 9 frequencies are displayed.</div>
+                        <div class="help-a">Loaded using a three-layer fallback: first from the built-in database (8,341 airports), then AVWX, then aviationweather.gov. Up to 9 frequencies displayed including ATIS, TWR, GND, APP, DEP, CTR, and UNICOM.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">ATIS / AWOS Phone</div>
@@ -833,7 +837,7 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">✈️ Aviation Tools Collection</div>
-                        <div class="help-a">Tap <b>Open Aviation Tools</b> to launch the full tools overlay. Contains 6 tools accessible from the tool grid. Use <b>←</b> to go back to the tool menu, and <b>✕</b> to close the overlay entirely.</div>
+                        <div class="help-a">Tap <b>Open Aviation Tools</b> to launch the full tools overlay. Contains 9 tools: Unit Converter, E6B Flight Computer, E6B Trainer, Great Circle Distance, Crosswind Calculator, VFR Airspace Minimums, Weather Terms, Abbreviations, and Morse Code Trainer. Use <b>←</b> to go back to the tool menu, and <b>✕</b> to close the overlay entirely.</div>
                     </div>
                 </div>
 
@@ -898,6 +902,43 @@
                     <div class="help-item">
                         <div class="help-q">What is the Abbreviations tool?</div>
                         <div class="help-a">An embedded searchable dictionary of aviation acronyms and abbreviations, powered by <b>Simplify Acronym Search</b>. Look up any ICAO, FAA, or general aviation abbreviation directly in-app without switching browsers.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🌬️ Aviation Tools — Crosswind Calculator</div>
+                    <div class="help-item">
+                        <div class="help-q">Two input modes</div>
+                        <div class="help-a">The calculator has two modes: <b>Visual Compass</b> — drag the wind arrow around the compass rose and adjust speed with the slider, or <b>Type-In</b> — enter wind direction, speed, gust, and runway heading numerically. Both produce the same output.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Output</div>
+                        <div class="help-a">Shows computed <b>headwind/tailwind</b> and <b>crosswind</b> components with direction (left/right). When gust is entered, worst-case gust components are also displayed. A <span style="color:var(--danger);font-weight:700;">⚠️ LIMIT</span> badge appears if crosswind exceeds your personal minimum set in Personal Minimums.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">🛩️ Aviation Tools — VFR Airspace Minimums</div>
+                    <div class="help-item">
+                        <div class="help-q">What is shown?</div>
+                        <div class="help-a">A quick-reference card for FAA VFR weather minimums by airspace class (B, C, D, E, G) and altitude band. Shows required <b>flight visibility</b> and <b>cloud clearance</b> (above, below, horizontal) for each class. Useful for preflight planning and in-flight reference.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">📡 Aviation Tools — Morse Code Trainer</div>
+                    <div class="help-item">
+                        <div class="help-q">Modes</div>
+                        <div class="help-a">Four training modes:<br><br>
+                            <b>Learn</b> — browse the full Morse alphabet with visual dot/dash display and audio playback per character.<br><br>
+                            <b>Listen</b> — hear a character played and identify it. Speed adjustable via WPM slider.<br><br>
+                            <b>Quiz</b> — given a character, tap the correct Morse pattern from multiple choices. Tracks your score.<br><br>
+                            <b>Words</b> — full word/sentence practice. Includes common VOR identifiers (e.g. TPE, LAX, SFO) for realistic navaid ident training.
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Audio</div>
+                        <div class="help-a">Uses a 600 Hz sine tone generated in-browser. Speed is adjustable. Make sure your device is not on silent mode.</div>
                     </div>
                 </div>
                 
@@ -966,7 +1007,7 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">☁️ Cloud Backup</div>
-                        <div class="help-a">Saves favorites, default airport, world clock cities, and multi-airport list using a 4–6 digit code. No account or personal data needed. Restore on any device with your code. Choose <b>This Device Only</b> if you prefer local-only storage.</div>
+                        <div class="help-a">Saves favorites, default airport, world clock cities, multi-airport list, app theme, and personal minimums using a 4–6 digit code. No account or personal data needed. Restore on any device with your code. Choose <b>This Device Only</b> if you prefer local-only storage.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">API Usage Monitor</div>
