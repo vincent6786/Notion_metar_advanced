@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.1.6',  // ← set once in index.html
+            version: window.APP_VERSION || '4.1.7',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {
@@ -1816,6 +1816,9 @@
                     if (stationData._meta) console.log(`%c[AVWX] Station - Key #${stationData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
                     renderInfo(stationData);
                     updateAudioSection(icao);
+                    // Populate frequencies directly — not via renderInfo to avoid timing issues
+                    const fc = document.getElementById('freqContainer');
+                    if (fc) renderInfoFrequencies(stationData, fc);
                 }
                 
                 // ── PHASE 2: Start slow tasks in background (don't block) ──
@@ -1867,7 +1870,12 @@
                         setupRunwaySelect();
                         // Redraw wind rose with a small delay to ensure canvas is visible
                         // (iOS Safari discards draws on display:none canvases)
-                        setTimeout(() => { if (document.getElementById('rwySelect').value) drawWindRose(); }, 80);
+                        setTimeout(() => {
+                            if (document.getElementById('rwySelect').value) {
+                                drawWindRose('windRose');
+                                drawWindRoseOnCanvas('windRose2');
+                            }
+                        }, 80);
                         
                         // Store for trend analysis
                         storeMetarForTrend(icao, m);
@@ -3094,8 +3102,12 @@
             // ── Layer 1: embedded FREQ_DB ──
             let dbFreqs = null;
             try {
-                dbFreqs = (typeof lookupFrequencies === 'function') ? lookupFrequencies(icao) : null;
-                console.log(`[FreqDB] ${icao}: lookupFrequencies=${typeof lookupFrequencies}, result=${dbFreqs ? dbFreqs.length + ' freqs' : 'null'}`);
+                if (typeof lookupFrequencies === 'function') {
+                    dbFreqs = lookupFrequencies(icao);
+                } else if (typeof FREQ_DB !== 'undefined' && FREQ_DB[icao]) {
+                    dbFreqs = FREQ_DB[icao];
+                }
+                console.log(`[FreqDB] ${icao}: ${dbFreqs ? dbFreqs.length + ' freqs found' : 'not in DB'}`);
             } catch(e) {
                 console.warn('[FreqDB] Lookup error:', e);
             }
@@ -3186,10 +3198,6 @@
             document.getElementById('calcDA').innerText  = `${da} ft`;
             document.getElementById('calcISA').innerText = `${isaDev >= 0 ? '+' : ''}${isaDev}°C`;
             checkDAWarning(da, elev);
-
-            // ── FREQUENCIES ──
-            const fContainer = document.getElementById('freqContainer');
-            if (fContainer) renderInfoFrequencies(d, fContainer);
 
             updateSunDisplay();
             const sunEl = document.getElementById('infoSun');

@@ -51,9 +51,9 @@
         }
     
 
-        function drawWindRose() {
+        function drawWindRose(forceCanvasId) {
             const weatherTabActive = document.getElementById('tab-weather')?.classList.contains('active');
-            const canvasId = weatherTabActive ? 'windRose2' : 'windRose';
+            const canvasId = forceCanvasId || (weatherTabActive ? 'windRose2' : 'windRose');
             const canvas   = document.getElementById(canvasId);
             const ctx      = canvas.getContext('2d');
             const w = 140, h = 140, cx = 70, cy = 70, r = 54;
@@ -176,10 +176,7 @@
             const orig = document.getElementById('rwySelect');
             const copy = document.getElementById('rwySelect2');
             if (copy && orig) copy.value = orig.value;
-            const saved = document.getElementById('toggleMultiDashboard');
-            // Temporarily point drawWindRose to the right canvas
-            const temp = { checked: canvasId === 'windRose2' };
-            if (saved) { const prev = saved.checked; saved.checked = temp.checked; drawWindRose(); saved.checked = prev; }
+            drawWindRose(canvasId);
         }
     
         function renderRunwaysComplex() {
@@ -1202,6 +1199,12 @@
                     });
                     if (name === 'world') updateClock();
                     if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
+                    // Redraw wind rose after tab is visible — iOS Safari discards canvas draws on hidden elements
+                    if (name === 'metar') setTimeout(() => { if (document.getElementById('rwySelect').value) drawWindRose(); }, 50);
+                    if (name === 'weather') setTimeout(() => {
+                        if (document.getElementById('rwySelect').value) drawWindRose();
+                        drawWindRoseOnCanvas('windRose2');
+                    }, 50);
                 }
 
         async function checkMultiDashboardEnabled() {
