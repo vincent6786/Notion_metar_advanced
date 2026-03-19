@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.1.7',  // ← set once in index.html
+            version: window.APP_VERSION || '4.1.8',  // ← set once in index.html
             title: 'METAR GO — Cloud Edition',
             changes: [
                 {

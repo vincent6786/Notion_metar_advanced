@@ -6504,6 +6504,7 @@ const FREQ_DB={
 "VEAZ":[{t:"TWR",f:122.3}],
 "VEBD":[{t:"TWR",f:122.3},{t:"APP",f:131.2},{t:"A/G",d:"RDO",f:293.1}],
 "VEBI":[{t:"TWR",f:122.3}],
+"VEBN":[{t:"TWR",f:118.1},{t:"APP",d:"VIBN APP",f:119.0},{t:"ACC N & ACC S",d:"120.750 MHz",f:132.4}],
 "VEBS":[{t:"ATIS",f:126.8},{t:"TWR",f:125.15},{t:"APP",f:123.5}],
 "VECC":[{t:"ATIS",f:126.4},{t:"GND",d:"KOLKATA GND",f:121.9},{t:"TWR",d:"KOLKATA TWR",f:118.1},{t:"APP",d:"KOLKATA APP",f:127.9},{t:"ACC",d:"KOLKATA CON",f:119.3},{t:"ACC",d:"Kolkata Radar",f:120.575},{t:"ACC",d:"Kolkata Radar",f:132.35},{t:"ACC",d:"Kolkata Radar",f:133.75},{t:"RADAR",d:"Feeder AREA-APP",f:127.3},{t:"APP CONTROL",d:"KOLKATA CONTROL",f:132.45},{t:"Oceanic",d:"Kolkata Control",f:132.45}],
 "VECO":[{t:"TWR",f:122.3}],

@@ -2241,33 +2241,37 @@
 
         async function fetchMultiAirportData(icao) {
             try {
-                // Fetch METAR + Station in parallel (secureFetch caches both for 10 min)
+                // Check TAF cache first to avoid unnecessary fetch
+                const tafCacheKey = `cache_/api/weather?type=taf&station=${icao}`;
+                const tafCached   = localStorage.getItem(tafCacheKey);
+                let tafPromise    = null;
+                if (!tafCached) {
+                    // Fire TAF fetch in parallel with METAR+Station
+                    tafPromise = secureFetch(`/api/weather?type=taf&station=${icao}`).catch(() => null);
+                }
+
+                // Fetch METAR + Station in parallel
                 const [metarRes, stationRes] = await Promise.allSettled([
                     secureFetch(`/api/weather?type=metar&station=${icao}`),
                     secureFetch(`/api/weather?type=station&station=${icao}`)
                 ]);
-        
-                // Check TAF existence from cache first — avoid burning extra API quota
-                const tafCacheKey = `cache_/api/weather?type=taf&station=${icao}`;
-                const tafCached   = localStorage.getItem(tafCacheKey);
+
+                // Resolve TAF
                 let hasTaf = false;
                 if (tafCached) {
                     try { hasTaf = !!(JSON.parse(tafCached).data?.raw); } catch(e) {}
-                } else {
-                    // No cache hit — do one TAF fetch and cache it
-                    try {
-                        const taf = await secureFetch(`/api/weather?type=taf&station=${icao}`);
-                        hasTaf = !!(taf?.raw && !taf?.error);
-                    } catch(e) { hasTaf = false; }
+                } else if (tafPromise) {
+                    const taf = await tafPromise;
+                    hasTaf = !!(taf?.raw && !taf?.error);
                 }
-        
+
                 if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
                     const station = stationRes.status === 'fulfilled' ? stationRes.value : null;
                     multiDataCache[icao] = {
                         metar:       metarRes.value,
                         hasTaf,
                         stationName: station?.name || icao,
-                        stationIata: station?.iata || '', 
+                        stationIata: station?.iata || '',
                         fetchTime:   Date.now()
                     };
                     renderMultiCard(icao);
@@ -2299,9 +2303,9 @@
     
         async function refreshMultiData() {
             console.log('[Multi] Refreshing all airports...');
-            for (const icao of multiAirports) {
-                await fetchMultiAirportData(icao);
-            }
+            await Promise.allSettled(
+                multiAirports.map(icao => fetchMultiAirportData(icao))
+            );
             // Update last-refreshed stamp
             const now = new Date();
             const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
