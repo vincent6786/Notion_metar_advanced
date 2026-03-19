@@ -1166,17 +1166,63 @@
         // ================================================================
         // 24. UI HELPERS
         // ================================================================
-        function toggleNightMode() {
-            document.body.classList.toggle('cockpit-dark');
-            const isDark = document.body.classList.contains('cockpit-dark');
-            const btn    = document.getElementById('btnNightMode');
-            btn.innerHTML = isDark ? "<span>⚪ Day Mode</span>" : "<span>🔴 Cockpit Night Mode</span>";
-            btn.style.borderColor = isDark ? "#fff" : "var(--danger)";
-            Storage.set('efb_night_mode', isDark ? 'true' : 'false');
-            if (document.getElementById('rwySelect').value) drawWindRose();
+        // ── Theme engine ──
+        const THEME_CLASSES = {
+            default:    null,
+            cockpit:    'cockpit-dark',
+            sectional:  'theme-sectional',
+            ifr:        'theme-ifr',
+            phosphor:   'theme-phosphor',
+            contrast:   'theme-contrast',
+        };
+
+        const THEME_SWATCH_COLORS = {
+            default:   '#0a84ff',
+            cockpit:   '#ff0000',
+            sectional: '#c49a3c',
+            ifr:       '#4a9eff',
+            phosphor:  '#00ff41',
+            contrast:  '#ffffff',
+        };
+
+        function setTheme(name) {
+            if (!THEME_CLASSES.hasOwnProperty(name)) name = 'default';
+
+            // Remove all theme classes
+            Object.values(THEME_CLASSES).forEach(cls => {
+                if (cls) document.body.classList.remove(cls);
+            });
+
+            // Apply selected theme class
+            const cls = THEME_CLASSES[name];
+            if (cls) document.body.classList.add(cls);
+
+            // Update dropdown & swatch
+            const sel = document.getElementById('themeSelect');
+            if (sel) sel.value = name;
+            const swatch = document.getElementById('themeSwatch');
+            if (swatch) swatch.style.background = THEME_SWATCH_COLORS[name] || '#0a84ff';
+
+            // Persist
+            Storage.set('efb_theme', name);
+
+            // Redraw wind rose if active
+            if (document.getElementById('rwySelect')?.value) drawWindRose();
         }
 
-        function checkNightModeSaved() { if (localStorage.getItem('efb_night_mode') === 'true') toggleNightMode(); }
+        async function initTheme() {
+            // Migrate from old night-mode key
+            const legacy = localStorage.getItem('efb_night_mode');
+            const saved  = await Storage.get('efb_theme');
+
+            if (!saved && legacy === 'true') {
+                setTheme('cockpit');
+                localStorage.removeItem('efb_night_mode');
+                return;
+            }
+
+            setTheme(saved || 'default');
+        }
 
         function setTab(name) {
                     document.querySelectorAll('.view-section').forEach(el => {

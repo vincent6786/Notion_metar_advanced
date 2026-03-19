@@ -3,13 +3,13 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.1.8',  // ← set once in index.html
-            title: 'METAR GO — Cloud Edition',
+            version: window.APP_VERSION || '4.2.0',  // ← set once in index.html
+            title: 'METAR GO — Theme Edition',
             changes: [
                 {
                     icon: '🎨',
-                    title: 'Contrast overhaul',
-                    desc: 'All tools now use amber highlights, darker backgrounds and thicker borders for better cockpit readability.'
+                    title: 'Theme Selection',
+                    desc: '6 app themes — Default, Cockpit Night, Sectional (VFR), IFR Enroute, Phosphor (CRT), and High Contrast. Syncs to cloud backup.'
                 },
                 {
                     icon: '📡',
@@ -1182,7 +1182,7 @@
             renderStorageModeUI();
             updateApiQuickStats();
             initWorldClock();
-            checkNightModeSaved();
+            await initTheme();
             renderFavoritesSettings();
             renderHistory();
             await checkMultiDashboardEnabled();

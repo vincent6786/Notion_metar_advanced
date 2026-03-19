@@ -256,6 +256,210 @@
         body.cockpit-dark .n-bold { color: #ff3333; }
 
         /* ============================================================
+           5b. THEME: SECTIONAL (VFR Chart)
+           Warm parchment tones inspired by FAA Sectional Charts
+        ============================================================ */
+        body.theme-sectional {
+            --bg:       #1e1a14;
+            --card-bg:  #2c261d;
+            --text:     #e8d9be;
+            --sub-text: #9a8b6f;
+            --border:   #4a3f30;
+            --accent:   #c49a3c;
+            --danger:   #c44230;
+            --warn:     #d4943a;
+            --success:  #5a8a3a;
+            --mvfr:     #5a9acc;
+            --lifr:     #9a6abf;
+            --sky-bg:   #1a1810;
+            --strip-bg: #3a3228;
+        }
+        body.theme-sectional input,
+        body.theme-sectional select,
+        body.theme-sectional textarea {
+            background: #252015 !important;
+            color: #e8d9be !important;
+            border-color: #4a3f30 !important;
+        }
+        body.theme-sectional .tab.active {
+            border-bottom-color: #c49a3c;
+            color: #c49a3c;
+        }
+        body.theme-sectional .pill-btn.active,
+        body.theme-sectional .unit-pill.active-unit {
+            background: #c49a3c;
+            box-shadow: 0 2px 8px rgba(196,154,60,0.3);
+        }
+
+        /* ============================================================
+           5c. THEME: IFR ENROUTE
+           Deep navy inspired by IFR Low Altitude Enroute Charts
+        ============================================================ */
+        body.theme-ifr {
+            --bg:       #080e1a;
+            --card-bg:  #111d30;
+            --text:     #c8d6e5;
+            --sub-text: #6b8299;
+            --border:   #1e3350;
+            --accent:   #4a9eff;
+            --danger:   #ff5555;
+            --warn:     #ffaa44;
+            --success:  #44cc88;
+            --mvfr:     #4a9eff;
+            --lifr:     #a06ad4;
+            --sky-bg:   #0a1525;
+            --strip-bg: #1a2d48;
+        }
+        body.theme-ifr input,
+        body.theme-ifr select,
+        body.theme-ifr textarea {
+            background: #0d1828 !important;
+            color: #c8d6e5 !important;
+            border-color: #1e3350 !important;
+        }
+        body.theme-ifr .tab.active {
+            border-bottom-color: #4a9eff;
+            color: #4a9eff;
+        }
+        body.theme-ifr .pill-btn.active,
+        body.theme-ifr .unit-pill.active-unit {
+            background: #4a9eff;
+            box-shadow: 0 2px 8px rgba(74,158,255,0.3);
+        }
+
+        /* ============================================================
+           5d. THEME: PHOSPHOR
+           Green-on-black retro CRT terminal
+        ============================================================ */
+        body.theme-phosphor {
+            --bg:       #000a00;
+            --card-bg:  #001a00;
+            --text:     #00ff41;
+            --sub-text: #008822;
+            --border:   #003300;
+            --accent:   #00ff41;
+            --danger:   #ff2222;
+            --warn:     #ccaa00;
+            --success:  #00ff41;
+            --mvfr:     #00aaff;
+            --lifr:     #aa44ff;
+            --sky-bg:   #000d00;
+            --strip-bg: #002200;
+        }
+        body.theme-phosphor * {
+            text-shadow: 0 0 4px rgba(0,255,65,0.25);
+        }
+        body.theme-phosphor input,
+        body.theme-phosphor select,
+        body.theme-phosphor textarea {
+            background: #001100 !important;
+            color: #00ff41 !important;
+            border-color: #003300 !important;
+            caret-color: #00ff41;
+        }
+        body.theme-phosphor .tab.active {
+            border-bottom-color: #00ff41;
+            color: #00ff41;
+        }
+        body.theme-phosphor .pill-btn.active,
+        body.theme-phosphor .unit-pill.active-unit {
+            background: #00cc33;
+            color: #000;
+            box-shadow: 0 0 8px rgba(0,255,65,0.4);
+        }
+        body.theme-phosphor .badge-cat {
+            color: #000 !important;
+            background: #00ff41 !important;
+        }
+
+        /* ============================================================
+           5e. THEME: HIGH CONTRAST
+           Maximum readability — white on black, bold borders
+        ============================================================ */
+        body.theme-contrast {
+            --bg:       #000000;
+            --card-bg:  #111111;
+            --text:     #ffffff;
+            --sub-text: #bbbbbb;
+            --border:   #555555;
+            --accent:   #00aaff;
+            --danger:   #ff3333;
+            --warn:     #ffcc00;
+            --success:  #00ff00;
+            --mvfr:     #00aaff;
+            --lifr:     #cc55ff;
+            --sky-bg:   #0a0a0a;
+            --strip-bg: #2a2a2a;
+        }
+        body.theme-contrast * {
+            border-width: 2px !important;
+        }
+        body.theme-contrast input,
+        body.theme-contrast select,
+        body.theme-contrast textarea {
+            background: #0a0a0a !important;
+            color: #ffffff !important;
+            border-color: #666 !important;
+        }
+        body.theme-contrast .tab.active {
+            border-bottom-color: #00aaff;
+            color: #ffffff;
+        }
+        body.theme-contrast .pill-btn.active,
+        body.theme-contrast .unit-pill.active-unit {
+            background: #00aaff;
+            color: #000;
+            box-shadow: none;
+            font-weight: 800;
+        }
+        body.theme-contrast .badge-cat {
+            font-weight: 900;
+            border: 2px solid #fff !important;
+        }
+
+        /* ── Theme selector dropdown ── */
+        .theme-select-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-select-wrap select {
+            flex: 1;
+            appearance: none;
+            -webkit-appearance: none;
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 36px 10px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .theme-select-wrap select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .theme-select-wrap::after {
+            content: '▾';
+            position: absolute;
+            right: 14px;
+            color: var(--sub-text);
+            font-size: 14px;
+            pointer-events: none;
+        }
+        .theme-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        /* ============================================================
            6. UI ELEMENTS — TOP BAR & SEARCH
         ============================================================ */
         .top-bar {

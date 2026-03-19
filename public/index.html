@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.1.8';</script>
+    <script>window.APP_VERSION = '4.2.0';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -961,8 +961,8 @@
                         </div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">🔴 Cockpit Night Mode</div>
-                        <div class="help-a">Switches all UI colours to red-on-black to preserve night vision in dark cockpit environments. Tap again (shows "Day Mode") to return to normal. Setting persists between sessions.</div>
+                        <div class="help-q">🎨 App Theme</div>
+                        <div class="help-a">Choose from 6 themes: Default dark, Cockpit Night (red-on-black for night vision), Sectional (warm VFR chart tones), IFR Enroute (navy), Phosphor (green CRT terminal), and High Contrast. Selection syncs to cloud backup.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">☁️ Cloud Backup</div>
@@ -1575,10 +1575,23 @@
         
         <!-- Visuals -->
         <div class="section-title">Visuals</div>
-        <button id="btnNightMode" class="atc-btn" onclick="toggleNightMode()"
-                style="justify-content:center; margin-bottom:20px; border:1px solid var(--danger);">
-            <span>🔴 Cockpit Night Mode</span>
-        </button>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;">
+            <div style="font-weight:700;margin-bottom:8px;">App Theme</div>
+            <div class="theme-select-wrap">
+                <span class="theme-swatch" id="themeSwatch"></span>
+                <select id="themeSelect" onchange="setTheme(this.value)">
+                    <option value="default">Default (Dark)</option>
+                    <option value="cockpit">🔴 Cockpit Night</option>
+                    <option value="sectional">🗺️ Sectional (VFR)</option>
+                    <option value="ifr">📘 IFR Enroute</option>
+                    <option value="phosphor">💚 Phosphor (CRT)</option>
+                    <option value="contrast">⚪ High Contrast</option>
+                </select>
+            </div>
+            <div style="font-size:11px;color:var(--sub-text);margin-top:8px;line-height:1.5;">
+                Cockpit Night uses monochrome red to preserve night vision. Phosphor emulates a vintage CRT terminal.
+            </div>
+        </div>
 
         <!-- Multi-Airport Dashboard Toggle -->
         <div class="section-title">Multi-Airport Dashboard</div>
