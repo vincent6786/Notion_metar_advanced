@@ -3604,6 +3604,8 @@ function render160() {
         tri_ref: r60_triRef, tri_calc: r60_triCalc, tri_example: r60_triExample, tri_quiz: r60_triQuiz,
     };
     el.innerHTML = renderers[key] ? renderers[key]() : '';
+    // Post-render init for wind triangle calc
+    if (key === 'tri_calc') renderTriInputs();
 }
 
 /* ── Helpers ── */
@@ -3655,6 +3657,7 @@ function r60AutoCalc() {
     if (_160.topic === 'wind' && _160.mode === 'calc') calcWind160();
     if (_160.topic === 'tod' && _160.mode === 'calc') calcTOD160();
     if (_160.topic === 'rod' && _160.mode === 'calc') calcROD160();
+    if (_160.topic === 'tri' && _160.mode === 'calc') calcTri();
 }
 
 function calcCourse160() {
@@ -3754,20 +3757,20 @@ function calcWind160() {
     let ww = wDir - rwy;
     if (ww > 180) ww -= 360;
     if (ww < -180) ww += 360;
-    const wwRad = Math.abs(ww) * Math.PI / 180;
-    const cwc = wSpd * Math.sin(wwRad);
-    const lwc = wSpd * Math.cos(wwRad);
-    const cwcDir = ww > 0 ? 'from Right' : ww < 0 ? 'from Left' : '';
+    const wwRad = ww * Math.PI / 180;
+    const cwc = wSpd * Math.sin(wwRad);     // +ve = from right, -ve = from left
+    const lwc = wSpd * Math.cos(wwRad);     // +ve = headwind, -ve = tailwind
+    const cwcDir = cwc > 0.1 ? 'from Right' : cwc < -0.1 ? 'from Left' : '';
     const hwLabel = lwc >= 0 ? 'Headwind' : 'Tailwind';
     let html = `<b style="color:#e8a020;">Wind Angle:</b> ${Math.abs(ww).toFixed(0)}° ${cwcDir}<br>`;
-    html += `<b>Crosswind:</b> ${cwc.toFixed(1)} kt ${cwcDir}<br>`;
+    html += `<b>Crosswind:</b> ${Math.abs(cwc).toFixed(1)} kt ${cwcDir}<br>`;
     html += `<b>${hwLabel}:</b> ${Math.abs(lwc).toFixed(1)} kt<br>`;
     if (!isNaN(tas) && tas > 0) {
-        const wca = (cwc * 60) / tas;
-        const hdg = rwy - wca;
-        const gs = tas + (lwc >= 0 ? -Math.abs(lwc) : Math.abs(lwc));
-        html += `<br><b style="color:#e8a020;">WCA:</b> ${Math.abs(wca).toFixed(1)}° ${wca > 0 ? 'Right' : 'Left'}<br>`;
-        html += `<b>Heading:</b> ${((hdg % 360) + 360).toFixed(0) % 360 || 360}°<br>`;
+        const wca = (cwc * 60) / tas;       // +ve = steer right, -ve = steer left
+        const hdg = rwy + wca;              // steer INTO wind
+        const gs = tas - lwc;               // headwind subtracts, tailwind adds
+        html += `<br><b style="color:#e8a020;">WCA:</b> ${Math.abs(wca).toFixed(1)}° ${wca > 0.1 ? 'Right' : wca < -0.1 ? 'Left' : ''}<br>`;
+        html += `<b>Heading:</b> ${((Math.round(hdg) % 360) + 360) % 360 || 360}°<br>`;
         html += `<b>Ground Speed:</b> ${gs.toFixed(0)} kt`;
     }
     el.innerHTML = html;
@@ -4016,14 +4019,12 @@ function r60NewQ() {
         const variant = _rand(0, 1);
         if (variant === 0) { q = `Altitude ${alt.toLocaleString()} ft, airport ${elev} ft. TOD distance for 3°?`; answer = (alt - elev) / 300; unit = 'NM'; }
         else { const rng = _rand(3, 20); q = `On 3° glideslope, ${rng} NM from runway. Height AGL?`; answer = 300 * rng; unit = 'ft'; }
-    } else { // rod
+    } else if (_160.topic === 'rod') {
         const gs = _rand(70, 160);
         const variant = _rand(0, 1);
         if (variant === 0) { q = `GS ${gs} kt on 3° glideslope. Required V/S?`; answer = gs * 5; unit = 'fpm'; }
         else { const angle = _rand(2, 6); q = `GS ${gs} kt, descent angle ${angle}°. Required V/S?`; answer = (gs * angle * 100) / 60; unit = 'fpm'; }
-    }
-
-    if (_160.topic === 'tri') {
+    } else if (_160.topic === 'tri') {
         // Wind triangle quiz — find track or GS
         const hdg = _rand(1, 36) * 10;
         const tas = _rand(80, 150);
@@ -4039,6 +4040,8 @@ function r60NewQ() {
         if (variant === 0) { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. Ground speed?`; answer = gs; unit = 'kt'; }
         else { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. Track?`; answer = trk; unit = '°'; }
     }
+
+    if (!q) { area.innerHTML = '<div style="color:#ff9f0a;padding:20px;text-align:center;">No quiz available for this topic.</div>'; return; }
 
     _160.quizQ = { answer, unit };
     area.innerHTML = _card('Question', q) +
@@ -4109,7 +4112,7 @@ function r60_triCalc() {
         <button id="triSolve-find_wind" onclick="setTriMode('find_wind')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;">Find Wind</button>
     </div>
     <div id="triInputs"></div>
-    <canvas id="triCanvasEl" width="340" height="340" style="width:100%;max-width:340px;display:block;margin:12px auto 0;border-radius:10px;background:#0a0a0a;border:1px solid #333;"></canvas>
+    <canvas id="triCanvasEl" style="width:100%;max-width:340px;aspect-ratio:1;display:block;margin:12px auto 0;border-radius:10px;background:#0a0a0a;border:1px solid #333;"></canvas>
     ` + _result('triResult');
 }
 
@@ -4141,8 +4144,6 @@ function renderTriInputs() {
             '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
             _inp('tri_trk','Track (°)','100%') + _inp('tri_gs','GS (kt)','100%') + '</div>';
     }
-    // Bind oninput to all new inputs
-    el.querySelectorAll('input').forEach(i => i.addEventListener('input', calcTri));
 }
 
 function calcTri() {
@@ -4212,8 +4213,17 @@ function calcTri() {
 function drawTri(d) {
     const c = document.getElementById('triCanvasEl');
     if (!c) return;
+    const dpr = window.devicePixelRatio || 1;
+    // Use the CSS-rendered width (respects width:100%;max-width:340px)
+    const rect = c.getBoundingClientRect();
+    const cssW = Math.round(rect.width) || 340;
+    const cssH = cssW; // keep square
+    c.width = cssW * dpr;
+    c.height = cssH * dpr;
+    c.style.height = cssH + 'px';
     const ctx = c.getContext('2d');
-    const W = c.width, H = c.height, cx = W / 2, cy = H / 2;
+    ctx.scale(dpr, dpr);
+    const W = cssW, H = cssH, cx = W / 2, cy = H / 2;
     ctx.clearRect(0, 0, W, H);
 
     // Background compass rose
@@ -4346,6 +4356,14 @@ async function adminSetToolVisibility(toolId, hidden) {
         });
         window._hiddenTools = list;
         applyToolVisibility();
+        // Re-render the in-app admin tools panel toggles
+        const adminTabContent = document.getElementById('adminTabContent');
+        if (adminTabContent && adminTabContent.querySelector('[onchange*="adminSetToolVisibility"]')) {
+            adminTabContent.innerHTML = `
+                <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tool Visibility — toggle to show/hide for all users</div>
+                <div style="font-size:11px;color:#888;margin-bottom:14px;">Hidden tools are invisible to normal users. Admin always sees all tools with a <span style="color:#ff9f0a;">👁 HIDDEN</span> badge.</div>
+                ${renderAdminToolsPanel()}`;
+        }
         if (typeof showToast === 'function') showToast(hidden ? '🔒 Tool hidden' : '🔓 Tool visible');
     } catch(e) { if (typeof showToast === 'function') showToast('⚠️ Failed to update'); }
 }

@@ -607,6 +607,7 @@
             const activeTab = tab || 'stats';
             const content = document.getElementById('apiStatsContent');
             window._isAdminSession = true;
+            window._adminPwd = password;
             if (typeof applyToolVisibility === 'function') applyToolVisibility();
             content.innerHTML = `
                 <!-- Tab switcher -->
