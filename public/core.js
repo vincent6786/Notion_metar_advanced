@@ -3,18 +3,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.2.2',  // ← set once in index.html
-            title: 'METAR GO — Theme Edition',
+            version: window.APP_VERSION || '4.3.0',  // ← set once in index.html
+            title: 'METAR GO — Training Edition',
             changes: [
                 {
                     icon: '📐',
-                    title: '1:60 Rule Trainer',
-                    desc: 'New aviation tool — course correction, wind correction angle, top of descent, and rate of descent. Reference cards, calculators, worked examples, and quiz mode.'
+                    title: 'Training Area',
+                    desc: '5 training modules: 1:60 Rule (course correction, wind correction, TOD, V/S) plus a new Wind Triangle tool with interactive canvas. Each has reference cards, calculators, worked examples, and quiz mode.'
                 },
                 {
-                    icon: '🎨',
-                    title: 'Theme Selection',
-                    desc: '6 app themes — Default, Cockpit Night, Sectional (VFR), IFR Enroute, Phosphor (CRT), and High Contrast. Syncs to cloud backup.'
+                    icon: '🔧',
+                    title: 'Admin Tool Control',
+                    desc: 'Admins can now toggle tool visibility for all users. Hidden tools are invisible to normal users but always visible to admin with a badge.'
                 }
             ]
         };
@@ -595,6 +595,7 @@
                 const data = await res.json();
                 apiStatsCache = data;
                 _adminPasswordCache = password;
+                window._adminPwd = password;
                 showAdminConsoleLink(); // reveal shortcut in Settings
                 showAdminPanel(password, 'stats');
             } catch (err) {
@@ -605,27 +606,34 @@
         function showAdminPanel(password, tab) {
             const activeTab = tab || 'stats';
             const content = document.getElementById('apiStatsContent');
+            window._isAdminSession = true;
+            if (typeof applyToolVisibility === 'function') applyToolVisibility();
             content.innerHTML = `
                 <!-- Tab switcher -->
                 <div style="display:flex;gap:0;margin-bottom:20px;background:#1c1c1e;border-radius:10px;padding:3px;border:1px solid #333;">
                     <button id="adminTab-stats" onclick="switchAdminTab('stats','${password}')"
                             style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
                             background:${activeTab==='stats'?'var(--accent)':'transparent'};
-                            color:${activeTab==='stats'?'#fff':'#8e8e93'};">📊 API Stats</button>
+                            color:${activeTab==='stats'?'#fff':'#8e8e93'};">📊 Stats</button>
                     <button id="adminTab-users" onclick="switchAdminTab('users','${password}')"
                             style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
                             background:${activeTab==='users'?'var(--accent)':'transparent'};
                             color:${activeTab==='users'?'#fff':'#8e8e93'};">👥 Users</button>
+                    <button id="adminTab-tools" onclick="switchAdminTab('tools','${password}')"
+                            style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+                            background:${activeTab==='tools'?'var(--accent)':'transparent'};
+                            color:${activeTab==='tools'?'#fff':'#8e8e93'};">🔧 Tools</button>
                 </div>
                 <div id="adminTabContent"></div>`;
 
             // Always fetch fresh on open — accurate across devices
             if (activeTab === 'users') loadUsersTab(password);
+            else if (activeTab === 'tools') loadToolsTab();
             else                       loadStatsAndRender(password);
         }
 
         async function switchAdminTab(tab, password) {
-            ['stats','users'].forEach(t => {
+            ['stats','users','tools'].forEach(t => {
                 const btn = document.getElementById(`adminTab-${t}`);
                 if (!btn) return;
                 btn.style.background = t === tab ? 'var(--accent)' : 'transparent';
@@ -633,7 +641,19 @@
             });
             // Always fetch fresh — ensures stats are current across all devices
             if (tab === 'stats') await loadStatsAndRender(password);
+            else if (tab === 'tools') loadToolsTab();
             else                 await loadUsersTab(password);
+        }
+
+        async function loadToolsTab() {
+            const tabContent = document.getElementById('adminTabContent');
+            if (!tabContent) return;
+            // Fetch latest config
+            await fetchToolVisibility();
+            tabContent.innerHTML = `
+                <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tool Visibility — toggle to show/hide for all users</div>
+                <div style="font-size:11px;color:#888;margin-bottom:14px;">Hidden tools are invisible to normal users. Admin always sees all tools with a <span style="color:#ff9f0a;">👁 HIDDEN</span> badge.</div>
+                ${typeof renderAdminToolsPanel === 'function' ? renderAdminToolsPanel() : '<div style="color:#ff453a;">renderAdminToolsPanel not loaded</div>'}`;
         }
 
         async function loadStatsAndRender(password) {
@@ -1189,6 +1209,7 @@
             await checkNoGoBannerEnabled();
             loadUnitPreferences();
             if (typeof loadAeroSearchModeSetting === 'function') loadAeroSearchModeSetting();
+            if (typeof fetchToolVisibility === 'function') fetchToolVisibility();
 
 
             const savedDefault = await Storage.get('efb_default_station');

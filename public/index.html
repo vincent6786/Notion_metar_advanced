@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.2.2';</script>
+    <script>window.APP_VERSION = '4.3.0';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -943,23 +943,24 @@
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">📐 Aviation Tools — 1:60 Rule</div>
+                    <div class="help-section-title">📐 Aviation Tools — Training Area</div>
                     <div class="help-item">
-                        <div class="help-q">What is the 1:60 Rule?</div>
-                        <div class="help-a">A pilot's mental-math shortcut: at small angles, <b>1° off course at 60 NM = 1 NM displacement</b>. This approximation (sin θ ≈ θ/60 for θ in degrees) underpins course corrections, wind correction angles, top-of-descent planning, and vertical speed calculations.</div>
+                        <div class="help-q">What is the Training Area?</div>
+                        <div class="help-a">A comprehensive training tool covering the <b>1:60 Rule</b> and <b>Wind Triangle</b> — the essential mental-math skills every pilot needs. The 1:60 rule states that at small angles, <b>1° off course at 60 NM = 1 NM displacement</b>.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Topics</div>
-                        <div class="help-a">Four topic tabs:<br><br>
+                        <div class="help-a">Five topic tabs:<br><br>
                             <b>COURSE</b> — Track Error (TE), Closing Angle (CA), Direct-to-Waypoint (TE+CA), and Double Track Error methods.<br><br>
                             <b>WIND</b> — Crosswind/headwind components using sine/cosine shortcuts, Wind Correction Angle (WCA), and ground speed estimation.<br><br>
                             <b>TOD</b> — Top of Descent distance, height-at-range checks, and the 300 ft/NM rule for 3° glideslopes.<br><br>
-                            <b>V/S</b> — Rate of descent from flight path angle (GS × 5 shortcut), gradient-to-FPA conversion, and constant-rate descent planning.
+                            <b>V/S</b> — Rate of descent from flight path angle (GS × 5 shortcut), gradient-to-FPA conversion, and constant-rate descent planning.<br><br>
+                            <b>WIND △</b> — Interactive Wind Triangle with canvas visualisation. Three solve modes: find Track/GS, find Heading to steer, or find Wind from observed track and ground speed.
                         </div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Modes</div>
-                        <div class="help-a">Each topic has four modes: <b>REF</b> (formula reference cards), <b>CALC</b> (interactive calculator), <b>EXAMPLES</b> (worked step-by-step problems from EVA ground school), and <b>QUIZ</b> (randomised practice problems with scoring).</div>
+                        <div class="help-a">Each topic has four modes: <b>REF</b> (formula reference cards), <b>CALC</b> (interactive calculator with live canvas for Wind Triangle), <b>EXAMPLES</b> (worked step-by-step problems), and <b>QUIZ</b> (randomised practice problems with scoring).</div>
                     </div>
                 </div>
                 
@@ -1033,6 +1034,10 @@
                     <div class="help-item">
                         <div class="help-q">API Usage Monitor</div>
                         <div class="help-a">Admin-only view showing daily AVWX API call counts across all keys. Requires admin password. Useful for monitoring usage before plan limits are reached.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">🔧 Admin Tool Control</div>
+                        <div class="help-a">Admins can hide/show individual tools for all users via the <b>🔧 Tools</b> tab in the admin panel (in-app or admin.html). Hidden tools are invisible to normal users but always visible to the admin with a <span style="color:#ff9f0a;">👁 HIDDEN</span> badge. Useful for staging new tools or restricting access during training.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Dashboard Card Style (Raw vs Detailed)</div>
@@ -2390,56 +2395,56 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 
                 <!-- Unit Converter -->
-                <div onclick="openTool('unit-converter')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('unit-converter')" class="tool-card" data-tool-id="unit-converter" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📏</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Unit Converter</div>
                     <div style="font-size:11px; color:var(--sub-text);">10 categories: speed, energy, power, more</div>
                 </div>
                 
                 <!-- E6B Flight Computer -->
-                <div onclick="openTool('e6b-calculator')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('e6b-calculator')" class="tool-card" data-tool-id="e6b-calculator" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">✈️</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Calculator</div>
                     <div style="font-size:11px; color:var(--sub-text);">DA, TAS, cloud base, freezing</div>
                 </div>
                 
                 <!-- Great Circle -->
-                <div onclick="openTool('great-circle')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('great-circle')" class="tool-card" data-tool-id="great-circle" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">🌍</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Great Circle</div>
                     <div style="font-size:11px; color:var(--sub-text);">Distance & bearing calc</div>
                 </div>
                 
                 <!-- E6B Trainer -->
-                <div onclick="openTool('e6b-trainer')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('e6b-trainer')" class="tool-card" data-tool-id="e6b-trainer" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">🎓</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Trainer</div>
                     <div style="font-size:11px; color:var(--sub-text);">Interactive UND trainer</div>
                 </div>
                 
                 <!-- Weather Terms -->
-                <div onclick="openTool('weather-terms')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('weather-terms')" class="tool-card" data-tool-id="weather-terms" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">🌦️</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Terms</div>
                     <div style="font-size:11px; color:var(--sub-text);">METAR abbreviations & symbols</div>
                 </div>
                 
                 <!-- Abbreviations -->
-                <div onclick="openTool('abbreviations')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('abbreviations')" class="tool-card" data-tool-id="abbreviations" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📖</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Abbreviations</div>
                     <div style="font-size:11px; color:var(--sub-text);">Aviation terminology</div>
                 </div>
 
                 <!-- Crosswind Calculator -->
-                <div onclick="openTool('crosswind')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('crosswind')" class="tool-card" data-tool-id="crosswind" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">💨</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Crosswind Calc</div>
                     <div style="font-size:11px; color:var(--sub-text);">Headwind & crosswind components</div>
                 </div>
 
                 <!-- Airspace Minimums -->
-                <div onclick="openTool('airspace-mins')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('airspace-mins')" class="tool-card" data-tool-id="airspace-mins" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📋</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Airspace Mins</div>
                     <div style="font-size:11px; color:var(--sub-text);">VFR cloud &amp; vis requirements</div>
@@ -2452,17 +2457,17 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
 
                 <!-- Morse Code Trainer -->
-                <div onclick="openTool('morse-trainer')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <div onclick="openTool('morse-trainer')" class="tool-card" data-tool-id="morse-trainer" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📡</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Morse Code</div>
                     <div style="font-size:11px; color:var(--sub-text);">Learn &amp; practice aviation Morse</div>
                 </div>
 
-                <!-- 1:60 Rule -->
-                <div onclick="openTool('160-rule')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                <!-- Training Area -->
+                <div onclick="openTool('training-area')" class="tool-card" data-tool-id="training-area" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
                     <div style="font-size:32px; margin-bottom:12px;">📐</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">1:60 Rule</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Course, wind, TOD &amp; ROD trainer</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Training Area</div>
+                    <div style="font-size:11px; color:var(--sub-text);">1:60 rule, wind triangle &amp; more</div>
                 </div>
 
             </div>
@@ -3303,13 +3308,14 @@
         <!-- ================================================================
              1:60 RULE TRAINING TOOL
         ================================================================ -->
-        <div id="tool-160-rule" class="tool-view" style="display:none;">
+        <div id="tool-training-area" class="tool-view" style="display:none;">
             <!-- Topic selector -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:#111;border-radius:10px;padding:3px;gap:2px;border:1px solid #333;margin-bottom:10px;">
-                <button id="r60t-course" onclick="set160Topic('course')" style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#e8a020;color:#000;transition:all 0.2s;">COURSE</button>
-                <button id="r60t-wind" onclick="set160Topic('wind')" style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">WIND</button>
-                <button id="r60t-tod" onclick="set160Topic('tod')" style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">TOD</button>
-                <button id="r60t-rod" onclick="set160Topic('rod')" style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">V/S</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;background:#111;border-radius:10px;padding:3px;gap:2px;border:1px solid #333;margin-bottom:10px;">
+                <button id="r60t-course" onclick="set160Topic('course')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:#e8a020;color:#000;transition:all 0.2s;">COURSE</button>
+                <button id="r60t-wind" onclick="set160Topic('wind')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">WIND</button>
+                <button id="r60t-tod" onclick="set160Topic('tod')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">TOD</button>
+                <button id="r60t-rod" onclick="set160Topic('rod')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">V/S</button>
+                <button id="r60t-tri" onclick="set160Topic('tri')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">WIND △</button>
             </div>
             <!-- Mode selector -->
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:#0a0a0a;border-radius:8px;padding:3px;gap:2px;border:1px solid #2a2a2a;margin-bottom:16px;">

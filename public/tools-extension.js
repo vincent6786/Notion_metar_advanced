@@ -356,7 +356,7 @@ function openTool(toolName) {
             'morse-trainer': 'Morse Code Trainer',
             'crosswind': 'Crosswind Calculator',
             'airspace-mins': 'VFR Airspace Minimums',
-            '160-rule': '1:60 Rule'
+            'training-area': 'Training Area'
         };
         updateExtensionHeader(toolTitles[toolName] || 'Tool', true);
         
@@ -379,7 +379,7 @@ function openTool(toolName) {
             gcInitMap();
         } else if (toolName === 'airspace-mins') {
             initAirspaceMins();
-        } else if (toolName === '160-rule') {
+        } else if (toolName === 'training-area') {
             init160Rule();
         }
     }
@@ -3575,7 +3575,7 @@ function init160Rule() {
 /* ── Topic & mode navigation ── */
 function set160Topic(t) {
     _160.topic = t;
-    ['course','wind','tod','rod'].forEach(id => {
+    ['course','wind','tod','rod','tri'].forEach(id => {
         const b = document.getElementById('r60t-' + id);
         if (b) { b.style.background = id === t ? '#e8a020' : 'transparent'; b.style.color = id === t ? '#000' : '#888'; }
     });
@@ -3601,6 +3601,7 @@ function render160() {
         wind_ref: r60_windRef, wind_calc: r60_windCalc, wind_example: r60_windExample, wind_quiz: r60_windQuiz,
         tod_ref: r60_todRef, tod_calc: r60_todCalc, tod_example: r60_todExample, tod_quiz: r60_todQuiz,
         rod_ref: r60_rodRef, rod_calc: r60_rodCalc, rod_example: r60_rodExample, rod_quiz: r60_rodQuiz,
+        tri_ref: r60_triRef, tri_calc: r60_triCalc, tri_example: r60_triExample, tri_quiz: r60_triQuiz,
     };
     el.innerHTML = renderers[key] ? renderers[key]() : '';
 }
@@ -4022,6 +4023,23 @@ function r60NewQ() {
         else { const angle = _rand(2, 6); q = `GS ${gs} kt, descent angle ${angle}°. Required V/S?`; answer = (gs * angle * 100) / 60; unit = 'fpm'; }
     }
 
+    if (_160.topic === 'tri') {
+        // Wind triangle quiz — find track or GS
+        const hdg = _rand(1, 36) * 10;
+        const tas = _rand(80, 150);
+        const wdir = _rand(1, 36) * 10;
+        const wspd = _rand(5, 30);
+        const wRad = (wdir + 180) * Math.PI / 180;
+        const hRad = hdg * Math.PI / 180;
+        const gx = tas * Math.sin(hRad) + wspd * Math.sin(wRad);
+        const gy = tas * Math.cos(hRad) + wspd * Math.cos(wRad);
+        const gs = Math.sqrt(gx * gx + gy * gy);
+        const trk = (((Math.atan2(gx, gy) * 180 / Math.PI) % 360) + 360) % 360 || 360;
+        const variant = _rand(0, 1);
+        if (variant === 0) { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. Ground speed?`; answer = gs; unit = 'kt'; }
+        else { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. Track?`; answer = trk; unit = '°'; }
+    }
+
     _160.quizQ = { answer, unit };
     area.innerHTML = _card('Question', q) +
         `<div style="display:flex;gap:8px;align-items:center;">
@@ -4052,4 +4070,314 @@ function r60CheckAns() {
     }
     const sc = document.getElementById('r60score');
     if (sc) sc.textContent = `Score: ${_160.quizScore}/${_160.quizTotal}`;
+}
+
+// ========================= WIND TRIANGLE =========================
+
+let _triCanvas = null;
+let _triCtx = null;
+let _triMode = 'find_track'; // find_track | find_heading | find_wind
+
+function r60_triRef() {
+    return _card('The Wind Triangle',
+        'The wind triangle is the vector relationship between three quantities:<br><br>' +
+        '• <b style="color:#fff;">Air Vector</b> — Heading + TAS (where the aircraft points and its airspeed)<br>' +
+        '• <b style="color:#30d158;">Ground Vector</b> — Track + GS (actual path over the ground)<br>' +
+        '• <b style="color:#00bfff;">Wind Vector</b> — Wind direction + speed (the difference between air and ground)<br><br>' +
+        '<b>Vector equation:</b>' +
+        _formula('Air Vector + Wind Vector = Ground Vector') +
+        'Or equivalently: <b>Ground = Air + Wind</b>. The wind "pushes" the air vector to produce the ground vector.'
+    ) +
+    _card('Three Solve Modes',
+        '<b>Find Track & GS</b> — Given heading, TAS, and wind → solve for track and ground speed. Used in flight planning.<br><br>' +
+        '<b>Find Heading & TAS</b> — Given desired track, required GS, and wind → solve for heading to steer and required airspeed. Used for time-critical navigation.<br><br>' +
+        '<b>Find Wind</b> — Given heading, TAS, track, and GS → solve for wind direction and speed. Used in-flight to determine actual wind.'
+    ) +
+    _card('Key Formulas',
+        _formula('Track = Heading + Drift Angle') +
+        _formula('CWC = Wind Speed × sin(Wind Angle)') +
+        _formula('TWC = Wind Speed × cos(Wind Angle)') +
+        _formula('GS = TAS − Headwind &nbsp;(or + Tailwind)') +
+        'Wind Angle = angle between wind direction and heading (measured as the direction wind is coming FROM relative to heading).'
+    );
+}
+
+function r60_triCalc() {
+    return `<div style="display:flex;gap:4px;margin-bottom:12px;background:#111;border-radius:8px;padding:3px;border:1px solid #333;">
+        <button id="triSolve-find_track" onclick="setTriMode('find_track')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:#e8a020;color:#000;">Find Track/GS</button>
+        <button id="triSolve-find_heading" onclick="setTriMode('find_heading')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;">Find HDG/TAS</button>
+        <button id="triSolve-find_wind" onclick="setTriMode('find_wind')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;">Find Wind</button>
+    </div>
+    <div id="triInputs"></div>
+    <canvas id="triCanvasEl" width="340" height="340" style="width:100%;max-width:340px;display:block;margin:12px auto 0;border-radius:10px;background:#0a0a0a;border:1px solid #333;"></canvas>
+    ` + _result('triResult');
+}
+
+function setTriMode(mode) {
+    _triMode = mode;
+    ['find_track','find_heading','find_wind'].forEach(m => {
+        const b = document.getElementById('triSolve-' + m);
+        if (b) { b.style.background = m === mode ? '#e8a020' : 'transparent'; b.style.color = m === mode ? '#000' : '#888'; }
+    });
+    renderTriInputs();
+}
+
+function renderTriInputs() {
+    const el = document.getElementById('triInputs');
+    if (!el) return;
+    if (_triMode === 'find_track') {
+        el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_hdg','Heading (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+            '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_wdir','Wind FROM (°)','100%') + _inp('tri_wspd','Wind Speed (kt)','100%') + '</div>';
+    } else if (_triMode === 'find_heading') {
+        el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_trk','Desired Track (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+            '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_wdir','Wind FROM (°)','100%') + _inp('tri_wspd','Wind Speed (kt)','100%') + '</div>';
+    } else { // find_wind
+        el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_hdg','Heading (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+            '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_trk','Track (°)','100%') + _inp('tri_gs','GS (kt)','100%') + '</div>';
+    }
+    // Bind oninput to all new inputs
+    el.querySelectorAll('input').forEach(i => i.addEventListener('input', calcTri));
+}
+
+function calcTri() {
+    const el = document.getElementById('triResult');
+    if (!el) return;
+    const v = id => parseFloat(document.getElementById(id)?.value);
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+    const normDeg = d => ((d % 360) + 360) % 360 || 360;
+    let html = '';
+
+    if (_triMode === 'find_track') {
+        const hdg = v('tri_hdg'), tas = v('tri_tas'), wdir = v('tri_wdir'), wspd = v('tri_wspd');
+        if ([hdg,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values…</span>'; drawTri(null); return; }
+        // Wind FROM wdir means wind vector points toward (wdir + 180)
+        const wRad = toRad(wdir + 180); // direction wind is GOING
+        const hRad = toRad(hdg);
+        // Air vector + wind vector = ground vector
+        const gx = tas * Math.sin(hRad) + wspd * Math.sin(wRad);
+        const gy = tas * Math.cos(hRad) + wspd * Math.cos(wRad);
+        const gs = Math.sqrt(gx * gx + gy * gy);
+        const trk = normDeg(toDeg(Math.atan2(gx, gy)));
+        const drift = normDeg(trk) - normDeg(hdg);
+        const da = drift > 180 ? drift - 360 : drift < -180 ? drift + 360 : drift;
+        html = `<b style="color:#30d158;">Track:</b> ${trk.toFixed(0)}°<br>`;
+        html += `<b style="color:#30d158;">Ground Speed:</b> ${gs.toFixed(0)} kt<br>`;
+        html += `<b>Drift Angle:</b> ${Math.abs(da).toFixed(1)}° ${da >= 0 ? 'Right' : 'Left'}`;
+        drawTri({ hdg, tas, trk, gs, wdir, wspd });
+    } else if (_triMode === 'find_heading') {
+        const trk = v('tri_trk'), tas = v('tri_tas'), wdir = v('tri_wdir'), wspd = v('tri_wspd');
+        if ([trk,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values…</span>'; drawTri(null); return; }
+        // Solve for heading: iterative approach
+        const wRad = toRad(wdir + 180);
+        const tRad = toRad(trk);
+        // Wind correction angle: sin(WCA) = (wspd * sin(wdir - trk)) / tas
+        const ww = wdir - trk;
+        const sinWCA = (wspd * Math.sin(toRad(ww))) / tas;
+        if (Math.abs(sinWCA) > 1) { el.innerHTML = '<span style="color:#ff453a;">Wind too strong for this TAS — no solution</span>'; drawTri(null); return; }
+        const wca = toDeg(Math.asin(sinWCA));
+        const hdg = normDeg(trk + wca);
+        // GS from ground vector
+        const hRad = toRad(hdg);
+        const gx = tas * Math.sin(hRad) + wspd * Math.sin(wRad);
+        const gy = tas * Math.cos(hRad) + wspd * Math.cos(wRad);
+        const gs = Math.sqrt(gx * gx + gy * gy);
+        html = `<b style="color:#fff;">Heading:</b> ${hdg.toFixed(0)}°<br>`;
+        html += `<b>WCA:</b> ${Math.abs(wca).toFixed(1)}° ${wca >= 0 ? 'Right' : 'Left'}<br>`;
+        html += `<b style="color:#30d158;">Ground Speed:</b> ${gs.toFixed(0)} kt`;
+        drawTri({ hdg, tas, trk, gs, wdir, wspd });
+    } else { // find_wind
+        const hdg = v('tri_hdg'), tas = v('tri_tas'), trk = v('tri_trk'), gs = v('tri_gs');
+        if ([hdg,tas,trk,gs].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values…</span>'; drawTri(null); return; }
+        // Wind = ground - air
+        const hRad = toRad(hdg), tRad = toRad(trk);
+        const wx = gs * Math.sin(tRad) - tas * Math.sin(hRad);
+        const wy = gs * Math.cos(tRad) - tas * Math.cos(hRad);
+        const wspd = Math.sqrt(wx * wx + wy * wy);
+        const wGoingTo = normDeg(toDeg(Math.atan2(wx, wy)));
+        const wdir = normDeg(wGoingTo + 180); // FROM direction
+        html = `<b style="color:#00bfff;">Wind:</b> ${wdir.toFixed(0)}° / ${wspd.toFixed(0)} kt<br>`;
+        html += `<span style="color:#888;font-size:11px;">(Wind from ${wdir.toFixed(0)}° at ${wspd.toFixed(0)} kt)</span>`;
+        drawTri({ hdg, tas, trk, gs, wdir, wspd });
+    }
+    el.innerHTML = html;
+}
+
+function drawTri(d) {
+    const c = document.getElementById('triCanvasEl');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const W = c.width, H = c.height, cx = W / 2, cy = H / 2;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background compass rose
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 0.5;
+    [60, 100, 140].forEach(r => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); });
+    ctx.fillStyle = '#333'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ['N','E','S','W'].forEach((l, i) => {
+        const a = i * Math.PI / 2 - Math.PI / 2;
+        ctx.fillText(l, cx + 152 * Math.cos(a), cy + 152 * Math.sin(a) + 4);
+    });
+
+    if (!d) return;
+    const toRad = deg => deg * Math.PI / 180;
+    // Scale: find max vector length for auto-scaling
+    const maxV = Math.max(d.tas, d.gs, d.wspd) || 100;
+    const scale = 130 / maxV;
+
+    // Helper: draw vector from (x0,y0) in compass bearing direction
+    function drawVec(x0, y0, bearing, length, color, label) {
+        const rad = toRad(bearing);
+        const dx = Math.sin(rad) * length * scale;
+        const dy = -Math.cos(rad) * length * scale;
+        const x1 = x0 + dx, y1 = y0 + dy;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+        ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+        // Arrowhead
+        const angle = Math.atan2(y1 - y0, x1 - x0);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 - 10 * Math.cos(angle - 0.4), y1 - 10 * Math.sin(angle - 0.4));
+        ctx.lineTo(x1 - 10 * Math.cos(angle + 0.4), y1 - 10 * Math.sin(angle + 0.4));
+        ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+        // Label
+        const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+        ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+        const off = 14;
+        ctx.fillText(label, mx + off * Math.cos(angle + Math.PI/2), my + off * Math.sin(angle + Math.PI/2));
+        return { x: x1, y: y1 };
+    }
+
+    // Draw from center: Air vector (white), then Wind vector (cyan) from tip, ground vector (green) from center
+    const airTip = drawVec(cx, cy, d.hdg, d.tas, '#ffffff', `HDG ${d.hdg.toFixed(0)}°`);
+    drawVec(airTip.x, airTip.y, d.wdir + 180, d.wspd, '#00bfff', `W ${d.wspd.toFixed(0)}kt`);
+    drawVec(cx, cy, d.trk, d.gs, '#30d158', `TRK ${d.trk.toFixed(0)}°`);
+}
+
+function r60_triExample() {
+    return _card('Example — Find Track & GS',
+        '<b>Given:</b> Heading 360°, TAS 120 kt, Wind 270°/30 kt.<br><br>' +
+        '<b>Wind angle from heading:</b> 270° − 360° = −90° (from left)<br>' +
+        '<b>CWC:</b> 30 × sin(90°) = 30 kt (drifting right)<br>' +
+        '<b>HWC:</b> 30 × cos(90°) = 0 kt (pure crosswind)<br><br>' +
+        '<b>Drift:</b> sin⁻¹(30/120) ≈ 14.5° right<br>' +
+        '<b>Track:</b> 360° + 14.5° = <b style="color:#30d158;">014°</b><br>' +
+        '<b>GS:</b> √(120² − 30²) + 0 ≈ <b style="color:#30d158;">116 kt</b>'
+    ) +
+    _card('Example — Find Heading to Steer',
+        '<b>Given:</b> Desired track 045°, TAS 100 kt, Wind 090°/20 kt.<br><br>' +
+        '<b>Wind angle from track:</b> 090° − 045° = 45° (from right)<br>' +
+        '<b>CWC:</b> 20 × sin(45°) = 14.1 kt (pushing left)<br>' +
+        '<b>WCA:</b> sin⁻¹(14.1/100) = 8.1° → steer right<br>' +
+        '<b>Heading:</b> 045° + 8° = <b style="color:#fff;">053°</b><br>' +
+        '<b>GS:</b> 100 + 20 × cos(45°) headwind component ≈ <b style="color:#30d158;">86 kt</b>'
+    ) +
+    _card('Example — Find Wind In-Flight',
+        '<b>Given:</b> Heading 180°, TAS 110 kt, Track 175° (from GPS), GS 95 kt.<br><br>' +
+        '<b>Drift:</b> 175° − 180° = 5° left → wind from the right<br>' +
+        '<b>GS vs TAS:</b> 95 < 110 → headwind component present<br>' +
+        '<b>Wind:</b> solved vectorially → <b style="color:#00bfff;">210° / 18 kt</b><br>' +
+        '<span style="color:#888;">This is how experienced pilots cross-check winds aloft during cruise.</span>'
+    );
+}
+
+function r60_triQuiz() { return _genQuiz('tri'); }
+
+// ========================= TOOL VISIBILITY SYSTEM =========================
+
+window._hiddenTools = [];
+window._isAdminSession = false;
+
+async function fetchToolVisibility() {
+    try {
+        const res = await fetch('/api/access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'get_config' })
+        });
+        const data = await res.json();
+        window._hiddenTools = data.hidden_tools || [];
+        applyToolVisibility();
+    } catch(e) {
+        console.warn('[Tools] Failed to fetch visibility config:', e);
+    }
+}
+
+function applyToolVisibility() {
+    document.querySelectorAll('.tool-card[data-tool-id]').forEach(card => {
+        const id = card.dataset.toolId;
+        const isHidden = window._hiddenTools.includes(id);
+        if (isHidden && !window._isAdminSession) {
+            card.style.display = 'none';
+        } else {
+            card.style.display = '';
+            // Admin badge for hidden tools
+            const existing = card.querySelector('.admin-hidden-badge');
+            if (isHidden && window._isAdminSession) {
+                if (!existing) {
+                    const badge = document.createElement('div');
+                    badge.className = 'admin-hidden-badge';
+                    badge.style.cssText = 'font-size:9px;color:#ff9f0a;font-weight:800;letter-spacing:0.5px;margin-top:4px;';
+                    badge.textContent = '👁 HIDDEN';
+                    card.appendChild(badge);
+                }
+            } else if (existing) {
+                existing.remove();
+            }
+        }
+    });
+}
+
+async function adminSetToolVisibility(toolId, hidden) {
+    const list = [...window._hiddenTools];
+    if (hidden && !list.includes(toolId)) list.push(toolId);
+    if (!hidden) { const idx = list.indexOf(toolId); if (idx >= 0) list.splice(idx, 1); }
+    try {
+        await fetch('/api/access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'set_config', hidden_tools: list, password: window._adminPwd || _adminPasswordCache })
+        });
+        window._hiddenTools = list;
+        applyToolVisibility();
+        if (typeof showToast === 'function') showToast(hidden ? '🔒 Tool hidden' : '🔓 Tool visible');
+    } catch(e) { if (typeof showToast === 'function') showToast('⚠️ Failed to update'); }
+}
+
+// Tool metadata for admin panel
+const TOOL_META = [
+    { id: 'unit-converter', icon: '📏', name: 'Unit Converter' },
+    { id: 'e6b-calculator', icon: '✈️', name: 'E6B Calculator' },
+    { id: 'great-circle', icon: '🌍', name: 'Great Circle' },
+    { id: 'e6b-trainer', icon: '🎓', name: 'E6B Trainer' },
+    { id: 'weather-terms', icon: '🌦️', name: 'Weather Terms' },
+    { id: 'abbreviations', icon: '📖', name: 'Abbreviations' },
+    { id: 'crosswind', icon: '💨', name: 'Crosswind Calc' },
+    { id: 'airspace-mins', icon: '📋', name: 'Airspace Mins' },
+    { id: 'morse-trainer', icon: '📡', name: 'Morse Code' },
+    { id: 'training-area', icon: '📐', name: 'Training Area' },
+];
+
+function renderAdminToolsPanel() {
+    return TOOL_META.map(t => {
+        const isHidden = window._hiddenTools.includes(t.id);
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#111;border:1px solid #333;border-radius:8px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:20px;">${t.icon}</span>
+                <span style="font-weight:700;font-size:13px;">${t.name}</span>
+            </div>
+            <label style="position:relative;display:inline-block;width:48px;height:28px;flex-shrink:0;cursor:pointer;">
+                <input type="checkbox" ${isHidden ? '' : 'checked'} onchange="adminSetToolVisibility('${t.id}', !this.checked)"
+                       style="opacity:0;width:0;height:0;">
+                <span style="position:absolute;inset:0;background:${isHidden ? '#555' : 'var(--accent)'};border-radius:28px;transition:0.3s;"></span>
+                <span style="position:absolute;left:${isHidden ? '4px' : '24px'};bottom:4px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
+            </label>
+        </div>`;
+    }).join('');
 }

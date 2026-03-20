@@ -409,6 +409,7 @@
     <div class="tab-bar">
       <button class="tab-btn active" id="tabBtnUsers" onclick="switchTab('users')">👥 Access Codes</button>
       <button class="tab-btn" id="tabBtnStats" onclick="switchTab('stats')">📊 API Stats</button>
+      <button class="tab-btn" id="tabBtnTools" onclick="switchTab('tools')">🔧 Tools</button>
     </div>
 
     <!-- ── USERS TAB ── -->
@@ -457,6 +458,13 @@
     <!-- ── STATS TAB ── -->
     <div id="tabStats" style="display:none;">
       <div id="statsContent"><div class="empty">Loading...</div></div>
+    </div>
+
+    <!-- ── TOOLS TAB ── -->
+    <div id="tabTools" style="display:none;">
+      <div style="font-size:10px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tool Visibility</div>
+      <div style="font-size:12px;color:var(--sub);margin-bottom:14px;line-height:1.6;">Toggle tools on/off for all users. Admin always sees all tools with a <span style="color:var(--warn);">👁 HIDDEN</span> badge.</div>
+      <div id="toolToggles"><div class="empty">Loading...</div></div>
     </div>
 
   </div><!-- /mainPanel -->
@@ -534,10 +542,13 @@ function updateApiUsageBanner(data) {
 function switchTab(tab) {
   document.getElementById('tabUsers').style.display = tab === 'users' ? 'block' : 'none';
   document.getElementById('tabStats').style.display = tab === 'stats' ? 'block' : 'none';
+  document.getElementById('tabTools').style.display = tab === 'tools' ? 'block' : 'none';
   document.getElementById('tabBtnUsers').classList.toggle('active', tab === 'users');
   document.getElementById('tabBtnStats').classList.toggle('active', tab === 'stats');
+  document.getElementById('tabBtnTools').classList.toggle('active', tab === 'tools');
   if (tab === 'stats') loadFreshStats();
   if (tab === 'users') loadUsers();
+  if (tab === 'tools') loadToolsConfig();
 }
 
 async function loadFreshStats() {
@@ -834,6 +845,79 @@ async function drawerDelete() {
 window.addEventListener('load', () => {
   document.getElementById('loginPassword').focus();
 });
+
+// ── Tool Visibility ──────────────────────────────────────────────────────
+const ADMIN_TOOLS = [
+  { id: 'unit-converter', icon: '📏', name: 'Unit Converter' },
+  { id: 'e6b-calculator', icon: '✈️', name: 'E6B Calculator' },
+  { id: 'great-circle', icon: '🌍', name: 'Great Circle' },
+  { id: 'e6b-trainer', icon: '🎓', name: 'E6B Trainer' },
+  { id: 'weather-terms', icon: '🌦️', name: 'Weather Terms' },
+  { id: 'abbreviations', icon: '📖', name: 'Abbreviations' },
+  { id: 'crosswind', icon: '💨', name: 'Crosswind Calc' },
+  { id: 'airspace-mins', icon: '📋', name: 'Airspace Mins' },
+  { id: 'morse-trainer', icon: '📡', name: 'Morse Code' },
+  { id: 'training-area', icon: '📐', name: 'Training Area' },
+];
+
+let _hiddenTools = [];
+
+async function loadToolsConfig() {
+  const el = document.getElementById('toolToggles');
+  if (!el) return;
+  el.innerHTML = '<div class="empty">⏳ Loading...</div>';
+  try {
+    const res = await fetch('/api/access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_config' })
+    });
+    const data = await res.json();
+    _hiddenTools = data.hidden_tools || [];
+    renderToolToggles();
+  } catch(e) {
+    el.innerHTML = '<div class="empty" style="color:var(--danger);">Failed to load config</div>';
+  }
+}
+
+function renderToolToggles() {
+  const el = document.getElementById('toolToggles');
+  if (!el) return;
+  el.innerHTML = ADMIN_TOOLS.map(t => {
+    const visible = !_hiddenTools.includes(t.id);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:22px;">${t.icon}</span>
+        <div>
+          <div style="font-weight:700;font-size:13px;">${t.name}</div>
+          <div style="font-size:11px;color:${visible ? 'var(--success)' : 'var(--warn)'};">${visible ? 'Visible to all users' : '👁 Hidden from users'}</div>
+        </div>
+      </div>
+      <label style="position:relative;display:inline-block;width:48px;height:28px;flex-shrink:0;cursor:pointer;">
+        <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleToolVisibility('${t.id}', !this.checked)"
+               style="opacity:0;width:0;height:0;position:absolute;">
+        <span style="position:absolute;inset:0;background:${visible ? 'var(--success)' : '#555'};border-radius:28px;transition:0.3s;"></span>
+        <span style="position:absolute;left:${visible ? '24px' : '4px'};bottom:4px;width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;"></span>
+      </label>
+    </div>`;
+  }).join('');
+}
+
+async function toggleToolVisibility(toolId, hide) {
+  const list = [..._hiddenTools];
+  if (hide && !list.includes(toolId)) list.push(toolId);
+  if (!hide) { const i = list.indexOf(toolId); if (i >= 0) list.splice(i, 1); }
+  try {
+    await fetch('/api/access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_config', hidden_tools: list, password: _password })
+    });
+    _hiddenTools = list;
+    renderToolToggles();
+    toast(hide ? '🔒 Tool hidden' : '🔓 Tool visible');
+  } catch(e) { toast('⚠️ Failed to update'); }
+}
 </script>
 </body>
 </html>
