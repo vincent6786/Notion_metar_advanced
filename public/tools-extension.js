@@ -4042,7 +4042,7 @@ function r60NewQ() {
         const trk = (((Math.atan2(gx, gy) * 180 / Math.PI) % 360) + 360) % 360 || 360;
         const variant = _rand(0, 1);
         if (variant === 0) { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. Ground speed?`; answer = gs; unit = 'kt'; }
-        else { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. Track?`; answer = trk; unit = '°'; }
+        else { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. True Track (TT)?`; answer = trk; unit = '°'; }
     }
 
     if (!q) { area.innerHTML = '<div style="color:#ff9f0a;padding:20px;text-align:center;">No quiz available for this topic.</div>'; return; }
@@ -4097,36 +4097,47 @@ function r60CheckAns() {
 
 let _triCanvas = null;
 let _triCtx = null;
-let _triMode = 'find_track'; // find_track | find_heading | find_wind
+let _triMode = 'find_heading'; // find_track | find_heading | find_wind
 
 function r60_triRef() {
     return _card('The Wind Triangle',
         'The wind triangle is the vector relationship between three quantities:<br><br>' +
-        '• <b style="color:#fff;">Air Vector</b> — Heading + TAS (where the aircraft points and its airspeed)<br>' +
-        '• <b style="color:#30d158;">Ground Vector</b> — Track + GS (actual path over the ground)<br>' +
-        '• <b style="color:#00bfff;">Wind Vector</b> — Wind direction + speed (the difference between air and ground)<br><br>' +
+        '• <b style="color:#fff;">Air Vector</b> — TH (True Heading) + TAS<br>' +
+        '• <b style="color:#30d158;">Ground Vector</b> — TT (True Track) + GS<br>' +
+        '• <b style="color:#00bfff;">Wind Vector</b> — Wind direction + speed<br><br>' +
         '<b>Vector equation:</b>' +
         _formula('Air Vector + Wind Vector = Ground Vector') +
-        'Or equivalently: <b>Ground = Air + Wind</b>. The wind "pushes" the air vector to produce the ground vector.'
+        'The wind "pushes" the air vector to produce the ground vector.'
+    ) +
+    _card('Terminology',
+        '<b>TC</b> (True Course) — planned direction on the chart<br>' +
+        '<b>TH</b> (True Heading) — direction the nose points (TC ± WCA)<br>' +
+        '<b>TT</b> (True Track) — actual path over the ground<br>' +
+        '<b>MC</b> (Magnetic Course) — TC corrected for variation<br>' +
+        '<b>MH</b> (Magnetic Heading) — TH corrected for variation<br>' +
+        '<b>DA</b> (Drift Angle) — angle between TH and TT<br>' +
+        '<b>WCA</b> (Wind Correction Angle) — angle applied to TC to get TH<br><br>' +
+        _formula('MH = TH − Var(E) &nbsp; or &nbsp; TH + Var(W)') +
+        'In no-wind conditions: TC = TH = TT. With wind: TH = TC + WCA.'
     ) +
     _card('Three Solve Modes',
-        '<b>Find Track & GS</b> — Given heading, TAS, and wind → solve for track and ground speed. Used in flight planning.<br><br>' +
-        '<b>Find Heading & TAS</b> — Given desired track, required GS, and wind → solve for heading to steer and required airspeed. Used for time-critical navigation.<br><br>' +
-        '<b>Find Wind</b> — Given heading, TAS, track, and GS → solve for wind direction and speed. Used in-flight to determine actual wind.'
+        '<b>Find TT & GS</b> — Given TH, TAS, and wind → solve for true track and ground speed.<br><br>' +
+        '<b>Find TH & GS</b> — Given TC (desired course), TAS, and wind → solve for true heading to steer and resulting GS.<br><br>' +
+        '<b>Find Wind</b> — Given TH, TAS, TT, and GS → solve for wind direction and speed. Used in-flight.'
     ) +
     _card('Key Formulas',
-        _formula('Track = Heading + Drift Angle') +
-        _formula('CWC = Wind Speed × sin(Wind Angle)') +
-        _formula('TWC = Wind Speed × cos(Wind Angle)') +
+        _formula('TT = TH + Drift Angle') +
+        _formula('CWC = Wind Speed × sin(WW)') +
+        _formula('LWC = Wind Speed × cos(WW)') +
         _formula('GS = TAS − Headwind &nbsp;(or + Tailwind)') +
-        'Wind Angle = angle between wind direction and heading (measured as the direction wind is coming FROM relative to heading).'
+        'WW (Wind Angle) = angle between wind FROM direction and TH.'
     );
 }
 
 function r60_triCalc() {
     return `<div style="display:flex;gap:4px;margin-bottom:12px;background:#111;border-radius:8px;padding:3px;border:1px solid #333;">
-        <button id="triSolve-find_track" onclick="setTriMode('find_track')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:#e8a020;color:#000;">Find Track/GS</button>
-        <button id="triSolve-find_heading" onclick="setTriMode('find_heading')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;">Find HDG/TAS</button>
+        <button id="triSolve-find_heading" onclick="setTriMode('find_heading')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:#e8a020;color:#000;">Find TH/GS</button>
+        <button id="triSolve-find_track" onclick="setTriMode('find_track')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;">Find TT/GS</button>
         <button id="triSolve-find_wind" onclick="setTriMode('find_wind')" style="flex:1;padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;">Find Wind</button>
     </div>
     <div id="triInputs"></div>
@@ -4146,22 +4157,30 @@ function setTriMode(mode) {
 function renderTriInputs() {
     const el = document.getElementById('triInputs');
     if (!el) return;
-    if (_triMode === 'find_track') {
-        el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_hdg','Heading (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+    let html;
+    if (_triMode === 'find_heading') {
+        html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_trk','TC — True Course (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
             '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_wdir','Wind FROM (°)','100%') + _inp('tri_wspd','Wind Speed (kt)','100%') + '</div>';
-    } else if (_triMode === 'find_heading') {
-        el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_trk','Desired Track (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+            _inp('tri_wdir','Wind FROM (°)','100%') + _inp('tri_wspd','Wind Speed (kt)','100%') +
+            '</div>' +
+            '<input id="tri_var" type="number" placeholder="Variation (+ East / − West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
+    } else if (_triMode === 'find_track') {
+        html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_hdg','TH — True Heading (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
             '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_wdir','Wind FROM (°)','100%') + _inp('tri_wspd','Wind Speed (kt)','100%') + '</div>';
-    } else { // find_wind
-        el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_hdg','Heading (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+            _inp('tri_wdir','Wind FROM (°)','100%') + _inp('tri_wspd','Wind Speed (kt)','100%') +
+            '</div>' +
+            '<input id="tri_var" type="number" placeholder="Variation (+ East / − West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
+    } else {
+        html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            _inp('tri_hdg','TH — True Heading (°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
             '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_trk','Track (°)','100%') + _inp('tri_gs','GS (kt)','100%') + '</div>';
+            _inp('tri_trk','TT — True Track (°)','100%') + _inp('tri_gs','GS (kt)','100%') +
+            '</div>' +
+            '<input id="tri_var" type="number" placeholder="Variation (+ East / − West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
     }
+    el.innerHTML = html;
 }
 
 function calcTri() {
@@ -4219,21 +4238,46 @@ function calcTri() {
     const wcaDir = wca > 0.1 ? 'R' : wca < -0.1 ? 'L' : '';
     const daDir = da > 0.1 ? 'R' : da < -0.1 ? 'L' : '';
 
+    // Variation — positive = East, negative = West
+    const variation = parseFloat(document.getElementById('tri_var')?.value);
+    const hasVar = !isNaN(variation);
+
     const row = (label, val, color) => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1a1a1a;"><span style="color:#888;font-size:12px;">${label}</span><span style="color:${color||'#fff'};font-size:13px;font-weight:700;">${val}</span></div>`;
 
     let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">';
-    html += row('TH (Heading)', `${normDeg(hdg).toFixed(0)}°`, '#fff');
-    html += row('Track', `${normDeg(trk).toFixed(0)}°`, '#30d158');
+    // True values
+    if (_triMode === 'find_heading') {
+        html += row('TC (True Course)', `${normDeg(trk).toFixed(0)}°`, '#30d158');
+    }
+    html += row('TH (True Heading)', `${normDeg(hdg).toFixed(0)}°`, '#fff');
+    if (_triMode !== 'find_heading') {
+        html += row('TT (True Track)', `${normDeg(trk).toFixed(0)}°`, '#30d158');
+    }
+    // Magnetic values
+    if (hasVar) {
+        const mh = normDeg(hdg - variation);
+        html += row('MH (Mag Heading)', `${mh.toFixed(0)}°`, '#bf5af2');
+        if (_triMode === 'find_heading') {
+            const mc = normDeg(trk - variation);
+            html += row('MC (Mag Course)', `${mc.toFixed(0)}°`, '#bf5af2');
+        } else {
+            const mt = normDeg(trk - variation);
+            html += row('MT (Mag Track)', `${mt.toFixed(0)}°`, '#bf5af2');
+        }
+    }
+    // Speeds
     html += row('TAS', `${tas.toFixed(0)} kt`, '#fff');
     html += row('GS', `${gs.toFixed(0)} kt`, '#30d158');
+    // Wind
     html += row('Wind', `${normDeg(wdir).toFixed(0)}° / ${wspd.toFixed(0)} kt`, '#00bfff');
     html += row('WW (Wind Angle)', `${Math.abs(ww).toFixed(0)}° ${cwcDir}`, '#00bfff');
+    // Components
     html += row('CWC', `${Math.abs(cwc).toFixed(1)} kt ${cwcDir}`, '#e8a020');
     html += row(`LWC (${lwcType})`, `${Math.abs(lwc).toFixed(1)} kt`, '#e8a020');
     html += row('WCA', `${Math.abs(wca).toFixed(1)}° ${wcaDir}`, '#e8a020');
     html += row('Drift Angle', `${Math.abs(da).toFixed(1)}° ${daDir}`, '#e8a020');
     html += '</div>';
-    html += '<div style="font-size:10px;color:#555;margin-top:8px;">MH = TH ± Magnetic Variation (not available without station data)</div>';
+    if (!hasVar) html += '<div style="font-size:10px;color:#555;margin-top:8px;">Enter Variation above to see MH / MC. Convention: + East, − West.</div>';
 
     el.innerHTML = html;
     drawTri({ hdg: normDeg(hdg), tas, trk: normDeg(trk), gs, wdir: normDeg(wdir), wspd });
@@ -4320,25 +4364,48 @@ function drawTri(d) {
     drawArrow(cx, cy, airTip.x, airTip.y, '#ffffff', 2.5, false);
     drawArrow(airTip.x, airTip.y, windTip.x, windTip.y, '#00bfff', 2, true);
 
-    // Smart label placement at tips, offset outward from center
-    function tipOffset(tip) {
-        const dx = tip.x - cx, dy = tip.y - cy;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        return { x: (dx / dist) * 16, y: (dy / dist) * 16 };
-    }
+    // Smart label placement — staggered positions + opposite sides + collision avoidance
+    const labels = [];
 
-    const ao = tipOffset(airTip);
-    drawLabel(airTip.x, airTip.y, `HDG ${d.hdg.toFixed(0)}° · ${d.tas.toFixed(0)}kt`, '#ffffff', ao.x, ao.y);
+    // Air label at 35% along vector, offset LEFT of vector direction
+    const aPos = { x: cx + (airTip.x - cx) * 0.35, y: cy + (airTip.y - cy) * 0.35 };
+    const aAng = Math.atan2(airTip.y - cy, airTip.x - cx);
+    labels.push({ x: aPos.x + 20 * Math.cos(aAng - Math.PI/2), y: aPos.y + 20 * Math.sin(aAng - Math.PI/2),
+        text: `TH ${d.hdg.toFixed(0)}°`, color: '#ffffff' });
 
-    const go = tipOffset(gndTip);
-    const gaDist = Math.sqrt((gndTip.x - airTip.x) ** 2 + (gndTip.y - airTip.y) ** 2);
-    const extraShift = gaDist < 30 ? 20 : 0;
-    drawLabel(gndTip.x, gndTip.y, `TRK ${d.trk.toFixed(0)}° · ${d.gs.toFixed(0)}kt`, '#30d158', go.x, go.y + extraShift);
+    // Ground label at 65% along vector, offset RIGHT of vector direction
+    const gPos = { x: cx + (gndTip.x - cx) * 0.65, y: cy + (gndTip.y - cy) * 0.65 };
+    const gAng = Math.atan2(gndTip.y - cy, gndTip.x - cx);
+    labels.push({ x: gPos.x + 20 * Math.cos(gAng + Math.PI/2), y: gPos.y + 20 * Math.sin(gAng + Math.PI/2),
+        text: `TT ${d.trk.toFixed(0)}°`, color: '#30d158' });
 
+    // Wind label at midpoint of wind vector, offset perpendicular
     const wMidX = (airTip.x + windTip.x) / 2, wMidY = (airTip.y + windTip.y) / 2;
     const wAngle = Math.atan2(windTip.y - airTip.y, windTip.x - airTip.x);
-    drawLabel(wMidX, wMidY, `${d.wdir.toFixed(0)}°/${d.wspd.toFixed(0)}kt`, '#00bfff',
-        16 * Math.cos(wAngle + Math.PI / 2), 16 * Math.sin(wAngle + Math.PI / 2));
+    labels.push({ x: wMidX + 18 * Math.cos(wAngle + Math.PI/2), y: wMidY + 18 * Math.sin(wAngle + Math.PI/2),
+        text: `W ${d.wdir.toFixed(0)}°/${d.wspd.toFixed(0)}kt`, color: '#00bfff' });
+
+    // Collision avoidance — push overlapping labels apart (larger threshold)
+    for (let pass = 0; pass < 5; pass++) {
+        for (let i = 0; i < labels.length; i++) {
+            for (let j = i + 1; j < labels.length; j++) {
+                const dx = labels[j].x - labels[i].x;
+                const dy = labels[j].y - labels[i].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const minDist = 40; // increased from 22
+                if (dist < minDist) {
+                    const push = (minDist - dist) / 2 + 2;
+                    const nx = dist > 0.1 ? dx / dist : 0;
+                    const ny = dist > 0.1 ? dy / dist : -1;
+                    labels[i].x -= nx * push; labels[i].y -= ny * push;
+                    labels[j].x += nx * push; labels[j].y += ny * push;
+                }
+            }
+        }
+    }
+
+    // Draw all labels
+    labels.forEach(l => drawLabel(l.x, l.y, l.text, l.color, 0, 0));
 
     // Origin dot
     ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2);
@@ -4346,31 +4413,31 @@ function drawTri(d) {
 }
 
 function r60_triExample() {
-    return _card('Example — Find Track & GS',
-        '<b>Given:</b> Heading 360°, TAS 120 kt, Wind 270°/30 kt.<br><br>' +
-        '<b>Wind angle from heading:</b> 270° − 360° = −90° (from left)<br>' +
-        '<b>CWC:</b> 30 × sin(90°) = 30 kt (drifting right)<br>' +
-        '<b>HWC:</b> 30 × cos(90°) = 0 kt (pure crosswind)<br><br>' +
-        '<b>Drift:</b> sin⁻¹(30/120) ≈ 14.5° right<br>' +
-        '<b>Track:</b> 360° + 14.5° = <b style="color:#30d158;">014°</b><br>' +
-        '<b>GS:</b> √(120² + 30²) ≈ <b style="color:#30d158;">124 kt</b><br>' +
-        '<span style="color:#888;">Note: GS > TAS because the wind adds an eastward component without any headwind penalty.</span>'
+    return _card('Example — Ground School Format',
+        '<b>Given:</b> Wind 060°(T) at 22 kt, TC 270°, TAS 180 kt, Variation 11°E.<br><br>' +
+        '<b>WW from TC:</b> 060° − 270° = −210° → 150°<br>' +
+        '<b>sinWCA:</b> (22 × sin 150°) / 180 = (22 × 0.5) / 180 = 0.061<br>' +
+        '<b>WCA:</b> sin⁻¹(0.061) = <b>3.5° Right</b><br>' +
+        '<b>TH:</b> 270° + 3.5° = <b style="color:#fff;">274°</b><br><br>' +
+        '<b>WW from TH:</b> 060° − 274° = −214° → 146°<br>' +
+        '<b>CWC:</b> 22 × sin(146°) = <b>12.3 kt L</b><br>' +
+        '<b>LWC:</b> 22 × cos(146°) = <b>−18.2 kt (TW)</b><br>' +
+        '<b>GS:</b> 180 − (−18.2) = <b style="color:#30d158;">198 kt</b><br><br>' +
+        '<b style="color:#bf5af2;">MH:</b> 274° − 11° = <b style="color:#bf5af2;">263°</b><br>' +
+        '<b style="color:#bf5af2;">MC:</b> 270° − 11° = <b style="color:#bf5af2;">259°</b>'
     ) +
-    _card('Example — Find Heading to Steer',
-        '<b>Given:</b> Desired track 045°, TAS 100 kt, Wind 090°/20 kt.<br><br>' +
-        '<b>Wind angle from track:</b> 090° − 045° = 45° (from right)<br>' +
-        '<b>CWC:</b> 20 × sin(45°) = 14.1 kt (pushing left)<br>' +
-        '<b>WCA:</b> sin⁻¹(14.1/100) = 8.1° → steer right<br>' +
-        '<b>Heading:</b> 045° + 8° = <b style="color:#fff;">053°</b><br>' +
-        '<b>HWC:</b> 20 × cos(45°) = 14.1 kt headwind<br>' +
-        '<b>GS:</b> 100 − 14.1 ≈ <b style="color:#30d158;">86 kt</b>'
+    _card('Example — Find TT & GS',
+        '<b>Given:</b> TH 360°, TAS 120 kt, Wind 270°/30 kt.<br><br>' +
+        '<b>CWC:</b> 30 × sin(90°) = 30 kt (drifting right)<br>' +
+        '<b>HWC:</b> 30 × cos(90°) = 0 kt (pure crosswind)<br>' +
+        '<b>TT:</b> 360° + 14.5° = <b style="color:#30d158;">014°</b><br>' +
+        '<b>GS:</b> √(120² + 30²) ≈ <b style="color:#30d158;">124 kt</b>'
     ) +
     _card('Example — Find Wind In-Flight',
-        '<b>Given:</b> Heading 180°, TAS 110 kt, Track 175° (from GPS), GS 95 kt.<br><br>' +
-        '<b>Drift:</b> 175° − 180° = 5° left → wind from the right<br>' +
+        '<b>Given:</b> TH 180°, TAS 110 kt, TT 175° (from GPS), GS 95 kt.<br><br>' +
+        '<b>Drift:</b> TT − TH = 175° − 180° = 5° left → wind from the right<br>' +
         '<b>GS vs TAS:</b> 95 < 110 → headwind component present<br>' +
-        '<b>Wind:</b> solved vectorially → <b style="color:#00bfff;">210° / 18 kt</b><br>' +
-        '<span style="color:#888;">This is how experienced pilots cross-check winds aloft during cruise.</span>'
+        '<b>Wind:</b> solved vectorially → <b style="color:#00bfff;">210° / 18 kt</b>'
     );
 }
 
