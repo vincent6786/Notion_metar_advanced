@@ -1,392 +1,259 @@
 # METAR GO
 
 <div align="center">
-  <img src="appicon.png" alt="METAR GO Logo" width="120"/>
+  <img src="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png" alt="METAR GO Logo" width="120"/>
   
-  ### Cloud Edition · v3.3.0
+  ### Theme Edition · v4.2.1
   
-  **Aviation Weather & Electronic Flight Bag**
+  **Aviation Weather Viewer & Electronic Flight Bag**
   
-  A comprehensive web-based aviation weather application providing real-time METAR, TAF, and EFB tools for pilots.
+  A Progressive Web App for pilots — real-time METAR/TAF, runway wind analysis, SIGMET/AIRMET, live ATC audio, and a full suite of aviation tools. Built for student pilots and flight training.
 </div>
 
 ---
 
 ## 📋 Overview
 
-METAR GO is a modern, cloud-based aviation weather application designed specifically for pilots. It provides real-time weather information, runway analysis, wind calculations, and essential Electronic Flight Bag (EFB) tools in a sleek, mobile-optimized interface.
+METAR GO is a mobile-first aviation weather app built entirely in vanilla JS/HTML/CSS and deployed as a PWA on Vercel. It fetches live weather from multiple sources, decodes and visualises it for quick cockpit decision-making, and bundles 9 aviation tools in an overlay panel. All settings — favorites, theme, personal minimums — sync across devices via PIN-based cloud backup.
 
-The application integrates with the AVWX API to fetch current aviation weather data and presents it in an intuitive, pilot-friendly format with visual aids like wind roses, runway diagrams, and flight category indicators.
+Primary coverage airports: **RCTP, RCSS** (Taiwan), plus airports in Japan, Germany, the UK, and **KMHR** (US training base).
 
 ---
 
 ## ✨ Features
 
-### 🌤️ Weather Information
-- **Real-time METAR & TAF**: Fetch current weather observations and terminal area forecasts
-- **Flight Category Display**: VFR, MVFR, IFR, LIFR color-coded indicators
-- **NOTAM Integration**: View current notices to airmen for selected airports
-- **Nearby Stations**: GPS-based location services to find nearest airports
-- **Weather History**: Track recent airport searches
+### 🌤️ Weather Data
+- **METAR & TAF** from AVWX with 9-key round-robin rotation and 10-minute caching
+- **24-hour meteogram** from Open-Meteo — temperature, dewpoint, wind arrows, weather icons (tap any hour column for detail)
+- **Winds Aloft** table — 925 / 850 / 700 hPa pressure-level data from Open-Meteo
+- **NOTAMs** — colour-coded Critical / Caution / Info from aviationweather.gov
+- **SIGMET / AIRMET** — US data from AWC; non-US airports link to the relevant national authority with checked-at timestamps and manual refresh
+- **Flight category badges** — VFR / MVFR / IFR / LIFR with tap-to-open legend
+- **Trend indicators** — ↗ ↘ → comparing current reading against ~1 hour ago for wind, visibility, and ceiling
+- **Raw METAR highlights** — gusts (red), low visibility (purple), thunderstorm/heavy precip (orange)
 
 ### 🛫 Runway & Wind Analysis
-- **Interactive Wind Rose**: Visual representation of wind direction and runway alignment
-- **Runway Selector**: Smart runway selection based on current wind conditions
-- **Crosswind Calculator**: Real-time crosswind and headwind component calculations
-- **Magnetic Variation**: Automatic adjustment for magnetic declination
-- **Runway Visualization**: Graphical runway display with wind overlay
+- **Interactive wind rose** — headwind (green) / tailwind (red) relative to selected runway; auto-picks optimal headwind runway
+- **Runway wind components** — headwind/tailwind and crosswind for every runway; ⚠ LIMIT badge when personal crosswind limit is exceeded
+- **Magnetic variation** — from AVWX station record with NOAA WMM API fallback
+- **Sky cover visualisation** — animated cloud icons scaled to coverage (FEW → OVC), sorted by altitude
 
-### 🔧 EFB Tools
-Comprehensive pilot tools accessible through an extensible tools system:
-- Flight planning calculators
-- Performance calculations
-- Weight & balance tools
-- Aviation references
-- NO-GO check tools for safety minimums
+### 📡 ATC & Communications
+- **Live ATC audio** — in-app streams for RCTP (5), RCSS (3), and other Taiwan airports via TWATC.net; LiveATC.net search for all others
+- **Audio state preservation** across auto-refresh cycles
+- **CRAFT clearance scratchpad** — auto-saves between sessions
+- **Airport frequencies** — three-layer fallback: built-in DB (8,341 airports from OurAirports) → AVWX → aviationweather.gov
+- **ATIS/AWOS phone numbers** — built-in for Taiwan airports; AirNav link for others
+- **Emergency squawk codes** — always-visible quick reference (7700, 7600, 7500, 1200, 2000)
+- **US airport resources** — AirNav, iFlightPlanner (Sectional + IFR Low), 1800wxbrief links auto-update per ICAO
 
-### 📱 Mobile-First Design
-- **Progressive Web App**: Add to home screen on iOS/Android
-- **Responsive Layout**: Optimized for all screen sizes
-- **Offline Capability**: Basic functionality when network unavailable
-- **Touch-Optimized**: Gesture-based navigation and controls
-- **Safe Area Support**: Full iPhone notch and home indicator support
+### ℹ️ Info Tab
+- **Pressure Altitude, Density Altitude, ISA Deviation** cards with tap-to-detail formula breakdowns (×30 ft/hPa, ×120 ft/°C)
+- **Sunrise / Sunset** — NOAA algorithm, tap to toggle UTC ↔ local
+- **Relative Humidity** — orange (< 30% dry), blue (> 80% humid), fog risk indicator
 
-### ⚙️ Advanced Features
-- **Cloud Sync**: Save and sync settings across devices with PIN protection
-- **Dashboard Mode**: Consolidated weather view with enhanced visuals
-- **AWOS/ASOS Integration**: Direct access to automated weather stations
-- **Customizable Units**: Switch between metric and imperial measurements
-- **Dark Mode**: Optimized for cockpit use with reduced eye strain
-- **Time Display**: UTC with local time offset
+### 🛠 Aviation Tools (9 tools in overlay panel)
+| Tool | Description |
+|------|-------------|
+| **Unit Converter** | 10 categories — distance, altitude, speed, temp, pressure, fuel volume, weight, fuel flow, energy, power |
+| **E6B Flight Computer** | Density altitude, TAS, cloud base, freezing level from indicated altitude / IAS / QNH / OAT / dewpoint |
+| **E6B Trainer** | Interactive UND simulator — wind correction, fuel burn, time/distance |
+| **Great Circle Distance** | Enter two ICAO codes → great circle distance + initial track bearing with Leaflet map |
+| **Crosswind Calculator** | Visual compass (drag) + type-in mode; headwind/tailwind + crosswind with gust components |
+| **VFR Airspace Minimums** | Quick-reference card — visibility and cloud clearance by FAA airspace class |
+| **Weather Terms** | Searchable METAR weather codes, intensity prefixes, descriptors, wind barb SVG examples |
+| **Abbreviations** | Searchable dictionary — ICAO/FAA/general aviation acronyms (~1,496 entries from metar-db.js) |
+| **Morse Code Trainer** | Learn, Listen, Quiz, Words modes — includes VOR idents (TPE, LAX, SFO…), adjustable WPM |
+
+### 🎨 Themes
+Six app-wide themes — selection persists and syncs to cloud backup:
+| Theme | Style |
+|-------|-------|
+| **Default** | Dark (#000 background, blue accent) |
+| **Cockpit Night** | Monochrome red-on-black for night vision preservation |
+| **Sectional (VFR)** | Warm parchment tones inspired by FAA Sectional Charts |
+| **IFR Enroute** | Deep navy inspired by IFR Low Altitude Enroute Charts |
+| **Phosphor (CRT)** | Green-on-black retro terminal with text glow |
+| **High Contrast** | Maximum readability — white-on-black, 2px borders |
+
+### 📊 Multi-Airport Dashboard
+- Track up to 8 airports simultaneously with auto-refresh every 5 minutes
+- Two card styles: **Raw** (highlighted METAR string) or **Detailed** (decoded wind, vis, cloud, temp, pressure, RH, TAF badge)
+- IATA-to-ICAO auto-resolution (e.g. JFK → KJFK)
+- Tap any card to load full data; drag handles to reorder
+- Cloud-synced airport list
+
+### 🌍 World Clock
+- Live local times with UTC offset for any ICAO code
+- Timezone auto-resolved from coordinates
+- Optional cloud sync of city list
+
+### ⚙️ Settings & Cloud Backup
+- **PIN-based cloud sync** (4–6 digits) via Upstash Redis — no account needed
+- Synced keys: favorites, default airport, preferred runway, theme, personal minimums, multi-airport list, world clock cities, unit preferences
+- **IndexedDB + localStorage dual persistence** with iOS purge recovery and 23-hour keep-alive
+- **Per-user access codes** with admin panel (in-app + admin.html)
+- **Per-IP rate limiting** on PIN attempts
+
+### 📱 Progressive Web App
+- **Service worker** with static asset precaching and API cache fallback
+- **Swipe navigation** between tabs with gesture lock (distinguishes horizontal swipe from vertical scroll)
+- **Liquid glass mode** when launched from iOS home screen (backdrop blur + subtle gradients)
+- **Safe area support** — notch, home indicator, landscape insets
+- **Offline mode** — cached data served with age badge and retry banner
+
+### 🔄 Personal Minimums & GO/NO-GO
+- Four profiles: **SOLO**, **DUAL**, **CUSTOM**, **KMHR**
+- Crosswind, ceiling, and visibility limits per profile
+- Live GO ✅ / NO-GO ⛔ check against current METAR
+- Optional red NO-GO banner at top of screen
 
 ---
 
 ## 🛠️ Technology Stack
 
 ### Frontend
-- **HTML5/CSS3**: Modern, semantic markup with CSS Grid and Flexbox
-- **Vanilla JavaScript**: No framework dependencies for maximum performance
-- **Canvas API**: Dynamic wind rose and runway visualizations
-- **LocalStorage**: Client-side caching and preference storage
+- **Vanilla JS / HTML5 / CSS3** — zero framework dependencies
+- **Canvas API** — wind rose, crosswind compass
+- **Leaflet.js** — Great Circle distance map
+- **CSS custom properties** — theme engine (`:root` variables overridden per theme class)
+- **IndexedDB + localStorage** — dual-layer client persistence
 
-### Backend (Serverless)
-- **Node.js**: Runtime environment
-- **Vercel Serverless Functions**: API endpoints and proxy services
-- **Upstash Redis**: Distributed KV store for settings sync and API rate limiting
+### Backend (Serverless on Vercel)
+- **Node.js** serverless functions (7 API routes)
+- **Upstash Redis** — cloud settings, API key rotation pointer, rate limiting, API stats
 
-### APIs & Services
-- **AVWX REST API**: Aviation weather data (METAR, TAF, station info)
-- **Geolocation API**: Browser-based position services
-- **AWOS Network**: Automated weather observation stations
+### Data Sources
+| Source | Data |
+|--------|------|
+| **AVWX API** (9 free-tier keys, round-robin) | METAR, TAF, station info, frequencies |
+| **Open-Meteo** | 24h meteogram, pressure-level winds aloft |
+| **aviationweather.gov** | NOTAMs, SIGMET/AIRMET, frequency fallback |
+| **OurAirports CSV** | Built-in frequency database (8,341 airports) |
+| **NOAA WMM API** | Magnetic variation fallback |
+| **TWATC.net** | Live ATC audio streams (Taiwan) |
+
+### Automation
+- **bump.js** + GitHub Actions (`bump-version.yml`) — git tag triggers version bump across `index.html`, `sw.js`, `core.js` and auto-commits to main
 
 ---
 
 ## 📁 Project Structure
 
 ```
-metar-plus/
-├── index.html              # Main application interface
-├── styles.css              # Global styles and themes
-├── maintenance.html        # Maintenance mode page
+metar-go/
+├── index.html                # Main application (single-page)
+├── styles.css                # Global styles + 6 theme definitions
+├── manifest.json             # PWA manifest
+├── sw.js                     # Service worker (precache + API cache)
+├── maintenance.html          # Maintenance mode landing page
+├── admin.html                # Standalone admin panel
 │
-├── app.js                  # Core application logic
-├── core.js                 # Weather parsing and display
-├── init.js                 # Initialization and startup
-├── tools-extension.js      # Modular EFB tools system
+├── init.js                   # Boot sequence, launch screen
+├── core.js                   # Storage, cloud sync, weather parsing, display
+├── app.js                    # UI logic, tabs, themes, minimums, dashboard
+├── tools-extension.js        # 9-tool overlay system (converter, E6B, crosswind…)
+├── gc-tools-extension_patch.js  # Great Circle tool Leaflet patch
 │
-├── api/                    # Serverless functions
-│   ├── weather.js         # Weather data proxy with API key rotation
-│   ├── settings.js        # Cloud settings sync (GET/POST/DELETE)
-│   ├── awos.js           # AWOS data proxy with styling
-│   ├── api-stats.js      # API usage statistics
-│   ├── status.js         # Service health check
-│   └── stream.js         # Real-time data streaming
+├── airport-db.js             # Airport coordinate/runway database
+├── airportfrequencies.js     # Frequency database (8,341 airports)
+├── metar-db.js               # METAR abbreviations (~1,496 entries)
 │
-├── package.json           # Dependencies and metadata
-├── vercel.json           # Deployment configuration
+├── weather.js                # API: weather proxy + AVWX key rotation
+├── settings.js               # API: cloud settings CRUD + registry
+├── access.js                 # API: access code validation + rate limiting
+├── awos.js                   # API: AWOS data proxy (KMHR)
+├── api-stats.js              # API: daily usage stats per key
+├── status.js                 # API: health check
+├── stream.js                 # API: ATC audio stream proxy
 │
-└── assets/
-    ├── appicon.png       # Application icon
-    └── plane.png         # UI graphics
+├── bump.js                   # Version bump automation script
+├── package.json              # Dependencies (@upstash/redis)
+├── vercel.json               # Route rewrites for API endpoints
+│
+├── plane.png                 # Wind rose aircraft icon
+└── diamond.png               # UI decorative asset
 ```
+
+> **Note:** Image assets (`app-icon.png`, `plane.png`, `diamond.png`) must use `raw.githubusercontent.com` URLs in production — local paths break on deployed builds.
 
 ---
 
-## 🚀 Setup & Installation
+## 🚀 Setup
 
 ### Prerequisites
-- Node.js 18.x or higher
-- Vercel account (for deployment)
+- Node.js 18+
+- Vercel account
 - Upstash Redis database
-- AVWX API key(s)
+- At least 1 AVWX API key (supports up to 9)
+
+### Environment Variables (Vercel)
+
+```env
+# Upstash Redis
+KV_REST_API_URL=...
+KV_REST_API_TOKEN=...
+
+# AVWX API keys (round-robin, 1–9)
+AVWX_KEY_1=...
+AVWX_KEY_2=...
+# ... up to AVWX_KEY_9
+
+# Access control
+ACCESS_GATE_ENABLED=true
+ADMIN_ACCESS_CODE=...
+ADMIN_PASSCODE=...
+IP_HOURLY_LIMIT=100
+
+# CORS
+ALLOWED_ORIGIN=https://your-domain.vercel.app
+
+# Maintenance mode (optional)
+MAINTENANCE_MODE=false
+MAINTENANCE_BYPASS_KEY=...
+```
 
 ### Local Development
 
-1. **Clone the repository**
 ```bash
-git clone <your-repo-url>
-cd metar-plus
-```
-
-2. **Install dependencies**
-```bash
+git clone <repo-url>
+cd metar-go
 npm install
+npx vercel dev    # runs at http://localhost:3000
 ```
 
-3. **Configure environment variables**
+### Deploy & Version Bump
 
-Create a `.env` file in the project root:
-
-```env
-# Upstash Redis (for settings sync)
-KV_REST_API_URL=your_upstash_redis_url
-KV_REST_API_TOKEN=your_upstash_token
-
-# AVWX API Keys (supports multiple for rotation)
-AVWX_KEY_1=your_primary_api_key
-AVWX_KEY_2=your_secondary_api_key
-AVWX_KEY_3=your_tertiary_api_key
-AVWX_KEY_4=your_quaternary_api_key
-
-# API Rate Limiting
-AVWX_DAILY_LIMIT=4000
-```
-
-4. **Run locally with Vercel CLI**
 ```bash
-npx vercel dev
+git add -A && git commit -m "v4.2.1 — theme system + help update"
+git push origin main
+git tag v4.2.1 && git push origin v4.2.1   # triggers bump.js via GitHub Actions
 ```
-
-The application will be available at `http://localhost:3000`
-
----
-
-## 🌐 Deployment
-
-### Vercel Deployment
-
-1. **Install Vercel CLI**
-```bash
-npm i -g vercel
-```
-
-2. **Deploy to Vercel**
-```bash
-vercel
-```
-
-3. **Configure environment variables** in Vercel dashboard:
-   - Go to your project settings
-   - Add all environment variables from `.env`
-   - Redeploy if needed
-
-4. **Custom domain** (optional):
-   - Add your domain in Vercel project settings
-   - Update DNS records as instructed
 
 ---
 
 ## 🔌 API Endpoints
 
-### Weather Data
-```
-GET /api/weather?station=KJFK&type=metar
-GET /api/weather?station=KJFK&type=taf
-GET /api/weather?station=KJFK&type=station
-GET /api/weather?station=KJFK&type=notam
-GET /api/weather?station=37.7749,-122.4194&type=near
-GET /api/weather?station=kennedy&type=search
-```
-
-**Response includes metadata:**
-```json
-{
-  "...weather data...",
-  "_meta": {
-    "key_used": 1,
-    "key_usage": 245,
-    "key_limit": 4000,
-    "key_remaining": 3755
-  }
-}
-```
-
-### Settings Sync (Cloud Storage)
-```
-GET    /api/settings?pin=1234&key=theme
-GET    /api/settings?pin=1234              # Get all settings
-POST   /api/settings {pin, key, value}     # Save setting
-DELETE /api/settings?pin=1234&key=theme    # Delete setting
-DELETE /api/settings?pin=1234              # Delete all settings
-```
-
-### AWOS Data
-```
-GET /api/awos
-```
-Returns styled AWOS data from configured station (currently KMHR).
-
-### Service Status
-```
-GET /api/status
-```
-
-### API Statistics
-```
-GET /api/api-stats
-```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/weather?station=RCTP&type=metar` | GET | METAR/TAF/station/NOTAM/nearby/search via AVWX |
+| `/api/settings?pin=1234` | GET | Restore all cloud settings |
+| `/api/settings` | POST | Save a single setting `{pin, key, value}` |
+| `/api/settings?pin=1234` | DELETE | Delete all cloud data for PIN |
+| `/api/access` | POST | Validate access code |
+| `/api/awos` | GET | KMHR AWOS data |
+| `/api/api-stats` | GET | Daily AVWX key usage (admin) |
+| `/api/status` | GET | Health check |
+| `/api/stream` | GET | ATC audio stream proxy |
 
 ---
 
-## 🎯 Usage
+## ⚠️ Known Constraints
 
-### Basic Workflow
-
-1. **Search for an airport**
-   - Enter ICAO code (e.g., KJFK) in search box
-   - Or use GPS location button to find nearby airports
-
-2. **View weather information**
-   - METAR tab: Current observations
-   - TAF tab: Forecast information
-   - Dashboard: Combined view with enhanced visuals
-
-3. **Analyze runway conditions**
-   - Select runway from dropdown
-   - View wind rose visualization
-   - Check crosswind/headwind components
-
-4. **Access EFB tools**
-   - Navigate to Tools tab
-   - Select tool from available options
-   - Use full-screen mode for better visibility
-
-5. **Sync settings** (optional)
-   - Open settings panel
-   - Create 4-6 digit PIN
-   - Backup or restore settings across devices
-
-### Keyboard Shortcuts
-- `Enter` in search box: Load weather data
-- Click time badge: Toggle UTC/Local time
-- Click flight category badge: View legend
-
----
-
-## ⚙️ Configuration
-
-### API Key Rotation
-The application implements intelligent API key rotation to maximize daily quotas:
-- Automatically tracks usage per key
-- Selects key with lowest usage
-- Falls back to alternative keys on rate limit
-- Marks exhausted keys for next day
-
-### Customization Options
-- **Units**: Metric / Imperial / Aviation standard
-- **Time Display**: UTC or Local with offset
-- **Dashboard Mode**: Enhanced vs. standard view
-- **Runway Preferences**: Saved per airport
-- **Theme**: Optimized dark mode for cockpit use
-
-### LocalStorage Keys
-```javascript
-efb_recent_history      // Recent airport searches
-efb_pref_rwy_<ICAO>    // Preferred runway per airport
-efb_settings_pin        // Cloud sync PIN
-efb_last_station        // Last searched station
-```
-
----
-
-## 🔒 Security & Privacy
-
-- **PIN Protection**: 4-6 digit PIN for cloud settings sync
-- **Client-Side First**: Sensitive preferences stored locally
-- **No User Tracking**: No analytics or tracking scripts
-- **Secure Storage**: Upstash Redis with encrypted connections
-- **CORS Enabled**: API endpoints accessible from authorized origins
-
----
-
-## 📊 Performance
-
-- **Caching Strategy**: 
-  - API responses cached for 2 minutes (`s-maxage=120`)
-  - Stale-while-revalidate for optimal UX
-  
-- **Bundle Size**: 
-  - No external frameworks
-  - Optimized vanilla JavaScript
-  - Minimal dependencies
-
-- **Load Time**:
-  - Launch screen with progressive loading
-  - Lazy-loaded tool modules
-  - Offline-first approach
-
----
-
-## 🧪 Testing
-
-### Manual Testing Checklist
-- [ ] METAR data loads correctly
-- [ ] TAF data displays properly
-- [ ] Wind rose renders accurately
-- [ ] Runway selection works
-- [ ] Crosswind calculations correct
-- [ ] GPS location functional
-- [ ] Cloud sync saves/restores
-- [ ] Offline mode graceful
-- [ ] PWA installable
-- [ ] Mobile responsive
-
-### API Rate Limit Testing
-Monitor API usage through the stats endpoint:
-```bash
-curl https://your-domain.vercel.app/api/api-stats
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Weather data not loading**
-- Check API keys are configured in Vercel environment
-- Verify station code is valid ICAO identifier
-- Check browser console for errors
-- Confirm API quota not exceeded
-
-**GPS not working**
-- Ensure HTTPS connection (required for geolocation)
-- Check browser location permissions
-- Try manual station entry as fallback
-
-**Settings not syncing**
-- Verify Upstash Redis credentials
-- Check PIN is 4-6 digits
-- Ensure network connectivity
-- Clear browser cache and retry
-
-**Wind rose not displaying**
-- Verify station has runway data
-- Check magnetic variation available
-- Inspect canvas element in dev tools
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Areas for improvement:
-
-- Additional EFB tools and calculators
-- Enhanced weather visualizations
-- Performance optimizations
-- Accessibility improvements
-- Internationalization (i18n)
-- Unit tests and E2E testing
+- **AVWX free-tier keys fail frequently** — the app rotates across 9 keys and falls back to local databases where possible
+- **iOS Safari discards canvas draws on `display:none` elements** — wind rose and canvas components initialise only when their tab is visible
+- **`position:fixed` inside `display:none` parents** — all modals are direct children of `<body>`
+- **Service worker cache versions** must stay in sync across `sw.js`, `core.js`, and `index.html` — `bump.js` automates this
 
 ---
 
@@ -398,16 +265,16 @@ This project is private and proprietary. All rights reserved.
 
 ## 🙏 Acknowledgments
 
-- **AVWX**: Aviation weather data API
-- **Upstash**: Serverless Redis database
-- **Vercel**: Hosting and serverless functions
-- **AWOS Network**: Automated weather stations
-
----
-
-## 📞 Support
-
-For issues, questions, or feature requests, please contact the development team.
+- **[AVWX](https://avwx.rest)** — Aviation weather data API
+- **[Open-Meteo](https://open-meteo.com)** — Open-source NWP model data
+- **[aviationweather.gov](https://aviationweather.gov)** — FAA/NOAA NOTAMs, SIGMET/AIRMET, frequencies
+- **[TWATC.net](https://twatc.net)** — Taiwan ATC live audio streams
+- **[LiveATC.net](https://www.liveatc.net)** — Global ATC audio
+- **[OurAirports](https://ourairports.com)** — Airport frequency CSV data
+- **[Upstash](https://upstash.com)** — Serverless Redis
+- **[Vercel](https://vercel.com)** — Hosting and serverless functions
+- **[Leaflet](https://leafletjs.com)** — Interactive maps
+- **[UND](https://www.und.edu)** — E6B Trainer simulator
 
 ---
 
