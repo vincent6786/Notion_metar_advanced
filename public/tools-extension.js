@@ -355,7 +355,8 @@ function openTool(toolName) {
             'e6b-trainer': 'E6B Trainer (UND)',
             'morse-trainer': 'Morse Code Trainer',
             'crosswind': 'Crosswind Calculator',
-            'airspace-mins': 'VFR Airspace Minimums'
+            'airspace-mins': 'VFR Airspace Minimums',
+            '160-rule': '1:60 Rule'
         };
         updateExtensionHeader(toolTitles[toolName] || 'Tool', true);
         
@@ -378,6 +379,8 @@ function openTool(toolName) {
             gcInitMap();
         } else if (toolName === 'airspace-mins') {
             initAirspaceMins();
+        } else if (toolName === '160-rule') {
+            init160Rule();
         }
     }
 }
@@ -3556,4 +3559,497 @@ function skipMorseWord() {
 function updateWordsScore() {
     const el = document.getElementById('morseWordsScore');
     if (el) el.textContent = _morseWordsScore;
+}
+
+
+// ============================================================================
+// 1:60 RULE TRAINING TOOL
+// ============================================================================
+
+let _160 = { topic: 'course', mode: 'ref', quizQ: null, quizScore: 0, quizTotal: 0 };
+
+function init160Rule() {
+    set160Topic('course');
+}
+
+/* ── Topic & mode navigation ── */
+function set160Topic(t) {
+    _160.topic = t;
+    ['course','wind','tod','rod'].forEach(id => {
+        const b = document.getElementById('r60t-' + id);
+        if (b) { b.style.background = id === t ? '#e8a020' : 'transparent'; b.style.color = id === t ? '#000' : '#888'; }
+    });
+    set160Mode(_160.mode);
+}
+
+function set160Mode(m) {
+    _160.mode = m;
+    ['ref','calc','example','quiz'].forEach(id => {
+        const b = document.getElementById('r60m-' + id);
+        if (b) { b.style.background = id === m ? 'var(--accent)' : 'transparent'; b.style.color = id === m ? '#fff' : '#888'; }
+    });
+    render160();
+}
+
+/* ── Master renderer ── */
+function render160() {
+    const el = document.getElementById('r60Content');
+    if (!el) return;
+    const key = _160.topic + '_' + _160.mode;
+    const renderers = {
+        course_ref: r60_courseRef, course_calc: r60_courseCalc, course_example: r60_courseExample, course_quiz: r60_courseQuiz,
+        wind_ref: r60_windRef, wind_calc: r60_windCalc, wind_example: r60_windExample, wind_quiz: r60_windQuiz,
+        tod_ref: r60_todRef, tod_calc: r60_todCalc, tod_example: r60_todExample, tod_quiz: r60_todQuiz,
+        rod_ref: r60_rodRef, rod_calc: r60_rodCalc, rod_example: r60_rodExample, rod_quiz: r60_rodQuiz,
+    };
+    el.innerHTML = renderers[key] ? renderers[key]() : '';
+}
+
+/* ── Helpers ── */
+function _card(title, body) { return `<div style="background:#111;border:1px solid #333;border-radius:10px;padding:14px;margin-bottom:12px;"><div style="font-weight:800;font-size:13px;margin-bottom:8px;color:#e8a020;">${title}</div><div style="font-size:12px;color:#ccc;line-height:1.7;">${body}</div></div>`; }
+function _formula(f) { return `<div style="background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 14px;margin:8px 0;font-family:'SF Mono',monospace;font-size:13px;color:#e8a020;text-align:center;font-weight:700;">${f}</div>`; }
+function _inp(id, ph, w) { return `<input id="${id}" type="number" placeholder="${ph}" style="width:${w||'100%'};background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">`; }
+function _result(id) { return `<div id="${id}" style="background:#0a0a0a;border:2px solid #333;border-radius:10px;padding:14px;margin-top:12px;font-size:13px;color:#ccc;line-height:1.8;min-height:40px;"></div>`; }
+function _rand(a,b) { return Math.floor(Math.random()*(b-a+1))+a; }
+
+// ========================= COURSE CORRECTION =========================
+
+function r60_courseRef() {
+    return _card('1:60 Rule — Basic Principle',
+        'For small angles (< 15°), 1° off course at 60 NM = 1 NM displacement.<br><br>' +
+        _formula('sin θ ≈ tan θ ≈ θ / 60 &nbsp; (θ in degrees)') +
+        'At any distance: <b>θ°</b> off course at <b>D</b> NM = <b>D × θ / 60</b> NM displacement.'
+    ) +
+    _card('Track Error (TE)',
+        _formula('TE = (Distance Off × 60) / Distance Flown') +
+        'TE tells you how many degrees you have drifted from the planned course.'
+    ) +
+    _card('Closing Angle (CA)',
+        _formula('CA = (Distance Off × 60) / Distance Remaining') +
+        'CA is the angle needed to fly from current position to the destination.'
+    ) +
+    _card('Direct to Waypoint',
+        _formula('Heading Change = TE + CA') +
+        '1. Calculate TE from distance flown<br>2. Calculate CA from distance remaining<br>3. Add both for total heading change toward the destination.'
+    ) +
+    _card('Double Track Error',
+        _formula('Heading Change = 2 × TE') +
+        'Used when you want to regain the <b>original course line</b> (not fly direct to destination).<br>' +
+        'Fly the corrected heading for the <b>same distance</b> already flown, then reduce correction to 1 × TE to maintain course.'
+    );
+}
+
+function r60_courseCalc() {
+    return '<div style="font-weight:800;font-size:13px;margin-bottom:12px;color:#fff;">Course Correction Calculator</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_distOff','Distance Off Track (NM)','100%') +
+        _inp('r60_distFlown','Distance Flown (NM)','100%') +
+    '</div>' +
+    _inp('r60_totalDist','Total Route Distance (NM)') +
+    _result('r60_courseResult');
+}
+
+function r60AutoCalc() {
+    if (_160.topic === 'course' && _160.mode === 'calc') calcCourse160();
+    if (_160.topic === 'wind' && _160.mode === 'calc') calcWind160();
+    if (_160.topic === 'tod' && _160.mode === 'calc') calcTOD160();
+    if (_160.topic === 'rod' && _160.mode === 'calc') calcROD160();
+}
+
+function calcCourse160() {
+    const off = parseFloat(document.getElementById('r60_distOff')?.value);
+    const flown = parseFloat(document.getElementById('r60_distFlown')?.value);
+    const total = parseFloat(document.getElementById('r60_totalDist')?.value);
+    const el = document.getElementById('r60_courseResult');
+    if (!el) return;
+    let html = '';
+    if (off > 0 && flown > 0) {
+        const te = (off * 60) / flown;
+        html += `<b style="color:#e8a020;">Track Error (TE):</b> ${te.toFixed(1)}°<br>`;
+        html += `<b>Double TE correction:</b> ${(te * 2).toFixed(1)}°<br>`;
+        if (total > flown) {
+            const remain = total - flown;
+            const ca = (off * 60) / remain;
+            html += `<br><b style="color:#e8a020;">Closing Angle (CA):</b> ${ca.toFixed(1)}°<br>`;
+            html += `<b>Direct-to heading change (TE + CA):</b> ${(te + ca).toFixed(1)}°`;
+        }
+    } else {
+        html = '<span style="color:#555;">Enter values above to calculate…</span>';
+    }
+    el.innerHTML = html;
+}
+
+function r60_courseExample() {
+    return _card('Example — Oxford to Cambridge',
+        '<b>Given:</b> Course 074°M, Distance 70 NM, Heading 065°M.<br>After 30 NM, pinpointed 4 NM left of track at Cranfield.<br><br>' +
+        '<b>Step 1 — Track Error:</b>' + _formula('TE = (4 × 60) / 30 = 8° Left') +
+        '<b>Step 2 — TMG:</b> 074° − 8° = 066°M<br><br>' +
+        '<b>Step 3 — Closing Angle:</b> Distance remaining = 70 − 30 = 40 NM' + _formula('CA = (4 × 60) / 40 = 6°') +
+        '<b>Step 4 — Heading Change:</b>' + _formula('TE + CA = 8° + 6° = 14° Right') +
+        '<b>New Heading:</b> 065° + 14° = <b style="color:#30d158;">079°M</b>'
+    ) +
+    _card('Example — Double Track Error',
+        '<b>Given:</b> Route X→Y, 60 NM, GS 90 kt. Depart 0940.<br>At 0956, fixed 4 NM right of track.<br><br>' +
+        '<b>Time flown:</b> 16 min → Distance = 90 × 16/60 = 24 NM<br>' +
+        '<b>TE:</b> (4 × 60) / 24 = <b>10° Right</b><br><br>' +
+        '<b>Correction:</b> 2 × TE = <b>20° Left</b><br>' +
+        '<b>Fly for:</b> same time (16 min) → regain track at <b>1012</b><br>' +
+        '<b>Then:</b> turn <b>10° Right</b> to maintain course.'
+    );
+}
+
+function r60_courseQuiz() {
+    return _genQuiz('course');
+}
+
+// ========================= WIND CORRECTION =========================
+
+function r60_windRef() {
+    return _card('Crosswind Component (CWC)',
+        _formula('CWC = Wind Speed × sin(Wind Angle)') +
+        '<b>Quick sine table</b> (wind angle → factor):<br>' +
+        '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;text-align:center;font-size:11px;">' +
+        ['10°→0.2','20°→0.3','30°→0.5','40°→0.6','50°→0.7','60°→0.8','70°→0.9','80°→1.0','90°→1.0',''].map(s =>
+            s ? `<span style="background:#1a1a1a;border-radius:4px;padding:4px;">${s}</span>` : '<span></span>'
+        ).join('') + '</div>'
+    ) +
+    _card('Wind Correction Angle (WCA)',
+        _formula('WCA = (CWC × 60) / TAS') +
+        'Apply WCA <b>into</b> the wind: if wind from left, correct left.'
+    ) +
+    _card('Ground Speed (GS)',
+        _formula('LWC = Wind Speed × cos(Wind Angle)') +
+        _formula('GS = TAS ± LWC') +
+        'Headwind: subtract. Tailwind: add.<br>' +
+        '<b>Quick cosine:</b> cos θ = sin(90° − θ)'
+    ) +
+    _card('Sine Shortcut',
+        'For mental math: <b>sin(N°) ≈ (N÷10 + 2) / 10</b><br>' +
+        'Works for 10°–80°. Examples: sin 30 = (3+2)/10 = 0.5 ✓'
+    );
+}
+
+function r60_windCalc() {
+    return '<div style="font-weight:800;font-size:13px;margin-bottom:12px;color:#fff;">Wind Correction Calculator</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_rwyHdg','Runway / Course (°)','100%') +
+        _inp('r60_windDir','Wind Direction (°)','100%') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_windSpd','Wind Speed (kt)','100%') +
+        _inp('r60_tas','TAS (kt)','100%') +
+    '</div>' +
+    _result('r60_windResult');
+}
+
+function calcWind160() {
+    const rwy = parseFloat(document.getElementById('r60_rwyHdg')?.value);
+    const wDir = parseFloat(document.getElementById('r60_windDir')?.value);
+    const wSpd = parseFloat(document.getElementById('r60_windSpd')?.value);
+    const tas = parseFloat(document.getElementById('r60_tas')?.value);
+    const el = document.getElementById('r60_windResult');
+    if (!el) return;
+    if (isNaN(rwy) || isNaN(wDir) || isNaN(wSpd)) { el.innerHTML = '<span style="color:#555;">Enter values above…</span>'; return; }
+    let ww = wDir - rwy;
+    if (ww > 180) ww -= 360;
+    if (ww < -180) ww += 360;
+    const wwRad = Math.abs(ww) * Math.PI / 180;
+    const cwc = wSpd * Math.sin(wwRad);
+    const lwc = wSpd * Math.cos(wwRad);
+    const cwcDir = ww > 0 ? 'from Right' : ww < 0 ? 'from Left' : '';
+    const hwLabel = lwc >= 0 ? 'Headwind' : 'Tailwind';
+    let html = `<b style="color:#e8a020;">Wind Angle:</b> ${Math.abs(ww).toFixed(0)}° ${cwcDir}<br>`;
+    html += `<b>Crosswind:</b> ${cwc.toFixed(1)} kt ${cwcDir}<br>`;
+    html += `<b>${hwLabel}:</b> ${Math.abs(lwc).toFixed(1)} kt<br>`;
+    if (!isNaN(tas) && tas > 0) {
+        const wca = (cwc * 60) / tas;
+        const hdg = rwy - wca;
+        const gs = tas + (lwc >= 0 ? -Math.abs(lwc) : Math.abs(lwc));
+        html += `<br><b style="color:#e8a020;">WCA:</b> ${Math.abs(wca).toFixed(1)}° ${wca > 0 ? 'Right' : 'Left'}<br>`;
+        html += `<b>Heading:</b> ${((hdg % 360) + 360).toFixed(0) % 360 || 360}°<br>`;
+        html += `<b>Ground Speed:</b> ${gs.toFixed(0)} kt`;
+    }
+    el.innerHTML = html;
+}
+
+function r60_windExample() {
+    return _card('Example — Downwind Leg RWY 19',
+        '<b>Given:</b> Course 010°M (downwind RWY 19), TAS 100 kt, Wind 230°/10 kt.<br><br>' +
+        '<b>Wind Angle:</b> 230° − 010° = 220° → use 360° − 220° = <b>40°</b> (from left)<br><br>' +
+        '<b>CWC:</b> 10 × sin(40°) = 10 × 0.6 = <b>6 kt</b> from left<br>' +
+        '<b>WCA:</b> 6 × 60 / 100 = <b>4° left</b><br>' +
+        '<b>Heading:</b> 010° − 4° = <b style="color:#30d158;">006°M</b><br><br>' +
+        '<b>Tailwind component:</b> 10 × cos(40°) = 10 × 0.7 = 7 kt tailwind<br>' +
+        '<b>GS:</b> 100 + 7 = <b style="color:#30d158;">107 kt</b>'
+    ) +
+    _card('Mental Math — Tower Clearance',
+        '<b>ATC:</b> "EVA 1, Runway 36, clear to land, wind 320 at 10"<br><br>' +
+        '<b>Wind angle:</b> 360 − 320 = <b>40°</b><br>' +
+        '<b>CWC:</b> 10 × sin(40) = 10 × 0.6 = <b>6 kt</b><br>' +
+        '<b>HWC:</b> 10 × cos(40) = 10 × 0.7 = <b>7 kt</b><br><br>' +
+        '<span style="color:#e8a020;">Practice doing this in your head every time tower gives you wind!</span>'
+    );
+}
+
+function r60_windQuiz() { return _genQuiz('wind'); }
+
+// ========================= TOP OF DESCENT =========================
+
+function r60_todRef() {
+    return _card('Top of Descent (TOD)',
+        'On a 3° glideslope, the aircraft descends <b>300 ft per NM</b>.' +
+        _formula('TOD (NM) = ΔAltitude / 300 &nbsp; (for 3°)') +
+        _formula('TOD (NM) = ΔFlight Level / 3 &nbsp; (for 3°)') +
+        'For other angles:' + _formula('TOD (NM) = ΔAltitude / (θ × 100)')
+    ) +
+    _card('Height at Distance',
+        'To check you\'re on the correct glideslope:' +
+        _formula('Height (ft AGL) = 300 × Range (NM) &nbsp; (for 3°)') +
+        _formula('Height (ft AGL) = θ × 100 × Range &nbsp; (for θ°)') +
+        'Example: 4 NM from runway on 3° → should be at 1200 ft AGL.'
+    ) +
+    _card('1° = 100 ft / NM',
+        'Key relationship from the 1:60 rule applied to descent:<br>' +
+        '1° flight path = 100 ft per NM<br>2° = 200 ft/NM<br>3° = 300 ft/NM<br>5° = 500 ft/NM'
+    );
+}
+
+function r60_todCalc() {
+    return '<div style="font-weight:800;font-size:13px;margin-bottom:12px;color:#fff;">TOD & Height Calculator</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_alt','Current Altitude (ft)','100%') +
+        _inp('r60_elev','Airport Elevation (ft)','100%') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_gs','Glideslope Angle (°)','100%') +
+        _inp('r60_range','Range from RWY (NM)','100%') +
+    '</div>' +
+    _result('r60_todResult');
+}
+
+function calcTOD160() {
+    const alt = parseFloat(document.getElementById('r60_alt')?.value);
+    const elev = parseFloat(document.getElementById('r60_elev')?.value);
+    const gs = parseFloat(document.getElementById('r60_gs')?.value) || 3;
+    const range = parseFloat(document.getElementById('r60_range')?.value);
+    const el = document.getElementById('r60_todResult');
+    if (!el) return;
+    let html = '';
+    if (!isNaN(alt) && !isNaN(elev)) {
+        const dAlt = alt - elev;
+        const tod = dAlt / (gs * 100);
+        html += `<b style="color:#e8a020;">Altitude to lose:</b> ${dAlt.toLocaleString()} ft<br>`;
+        html += `<b>TOD (${gs}° path):</b> ${tod.toFixed(1)} NM before airport<br>`;
+    }
+    if (!isNaN(range) && range > 0) {
+        const correctHt = gs * 100 * range;
+        html += `<br><b style="color:#e8a020;">Correct height at ${range} NM (${gs}°):</b> ${correctHt.toLocaleString()} ft AGL<br>`;
+        if (!isNaN(elev)) html += `<b>Correct altitude:</b> ${(correctHt + elev).toLocaleString()} ft MSL`;
+        if (!isNaN(alt) && !isNaN(elev)) {
+            const diff = alt - (correctHt + elev);
+            html += `<br><b>${diff > 0 ? '⚠️ TOO HIGH' : diff < 0 ? '⚠️ TOO LOW' : '✅ On path'}</b> by ${Math.abs(diff).toFixed(0)} ft`;
+        }
+    }
+    if (!html) html = '<span style="color:#555;">Enter altitude & elevation for TOD, or range for height check…</span>';
+    el.innerHTML = html;
+}
+
+function r60_todExample() {
+    return _card('Example — FL350 to Sea Level',
+        '<b>Given:</b> FL350, airport at sea level, 3° descent.<br><br>' +
+        '<b>TOD:</b> ΔFL / 3 = 350 / 3 = <b style="color:#30d158;">117 NM</b> before destination.'
+    ) +
+    _card('Example — 6500 ft to 800 ft Elevation',
+        '<b>Given:</b> Alt 6500 ft, airport elevation 800 ft MSL, 3° path.<br><br>' +
+        '<b>TOD:</b> (6500 − 800) / 300 = 5700 / 300 = <b style="color:#30d158;">19 NM</b> before destination.'
+    ) +
+    _card('Example — Height Check at 15 NM',
+        '<b>Given:</b> DA-40 at 6500 ft, 15 NM from airport, elevation 1200 ft.<br><br>' +
+        '<b>Correct height (3°):</b> 300 × 15 = 4500 ft AGL<br>' +
+        '<b>Correct altitude:</b> 4500 + 1200 = 5700 ft MSL<br><br>' +
+        'Aircraft is at 6500 ft → <b style="color:#ff453a;">800 ft too high!</b>'
+    );
+}
+
+function r60_todQuiz() { return _genQuiz('tod'); }
+
+// ========================= RATE OF DESCENT =========================
+
+function r60_rodRef() {
+    return _card('Vertical Speed from Flight Path Angle',
+        _formula('V/S = (GS × θ × 100) / 60') +
+        'Where GS is in knots, θ is flight path angle in degrees.<br><br>' +
+        'Simplified for 3° glideslope:' +
+        _formula('V/S = GS × 5') +
+        'Example: GS 80 kt on 3° → V/S = 80 × 5 = 400 fpm'
+    ) +
+    _card('Flight Path Angle from Gradient',
+        _formula('θ° = (1/100) × (ΔAlt / Distance)') +
+        'Since 1° ≈ 100 ft/NM, gradient in ft/NM divided by 100 gives FPA.'
+    ) +
+    _card('V/S from Gradient + GS',
+        _formula('V/S = Speed Factor × (ΔAlt / Distance)') +
+        _formula('Speed Factor (SF) = GS / 60') +
+        'When you know gradient (ft/NM) and ground speed, this gives required V/S directly.'
+    ) +
+    _card('Constant Rate Descent',
+        'When given a fixed ROD (e.g. 500 fpm):<br>' +
+        _formula('Descent Time = ΔAltitude / ROD') +
+        _formula('Descent Distance = GS × Time / 60') +
+        'Useful for ATC step-down clearances.'
+    );
+}
+
+function r60_rodCalc() {
+    return '<div style="font-weight:800;font-size:13px;margin-bottom:12px;color:#fff;">Rate of Descent Calculator</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_rodGS','Ground Speed (kt)','100%') +
+        _inp('r60_rodAngle','Flight Path Angle (°)','100%') +
+    '</div>' +
+    '<div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 6px;font-weight:700;">— or gradient mode —</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_rodDAlt','ΔAltitude (ft)','100%') +
+        _inp('r60_rodDist','Distance (NM)','100%') +
+    '</div>' +
+    _result('r60_rodResult');
+}
+
+function calcROD160() {
+    const gs = parseFloat(document.getElementById('r60_rodGS')?.value);
+    const angle = parseFloat(document.getElementById('r60_rodAngle')?.value);
+    const dAlt = parseFloat(document.getElementById('r60_rodDAlt')?.value);
+    const dist = parseFloat(document.getElementById('r60_rodDist')?.value);
+    const el = document.getElementById('r60_rodResult');
+    if (!el) return;
+    let html = '';
+    // Method 1: FPA + GS
+    if (!isNaN(gs) && gs > 0 && !isNaN(angle) && angle > 0) {
+        const vs = (gs * angle * 100) / 60;
+        html += `<b style="color:#e8a020;">V/S from ${angle}° at ${gs} kt:</b> ${Math.round(vs)} fpm<br>`;
+        if (angle === 3) html += `<span style="color:#888;">Shortcut check: ${gs} × 5 = ${gs * 5} fpm</span><br>`;
+    }
+    // Method 2: Gradient
+    if (!isNaN(dAlt) && dAlt > 0 && !isNaN(dist) && dist > 0) {
+        const grad = dAlt / dist;
+        const fpa = grad / 100;
+        html += `${html ? '<br>' : ''}<b style="color:#e8a020;">Gradient:</b> ${grad.toFixed(0)} ft/NM<br>`;
+        html += `<b>Flight Path Angle:</b> ${fpa.toFixed(1)}°<br>`;
+        if (!isNaN(gs) && gs > 0) {
+            const sf = gs / 60;
+            const vs2 = sf * grad;
+            html += `<b>Required V/S at ${gs} kt:</b> ${Math.round(vs2)} fpm`;
+        }
+    }
+    if (!html) html = '<span style="color:#555;">Enter GS + angle, or ΔAlt + distance…</span>';
+    el.innerHTML = html;
+}
+
+function r60_rodExample() {
+    return _card('Example — DA-40 on 5° Descent',
+        '<b>Given:</b> GS 100 kt, descent angle 5°.<br><br>' +
+        '<b>V/S</b> = (100 × 5 × 100) / 60 = <b style="color:#30d158;">833 fpm</b>'
+    ) +
+    _card('Example — 3° ILS, 75 kt + 5 kt Tailwind',
+        '<b>GS:</b> 75 + 5 = 80 kt<br>' +
+        '<b>V/S:</b> 80 × 5 = <b style="color:#30d158;">400 fpm</b>'
+    ) +
+    _card('Example — Gradient to V/S',
+        '<b>Given:</b> DA-42 at 12000 ft, 9 NM from VOR, need to be at 7000 ft. GS 140 kt.<br><br>' +
+        '<b>ΔAlt:</b> 12000 − 7000 = 5000 ft<br>' +
+        '<b>V/S:</b> (140/60) × (5000/9) = 2.33 × 555.6 = <b style="color:#30d158;">1296 fpm</b>'
+    ) +
+    _card('Example — Constant Rate Descent',
+        '<b>Given:</b> GS 135 kt, 11500 ft → 5500 ft, ROD 500 fpm.<br><br>' +
+        '<b>Alt to lose:</b> 6000 ft<br>' +
+        '<b>Time:</b> 6000 / 500 = 12 min<br>' +
+        '<b>Distance:</b> 135 × 12 / 60 = <b style="color:#30d158;">27 NM</b>'
+    );
+}
+
+function r60_rodQuiz() { return _genQuiz('rod'); }
+
+// ========================= QUIZ ENGINE =========================
+
+function _genQuiz(topic) {
+    return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <span style="font-weight:800;font-size:13px;color:#fff;">Practice Quiz</span>
+        <span style="font-size:12px;color:#e8a020;font-weight:700;" id="r60score">Score: ${_160.quizScore}/${_160.quizTotal}</span>
+    </div>
+    <div id="r60quizArea"></div>
+    <button onclick="r60NewQ()" style="width:100%;padding:12px;background:#e8a020;color:#000;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;margin-top:12px;">
+        ${_160.quizQ ? 'Next Question' : 'Start Quiz'}
+    </button>`;
+}
+
+function r60NewQ() {
+    const area = document.getElementById('r60quizArea');
+    if (!area) return;
+    let q, answer, unit, inputs;
+
+    if (_160.topic === 'course') {
+        const off = _rand(2, 8);
+        const flown = _rand(15, 40);
+        const total = flown + _rand(15, 50);
+        const remain = total - flown;
+        const te = (off * 60) / flown;
+        const ca = (off * 60) / remain;
+        const variant = _rand(0, 2);
+        if (variant === 0) { q = `Flown ${flown} NM, ${off} NM off track. What is the Track Error?`; answer = te; unit = '°'; }
+        else if (variant === 1) { q = `${off} NM off track, ${remain} NM remaining. What is the Closing Angle?`; answer = ca; unit = '°'; }
+        else { q = `Flown ${flown} NM of ${total} NM, ${off} NM off track. Heading change to fly direct?`; answer = te + ca; unit = '° (TE+CA)'; }
+    } else if (_160.topic === 'wind') {
+        const rwy = _rand(1, 36) * 10;
+        const wDir = _rand(1, 36) * 10;
+        const wSpd = _rand(5, 25);
+        const tas = _rand(80, 160);
+        let ww = wDir - rwy; if (ww > 180) ww -= 360; if (ww < -180) ww += 360;
+        const cwc = wSpd * Math.sin(Math.abs(ww) * Math.PI / 180);
+        const hwc = wSpd * Math.cos(Math.abs(ww) * Math.PI / 180);
+        const variant = _rand(0, 2);
+        if (variant === 0) { q = `RWY ${(rwy/10).toString().padStart(2,'0')}, Wind ${wDir}°/${wSpd} kt. Crosswind component?`; answer = cwc; unit = 'kt'; }
+        else if (variant === 1) { q = `RWY ${(rwy/10).toString().padStart(2,'0')}, Wind ${wDir}°/${wSpd} kt. Headwind component?`; answer = hwc; unit = 'kt'; }
+        else { const wca = (cwc * 60) / tas; q = `Course ${rwy}°, Wind ${wDir}°/${wSpd} kt, TAS ${tas} kt. WCA?`; answer = Math.abs(wca); unit = '°'; }
+    } else if (_160.topic === 'tod') {
+        const alt = _rand(3, 12) * 1000;
+        const elev = _rand(0, 15) * 100;
+        const variant = _rand(0, 1);
+        if (variant === 0) { q = `Altitude ${alt.toLocaleString()} ft, airport ${elev} ft. TOD distance for 3°?`; answer = (alt - elev) / 300; unit = 'NM'; }
+        else { const rng = _rand(3, 20); q = `On 3° glideslope, ${rng} NM from runway. Height AGL?`; answer = 300 * rng; unit = 'ft'; }
+    } else { // rod
+        const gs = _rand(70, 160);
+        const variant = _rand(0, 1);
+        if (variant === 0) { q = `GS ${gs} kt on 3° glideslope. Required V/S?`; answer = gs * 5; unit = 'fpm'; }
+        else { const angle = _rand(2, 6); q = `GS ${gs} kt, descent angle ${angle}°. Required V/S?`; answer = (gs * angle * 100) / 60; unit = 'fpm'; }
+    }
+
+    _160.quizQ = { answer, unit };
+    area.innerHTML = _card('Question', q) +
+        `<div style="display:flex;gap:8px;align-items:center;">
+            <input id="r60ans" type="number" placeholder="Your answer" style="flex:1;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:12px;color:#fff;font-size:15px;font-weight:700;">
+            <span style="color:#888;font-size:13px;font-weight:700;min-width:40px;">${unit}</span>
+        </div>
+        <button onclick="r60CheckAns()" style="width:100%;padding:12px;background:#30d158;color:#000;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;margin-top:10px;">Check Answer</button>
+        <div id="r60feedback" style="margin-top:10px;font-size:13px;font-weight:700;text-align:center;min-height:20px;"></div>`;
+    // Focus input
+    setTimeout(() => document.getElementById('r60ans')?.focus(), 100);
+}
+
+function r60CheckAns() {
+    if (!_160.quizQ) return;
+    const inp = document.getElementById('r60ans');
+    const fb = document.getElementById('r60feedback');
+    if (!inp || !fb) return;
+    const userAns = parseFloat(inp.value);
+    if (isNaN(userAns)) { fb.innerHTML = '<span style="color:#ff9f0a;">Enter a number!</span>'; return; }
+    const correct = _160.quizQ.answer;
+    const tolerance = Math.max(correct * 0.1, 1); // 10% or 1 unit
+    _160.quizTotal++;
+    if (Math.abs(userAns - correct) <= tolerance) {
+        _160.quizScore++;
+        fb.innerHTML = `<span style="color:#30d158;">✓ Correct! (${correct.toFixed(1)} ${_160.quizQ.unit})</span>`;
+    } else {
+        fb.innerHTML = `<span style="color:#ff453a;">✗ Answer: ${correct.toFixed(1)} ${_160.quizQ.unit}</span>`;
+    }
+    const sc = document.getElementById('r60score');
+    if (sc) sc.textContent = `Score: ${_160.quizScore}/${_160.quizTotal}`;
 }

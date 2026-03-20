@@ -3,18 +3,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.2.1',  // ← set once in index.html
+            version: window.APP_VERSION || '4.2.2',  // ← set once in index.html
             title: 'METAR GO — Theme Edition',
             changes: [
+                {
+                    icon: '📐',
+                    title: '1:60 Rule Trainer',
+                    desc: 'New aviation tool — course correction, wind correction angle, top of descent, and rate of descent. Reference cards, calculators, worked examples, and quiz mode.'
+                },
                 {
                     icon: '🎨',
                     title: 'Theme Selection',
                     desc: '6 app themes — Default, Cockpit Night, Sectional (VFR), IFR Enroute, Phosphor (CRT), and High Contrast. Syncs to cloud backup.'
-                },
-                {
-                    icon: '📖',
-                    title: 'Updated User Guide',
-                    desc: 'Help tab now covers all 9 aviation tools, SIGMET/AIRMET viewer, frequency fallback system, and theme selection.'
                 }
             ]
         };

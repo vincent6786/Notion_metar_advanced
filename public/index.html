@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.2.1';</script>
+    <script>window.APP_VERSION = '4.2.2';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -837,7 +837,7 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">✈️ Aviation Tools Collection</div>
-                        <div class="help-a">Tap <b>Open Aviation Tools</b> to launch the full tools overlay. Contains 9 tools: Unit Converter, E6B Flight Computer, E6B Trainer, Great Circle Distance, Crosswind Calculator, VFR Airspace Minimums, Weather Terms, Abbreviations, and Morse Code Trainer. Use <b>←</b> to go back to the tool menu, and <b>✕</b> to close the overlay entirely.</div>
+                        <div class="help-a">Tap <b>Open Aviation Tools</b> to launch the full tools overlay. Contains 10 tools: Unit Converter, E6B Flight Computer, E6B Trainer, Great Circle Distance, Crosswind Calculator, VFR Airspace Minimums, Weather Terms, Abbreviations, Morse Code Trainer, and 1:60 Rule. Use <b>←</b> to go back to the tool menu, and <b>✕</b> to close the overlay entirely.</div>
                     </div>
                 </div>
 
@@ -939,6 +939,27 @@
                     <div class="help-item">
                         <div class="help-q">Audio</div>
                         <div class="help-a">Uses a 600 Hz sine tone generated in-browser. Speed is adjustable. Make sure your device is not on silent mode.</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">📐 Aviation Tools — 1:60 Rule</div>
+                    <div class="help-item">
+                        <div class="help-q">What is the 1:60 Rule?</div>
+                        <div class="help-a">A pilot's mental-math shortcut: at small angles, <b>1° off course at 60 NM = 1 NM displacement</b>. This approximation (sin θ ≈ θ/60 for θ in degrees) underpins course corrections, wind correction angles, top-of-descent planning, and vertical speed calculations.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Topics</div>
+                        <div class="help-a">Four topic tabs:<br><br>
+                            <b>COURSE</b> — Track Error (TE), Closing Angle (CA), Direct-to-Waypoint (TE+CA), and Double Track Error methods.<br><br>
+                            <b>WIND</b> — Crosswind/headwind components using sine/cosine shortcuts, Wind Correction Angle (WCA), and ground speed estimation.<br><br>
+                            <b>TOD</b> — Top of Descent distance, height-at-range checks, and the 300 ft/NM rule for 3° glideslopes.<br><br>
+                            <b>V/S</b> — Rate of descent from flight path angle (GS × 5 shortcut), gradient-to-FPA conversion, and constant-rate descent planning.
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Modes</div>
+                        <div class="help-a">Each topic has four modes: <b>REF</b> (formula reference cards), <b>CALC</b> (interactive calculator), <b>EXAMPLES</b> (worked step-by-step problems from EVA ground school), and <b>QUIZ</b> (randomised practice problems with scoring).</div>
                     </div>
                 </div>
                 
@@ -2437,6 +2458,13 @@
                     <div style="font-size:11px; color:var(--sub-text);">Learn &amp; practice aviation Morse</div>
                 </div>
 
+                <!-- 1:60 Rule -->
+                <div onclick="openTool('160-rule')" class="tool-card" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">📐</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">1:60 Rule</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Course, wind, TOD &amp; ROD trainer</div>
+                </div>
+
             </div>
         </div>
         
@@ -3272,6 +3300,28 @@
             </div>
         </div>
         
+        <!-- ================================================================
+             1:60 RULE TRAINING TOOL
+        ================================================================ -->
+        <div id="tool-160-rule" class="tool-view" style="display:none;">
+            <!-- Topic selector -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:#111;border-radius:10px;padding:3px;gap:2px;border:1px solid #333;margin-bottom:10px;">
+                <button id="r60t-course" onclick="set160Topic('course')" style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#e8a020;color:#000;transition:all 0.2s;">COURSE</button>
+                <button id="r60t-wind" onclick="set160Topic('wind')" style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">WIND</button>
+                <button id="r60t-tod" onclick="set160Topic('tod')" style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">TOD</button>
+                <button id="r60t-rod" onclick="set160Topic('rod')" style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">V/S</button>
+            </div>
+            <!-- Mode selector -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:#0a0a0a;border-radius:8px;padding:3px;gap:2px;border:1px solid #2a2a2a;margin-bottom:16px;">
+                <button id="r60m-ref" onclick="set160Mode('ref')" style="padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.2s;">REF</button>
+                <button id="r60m-calc" onclick="set160Mode('calc')" style="padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">CALC</button>
+                <button id="r60m-example" onclick="set160Mode('example')" style="padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">EXAMPLES</button>
+                <button id="r60m-quiz" onclick="set160Mode('quiz')" style="padding:8px 4px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">QUIZ</button>
+            </div>
+            <!-- Content area -->
+            <div id="r60Content"></div>
+        </div>
+
     </div>
         <!-- ================================================================
              FORMULA EXPLANATION MODAL
