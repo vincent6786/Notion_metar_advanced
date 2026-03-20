@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.3.1',  // ← set once in index.html
+            version: window.APP_VERSION || '4.3.2',  // ← set once in index.html
             title: 'METAR GO — Training Edition',
             changes: [
                 {
@@ -96,8 +96,8 @@
             const v = window.APP_VERSION || '—';
             const launch = document.getElementById('launchVersion');
             const help   = document.getElementById('helpVersionLabel');
-            if (launch) launch.textContent = `CLOUD EDITION · v${v}`;
-            if (help)   help.textContent   = `v${v} · Cloud Edition · Quick reference for all features`;
+            if (launch) launch.textContent = `TRAINING EDITION · v${v}`;
+            if (help)   help.textContent   = `v${v} · Training Edition · Quick reference for all features`;
         }
     
         // ================================================================

@@ -4008,10 +4008,14 @@ function r60NewQ() {
         const tas = _rand(80, 160);
         let ww = wDir - rwy; if (ww > 180) ww -= 360; if (ww < -180) ww += 360;
         const cwc = wSpd * Math.sin(Math.abs(ww) * Math.PI / 180);
-        const hwc = wSpd * Math.cos(Math.abs(ww) * Math.PI / 180);
+        const lwc = wSpd * Math.cos(Math.abs(ww) * Math.PI / 180);
         const variant = _rand(0, 2);
         if (variant === 0) { q = `RWY ${(rwy/10).toString().padStart(2,'0')}, Wind ${wDir}°/${wSpd} kt. Crosswind component?`; answer = cwc; unit = 'kt'; }
-        else if (variant === 1) { q = `RWY ${(rwy/10).toString().padStart(2,'0')}, Wind ${wDir}°/${wSpd} kt. Headwind component?`; answer = hwc; unit = 'kt'; }
+        else if (variant === 1) {
+            const label = lwc >= 0 ? 'Headwind' : 'Tailwind';
+            q = `RWY ${(rwy/10).toString().padStart(2,'0')}, Wind ${wDir}°/${wSpd} kt. ${label} component?`;
+            answer = Math.abs(lwc); unit = 'kt';
+        }
         else { const wca = (cwc * 60) / tas; q = `Course ${rwy}°, Wind ${wDir}°/${wSpd} kt, TAS ${tas} kt. WCA?`; answer = Math.abs(wca); unit = '°'; }
     } else if (_160.topic === 'tod') {
         const alt = _rand(3, 12) * 1000;
@@ -4063,13 +4067,27 @@ function r60CheckAns() {
     const userAns = parseFloat(inp.value);
     if (isNaN(userAns)) { fb.innerHTML = '<span style="color:#ff9f0a;">Enter a number!</span>'; return; }
     const correct = _160.quizQ.answer;
-    const tolerance = Math.max(correct * 0.1, 1); // 10% or 1 unit
-    _160.quizTotal++;
-    if (Math.abs(userAns - correct) <= tolerance) {
-        _160.quizScore++;
-        fb.innerHTML = `<span style="color:#30d158;">✓ Correct! (${correct.toFixed(1)} ${_160.quizQ.unit})</span>`;
+    const unit = _160.quizQ.unit;
+
+    // Unit-aware tolerance
+    let isCorrect;
+    if (unit === '°' || unit.includes('°')) {
+        // Degree answers: handle 0/360 wraparound, fixed ±3° tolerance
+        let diff = Math.abs(userAns - correct);
+        diff = Math.min(diff, 360 - diff); // wraparound
+        isCorrect = diff <= 3;
     } else {
-        fb.innerHTML = `<span style="color:#ff453a;">✗ Answer: ${correct.toFixed(1)} ${_160.quizQ.unit}</span>`;
+        // Numeric answers (kt, fpm, NM, ft): 10% or 1 unit
+        const diff = Math.abs(userAns - correct);
+        isCorrect = diff <= Math.max(Math.abs(correct) * 0.1, 1);
+    }
+
+    _160.quizTotal++;
+    if (isCorrect) {
+        _160.quizScore++;
+        fb.innerHTML = `<span style="color:#30d158;">✓ Correct! (${correct.toFixed(1)} ${unit})</span>`;
+    } else {
+        fb.innerHTML = `<span style="color:#ff453a;">✗ Answer: ${correct.toFixed(1)} ${unit}</span>`;
     }
     const sc = document.getElementById('r60score');
     if (sc) sc.textContent = `Score: ${_160.quizScore}/${_160.quizTotal}`;
@@ -4153,71 +4171,81 @@ function calcTri() {
     const toRad = d => d * Math.PI / 180;
     const toDeg = r => r * 180 / Math.PI;
     const normDeg = d => ((d % 360) + 360) % 360 || 360;
-    let html = '';
+    const signedAngle = d => { let a = d; if (a > 180) a -= 360; if (a < -180) a += 360; return a; };
+
+    let hdg, tas, trk, gs, wdir, wspd, ww, cwc, lwc, wca, da;
 
     if (_triMode === 'find_track') {
-        const hdg = v('tri_hdg'), tas = v('tri_tas'), wdir = v('tri_wdir'), wspd = v('tri_wspd');
+        hdg = v('tri_hdg'); tas = v('tri_tas'); wdir = v('tri_wdir'); wspd = v('tri_wspd');
         if ([hdg,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values…</span>'; drawTri(null); return; }
-        // Wind FROM wdir means wind vector points toward (wdir + 180)
-        const wRad = toRad(wdir + 180); // direction wind is GOING
-        const hRad = toRad(hdg);
-        // Air vector + wind vector = ground vector
-        const gx = tas * Math.sin(hRad) + wspd * Math.sin(wRad);
-        const gy = tas * Math.cos(hRad) + wspd * Math.cos(wRad);
-        const gs = Math.sqrt(gx * gx + gy * gy);
-        const trk = normDeg(toDeg(Math.atan2(gx, gy)));
-        const drift = normDeg(trk) - normDeg(hdg);
-        const da = drift > 180 ? drift - 360 : drift < -180 ? drift + 360 : drift;
-        html = `<b style="color:#30d158;">Track:</b> ${trk.toFixed(0)}°<br>`;
-        html += `<b style="color:#30d158;">Ground Speed:</b> ${gs.toFixed(0)} kt<br>`;
-        html += `<b>Drift Angle:</b> ${Math.abs(da).toFixed(1)}° ${da >= 0 ? 'Right' : 'Left'}`;
-        drawTri({ hdg, tas, trk, gs, wdir, wspd });
-    } else if (_triMode === 'find_heading') {
-        const trk = v('tri_trk'), tas = v('tri_tas'), wdir = v('tri_wdir'), wspd = v('tri_wspd');
-        if ([trk,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values…</span>'; drawTri(null); return; }
-        // Solve for heading: iterative approach
         const wRad = toRad(wdir + 180);
-        const tRad = toRad(trk);
-        // Wind correction angle: sin(WCA) = (wspd * sin(wdir - trk)) / tas
-        const ww = wdir - trk;
-        const sinWCA = (wspd * Math.sin(toRad(ww))) / tas;
-        if (Math.abs(sinWCA) > 1) { el.innerHTML = '<span style="color:#ff453a;">Wind too strong for this TAS — no solution</span>'; drawTri(null); return; }
-        const wca = toDeg(Math.asin(sinWCA));
-        const hdg = normDeg(trk + wca);
-        // GS from ground vector
         const hRad = toRad(hdg);
         const gx = tas * Math.sin(hRad) + wspd * Math.sin(wRad);
         const gy = tas * Math.cos(hRad) + wspd * Math.cos(wRad);
-        const gs = Math.sqrt(gx * gx + gy * gy);
-        html = `<b style="color:#fff;">Heading:</b> ${hdg.toFixed(0)}°<br>`;
-        html += `<b>WCA:</b> ${Math.abs(wca).toFixed(1)}° ${wca >= 0 ? 'Right' : 'Left'}<br>`;
-        html += `<b style="color:#30d158;">Ground Speed:</b> ${gs.toFixed(0)} kt`;
-        drawTri({ hdg, tas, trk, gs, wdir, wspd });
+        gs = Math.sqrt(gx * gx + gy * gy);
+        trk = normDeg(toDeg(Math.atan2(gx, gy)));
+    } else if (_triMode === 'find_heading') {
+        trk = v('tri_trk'); tas = v('tri_tas'); wdir = v('tri_wdir'); wspd = v('tri_wspd');
+        if ([trk,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values…</span>'; drawTri(null); return; }
+        const wRad = toRad(wdir + 180);
+        const wwFromTrk = wdir - trk;
+        const sinWCA = (wspd * Math.sin(toRad(wwFromTrk))) / tas;
+        if (Math.abs(sinWCA) > 1) { el.innerHTML = '<span style="color:#ff453a;">Wind too strong for this TAS — no solution</span>'; drawTri(null); return; }
+        wca = toDeg(Math.asin(sinWCA));
+        hdg = normDeg(trk + wca);
+        const hRad = toRad(hdg);
+        const gx = tas * Math.sin(hRad) + wspd * Math.sin(wRad);
+        const gy = tas * Math.cos(hRad) + wspd * Math.cos(wRad);
+        gs = Math.sqrt(gx * gx + gy * gy);
     } else { // find_wind
-        const hdg = v('tri_hdg'), tas = v('tri_tas'), trk = v('tri_trk'), gs = v('tri_gs');
+        hdg = v('tri_hdg'); tas = v('tri_tas'); trk = v('tri_trk'); gs = v('tri_gs');
         if ([hdg,tas,trk,gs].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values…</span>'; drawTri(null); return; }
-        // Wind = ground - air
         const hRad = toRad(hdg), tRad = toRad(trk);
         const wx = gs * Math.sin(tRad) - tas * Math.sin(hRad);
         const wy = gs * Math.cos(tRad) - tas * Math.cos(hRad);
-        const wspd = Math.sqrt(wx * wx + wy * wy);
-        const wGoingTo = normDeg(toDeg(Math.atan2(wx, wy)));
-        const wdir = normDeg(wGoingTo + 180); // FROM direction
-        html = `<b style="color:#00bfff;">Wind:</b> ${wdir.toFixed(0)}° / ${wspd.toFixed(0)} kt<br>`;
-        html += `<span style="color:#888;font-size:11px;">(Wind from ${wdir.toFixed(0)}° at ${wspd.toFixed(0)} kt)</span>`;
-        drawTri({ hdg, tas, trk, gs, wdir, wspd });
+        wspd = Math.sqrt(wx * wx + wy * wy);
+        wdir = normDeg(toDeg(Math.atan2(wx, wy)) + 180);
     }
+
+    // Derive all common values
+    ww = signedAngle(wdir - hdg);
+    cwc = wspd * Math.sin(toRad(ww));
+    lwc = wspd * Math.cos(toRad(ww));
+    if (wca === undefined) wca = (Math.abs(cwc) < 0.01 || !tas) ? 0 : toDeg(Math.asin(Math.min(1, Math.abs(cwc) / tas))) * (cwc > 0 ? 1 : -1);
+    da = signedAngle(trk - hdg);
+
+    const cwcDir = cwc > 0.5 ? 'R' : cwc < -0.5 ? 'L' : '';
+    const lwcType = lwc >= 0 ? 'HW' : 'TW';
+    const wcaDir = wca > 0.1 ? 'R' : wca < -0.1 ? 'L' : '';
+    const daDir = da > 0.1 ? 'R' : da < -0.1 ? 'L' : '';
+
+    const row = (label, val, color) => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1a1a1a;"><span style="color:#888;font-size:12px;">${label}</span><span style="color:${color||'#fff'};font-size:13px;font-weight:700;">${val}</span></div>`;
+
+    let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">';
+    html += row('TH (Heading)', `${normDeg(hdg).toFixed(0)}°`, '#fff');
+    html += row('Track', `${normDeg(trk).toFixed(0)}°`, '#30d158');
+    html += row('TAS', `${tas.toFixed(0)} kt`, '#fff');
+    html += row('GS', `${gs.toFixed(0)} kt`, '#30d158');
+    html += row('Wind', `${normDeg(wdir).toFixed(0)}° / ${wspd.toFixed(0)} kt`, '#00bfff');
+    html += row('WW (Wind Angle)', `${Math.abs(ww).toFixed(0)}° ${cwcDir}`, '#00bfff');
+    html += row('CWC', `${Math.abs(cwc).toFixed(1)} kt ${cwcDir}`, '#e8a020');
+    html += row(`LWC (${lwcType})`, `${Math.abs(lwc).toFixed(1)} kt`, '#e8a020');
+    html += row('WCA', `${Math.abs(wca).toFixed(1)}° ${wcaDir}`, '#e8a020');
+    html += row('Drift Angle', `${Math.abs(da).toFixed(1)}° ${daDir}`, '#e8a020');
+    html += '</div>';
+    html += '<div style="font-size:10px;color:#555;margin-top:8px;">MH = TH ± Magnetic Variation (not available without station data)</div>';
+
     el.innerHTML = html;
+    drawTri({ hdg: normDeg(hdg), tas, trk: normDeg(trk), gs, wdir: normDeg(wdir), wspd });
 }
 
 function drawTri(d) {
     const c = document.getElementById('triCanvasEl');
     if (!c) return;
     const dpr = window.devicePixelRatio || 1;
-    // Use the CSS-rendered width (respects width:100%;max-width:340px)
     const rect = c.getBoundingClientRect();
     const cssW = Math.round(rect.width) || 340;
-    const cssH = cssW; // keep square
+    const cssH = cssW;
     c.width = cssW * dpr;
     c.height = cssH * dpr;
     c.style.height = cssH + 'px';
@@ -4226,48 +4254,95 @@ function drawTri(d) {
     const W = cssW, H = cssH, cx = W / 2, cy = H / 2;
     ctx.clearRect(0, 0, W, H);
 
-    // Background compass rose
-    ctx.strokeStyle = '#222'; ctx.lineWidth = 0.5;
-    [60, 100, 140].forEach(r => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); });
-    ctx.fillStyle = '#333'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    // Compass rose background
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 0.5;
+    [50, 90, 130].forEach(r => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); });
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+    for (let i = 0; i < 360; i += 30) {
+        const rad = i * Math.PI / 180;
+        const isMajor = i % 90 === 0;
+        const r0 = isMajor ? 130 : 135, r1 = 145;
+        ctx.beginPath();
+        ctx.moveTo(cx + r0 * Math.sin(rad), cy - r0 * Math.cos(rad));
+        ctx.lineTo(cx + r1 * Math.sin(rad), cy - r1 * Math.cos(rad));
+        ctx.stroke();
+    }
+    ctx.fillStyle = '#444'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ['N','E','S','W'].forEach((l, i) => {
-        const a = i * Math.PI / 2 - Math.PI / 2;
-        ctx.fillText(l, cx + 152 * Math.cos(a), cy + 152 * Math.sin(a) + 4);
+        const rad = i * Math.PI / 2;
+        ctx.fillText(l, cx + 155 * Math.sin(rad), cy - 155 * Math.cos(rad));
     });
 
     if (!d) return;
     const toRad = deg => deg * Math.PI / 180;
-    // Scale: find max vector length for auto-scaling
     const maxV = Math.max(d.tas, d.gs, d.wspd) || 100;
-    const scale = 130 / maxV;
+    const scale = 125 / maxV;
 
-    // Helper: draw vector from (x0,y0) in compass bearing direction
-    function drawVec(x0, y0, bearing, length, color, label) {
+    function vecEnd(x0, y0, bearing, length) {
         const rad = toRad(bearing);
-        const dx = Math.sin(rad) * length * scale;
-        const dy = -Math.cos(rad) * length * scale;
-        const x1 = x0 + dx, y1 = y0 + dy;
-        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
-        ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
-        // Arrowhead
-        const angle = Math.atan2(y1 - y0, x1 - x0);
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x1 - 10 * Math.cos(angle - 0.4), y1 - 10 * Math.sin(angle - 0.4));
-        ctx.lineTo(x1 - 10 * Math.cos(angle + 0.4), y1 - 10 * Math.sin(angle + 0.4));
-        ctx.closePath(); ctx.fillStyle = color; ctx.fill();
-        // Label
-        const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
-        ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-        const off = 14;
-        ctx.fillText(label, mx + off * Math.cos(angle + Math.PI/2), my + off * Math.sin(angle + Math.PI/2));
-        return { x: x1, y: y1 };
+        return { x: x0 + Math.sin(rad) * length * scale, y: y0 - Math.cos(rad) * length * scale };
     }
 
-    // Draw from center: Air vector (white), then Wind vector (cyan) from tip, ground vector (green) from center
-    const airTip = drawVec(cx, cy, d.hdg, d.tas, '#ffffff', `HDG ${d.hdg.toFixed(0)}°`);
-    drawVec(airTip.x, airTip.y, d.wdir + 180, d.wspd, '#00bfff', `W ${d.wspd.toFixed(0)}kt`);
-    drawVec(cx, cy, d.trk, d.gs, '#30d158', `TRK ${d.trk.toFixed(0)}°`);
+    function drawArrow(x0, y0, x1, y1, color, lineW, dashed) {
+        ctx.beginPath();
+        ctx.setLineDash(dashed ? [6, 4] : []);
+        ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+        ctx.strokeStyle = color; ctx.lineWidth = lineW; ctx.stroke();
+        ctx.setLineDash([]);
+        const angle = Math.atan2(y1 - y0, x1 - x0);
+        const sz = 8;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 - sz * Math.cos(angle - 0.35), y1 - sz * Math.sin(angle - 0.35));
+        ctx.lineTo(x1 - sz * Math.cos(angle + 0.35), y1 - sz * Math.sin(angle + 0.35));
+        ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+    }
+
+    function drawLabel(x, y, text, color, offsetX, offsetY) {
+        ctx.font = 'bold 10px sans-serif';
+        const tw = ctx.measureText(text).width;
+        const px = x + offsetX, py = y + offsetY;
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.beginPath();
+        const rx = px - tw / 2 - 5, ry = py - 7, rw = tw + 10, rh = 14;
+        if (ctx.roundRect) { ctx.roundRect(rx, ry, rw, rh, 4); } else { ctx.rect(rx, ry, rw, rh); }
+        ctx.fill();
+        ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(text, px, py);
+    }
+
+    const airTip = vecEnd(cx, cy, d.hdg, d.tas);
+    const gndTip = vecEnd(cx, cy, d.trk, d.gs);
+    const windTip = vecEnd(airTip.x, airTip.y, d.wdir + 180, d.wspd);
+
+    // Draw: ground first (behind), then air, then wind (dashed)
+    drawArrow(cx, cy, gndTip.x, gndTip.y, '#30d158', 2.5, false);
+    drawArrow(cx, cy, airTip.x, airTip.y, '#ffffff', 2.5, false);
+    drawArrow(airTip.x, airTip.y, windTip.x, windTip.y, '#00bfff', 2, true);
+
+    // Smart label placement at tips, offset outward from center
+    function tipOffset(tip) {
+        const dx = tip.x - cx, dy = tip.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        return { x: (dx / dist) * 16, y: (dy / dist) * 16 };
+    }
+
+    const ao = tipOffset(airTip);
+    drawLabel(airTip.x, airTip.y, `HDG ${d.hdg.toFixed(0)}° · ${d.tas.toFixed(0)}kt`, '#ffffff', ao.x, ao.y);
+
+    const go = tipOffset(gndTip);
+    const gaDist = Math.sqrt((gndTip.x - airTip.x) ** 2 + (gndTip.y - airTip.y) ** 2);
+    const extraShift = gaDist < 30 ? 20 : 0;
+    drawLabel(gndTip.x, gndTip.y, `TRK ${d.trk.toFixed(0)}° · ${d.gs.toFixed(0)}kt`, '#30d158', go.x, go.y + extraShift);
+
+    const wMidX = (airTip.x + windTip.x) / 2, wMidY = (airTip.y + windTip.y) / 2;
+    const wAngle = Math.atan2(windTip.y - airTip.y, windTip.x - airTip.x);
+    drawLabel(wMidX, wMidY, `${d.wdir.toFixed(0)}°/${d.wspd.toFixed(0)}kt`, '#00bfff',
+        16 * Math.cos(wAngle + Math.PI / 2), 16 * Math.sin(wAngle + Math.PI / 2));
+
+    // Origin dot
+    ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#666'; ctx.fill();
 }
 
 function r60_triExample() {
@@ -4278,7 +4353,8 @@ function r60_triExample() {
         '<b>HWC:</b> 30 × cos(90°) = 0 kt (pure crosswind)<br><br>' +
         '<b>Drift:</b> sin⁻¹(30/120) ≈ 14.5° right<br>' +
         '<b>Track:</b> 360° + 14.5° = <b style="color:#30d158;">014°</b><br>' +
-        '<b>GS:</b> √(120² − 30²) + 0 ≈ <b style="color:#30d158;">116 kt</b>'
+        '<b>GS:</b> √(120² + 30²) ≈ <b style="color:#30d158;">124 kt</b><br>' +
+        '<span style="color:#888;">Note: GS > TAS because the wind adds an eastward component without any headwind penalty.</span>'
     ) +
     _card('Example — Find Heading to Steer',
         '<b>Given:</b> Desired track 045°, TAS 100 kt, Wind 090°/20 kt.<br><br>' +
@@ -4286,7 +4362,8 @@ function r60_triExample() {
         '<b>CWC:</b> 20 × sin(45°) = 14.1 kt (pushing left)<br>' +
         '<b>WCA:</b> sin⁻¹(14.1/100) = 8.1° → steer right<br>' +
         '<b>Heading:</b> 045° + 8° = <b style="color:#fff;">053°</b><br>' +
-        '<b>GS:</b> 100 + 20 × cos(45°) headwind component ≈ <b style="color:#30d158;">86 kt</b>'
+        '<b>HWC:</b> 20 × cos(45°) = 14.1 kt headwind<br>' +
+        '<b>GS:</b> 100 − 14.1 ≈ <b style="color:#30d158;">86 kt</b>'
     ) +
     _card('Example — Find Wind In-Flight',
         '<b>Given:</b> Heading 180°, TAS 110 kt, Track 175° (from GPS), GS 95 kt.<br><br>' +
