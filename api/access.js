@@ -72,9 +72,23 @@ export default async function handler(req, res) {
         return res.json({ valid: true, name: user.name });
     }
 
+    // ── GET_CONFIG — fetch global app config (no auth needed) ────────────
+    if (action === 'get_config') {
+        const hidden = await kv.get('efb:config:hidden_tools');
+        return res.json({ hidden_tools: hidden || [] });
+    }
+
     // ── Everything below requires admin password ──────────────────────────
     if (password !== ADMIN_PASSWORD) {
         return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // ── SET_CONFIG — update tool visibility (admin only) ──────────────────
+    if (action === 'set_config') {
+        const { hidden_tools } = req.body;
+        if (!Array.isArray(hidden_tools)) return res.status(400).json({ error: 'hidden_tools must be an array' });
+        await kv.set('efb:config:hidden_tools', hidden_tools);
+        return res.json({ success: true });
     }
 
     // ── CREATE — generate a new access code ───────────────────────────────
