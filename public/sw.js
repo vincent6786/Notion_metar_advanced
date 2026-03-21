@@ -3,7 +3,7 @@
 // Offline-first for static assets, network-first for API calls
 // ================================================================
 
-const CACHE_VERSION = 'metar-go-v4.3.3';
+const CACHE_VERSION = 'metar-go-v4.3.5';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
@@ -21,6 +21,7 @@ const STATIC_ASSETS = [
     '/tools-extension.js',
     '/appicon.png',
     '/plane.png',
+    '/airspace-chart.jpg',
     '/METAR_TAF Abbreviations.pdf',
     // Leaflet from CDN
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',

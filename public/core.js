@@ -3,18 +3,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.3.3',  // ← set once in index.html
+            version: window.APP_VERSION || '4.3.5',  // ← set once in index.html
             title: 'METAR GO — Training Edition',
             changes: [
                 {
                     icon: '📐',
-                    title: 'Training Area',
-                    desc: '5 training modules: 1:60 Rule (course correction, wind correction, TOD, V/S) plus a new Wind Triangle tool with interactive canvas. Each has reference cards, calculators, worked examples, and quiz mode.'
+                    title: 'Training Area — 6 Topics',
+                    desc: 'New ALT module: Pressure Altitude, True Altitude (0.4%/°C), and Density Altitude (×120 ft/°C) with worked examples from EVA ground school. Plus Wind Triangle with Variation → MH/MC.'
                 },
                 {
                     icon: '🔧',
                     title: 'Admin Tool Control',
-                    desc: 'Admins can now toggle tool visibility for all users. Hidden tools are invisible to normal users but always visible to admin with a badge.'
+                    desc: 'Admins can toggle tool visibility for all users via the Tools tab in the admin panel.'
                 }
             ]
         };

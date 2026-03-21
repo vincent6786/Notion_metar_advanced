@@ -2879,6 +2879,15 @@ const AM_DATA = [
 
 let amState = { mode: 'day', filter: 'ALL' };
 
+function toggleAirspaceChart() {
+    const body = document.getElementById('amChartBody');
+    const chevron = document.getElementById('amChartChevron');
+    if (!body) return;
+    const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+    body.style.maxHeight = isOpen ? '0px' : '600px';
+    if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
 function initAirspaceMins() {
     amState = { mode: 'day', filter: 'ALL' };
 
@@ -3575,7 +3584,7 @@ function init160Rule() {
 /* ── Topic & mode navigation ── */
 function set160Topic(t) {
     _160.topic = t;
-    ['course','wind','tod','rod','tri'].forEach(id => {
+    ['course','wind','tod','rod','tri','alt'].forEach(id => {
         const b = document.getElementById('r60t-' + id);
         if (b) { b.style.background = id === t ? '#e8a020' : 'transparent'; b.style.color = id === t ? '#000' : '#888'; }
     });
@@ -3602,6 +3611,7 @@ function render160() {
         tod_ref: r60_todRef, tod_calc: r60_todCalc, tod_example: r60_todExample, tod_quiz: r60_todQuiz,
         rod_ref: r60_rodRef, rod_calc: r60_rodCalc, rod_example: r60_rodExample, rod_quiz: r60_rodQuiz,
         tri_ref: r60_triRef, tri_calc: r60_triCalc, tri_example: r60_triExample, tri_quiz: r60_triQuiz,
+        alt_ref: r60_altRef, alt_calc: r60_altCalc, alt_example: r60_altExample, alt_quiz: r60_altQuiz,
     };
     el.innerHTML = renderers[key] ? renderers[key]() : '';
     // Post-render init for wind triangle calc
@@ -3658,6 +3668,7 @@ function r60AutoCalc() {
     if (_160.topic === 'tod' && _160.mode === 'calc') calcTOD160();
     if (_160.topic === 'rod' && _160.mode === 'calc') calcROD160();
     if (_160.topic === 'tri' && _160.mode === 'calc') calcTri();
+    if (_160.topic === 'alt' && _160.mode === 'calc') calcAlt160();
 }
 
 function calcCourse160() {
@@ -3972,6 +3983,139 @@ function r60_rodExample() {
 
 function r60_rodQuiz() { return _genQuiz('rod'); }
 
+// ========================= ALTITUDE CALCULATIONS =========================
+
+function r60_altRef() {
+    return _card('ISA Standard Atmosphere',
+        'The International Standard Atmosphere (ISA) defines baseline conditions:<br><br>' +
+        _formula('ISA Temp = 15°C − (Altitude × 2°C / 1000 ft)') +
+        _formula('ISA Pressure = 1013.25 hPa at MSL, −1 hPa per 30 ft') +
+        'ISA Deviation = Actual Temperature − ISA Temperature'
+    ) +
+    _card('Pressure Altitude (PA)',
+        'The altitude at which the current pressure exists in the standard atmosphere.' +
+        _formula('PA = Field Elevation + (1013.25 − QNH) × 30 ft/hPa') +
+        'When QNH < 1013: PA is <b>higher</b> than indicated (pressure is lower than standard).<br>' +
+        'When QNH > 1013: PA is <b>lower</b> than indicated.'
+    ) +
+    _card('True Altitude',
+        'The actual altitude above MSL, corrected for non-standard temperature. The air column expands (warm) or contracts (cold) by <b>0.4% per °C</b> deviation from ISA.' +
+        _formula('True Alt = Ind Alt + (Ind Alt − Terrain Elev) × ISA Dev × 0.4%') +
+        'Only the air column above terrain is affected — terrain elevation itself does not change.<br><br>' +
+        '<span style="color:#ff9f0a;">⚠️ Warmer than ISA → True altitude is HIGHER than indicated</span><br>' +
+        '<span style="color:#00bfff;">❄️ Colder than ISA → True altitude is LOWER than indicated (dangerous!)</span>'
+    ) +
+    _card('Density Altitude (DA)',
+        'The altitude in the standard atmosphere at which the current air density would exist. Critical for aircraft performance.' +
+        _formula('DA = Pressure Altitude + ISA Deviation × 120 ft/°C') +
+        'Warmer → higher DA → worse performance (longer takeoff, reduced climb).<br>' +
+        'Cooler → lower DA → better performance.'
+    );
+}
+
+function r60_altCalc() {
+    return '<div style="font-weight:800;font-size:13px;margin-bottom:12px;color:#fff;">Altitude Calculator</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_altInd','Indicated Altitude (ft)','100%') +
+        _inp('r60_altElev','Field / Terrain Elev (ft)','100%') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        _inp('r60_altQNH','QNH (hPa)','100%') +
+        _inp('r60_altOAT','OAT — Actual Temp (°C)','100%') +
+    '</div>' +
+    _result('r60_altResult');
+}
+
+function calcAlt160() {
+    const indAlt = parseFloat(document.getElementById('r60_altInd')?.value);
+    const elev = parseFloat(document.getElementById('r60_altElev')?.value);
+    const qnh = parseFloat(document.getElementById('r60_altQNH')?.value);
+    const oat = parseFloat(document.getElementById('r60_altOAT')?.value);
+    const el = document.getElementById('r60_altResult');
+    if (!el) return;
+
+    const row = (label, val, color) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a1a1a;"><span style="color:#888;font-size:12px;">${label}</span><span style="color:${color||'#fff'};font-size:13px;font-weight:700;">${val}</span></div>`;
+    let html = '';
+
+    // Pressure Altitude
+    let pa = null;
+    const paRef = !isNaN(indAlt) ? indAlt : (!isNaN(elev) ? elev : null);
+    if (paRef !== null && !isNaN(qnh)) {
+        pa = paRef + (1013.25 - qnh) * 30;
+        html += row('Pressure Altitude', `${Math.round(pa).toLocaleString()} ft`, '#e8a020');
+        html += `<div style="font-size:10px;color:#555;padding:2px 0 6px;">PA = ${paRef.toLocaleString()} + (1013.25 − ${qnh}) × 30 = ${Math.round(pa).toLocaleString()}</div>`;
+    }
+
+    // ISA at indicated altitude (for True Altitude)
+    if (!isNaN(indAlt) && !isNaN(oat)) {
+        const isaAtInd = 15 - (indAlt * 2 / 1000);
+        const isaDevInd = oat - isaAtInd;
+        html += row('ISA Temp at Ind Alt', `${isaAtInd.toFixed(1)}°C`, '#888');
+        html += row('ISA Deviation (at Ind)', `${isaDevInd >= 0 ? '+' : ''}${isaDevInd.toFixed(1)}°C ${isaDevInd >= 0 ? '(warm)' : '(cold)'}`, isaDevInd >= 0 ? '#ff9f0a' : '#00bfff');
+
+        // True Altitude
+        if (!isNaN(elev)) {
+            const airColumn = indAlt - elev;
+            const correction = airColumn * isaDevInd * 0.004;
+            const trueAlt = indAlt + correction;
+            html += '<div style="height:8px;"></div>';
+            html += row('Air Column', `${airColumn.toLocaleString()} ft`, '#888');
+            html += row('Correction', `${correction >= 0 ? '+' : ''}${Math.round(correction)} ft (${Math.abs(isaDevInd * 0.4).toFixed(1)}%)`, '#888');
+            html += row('True Altitude', `${Math.round(trueAlt).toLocaleString()} ft`, '#30d158');
+        }
+    }
+
+    // ISA at pressure altitude (for Density Altitude)
+    if (pa !== null && !isNaN(oat)) {
+        const isaAtPA = 15 - (pa * 2 / 1000);
+        const isaDevPA = oat - isaAtPA;
+        const da = pa + isaDevPA * 120;
+        const daColor = (!isNaN(elev) && da > elev + 2000) ? '#ff453a' : '#e8a020';
+
+        html += '<div style="height:8px;"></div>';
+        html += row('ISA Temp at PA', `${isaAtPA.toFixed(1)}°C`, '#888');
+        html += row('ISA Deviation (at PA)', `${isaDevPA >= 0 ? '+' : ''}${isaDevPA.toFixed(1)}°C`, isaDevPA >= 0 ? '#ff9f0a' : '#00bfff');
+        html += row('Density Altitude', `${Math.round(da).toLocaleString()} ft`, daColor);
+        html += `<div style="font-size:10px;color:#555;padding:2px 0;">DA = ${Math.round(pa).toLocaleString()} + (${isaDevPA.toFixed(1)} × 120) = ${Math.round(da).toLocaleString()}</div>`;
+        if (!isNaN(elev) && da > elev + 2000) {
+            html += `<div style="color:#ff453a;font-weight:700;font-size:12px;padding:6px 0;">⚠️ DA exceeds field by ${Math.round(da - elev).toLocaleString()} ft — expect degraded performance</div>`;
+        }
+    }
+
+    if (!html) html = '<span style="color:#555;">Enter indicated altitude + QNH for PA, add OAT for ISA/True/DA, add elevation for True Alt…</span>';
+    el.innerHTML = html;
+}
+
+function r60_altExample() {
+    return _card('Example — True Altitude',
+        '<b>Given:</b> Indicated Alt 4,500 ft, QNH 1017 hPa, Terrain 1,700 ft, OAT 11°C.<br><br>' +
+        '<b>Step 1 — ISA Temp at 4,500 ft:</b><br>' +
+        '15°C − (4,500 × 2 / 1000) = <b>6°C</b><br><br>' +
+        '<b>Step 2 — ISA Deviation:</b><br>' +
+        '11°C − 6°C = <b>+5°C</b> (warmer than ISA)<br><br>' +
+        '<b>Step 3 — Air column correction:</b><br>' +
+        '5°C × 0.4% = 2% expansion<br>' +
+        '(4,500 − 1,700) × 1.02 + 1,700 = <b style="color:#30d158;">4,556 ft</b><br><br>' +
+        '<b>Step 4 — Distance to pylon (250 ft high):</b><br>' +
+        '4,556 − (1,700 + 250) = <b style="color:#30d158;">2,606 ft</b> clearance'
+    ) +
+    _card('Example — Density Altitude',
+        '<b>Given:</b> Stuttgart airport, elevation 1,276 ft, QNH 1002 hPa, OAT 25°C.<br><br>' +
+        '<b>Step 1 — Pressure Altitude:</b><br>' +
+        'QNH deviation: 1013.25 − 1002 = 11.25 hPa<br>' +
+        'PA = 1,276 + (11.25 × 30) = <b>1,614 ft</b><br><br>' +
+        '<b>Step 2 — ISA Temp at PA:</b><br>' +
+        '15°C − (1,614 × 2 / 1000) = <b>11.8°C</b><br><br>' +
+        '<b>Step 3 — ISA Deviation:</b><br>' +
+        '25°C − 11.8°C = <b>+13.2°C</b><br><br>' +
+        '<b>Step 4 — Density Altitude:</b><br>' +
+        '1,614 + (13.2 × 120) = <b style="color:#ff453a;">3,198 ft</b><br>' +
+        '<span style="color:#ff453a;">⚠️ Nearly 2,000 ft above field — significant performance impact!</span>'
+    );
+}
+
+function r60_altQuiz() { return _genQuiz('alt'); }
+
 // ========================= QUIZ ENGINE =========================
 
 function _genQuiz(topic) {
@@ -4043,6 +4187,46 @@ function r60NewQ() {
         const variant = _rand(0, 1);
         if (variant === 0) { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. Ground speed?`; answer = gs; unit = 'kt'; }
         else { q = `HDG ${hdg}°, TAS ${tas} kt, Wind ${wdir}°/${wspd} kt. True Track (TT)?`; answer = trk; unit = '°'; }
+    } else if (_160.topic === 'alt') {
+        const variant = _rand(0, 3);
+        if (variant === 0) {
+            // Pressure Altitude
+            const elev = _rand(1, 30) * 100;
+            const qnh = _rand(990, 1035);
+            const pa = elev + (1013.25 - qnh) * 30;
+            q = `Field elevation ${elev.toLocaleString()} ft, QNH ${qnh} hPa. Pressure Altitude?`;
+            answer = Math.round(pa); unit = 'ft';
+        } else if (variant === 1) {
+            // Density Altitude
+            const elev = _rand(1, 30) * 100;
+            const qnh = _rand(995, 1030);
+            const pa = elev + (1013.25 - qnh) * 30;
+            const isaAtPA = 15 - (pa * 2 / 1000);
+            const oat = Math.round(isaAtPA) + _rand(-5, 20);
+            const isaDev = oat - isaAtPA;
+            const da = pa + isaDev * 120;
+            q = `Elevation ${elev.toLocaleString()} ft, QNH ${qnh} hPa, OAT ${oat}°C. Density Altitude?`;
+            answer = Math.round(da); unit = 'ft';
+        } else if (variant === 2) {
+            // True Altitude
+            const indAlt = _rand(2, 10) * 1000;
+            const elev = _rand(2, 15) * 100;
+            const isaAtInd = 15 - (indAlt * 2 / 1000);
+            const oat = Math.round(isaAtInd) + _rand(-8, 12);
+            const isaDev = oat - isaAtInd;
+            const airCol = indAlt - elev;
+            const trueAlt = indAlt + airCol * isaDev * 0.004;
+            q = `Ind Alt ${indAlt.toLocaleString()} ft, terrain ${elev.toLocaleString()} ft, OAT ${oat}°C. True Altitude?`;
+            answer = Math.round(trueAlt); unit = 'ft';
+        } else {
+            // ISA Deviation
+            const alt = _rand(2, 12) * 1000;
+            const isaTemp = 15 - (alt * 2 / 1000);
+            const oat = Math.round(isaTemp) + _rand(-10, 15);
+            const isaDev = oat - isaTemp;
+            q = `Altitude ${alt.toLocaleString()} ft, OAT ${oat}°C. ISA deviation?`;
+            answer = isaDev; unit = '°C';
+        }
     }
 
     if (!q) { area.innerHTML = '<div style="color:#ff9f0a;padding:20px;text-align:center;">No quiz available for this topic.</div>'; return; }
@@ -4071,13 +4255,16 @@ function r60CheckAns() {
 
     // Unit-aware tolerance
     let isCorrect;
-    if (unit === '°' || unit.includes('°')) {
+    if ((unit === '°' || unit.includes('°')) && !unit.includes('°C')) {
         // Degree answers: handle 0/360 wraparound, fixed ±3° tolerance
         let diff = Math.abs(userAns - correct);
         diff = Math.min(diff, 360 - diff); // wraparound
         isCorrect = diff <= 3;
+    } else if (unit === 'ft' && _160.topic === 'alt') {
+        // Altitude calculations: ±100 ft (rounding in intermediate steps)
+        isCorrect = Math.abs(userAns - correct) <= 100;
     } else {
-        // Numeric answers (kt, fpm, NM, ft): 10% or 1 unit
+        // Numeric answers (kt, fpm, NM, ft, °C): 10% or 1 unit
         const diff = Math.abs(userAns - correct);
         isCorrect = diff <= Math.max(Math.abs(correct) * 0.1, 1);
     }
