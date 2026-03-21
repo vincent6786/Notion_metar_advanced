@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.3.5',  // ← set once in index.html
+            version: window.APP_VERSION || '4.3.6',  // ← set once in index.html
             title: 'METAR GO — Training Edition',
             changes: [
                 {
@@ -1227,8 +1227,16 @@
             if (savedDefault) {
                 inputField.value = savedDefault;
                 document.getElementById('icao').value = savedDefault;
-                loadPreferredRunwaySettings(savedDefault); 
-                loadData();   // data loads into whichever tab is already showing
+                loadPreferredRunwaySettings(savedDefault);
+                // Force refresh if data is older than 1 hour
+                const lastLoad = parseInt(localStorage.getItem('efb_last_load_ts') || '0');
+                const isStale = (Date.now() - lastLoad) > 3600000; // 1 hour
+                if (isStale) {
+                    console.log('[Init] Last data > 1 hour old — force refreshing');
+                    loadData(true);
+                } else {
+                    loadData();
+                }
                 } else {
                     document.getElementById('icao').value = '';
                     // Show the full-tab overlay instead of inline welcome
@@ -1248,10 +1256,17 @@
             setTimeout(() => { checkWhatsNew(); renderHelpWhatsNew(); }, 500);
 
             // Auto-refresh METAR every 10 minutes if an airport is loaded
+            // Force refresh if data has gone stale (> 1 hour, e.g. device was sleeping)
             setInterval(() => {
                 const icao = document.getElementById('icao').value.trim();
-                if (icao) {
-                    console.log('[Auto-refresh] Refreshing METAR for', icao);
+                if (!icao) return;
+                const lastLoad = parseInt(localStorage.getItem('efb_last_load_ts') || '0');
+                const elapsed = Date.now() - lastLoad;
+                if (elapsed > 3600000) {
+                    console.log('[Auto-refresh] Data > 1hr stale — force refreshing', icao);
+                    loadData(true);
+                } else {
+                    console.log('[Auto-refresh] Refreshing', icao);
                     loadData();
                 }
             }, 600000);

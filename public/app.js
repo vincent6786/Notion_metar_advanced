@@ -1783,8 +1783,18 @@
             if (!icao) return;
             const lastLoad = parseInt(localStorage.getItem('efb_last_load_ts') || '0');
             const elapsed  = Date.now() - lastLoad;
+            const ONE_HOUR = 60 * 60 * 1000;
             const FIVE_MIN = 5 * 60 * 1000;
-            if (elapsed > FIVE_MIN) {
+            if (elapsed > ONE_HOUR) {
+                // Data is stale — force refresh (clear all caches)
+                console.log(`[Reopen] ${Math.round(elapsed/60000)}m elapsed — FORCE refreshing ${icao} (data > 1hr)`);
+                showToast(`⚠️ Data expired — refreshing ${icao}…`);
+                loadData(true);
+                // Also force-refresh dashboard airports if enabled
+                if (typeof multiAirports !== 'undefined' && multiAirports.length > 0) {
+                    forceRefreshDashboard();
+                }
+            } else if (elapsed > FIVE_MIN) {
                 console.log(`[Reopen] ${Math.round(elapsed/60000)}m elapsed — auto-refreshing ${icao}`);
                 showToast(`↻ Refreshing ${icao}…`);
                 loadData();
@@ -2357,6 +2367,13 @@
             const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
             const el = document.getElementById('multiLastUpdated');
             if (el) el.innerText = `Auto-refreshed: ${timeStr}`;
+
+            // Sync: if the currently loaded METAR airport is in the dashboard, refresh it too
+            const currentIcao = document.getElementById('icao')?.value?.trim()?.toUpperCase();
+            if (currentIcao && multiAirports.includes(currentIcao)) {
+                console.log(`[Multi→METAR] Dashboard refreshed ${currentIcao} — syncing to METAR tab`);
+                loadData();
+            }
         }
 
         function renderMultiDashboard() {
