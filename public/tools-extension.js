@@ -4740,53 +4740,10 @@ function renderAdminToolsPanel() {
 // ============================================================================
 
 function initMetarDecoder() {
-    // Auto-fill from current METAR if available
-    const rawEl = document.getElementById('rawMetar');
-    const raw = rawEl?.innerText?.trim();
-    if (raw && raw.length > 10 && !raw.includes('Select an airport')) {
-        const inp = document.getElementById('decoderMetarInput');
-        if (inp && !inp.value) inp.value = raw;
-    }
-}
-
-function fillDecoderFromCurrent() {
-    const rawEl = document.getElementById('rawMetar');
-    const raw = rawEl?.innerText?.trim();
-    if (!raw || raw.length < 10 || raw.includes('Select an airport')) {
-        if (typeof showToast === 'function') showToast('⚠️ Load an airport first');
-        return;
-    }
-    const inp = document.getElementById('decoderMetarInput');
-    if (inp) {
-        inp.value = raw;
-        loadDecoderFromInput();
-    }
-}
-
-function loadDecoderFromInput() {
-    const inp = document.getElementById('decoderMetarInput');
     const frame = document.getElementById('decoderFrame');
-    if (!inp || !frame) return;
-    const metar = inp.value.trim();
-    if (!metar || metar.length < 10) {
-        if (typeof showToast === 'function') showToast('⚠️ Enter a valid METAR string');
-        return;
-    }
-    // e6bx decoder accepts METAR in the URL
-    const encoded = encodeURIComponent(metar);
-    const url = `https://e6bx.com/metar-decoder/?metar=${encoded}`;
-    frame.innerHTML = `<iframe src="${url}" style="width:100%;height:500px;border:none;border-radius:10px;background:#fff;" 
+    if (!frame) return;
+    frame.innerHTML = `<iframe src="https://e6bx.com/metar-decoder/" 
+        style="width:100%;height:70vh;min-height:500px;border:none;border-radius:10px;background:#fff;" 
         allow="clipboard-read; clipboard-write" loading="lazy"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`;
-}
-
-function clearDecoder() {
-    const inp = document.getElementById('decoderMetarInput');
-    const frame = document.getElementById('decoderFrame');
-    if (inp) inp.value = '';
-    if (frame) frame.innerHTML = `<div style="text-align:center;padding:40px;color:var(--sub-text);">
-        <div style="font-size:28px;margin-bottom:12px;">🔍</div>
-        <div style="font-weight:700;margin-bottom:4px;">METAR Decoder</div>
-        <div style="font-size:12px;">Paste a raw METAR above or tap "Use Current METAR" to decode it field-by-field.</div>
-    </div>`;
 }
