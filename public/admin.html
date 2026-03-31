@@ -200,6 +200,11 @@
     border-radius: 6px;
     white-space: nowrap;
   }
+  .user-calls.hot {
+    color: var(--warn);
+    border-color: rgba(255,159,10,0.4);
+    background: rgba(255,159,10,0.08);
+  }
   .status-pill {
     font-size: 10px;
     font-weight: 800;
@@ -211,11 +216,58 @@
   .status-active  { background: rgba(50,215,75,0.12); color: var(--success); }
   .status-revoked { background: rgba(255,69,58,0.12); color: var(--danger); }
 
+  /* ── Filter chips ── */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .filter-chips { display: flex; gap: 4px; }
+  .filter-chip {
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border2);
+    background: var(--card2);
+    color: var(--sub);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .filter-chip.active {
+    background: rgba(10,132,255,0.15);
+    border-color: rgba(10,132,255,0.4);
+    color: var(--accent);
+  }
+
+  /* ── Sort select ── */
+  .sort-select {
+    flex: 1;
+    min-width: 110px;
+    background: var(--card2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238e8e93'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+
   /* ── Progress bar ── */
   .progress-wrap { height: 5px; background: #222; border-radius: 3px; overflow: hidden; margin-top: 8px; }
   .progress-bar  { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
 
-  /* ── Copy button ── */
   /* ── Toasts ── */
   #toast {
     position: fixed;
@@ -437,10 +489,14 @@
         <div class="msg" id="createMsg"></div>
       </div>
 
+      <!-- User list header: label + count -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;">
+        <div class="section-lbl" style="margin:0;">All Access Codes</div>
+        <div id="userCountBadge" style="font-size:11px;color:var(--sub);font-weight:600;"></div>
+      </div>
 
-      <!-- User list -->
-      <div class="section-lbl">All Access Codes</div>
-      <div id="apiUsageBanner" style="display:none; background:var(--card2); border:1px solid var(--border2); border-radius:10px; padding:12px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <!-- API Usage Banner — BUG FIX: was display:none AND display:flex (latter always won) -->
+      <div id="apiUsageBanner" style="display:none;background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
         <div>
           <div style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--sub);margin-bottom:3px;">API Usage Today</div>
           <div id="apiUsageText" style="font-size:14px;font-weight:700;">— / —</div>
@@ -452,7 +508,27 @@
           <div id="apiUsagePct" style="font-size:11px;color:var(--sub);margin-top:4px;text-align:right;">0% used</div>
         </div>
       </div>
-      <div id="userList"><div class="empty">Loading...</div></div>
+
+      <!-- Search + Filter + Sort -->
+      <div style="margin-bottom:12px;">
+        <input type="text" id="userSearch" placeholder="🔍  Search by name or code…"
+               oninput="applyFilters()" style="margin-bottom:8px;font-size:13px;">
+        <div class="filter-row">
+          <div class="filter-chips">
+            <button class="filter-chip active" id="filterAll"     onclick="setFilter('all')">All</button>
+            <button class="filter-chip"        id="filterActive"  onclick="setFilter('active')">🟢 Active</button>
+            <button class="filter-chip"        id="filterRevoked" onclick="setFilter('revoked')">🔴 Revoked</button>
+          </div>
+          <select class="sort-select" id="userSort" onchange="applyFilters()">
+            <option value="code">A→Z Code</option>
+            <option value="name">A→Z Name</option>
+            <option value="calls">Most Calls</option>
+            <option value="newest">Newest</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="userList"><div class="empty">Loading…</div></div>
     </div>
 
     <!-- ── STATS TAB ── -->
@@ -472,10 +548,11 @@
 
 <script>
 // ── Config ───────────────────────────────────────────────────────────────
-// Update APP_URL to your actual Vercel URL
-const APP_URL = window.location.origin.replace('/admin', '') || 'https://your-app.vercel.app';
+const APP_URL = window.location.origin;   // BUG FIX: origin never contains '/admin', replace() was a no-op
 
 let _password = null;
+let _currentFilter = 'all';
+
 const NATO = ['ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM','VICTOR','WHISKEY'];
 
 // ── Toast ─────────────────────────────────────────────────────────────────
@@ -497,7 +574,6 @@ async function doLogin() {
   msg.style.color = '#8e8e93'; msg.textContent = 'Verifying...';
 
   try {
-    // Use api-stats as the auth check (it requires admin password)
     const res  = await fetch('/api/api-stats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -513,7 +589,6 @@ async function doLogin() {
     _password = pw;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainPanel').style.display  = 'block';
-    // Pre-populate stats tab with data we just fetched
     window._statsData = statsData;
     updateApiUsageBanner(statsData);
     loadUsers();
@@ -529,7 +604,7 @@ function updateApiUsageBanner(data) {
   if (!data?.aggregate || !banner) return;
   const { total_usage, total_limit, total_remaining, percentage } = data.aggregate;
   const color = percentage >= 90 ? 'var(--danger)' : percentage >= 70 ? 'var(--warn)' : 'var(--success)';
-  banner.style.display = 'flex';
+  banner.style.display = 'flex';  // BUG FIX: now actually works since initial state is display:none
   document.getElementById('apiUsageText').innerHTML =
     `<span style="color:${color}">${total_usage.toLocaleString()}</span> <span style="color:var(--sub);font-weight:400;font-size:12px;">/ ${total_limit.toLocaleString()} calls today</span>`;
   document.getElementById('apiUsageBar').style.width = percentage + '%';
@@ -547,8 +622,9 @@ function switchTab(tab) {
   document.getElementById('tabBtnStats').classList.toggle('active', tab === 'stats');
   document.getElementById('tabBtnTools').classList.toggle('active', tab === 'tools');
   if (tab === 'stats') loadFreshStats();
-  if (tab === 'users') loadUsers();
   if (tab === 'tools') loadToolsConfig();
+  // NOTE: Users tab no longer reloads on every visit — data already loaded;
+  //       pull-to-refresh achieved via manual loadUsers() after mutations.
 }
 
 async function loadFreshStats() {
@@ -565,7 +641,7 @@ async function loadFreshStats() {
   }
 }
 
-// ── Load users ────────────────────────────────────────────────────────────
+// ── Load & render users ───────────────────────────────────────────────────
 async function loadUsers() {
   try {
     const res  = await fetch('/api/access', {
@@ -581,29 +657,86 @@ async function loadUsers() {
 }
 
 function renderUsers(users) {
-  window._allUsers = users; // cache for drawer lookups
-  const active   = users.filter(u => u.active).length;
-  const revoked  = users.filter(u => !u.active).length;
-  const calls    = users.reduce((s, u) => s + (u.calls_today || 0), 0);
-  const summary  = document.getElementById('userSummary');
-  summary.innerHTML = `
+  window._allUsers = users;
+
+  // Update summary stats
+  const active  = users.filter(u => u.active).length;
+  const revoked = users.filter(u => !u.active).length;
+  const calls   = users.reduce((s, u) => s + (u.calls_today || 0), 0);
+  document.getElementById('userSummary').innerHTML = `
     <div class="stat-box"><div class="stat-num" style="color:var(--success)">${active}</div><div class="stat-lbl">Active</div></div>
     <div class="stat-box"><div class="stat-num" style="color:var(--danger)">${revoked}</div><div class="stat-lbl">Revoked</div></div>
     <div class="stat-box"><div class="stat-num" style="color:var(--accent)">${calls}</div><div class="stat-lbl">Calls Today</div></div>`;
 
+  // Update filter chip labels with counts
+  document.getElementById('filterAll').textContent     = `All (${users.length})`;
+  document.getElementById('filterActive').textContent  = `🟢 Active (${active})`;
+  document.getElementById('filterRevoked').textContent = `🔴 Revoked (${revoked})`;
+
+  applyFilters();
+}
+
+// ── Filter / Sort ─────────────────────────────────────────────────────────
+function setFilter(f) {
+  _currentFilter = f;
+  ['all', 'active', 'revoked'].forEach(id => {
+    const el = document.getElementById('filter' + id.charAt(0).toUpperCase() + id.slice(1));
+    if (el) el.classList.toggle('active', id === f);
+  });
+  applyFilters();
+}
+
+function applyFilters() {
+  const users = window._allUsers || [];
+  const q     = (document.getElementById('userSearch')?.value || '').toLowerCase().trim();
+  const sort  = document.getElementById('userSort')?.value || 'code';
+
+  let filtered = users.filter(u => {
+    if (_currentFilter === 'active'  && !u.active) return false;
+    if (_currentFilter === 'revoked' &&  u.active) return false;
+    if (q && !u.code.toLowerCase().includes(q) && !(u.name || '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (sort === 'name')   return (a.name || '').localeCompare(b.name || '');
+    if (sort === 'calls')  return (b.calls_today || 0) - (a.calls_today || 0);
+    if (sort === 'newest') return new Date(b.created || 0) - new Date(a.created || 0);
+    return a.code.localeCompare(b.code); // default: code A→Z
+  });
+
+  renderFilteredUsers(filtered, q);
+}
+
+function renderFilteredUsers(users, q) {
+  const all   = window._allUsers || [];
+  const badge = document.getElementById('userCountBadge');
+  if (badge) {
+    badge.textContent = users.length !== all.length
+      ? `${users.length} of ${all.length} users`
+      : `${all.length} user${all.length !== 1 ? 's' : ''}`;
+  }
+
   const list = document.getElementById('userList');
-  if (!users.length) { list.innerHTML = `<div class="empty">No codes yet — create one above.</div>`; return; }
+  if (!users.length) {
+    list.innerHTML = `<div class="empty">${all.length ? '🔍 No users match your search.' : 'No codes yet — create one above.'}</div>`;
+    return;
+  }
 
   list.innerHTML = users.map(u => {
-    const created = u.created ? new Date(u.created).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+    const created   = u.created ? new Date(u.created).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+    const callsHot  = (u.calls_today || 0) > 10;
+    const callsHtml = (u.calls_today > 0)
+      ? `<span class="user-calls ${callsHot ? 'hot' : ''}">${u.calls_today} calls</span>`
+      : '';
     return `
       <div class="user-row ${u.active ? '' : 'revoked'}" onclick="openDrawer('${u.code}')">
         <div style="flex:1;min-width:0;">
           <div class="user-code">${u.code}</div>
-          <div class="user-name">${u.name} · ${created}</div>
+          <div class="user-name">${u.name || '—'} · ${created}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-          <span class="user-calls">${u.calls_today || 0} calls</span>
+          ${callsHtml}
           <span class="status-pill ${u.active ? 'status-active' : 'status-revoked'}">${u.active ? 'ACTIVE' : 'REVOKED'}</span>
           <span style="color:#444;font-size:14px;">›</span>
         </div>
@@ -644,8 +777,8 @@ async function createCode() {
       msg.style.color = 'var(--success)'; msg.textContent = `✅ Created ${data.code}`;
       document.getElementById('newName').value = '';
       document.getElementById('newCode').value = '';
-      await loadUsers();                 // refresh list so drawer can find the new user
-      openDrawer(data.code);             // open edit drawer to share immediately
+      await loadUsers();
+      openDrawer(data.code);
     } else {
       msg.style.color = 'var(--danger)'; msg.textContent = `❌ ${data.error || 'Failed'}`;
     }
@@ -653,32 +786,6 @@ async function createCode() {
     msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Network error';
   }
   btn.disabled = false; btn.textContent = 'Create Code →';
-}
-
-// ── Revoke / Restore ───────────────────────────────────────────────────────
-async function revokeCode(code) {
-  if (!confirm(`Revoke ${code}?\n\nThis person will be blocked on their next app refresh.`)) return;
-  try {
-    await fetch('/api/access', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'revoke', code, password: _password })
-    });
-    toast(`🔒 ${code} revoked`);
-    loadUsers();
-  } catch(e) { toast('⚠️ Failed to revoke'); }
-}
-
-async function restoreCode(code) {
-  try {
-    await fetch('/api/access', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'restore', code, password: _password })
-    });
-    toast(`✅ ${code} restored`);
-    loadUsers();
-  } catch(e) { toast('⚠️ Failed to restore'); }
 }
 
 // ── API Stats ──────────────────────────────────────────────────────────────
@@ -811,34 +918,57 @@ function drawerCopyMessage() {
   setTimeout(() => btn.textContent = '💬 Copy Message', 1500);
 }
 
+// BUG FIX: was not checking API response — always toasted success even on server error
 async function drawerToggleStatus() {
   const users  = window._allUsers || [];
   const u      = users.find(x => x.code === _drawerCode);
   const action = u?.active ? 'revoke' : 'restore';
+  const btn    = document.getElementById('drawerStatusBtn');
+  btn.disabled = true;
   try {
-    await fetch('/api/access', {
+    const res  = await fetch('/api/access', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, code: _drawerCode, password: _password })
     });
-    toast(action === 'revoke' ? `🔒 ${_drawerCode} revoked` : `✅ ${_drawerCode} restored`);
-    _closeDrawer();
-    loadUsers();
-  } catch(e) { toast('⚠️ Failed'); }
+    const data = await res.json();
+    if (data.success) {
+      toast(action === 'revoke' ? `🔒 ${_drawerCode} revoked` : `✅ ${_drawerCode} restored`);
+      _closeDrawer();
+      loadUsers();
+    } else {
+      toast(`⚠️ ${data.error || 'Failed to update'}`);
+    }
+  } catch(e) {
+    toast('⚠️ Network error');
+  }
+  btn.disabled = false;
 }
 
+// BUG FIX: was not checking API response — always toasted success even on server error
 async function drawerDelete() {
   if (!confirm(`Permanently delete ${_drawerCode}?\n\nThis cannot be undone.`)) return;
+  const btn = document.querySelector('#editDrawer .btn-full:last-child');
+  if (btn) btn.disabled = true;
   try {
-    await fetch('/api/access', {
+    const res  = await fetch('/api/access', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', code: _drawerCode, password: _password })
     });
-    toast(`🗑 ${_drawerCode} deleted`);
-    _closeDrawer();
-    loadUsers();
-  } catch(e) { toast('⚠️ Failed to delete'); }
+    const data = await res.json();
+    if (data.success) {
+      toast(`🗑 ${_drawerCode} deleted`);
+      _closeDrawer();
+      loadUsers();
+    } else {
+      toast(`⚠️ ${data.error || 'Failed to delete'}`);
+      if (btn) btn.disabled = false;
+    }
+  } catch(e) {
+    toast('⚠️ Failed to delete');
+    if (btn) btn.disabled = false;
+  }
 }
 
 // Focus password on load
