@@ -3,7 +3,7 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.3.6',  // ← set once in index.html
+            version: window.APP_VERSION || '4.3.7',  // ← set once in index.html
             title: 'METAR GO — Training Edition',
             changes: [
                 {
