@@ -3,18 +3,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.3.8',  // ← set once in index.html
+            version: window.APP_VERSION || '4.4.0',  // ← set once in index.html
             title: 'METAR GO — Training Edition',
             changes: [
                 {
-                    icon: '📐',
-                    title: 'Training Area — 6 Topics',
-                    desc: 'New ALT module: Pressure Altitude, True Altitude (0.4%/°C), and Density Altitude (×120 ft/°C) with worked examples from EVA ground school. Plus Wind Triangle with Variation → MH/MC.'
+                    icon: '📌',
+                    title: 'My Resources',
+                    desc: 'Save custom links, PDF references, and text notes in the Tools tab. Up to 20 items, synced to cloud backup. Tap the 📌 tab in Aviation Tools to get started.'
                 },
                 {
-                    icon: '🔧',
-                    title: 'Admin Tool Control',
-                    desc: 'Admins can toggle tool visibility for all users via the Tools tab in the admin panel.'
+                    icon: '🔍',
+                    title: 'METAR Decoder',
+                    desc: 'New in-app METAR decoder powered by e6bx.com. Paste any raw METAR for field-by-field decoding.'
                 }
             ]
         };

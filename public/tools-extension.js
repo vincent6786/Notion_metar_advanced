@@ -314,16 +314,36 @@ function closeToolsExtension() {
  */
 function showToolsMenu() {
     const menu = document.getElementById('tools-menu');
+    const resources = document.getElementById('my-resources-panel');
+    const tabBar = document.getElementById('tools-tab-bar');
     const toolViews = document.querySelectorAll('.tool-view');
     
     if (menu) {
-        menu.style.display = 'block';
         toolViews.forEach(view => view.style.display = 'none');
         toolsExtensionState.currentTool = null;
         
-        // Update header
+        // Show tab bar
+        if (tabBar) tabBar.style.display = 'flex';
+        
+        // Restore whichever sub-tab was active
+        const activeTab = menu.style.display !== 'none' ? 'tools' : 
+                         (resources && resources.style.display !== 'none') ? 'resources' : 'tools';
+        switchToolsTab(activeTab);
+        
         updateExtensionHeader('Aviation Tools', false);
     }
+}
+
+function switchToolsTab(tab) {
+    const menu = document.getElementById('tools-menu');
+    const resources = document.getElementById('my-resources-panel');
+    ['tools', 'resources'].forEach(t => {
+        const btn = document.getElementById('toolsTabBtn-' + t);
+        if (btn) { btn.style.background = t === tab ? 'var(--accent)' : 'transparent'; btn.style.color = t === tab ? '#fff' : '#888'; }
+    });
+    if (menu) menu.style.display = tab === 'tools' ? 'block' : 'none';
+    if (resources) resources.style.display = tab === 'resources' ? 'block' : 'none';
+    if (tab === 'resources') loadMyResources();
 }
 
 /**
@@ -335,6 +355,10 @@ function openTool(toolName) {
     
     if (menu && toolView) {
         menu.style.display = 'none';
+        const resources = document.getElementById('my-resources-panel');
+        if (resources) resources.style.display = 'none';
+        const tabBar = document.getElementById('tools-tab-bar');
+        if (tabBar) tabBar.style.display = 'none';
         
         // Hide all tool views
         document.querySelectorAll('.tool-view').forEach(view => {
@@ -4746,4 +4770,154 @@ function initMetarDecoder() {
         style="width:100%;height:70vh;min-height:500px;border:none;border-radius:10px;background:#fff;" 
         allow="clipboard-read; clipboard-write" loading="lazy"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`;
+}
+
+// ============================================================================
+// MY RESOURCES — Custom links, PDFs, and notes
+// ============================================================================
+
+let _resourceType = 'link';
+let _myResources = [];
+
+async function loadMyResources() {
+    try {
+        const data = await Storage.get('efb_my_resources');
+        _myResources = Array.isArray(data) ? data : [];
+    } catch(e) {
+        _myResources = [];
+    }
+    renderResources();
+}
+
+async function saveMyResources() {
+    await Storage.set('efb_my_resources', _myResources);
+    renderResources();
+}
+
+function renderResources() {
+    const list = document.getElementById('resourceList');
+    const empty = document.getElementById('resourceEmpty');
+    if (!list) return;
+
+    if (_myResources.length === 0) {
+        list.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    list.innerHTML = _myResources.map((r, i) => {
+        const icon = r.type === 'pdf' ? '📄' : r.type === 'note' ? '📝' : '🔗';
+        const isLink = r.type === 'link' || r.type === 'pdf';
+
+        let body = '';
+        if (isLink && r.url) {
+            body = `<a href="${escHtml(r.url)}" target="_blank" rel="noopener" style="color:var(--accent);font-size:11px;text-decoration:none;word-break:break-all;display:block;margin-top:4px;">${truncateUrl(r.url)}</a>`;
+        } else if (r.type === 'note' && r.note) {
+            body = `<div style="font-size:12px;color:#ccc;margin-top:6px;line-height:1.5;white-space:pre-wrap;word-break:break-word;">${escHtml(r.note)}</div>`;
+        }
+
+        return `<div style="background:#111;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:flex-start;gap:10px;">
+                <span style="font-size:20px;flex-shrink:0;margin-top:1px;">${icon}</span>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:13px;color:#fff;">${escHtml(r.title || 'Untitled')}</div>
+                    ${body}
+                </div>
+                <button onclick="deleteResource(${i})" style="background:none;border:none;color:#555;font-size:16px;cursor:pointer;padding:4px 8px;flex-shrink:0;" title="Delete">✕</button>
+            </div>
+            ${isLink && r.url ? `<button onclick="openResourceInApp(${i})" style="width:100%;margin-top:10px;background:#1c1c1e;border:1px solid #333;color:var(--accent);padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Open in App ↗</button>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function truncateUrl(url) {
+    try { const u = new URL(url); return u.hostname + (u.pathname.length > 1 ? u.pathname.substring(0, 30) + '…' : ''); }
+    catch(e) { return url.substring(0, 40) + '…'; }
+}
+
+function setResourceType(type) {
+    _resourceType = type;
+    ['link','pdf','note'].forEach(t => {
+        const btn = document.getElementById('resType-' + t);
+        if (btn) { btn.style.background = t === type ? 'var(--accent)' : 'transparent'; btn.style.color = t === type ? '#fff' : '#888'; }
+    });
+    const urlRow = document.getElementById('resourceUrlRow');
+    const noteRow = document.getElementById('resourceNoteRow');
+    if (urlRow) urlRow.style.display = type !== 'note' ? 'block' : 'none';
+    if (noteRow) noteRow.style.display = type === 'note' ? 'block' : 'none';
+}
+
+function showAddResourceForm() {
+    const form = document.getElementById('resourceAddForm');
+    if (form) form.style.display = 'block';
+    const btn = document.getElementById('addResourceBtn');
+    if (btn) btn.style.display = 'none';
+    // Reset form
+    _resourceType = 'link';
+    setResourceType('link');
+    ['resourceTitle','resourceUrl','resourceNote'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('resourceTitle')?.focus();
+}
+
+function hideAddResourceForm() {
+    const form = document.getElementById('resourceAddForm');
+    if (form) form.style.display = 'none';
+    const btn = document.getElementById('addResourceBtn');
+    if (btn) btn.style.display = 'flex';
+}
+
+async function saveNewResource() {
+    if (_myResources.length >= 20) {
+        if (typeof showToast === 'function') showToast('⚠️ Maximum 20 resources');
+        return;
+    }
+    const title = document.getElementById('resourceTitle')?.value?.trim();
+    if (!title) {
+        if (typeof showToast === 'function') showToast('⚠️ Title is required');
+        return;
+    }
+
+    const item = { type: _resourceType, title, created: Date.now() };
+
+    if (_resourceType === 'note') {
+        const note = document.getElementById('resourceNote')?.value?.trim();
+        if (!note) { if (typeof showToast === 'function') showToast('⚠️ Note is empty'); return; }
+        item.note = note;
+    } else {
+        const url = document.getElementById('resourceUrl')?.value?.trim();
+        if (!url) { if (typeof showToast === 'function') showToast('⚠️ URL is required'); return; }
+        item.url = url;
+    }
+
+    _myResources.unshift(item);
+    await saveMyResources();
+    hideAddResourceForm();
+    if (typeof showToast === 'function') showToast('✅ Resource saved');
+}
+
+async function deleteResource(idx) {
+    const item = _myResources[idx];
+    if (!item) return;
+    if (!confirm(`Delete "${item.title}"?`)) return;
+    _myResources.splice(idx, 1);
+    await saveMyResources();
+    if (typeof showToast === 'function') showToast('🗑️ Deleted');
+}
+
+function openResourceInApp(idx) {
+    const item = _myResources[idx];
+    if (!item?.url) return;
+    if (typeof openInAppBrowser === 'function') {
+        openInAppBrowser(item.url, item.title || 'Resource');
+    } else {
+        window.open(item.url, '_blank');
+    }
 }
