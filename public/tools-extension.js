@@ -77,7 +77,7 @@ function toggleFullScreen() {
         }
         
         // Change icon to exit full-screen
-        if (fullscreenIcon) fullscreenIcon.textContent = 'âœ•';
+        if (fullscreenIcon) fullscreenIcon.textContent = '??;
         
         console.log('Entered full-screen mode with safe area support');
     } else {
@@ -122,7 +122,7 @@ function toggleFullScreen() {
         }
         
         // Change icon back to full-screen
-        if (fullscreenIcon) fullscreenIcon.textContent = 'â›¶';
+        if (fullscreenIcon) fullscreenIcon.textContent = '??;
         
         console.log('Exited full-screen mode');
     }
@@ -332,6 +332,12 @@ function showToolsMenu() {
 function openTool(toolName) {
     const menu = document.getElementById('tools-menu');
     const toolView = document.getElementById(`tool-${toolName}`);
+
+    if (toolName === 'metar-decoder') {
+        toolsExtensionState.currentTool = null;
+        if (typeof openDecodedMetar === 'function') openDecodedMetar();
+        return;
+    }
     
     if (menu && toolView) {
         menu.style.display = 'none';
@@ -348,6 +354,7 @@ function openTool(toolName) {
         // Update header with tool name
         const toolTitles = {
             'unit-converter': 'Unit Converter',
+            'metar-decoder': 'METAR Decoder',
             'great-circle': 'Great Circle Distance',
             'abbreviations': 'Aviation Abbreviations',
             'weather-terms': 'Present Weather Terms',
@@ -359,7 +366,7 @@ function openTool(toolName) {
             'training-area': 'Training Area'
         };
         updateExtensionHeader(toolTitles[toolName] || 'Tool', true);
-        
+
         // Initialize specific tools
         if (toolName === 'unit-converter') {
             updateUnitSelectors(); // Initialize with default units
@@ -640,7 +647,7 @@ function gcResolveInput(inputId, nameId) {
         const lat = parseFloat(coordMatch[1]);
         const lon = parseFloat(coordMatch[2]);
         if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-            nameEl.textContent = 'âœ“ Coordinates';
+            nameEl.textContent = '??Coordinates';
             nameEl.style.color = 'var(--success)';
             return;
         }
@@ -649,10 +656,10 @@ function gcResolveInput(inputId, nameId) {
         const airport = lookupAirport(val.toUpperCase());
         if (airport && airport.name) {
             const tag = airport.icao ? ` (${airport.icao})` : (airport.iata ? ` (${airport.iata})` : '');
-            nameEl.textContent = `âœ“ ${airport.name}${tag}`;
+            nameEl.textContent = `??${airport.name}${tag}`;
             nameEl.style.color = 'var(--success)';
         } else {
-            nameEl.textContent = 'âœ— Not found';
+            nameEl.textContent = '??Not found';
             nameEl.style.color = '#ff453a';
         }
     } else {
@@ -717,7 +724,7 @@ function calculateGreatCircle() {
     const fromLabel = from.icao||from.iata||`${from.lat.toFixed(2)},${from.lon.toFixed(2)}`;
     const toLabel   = to.icao||to.iata||`${to.lat.toFixed(2)},${to.lon.toFixed(2)}`;
     const routeEl = document.getElementById('gc-route-label');
-    if (routeEl) routeEl.textContent = `${fromLabel} â†’ ${toLabel}  Â·  ${fmt(distNM,1)} NM  Â·  Initial ${fmt(initialBearing,1)}Â°T`;
+    if (routeEl) routeEl.textContent = `${fromLabel} ??${toLabel}  Â·  ${fmt(distNM,1)} NM  Â·  Initial ${fmt(initialBearing,1)}Â°T`;
     const resultEl = document.getElementById('gc-result');
     if (resultEl) resultEl.style.display = 'block';
     setTimeout(() => gcRenderMap(from, to, lat1, lon1, lat2, lon2, c), 60);
@@ -784,7 +791,7 @@ function gcRenderMap(from,to,lat1r,lon1r,lat2r,lon2r,angDist) {
 }
 
 // ============================================================================
-// WEATHER TERMS DATABASE â†’ see metar-db.js
+// WEATHER TERMS DATABASE ??see metar-db.js
 // ============================================================================
 
 
@@ -828,13 +835,11 @@ function searchWeatherTerms() {
                     <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#e8a020; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        METAR KEY â†—
-                    </button>
+                        METAR KEY ??                    </button>
                     <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#34c759; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        METAR/TAF REF â†—
-                    </button>
+                        METAR/TAF REF ??                    </button>
                 </div>
             </div>
         </div>
@@ -885,13 +890,11 @@ function displayAllWeatherTerms() {
                     <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#e8a020; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        METAR KEY â†—
-                    </button>
+                        METAR KEY ??                    </button>
                     <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#34c759; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        METAR/TAF REF â†—
-                    </button>
+                        METAR/TAF REF ??                    </button>
                 </div>
             </div>
         </div>
@@ -928,8 +931,7 @@ function displayAllWeatherTerms() {
     html += `
         <div style="margin-top:20px; text-align:center;">
             <button onclick="displayAllCategories()" class="tool-btn" style="background:#111; border:2px solid #444; color:#e8a020; padding:10px 20px; font-size:12px; font-weight:700;">
-                SHOW ALL CATEGORIES â†“
-            </button>
+                SHOW ALL CATEGORIES ??            </button>
         </div>
     `;
     
@@ -956,13 +958,11 @@ function displayAllCategories() {
                     <button onclick="window.open('https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#e8a020; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        METAR KEY â†—
-                    </button>
+                        METAR KEY ??                    </button>
                     <button onclick="window.open('/METAR_TAF%20Abbreviations.pdf', '_blank')" 
                             class="tool-btn" 
                             style="background:#34c759; border:none; color:#000; padding:4px 8px; font-size:10px; font-weight:700;">
-                        METAR/TAF REF â†—
-                    </button>
+                        METAR/TAF REF ??                    </button>
                 </div>
             </div>
         </div>
@@ -993,7 +993,7 @@ function displayAllCategories() {
     html += `
         <div style="margin-top:20px; text-align:center;">
             <button onclick="displayAllWeatherTerms()" class="tool-btn" style="background:#111; border:2px solid #444; color:#e8a020; padding:10px 20px; font-size:12px; font-weight:700;">
-                â† BACK TO MAIN VIEW
+                ??BACK TO MAIN VIEW
             </button>
         </div>
     `;
@@ -1023,7 +1023,7 @@ function toggleSourcesMenu() {
  * Open the AWC GFA Symbols page in a new window
  */
 // ============================================================================
-// AEROSEARCH NATIVE â€” Offline-first Aviation Abbreviations Database
+// AEROSEARCH NATIVE ??Offline-first Aviation Abbreviations Database
 // Replaces external iframe. Fetches 5 Google Sheet sources, caches to
 // localStorage (7-day TTL), fully functional offline after first sync.
 // ============================================================================
@@ -1054,7 +1054,7 @@ let _aeroReady       = false;
 let _aeroSearchTimer = null;
 let _aeroActiveSource = 'all';
 
-// â”€â”€ Entry point â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Entry point ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function openAbbreviations() {
     const container = document.getElementById('abbrev-content');
     if (!container) return;
@@ -1070,14 +1070,14 @@ function openAbbreviations() {
         _aeroInjectUI(container);
         _aeroLoadData(false);
     } else {
-        // UI already in DOM â€” just re-render results
+        // UI already in DOM ??just re-render results
         if (_aeroData.length > 0) _aeroRender();
         // Re-attach scroll listener and back-to-top every open
         _aeroSetupListeners();
     }
 }
 
-// â”€â”€ Inject animation + pill styles once â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Inject animation + pill styles once ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function _aeroInjectStyles() {
     if (document.getElementById('aero-styles')) return;
     const s = document.createElement('style');
@@ -1102,7 +1102,7 @@ function _aeroInjectStyles() {
     document.head.appendChild(s);
 }
 
-// â”€â”€ Build UI skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Build UI skeleton ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function _aeroInjectUI(container) {
     const sourcePills = Object.values(AERO_SOURCES).map(s => {
         const c = AERO_SOURCE_COLORS[s.label];
@@ -1114,28 +1114,28 @@ function _aeroInjectUI(container) {
     container.innerHTML = `
     <div id="aero-root" style="display:flex;flex-direction:column;gap:0;">
 
-        <!-- â”€â”€ STICKY HEADER â”€â”€ always visible, correct background -->
+        <!-- ?€?€ STICKY HEADER ?€?€ always visible, correct background -->
         <div id="aero-header"
              style="position:sticky;top:0;z-index:20;
                     background:var(--bg);
                     padding:0 0 6px;
                     transition:padding 0.25s;">
 
-            <!-- Search bar â€” always visible -->
+            <!-- Search bar ??always visible -->
             <div id="aero-search-wrap"
                  style="display:flex;align-items:center;background:#111;
                         border:2px solid #444;border-radius:12px;padding:4px 10px;
                         margin-bottom:8px;transition:border-color 0.2s,box-shadow 0.2s;">
-                <span style="font-size:14px;margin-right:6px;opacity:0.4;">âŒ•</span>
+                <span style="font-size:14px;margin-right:6px;opacity:0.4;">??/span>
                 <input id="aero-input" type="text"
-                       placeholder="Search acronyms or definitionsâ€¦"
+                       placeholder="Search acronyms or definitions??
                        autocomplete="off" autocorrect="off" spellcheck="false"
                        style="flex:1;border:none;background:transparent;color:#fff;
                               font-size:15px;font-weight:500;padding:9px 0;outline:none;"
                        oninput="_aeroOnInput()" />
                 <button id="aero-clear" onclick="_aeroClear()"
                         style="display:none;border:none;background:none;color:#888;
-                               font-size:18px;padding:4px 6px;cursor:pointer;line-height:1;">Ã—</button>
+                               font-size:18px;padding:4px 6px;cursor:pointer;line-height:1;">?</button>
             </div>
 
             <!-- Collapsible filters -->
@@ -1167,8 +1167,8 @@ function _aeroInjectUI(container) {
                                    color:#fff;font-size:12px;font-weight:600;padding:8px 10px;
                                    cursor:pointer;outline:none;" onchange="_aeroRender()">
                         <option value="default">Original order</option>
-                        <option value="az">A â†’ Z</option>
-                        <option value="za">Z â†’ A</option>
+                        <option value="az">A ??Z</option>
+                        <option value="za">Z ??A</option>
                     </select>
                 </div>
             </div><!-- /#aero-filters -->
@@ -1181,7 +1181,7 @@ function _aeroInjectUI(container) {
                     <div id="aero-sync-info" style="font-size:11px;color:#555;"></div>
                     <button id="aero-sync-btn" onclick="_aeroLoadData(true)"
                             style="font-size:11px;color:#e8a020;background:none;border:none;
-                                   cursor:pointer;padding:2px 0;font-weight:700;">â†» Sync</button>
+                                   cursor:pointer;padding:2px 0;font-weight:700;">??Sync</button>
                 </div>
             </div>
         </div><!-- /#aero-header -->
@@ -1191,7 +1191,7 @@ function _aeroInjectUI(container) {
             <div style="text-align:center;padding:40px 0;">
                 <div style="width:28px;height:28px;border:3px solid #333;border-top-color:#e8a020;
                             border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 12px;"></div>
-                <div style="font-size:12px;color:#555;">Loading databasesâ€¦</div>
+                <div style="font-size:12px;color:#555;">Loading databases??/div>
             </div>
         </div>
 
@@ -1227,7 +1227,7 @@ function _aeroSetupListeners() {
             topBtn.style.transform = 'translateY(8px)';
             _aeroScrollTop();
         };
-        topBtn.textContent = 'â†‘';
+        topBtn.textContent = '??;
         topBtn.style.cssText = `position:fixed;bottom:max(28px,env(safe-area-inset-bottom));
             left:20px;width:40px;height:40px;border-radius:12px;
             background:#1c1c1e;border:1px solid #444;color:#0a84ff;
@@ -1277,7 +1277,7 @@ function _aeroSetupListeners() {
 
     scrollEl.addEventListener('scroll', _aeroOnScroll, { passive: true });
 
-    // Store cleanup â€” called on every close and reopen
+    // Store cleanup ??called on every close and reopen
     const root = document.getElementById('aero-root');
     if (root) root._aeroScrollCleanup = () => {
         scrollEl.removeEventListener('scroll', _aeroOnScroll);
@@ -1286,7 +1286,7 @@ function _aeroSetupListeners() {
 }
 
 
-// â”€â”€ Source filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Source filter ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function _aeroScrollTop() {
     const el = document.getElementById('tools-extension-panel');
     if (el) el.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1319,7 +1319,7 @@ function _aeroClear() {
     _aeroRender();
 }
 
-// â”€â”€ Data loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Data loading ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 async function _aeroLoadData(forceRefresh) {
     if (!forceRefresh) {
         try {
@@ -1350,7 +1350,7 @@ async function _aeroLoadData(forceRefresh) {
     }
 
     _aeroShowLoading();
-    _aeroUpdateSyncBtn('Syncingâ€¦', true);
+    _aeroUpdateSyncBtn('Syncing??, true);
 
     const keys    = Object.keys(AERO_SOURCES);
     const results = await Promise.allSettled(keys.map(k => _aeroFetchSource(k)));
@@ -1366,12 +1366,12 @@ async function _aeroLoadData(forceRefresh) {
                 _aeroData = JSON.parse(cached);
                 _aeroUpdateSyncInfo(ts, true);
                 _aeroRender();
-                _aeroUpdateSyncBtn('â†» Sync', false);
+                _aeroUpdateSyncBtn('??Sync', false);
                 return;
             }
         } catch(e) {}
-        _aeroShowError('Could not load databases. Check your connection and tap â†» Sync to retry.');
-        _aeroUpdateSyncBtn('â†» Sync', false);
+        _aeroShowError('Could not load databases. Check your connection and tap ??Sync to retry.');
+        _aeroUpdateSyncBtn('??Sync', false);
         return;
     }
 
@@ -1382,7 +1382,7 @@ async function _aeroLoadData(forceRefresh) {
     } catch(e) { console.warn('[AeroSearch] Cache write failed:', e); }
 
     _aeroUpdateSyncInfo(Date.now(), false);
-    _aeroUpdateSyncBtn('â†» Sync', false);
+    _aeroUpdateSyncBtn('??Sync', false);
     _aeroRender();
 }
 
@@ -1429,7 +1429,7 @@ function _aeroClean(s) {
     return s;
 }
 
-// â”€â”€ Render results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Render results ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function _aeroRender() {
     const resultsEl = document.getElementById('aero-results');
     const countEl   = document.getElementById('aero-count');
@@ -1463,7 +1463,7 @@ function _aeroRender() {
     if (items.length === 0) {
         resultsEl.innerHTML = `
             <div style="text-align:center;padding:50px 20px;">
-                <div style="font-size:36px;opacity:0.3;margin-bottom:12px;">âŒ•</div>
+                <div style="font-size:36px;opacity:0.3;margin-bottom:12px;">??/div>
                 <div style="color:#555;font-size:14px;font-weight:600;">No results</div>
                 <div style="color:#444;font-size:12px;margin-top:4px;">
                     ${term ? 'Try a different term or search mode' : 'Select a database to browse'}
@@ -1520,19 +1520,19 @@ function _aeroRender() {
     if (items.length > AERO_MAX_CARDS) {
         const hint = document.createElement('div');
         hint.style.cssText = 'text-align:center;padding:20px;color:#444;font-size:12px;';
-        hint.textContent = `Showing ${AERO_MAX_CARDS} of ${items.length} â€” refine your search`;
+        hint.textContent = `Showing ${AERO_MAX_CARDS} of ${items.length} ??refine your search`;
         resultsEl.appendChild(hint);
     }
 }
 
-// â”€â”€ UI helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ UI helpers ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function _aeroShowLoading() {
     const el = document.getElementById('aero-results');
     if (el) el.innerHTML = `
         <div style="text-align:center;padding:40px 0;">
             <div style="width:28px;height:28px;border:3px solid #333;border-top-color:#e8a020;
                         border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 12px;"></div>
-            <div style="font-size:12px;color:#555;">Syncing databasesâ€¦</div>
+            <div style="font-size:12px;color:#555;">Syncing databases??/div>
         </div>`;
 }
 
@@ -1540,7 +1540,7 @@ function _aeroShowError(msg) {
     const el = document.getElementById('aero-results');
     if (el) el.innerHTML = `
         <div style="text-align:center;padding:40px 20px;">
-            <div style="font-size:32px;margin-bottom:12px;">ğŸ“¡</div>
+            <div style="font-size:32px;margin-bottom:12px;">?“¡</div>
             <div style="color:#ff453a;font-size:13px;font-weight:700;margin-bottom:8px;">Unavailable Offline</div>
             <div style="color:#555;font-size:12px;line-height:1.6;">${msg}</div>
         </div>`;
@@ -1557,7 +1557,7 @@ function _aeroUpdateSyncInfo(ts, isStale) {
                : mins < 1440 ? `${Math.round(mins/60)}h ago`
                : `${Math.round(mins/1440)}d ago`;
     el.innerHTML = isStale
-        ? `<span style="color:#ff9f0a;">âš  Offline Â· cached ${age}</span>`
+        ? `<span style="color:#ff9f0a;">??Offline Â· cached ${age}</span>`
         : `<span style="color:#444;">Synced ${age}</span>`;
 }
 
@@ -1641,7 +1641,7 @@ function e6bAutofillCurrent() {
     const icao = document.getElementById('icao')?.value?.trim().toUpperCase() || '';
 
     if (!m) {
-        e6bShowStatus('No METAR loaded â€” search an airport first.');
+        e6bShowStatus('No METAR loaded ??search an airport first.');
         return;
     }
 
@@ -1651,7 +1651,7 @@ function e6bAutofillCurrent() {
     // QNH
     const altRaw = m.altimeter?.value;
     const altUnit = (altRaw !== null && altRaw < 200) ? 'inhg' : 'hpa';
-    // Elevation â†’ use as indicated altitude
+    // Elevation ??use as indicated altitude
     const elev = stn?.elevation_ft ?? 0;
 
     const uQnh  = document.getElementById('unitQnh');
@@ -1681,7 +1681,7 @@ async function e6bFetchCustom() {
     const status = document.getElementById('e6bCustomStatus');
     const icao   = input?.value?.trim().toUpperCase();
     if (!icao || icao.length < 3) { if (status) status.textContent = 'Enter a valid ICAO code.'; return; }
-    if (status) status.textContent = 'Fetchingâ€¦';
+    if (status) status.textContent = 'Fetching??;
 
     try {
         const [metarRes, stnRes] = await Promise.all([
@@ -1709,13 +1709,13 @@ async function e6bFetchCustom() {
         if (tempC   != null) document.getElementById('e6bTemp').value = tempC;
         if (dewC    != null) document.getElementById('e6bDew').value  = dewC;
 
-        if (status) status.textContent = `âœ“ Filled from ${icao}`;
+        if (status) status.textContent = `??Filled from ${icao}`;
         const lbl = document.getElementById('e6bAutofillLabel');
         if (lbl) lbl.textContent = `Filled from ${icao}`;
         document.getElementById('e6bCustomRow').style.display = 'none';
         calcE6B();
     } catch(err) {
-        if (status) status.textContent = 'Fetch failed â€” check connection.';
+        if (status) status.textContent = 'Fetch failed ??check connection.';
     }
 }
 
@@ -1724,7 +1724,7 @@ function e6bWindFill() {
     if (!wind || (!wind.spd && wind.dir === 0)) return;
     const mv      = parseMagVar(document.getElementById('wtMagVar').value);
     const magDir  = (wind.dir === 'VRB') ? 0 : wind.dir;
-    // METAR wind is magnetic â†’ convert to True for wind triangle
+    // METAR wind is magnetic ??convert to True for wind triangle
     const trueDir = ((magDir + mv) % 360 + 360) % 360;
     document.getElementById('wtWindDir').value = Math.round(trueDir);
     document.getElementById('wtWindSpd').value = wind.spd || 0;
@@ -1747,7 +1747,7 @@ function e6bShowStatus(msg) {
 // ============================================================================
 
 /**
- * Parse mag var from user text: "14W" â†’ -14, "3E" â†’ +3, "-14" â†’ -14, "14" â†’ +14
+ * Parse mag var from user text: "14W" ??-14, "3E" ??+3, "-14" ??-14, "14" ??+14
  * Convention: East = positive (East is least), West = negative (West is best)
  */
 function parseMagVar(str) {
@@ -1788,16 +1788,16 @@ async function wtFillMagVar() {
     const note = document.getElementById('wtMagVarNote');
 
     if (!stn) {
-        if (note) note.innerHTML = 'âš ï¸ No airport loaded â€” search an airport first, then tap Airport â†“.';
+        if (note) note.innerHTML = '? ï? No airport loaded ??search an airport first, then tap Airport ??';
         return;
     }
 
     const icao = document.getElementById('icao')?.value?.trim().toUpperCase() || 'Airport';
     let mv = stn.magnetic_variation;
 
-    // AVWX sometimes omits magnetic_variation â€” fall back to NOAA WMM API
+    // AVWX sometimes omits magnetic_variation ??fall back to NOAA WMM API
     if (mv == null && stn.latitude != null && stn.longitude != null) {
-        if (note) note.innerHTML = `â³ Fetching declination for ${icao} from NOAAâ€¦`;
+        if (note) note.innerHTML = `??Fetching declination for ${icao} from NOAA?¦`;
         try {
             const url  = `https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1=${stn.latitude}&lon1=${stn.longitude}&resultFormat=json`;
             const res  = await fetch(url);
@@ -1805,13 +1805,13 @@ async function wtFillMagVar() {
             const raw  = data?.result?.[0]?.declination;
             if (raw != null) mv = parseFloat(parseFloat(raw).toFixed(1));
         } catch(e) {
-            if (note) note.innerHTML = `âš ï¸ NOAA lookup failed. Enter manually, e.g. <b style="color:#888;">14W</b> or <b style="color:#888;">3E</b>.`;
+            if (note) note.innerHTML = `? ï? NOAA lookup failed. Enter manually, e.g. <b style="color:#888;">14W</b> or <b style="color:#888;">3E</b>.`;
             return;
         }
     }
 
     if (mv == null) {
-        if (note) note.innerHTML = `âš ï¸ No mag var data for ${icao}. Enter manually, e.g. <b style="color:#888;">14W</b>.`;
+        if (note) note.innerHTML = `? ï? No mag var data for ${icao}. Enter manually, e.g. <b style="color:#888;">14W</b>.`;
         return;
     }
 
@@ -1819,7 +1819,7 @@ async function wtFillMagVar() {
     const display = `${Math.abs(mv).toFixed(1)}${dir}`;
     document.getElementById('wtMagVar').value = display;
 
-    if (note) note.innerHTML = `<b style="color:#32d74b;">âœ“ ${icao}:</b> ${Math.abs(mv).toFixed(1)}Â° ${dir} â€” ${mv >= 0 ? 'East is least (TC &lt; MC)' : 'West is best (TC &gt; MC)'}`;
+    if (note) note.innerHTML = `<b style="color:#32d74b;">??${icao}:</b> ${Math.abs(mv).toFixed(1)}Â° ${dir} ??${mv >= 0 ? 'East is least (TC &lt; MC)' : 'West is best (TC &gt; MC)'}`;
 
     // Sync MC from TC if TC is set, else TC from MC
     const tc = parseFloat(document.getElementById('wtCourse').value);
@@ -1832,7 +1832,7 @@ async function wtFillMagVar() {
     calcWindTriangle();
 }
 
-// Called whenever the mag var field is edited â€” keep MCâ†”TC in sync
+// Called whenever the mag var field is edited ??keep MC?”TC in sync
 function wtMagVarChanged() {
     const mv = parseMagVar(document.getElementById('wtMagVar').value);
     const tc = parseFloat(document.getElementById('wtCourse').value);
@@ -1872,13 +1872,12 @@ function calcWindTriangle() {
     const toRad = d => d * Math.PI / 180;
     const toDeg = r => r * 180 / Math.PI;
 
-    // â”€â”€ Correct WCA formula â”€â”€
-    // sin(WCA) = (WS / TAS) Ã— sin(WD âˆ’ TC)
-    // Positive WCA â†’ heading is RIGHT of track (into right-side wind) âœ“
-    const sinWca = (ws / tas) * Math.sin(toRad(wd - tc));
+    // ?€?€ Correct WCA formula ?€?€
+    // sin(WCA) = (WS / TAS) ? sin(WD ??TC)
+    // Positive WCA ??heading is RIGHT of track (into right-side wind) ??    const sinWca = (ws / tas) * Math.sin(toRad(wd - tc));
 
     if (Math.abs(sinWca) > 1) {
-        // Wind too strong for TAS â€” no solution
+        // Wind too strong for TAS ??no solution
         [hdgEl,mhEl,gsEl,wcaEl,weEl,xwEl].forEach(el => { if (el) el.innerText = 'N/A'; });
         wtDrawSvg(null);
         return;
@@ -1899,7 +1898,7 @@ function calcWindTriangle() {
     const effect = gs - tas;
     const xw     = ws * Math.sin(toRad(wd - tc));   // + = from right
 
-    // â”€â”€ Results â”€â”€
+    // ?€?€ Results ?€?€
     if (hdgEl) { hdgEl.innerText = `${Math.round(hdg).toString().padStart(3,'0')}Â°T`; hdgEl.style.color = '#e8a020'; }
     if (mhEl)  { mhEl.innerText  = `${Math.round(mh).toString().padStart(3,'0')}Â°M`;  mhEl.style.color  = '#e8a020'; }
     if (gsEl)  { gsEl.innerText  = `${Math.round(gs)} kt`; gsEl.style.color = '#32d74b'; }
@@ -1946,15 +1945,15 @@ function wtDrawSvg(d) {
     });
 
     // Key points
-    // Origin â†’ TAS along HDG
+    // Origin ??TAS along HDG
     const P1 = vec(d.hdg, d.tas);
-    // From P1 â†’ wind vector (wind blows FROM wd, so vector points TOWARD wd+180)
+    // From P1 ??wind vector (wind blows FROM wd, so vector points TOWARD wd+180)
     const wToDir = (d.wd + 180) % 360;
     const P2 = {
         x: P1.x + Math.sin(toRad(wToDir)) * d.ws * scale,
         y: P1.y - Math.cos(toRad(wToDir)) * d.ws * scale
     };
-    // P2 should â‰ˆ vec(d.tc, d.gs) â€” the ground velocity endpoint
+    // P2 should ??vec(d.tc, d.gs) ??the ground velocity endpoint
 
     const arrowHead = (x2, y2, x1, y1, color, size = 7) => {
         const angle = Math.atan2(y2 - y1, x2 - x1);
@@ -1989,7 +1988,7 @@ function wtDrawSvg(d) {
     const wfx2 = cx + Math.sin(toRad(d.wd)) * (R + 7);
     const wfy2 = cy - Math.cos(toRad(d.wd)) * (R + 7);
 
-    // TC dashed guide â€” extends full diameter
+    // TC dashed guide ??extends full diameter
     const tcFar  = vec(d.tc, maxSpd);
     const tcBack = { x: cx - (tcFar.x - cx), y: cy - (tcFar.y - cy) };
 
@@ -2012,17 +2011,17 @@ function wtDrawSvg(d) {
         <line x1="${wfx1}" y1="${wfy1}" x2="${wfx2}" y2="${wfy2}"
               stroke="#ff453a" stroke-width="2.5" stroke-linecap="round"/>
 
-        <!-- GS vector: origin â†’ P2 (green, solid) -->
+        <!-- GS vector: origin ??P2 (green, solid) -->
         <line x1="${cx}" y1="${cy}" x2="${P2.x}" y2="${P2.y}"
               stroke="#32d74b" stroke-width="2.5" stroke-linecap="round"/>
         ${arrowHead(P2.x, P2.y, cx, cy, '#32d74b', 9)}
 
-        <!-- TAS / HDG vector: origin â†’ P1 (blue, solid) -->
+        <!-- TAS / HDG vector: origin ??P1 (blue, solid) -->
         <line x1="${cx}" y1="${cy}" x2="${P1.x}" y2="${P1.y}"
               stroke="#0a84ff" stroke-width="2.5" stroke-linecap="round"/>
         ${arrowHead(P1.x, P1.y, cx, cy, '#0a84ff', 9)}
 
-        <!-- Wind vector: P1 â†’ P2 (red, dashed) -->
+        <!-- Wind vector: P1 ??P2 (red, dashed) -->
         <line x1="${P1.x}" y1="${P1.y}" x2="${P2.x}" y2="${P2.y}"
               stroke="#ff453a" stroke-width="2" stroke-linecap="round" stroke-dasharray="5,2.5"/>
         ${arrowHead(P2.x, P2.y, P1.x, P1.y, '#ff453a', 7)}
@@ -2229,7 +2228,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================================================
 
 // ============================================================================
-// CROSSWIND CALCULATOR â€” Visual (canvas compass) + Type-In dual-mode
+// CROSSWIND CALCULATOR ??Visual (canvas compass) + Type-In dual-mode
 // ============================================================================
 
 let _cw = {
@@ -2240,7 +2239,7 @@ let _cw = {
 let _cwMoveHandler = null;
 let _cwEndHandler  = null;
 
-// â”€â”€ Entry point â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Entry point ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function cwInit() {
     // Restore saved settings
     const savedMode  = localStorage.getItem('cw_mode')  || 'visual';
@@ -2262,7 +2261,7 @@ function cwInit() {
     }
 }
 
-// â”€â”€ Mode switch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Mode switch ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function cwSetMode(mode, skipSave) {
     _cw.mode = mode;
     if (!skipSave) localStorage.setItem('cw_mode', mode);
@@ -2290,7 +2289,7 @@ function cwSetMode(mode, skipSave) {
     }
 }
 
-// â”€â”€ Canvas setup (HiDPI aware) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Canvas setup (HiDPI aware) ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function cwSetupCanvas() {
     const canvas = document.getElementById('cw-canvas');
     if (!canvas || canvas.dataset.cwReady === '1') return;
@@ -2310,7 +2309,7 @@ function cwSetupCanvas() {
     cwBindDrag(canvas);
 }
 
-// â”€â”€ Canvas draw â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Canvas draw ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function cwDraw() {
     const canvas = document.getElementById('cw-canvas');
     if (!canvas) return;
@@ -2324,7 +2323,7 @@ function cwDraw() {
 
     ctx.clearRect(0, 0, S, S);
 
-    // â”€â”€ Background circle â”€â”€
+    // ?€?€ Background circle ?€?€
     ctx.beginPath();
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.fillStyle = '#0d0d12';
@@ -2333,20 +2332,20 @@ function cwDraw() {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // â”€â”€ Subtle zone hint rings â”€â”€
-    // Outer drag zone (wind dir) â€” very faint orange tint
+    // ?€?€ Subtle zone hint rings ?€?€
+    // Outer drag zone (wind dir) ??very faint orange tint
     ctx.beginPath();
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.arc(cx, cy, R * 0.55, 0, Math.PI * 2, true);
     ctx.fillStyle = 'rgba(255,159,10,0.025)';
     ctx.fill();
-    // Inner drag zone (runway) â€” very faint blue tint
+    // Inner drag zone (runway) ??very faint blue tint
     ctx.beginPath();
     ctx.arc(cx, cy, R * 0.52, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(10,132,255,0.04)';
     ctx.fill();
 
-    // â”€â”€ Tick marks â”€â”€
+    // ?€?€ Tick marks ?€?€
     for (let deg = 0; deg < 360; deg += 5) {
         const isMajor = deg % 30 === 0;
         const isMed   = deg % 10 === 0;
@@ -2364,7 +2363,7 @@ function cwDraw() {
         ctx.stroke();
     }
 
-    // â”€â”€ Degree labels at 30Â° â”€â”€
+    // ?€?€ Degree labels at 30Â° ?€?€
     const lblFont = `bold ${Math.round(S * 0.042)}px 'SF Mono', monospace`;
     ctx.font = lblFont;
     ctx.textAlign = 'center';
@@ -2380,14 +2379,14 @@ function cwDraw() {
         ctx.fillText(lbl, lx, ly);
     }
 
-    // â”€â”€ Inner ring separator â”€â”€
+    // ?€?€ Inner ring separator ?€?€
     ctx.beginPath();
     ctx.arc(cx, cy, R * 0.58, 0, Math.PI * 2);
     ctx.strokeStyle = '#1e1e1e';
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // â•â• RUNWAY (rotates with rwyHdg) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ?â? RUNWAY (rotates with rwyHdg) ?â??â??â??â??â??â??â??â??â??â??â??â??â??â??â??â??â??â??â?
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(_cw.rwyHdg * Math.PI / 180);
@@ -2440,7 +2439,7 @@ function cwDraw() {
     ctx.fillText(String(rn2).padStart(2, '0'), 0, -rwH / 2 + 24);
     ctx.restore();
 
-    // â”€â”€ Wind component triangles â”€â”€
+    // ?€?€ Wind component triangles ?€?€
     if (_cw.wspd > 0) {
         const aRad = (_cw.wdir - _cw.rwyHdg) * Math.PI / 180;
         const hw   = _cw.wspd * Math.cos(aRad);
@@ -2485,9 +2484,9 @@ function cwDraw() {
         ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
     }
 
-    ctx.restore(); // â”€ end runway transform â”€
+    ctx.restore(); // ?€ end runway transform ?€
 
-    // â•â• WIND DIRECTION INDICATOR (orange triangle on ring) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ?â? WIND DIRECTION INDICATOR (orange triangle on ring) ?â??â??â??â??â??â??â??â?
     const wRad = (_cw.wdir - 90) * Math.PI / 180;
     const wTx  = cx + Math.cos(wRad) * (R - 2);
     const wTy  = cy + Math.sin(wRad) * (R - 2);
@@ -2506,7 +2505,7 @@ function cwDraw() {
     ctx.shadowBlur = 0;
     ctx.restore();
 
-    // â”€â”€ Center dot â”€â”€
+    // ?€?€ Center dot ?€?€
     ctx.beginPath();
     ctx.arc(cx, cy, 4, 0, Math.PI * 2);
     ctx.fillStyle = '#333';
@@ -2517,7 +2516,7 @@ function cwDraw() {
     ctx.fill();
 }
 
-// â”€â”€ Update stats panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Update stats panel ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function cwUpdateStats() {
     const rn1 = (Math.round(((((_cw.rwyHdg % 360) + 360) % 360)) / 10) || 36);
     const rn2  = rn1 <= 18 ? rn1 + 18 : rn1 - 18;
@@ -2574,13 +2573,13 @@ function cwUpdateStats() {
         if (_cw.wspd > 0) {
             stEl.style.display = 'block';
             if (limit > 0 && xw1a >= limit) {
-                stEl.textContent = `âœ— NO-GO â€” Crosswind ${xw1a.toFixed(1)} kt exceeds ${limit} kt limit`;
+                stEl.textContent = `??NO-GO ??Crosswind ${xw1a.toFixed(1)} kt exceeds ${limit} kt limit`;
                 stEl.style.cssText = 'display:block;text-align:center;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:800;letter-spacing:0.5px;background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.5);color:#ff453a;margin-bottom:8px;';
             } else if (hw1 < 0) {
-                stEl.textContent = `âš  TAILWIND â€” ${Math.abs(hw1).toFixed(1)} kt on RWY ${String(rn1).padStart(2,'0')} â€” Check POH`;
+                stEl.textContent = `??TAILWIND ??${Math.abs(hw1).toFixed(1)} kt on RWY ${String(rn1).padStart(2,'0')} ??Check POH`;
                 stEl.style.cssText = 'display:block;text-align:center;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:800;letter-spacing:0.5px;background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.5);color:#ff9f0a;margin-bottom:8px;';
             } else if (limit > 0) {
-                stEl.textContent = `âœ“ GO â€” Crosswind ${xw1a.toFixed(1)} kt within ${limit} kt limit`;
+                stEl.textContent = `??GO ??Crosswind ${xw1a.toFixed(1)} kt within ${limit} kt limit`;
                 stEl.style.cssText = 'display:block;text-align:center;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:800;letter-spacing:0.5px;background:rgba(48,209,88,0.12);border:1px solid rgba(48,209,88,0.4);color:#30d158;margin-bottom:8px;';
             } else {
                 stEl.textContent = `Crosswind ${xw1a.toFixed(1)} kt Â· ${hw1 >= 0 ? 'Headwind' : 'Tailwind'} ${Math.abs(hw1).toFixed(1)} kt`;
@@ -2603,7 +2602,7 @@ function cwUpdateStats() {
             const ghe = document.getElementById('cw-ghw-v'), ghl = document.getElementById('cw-ghw-lbl-v');
             const gxe = document.getElementById('cw-gxw-v'), gxl = document.getElementById('cw-gxw-lbl-v');
             if (ghe)  { ghe.textContent = Math.abs(ghw).toFixed(1); ghe.style.color = ghw < 0 ? '#ff453a' : '#e8a020'; }
-            if (ghl) ghl.textContent = ghw >= 0 ? 'Gust Headwind' : 'Gust Tailwind âš ï¸';
+            if (ghl) ghl.textContent = ghw >= 0 ? 'Gust Headwind' : 'Gust Tailwind ? ï?';
             if (gxe)  { gxe.textContent = gxa.toFixed(1); gxe.style.color = (limit > 0 && gxa >= limit) ? '#ff453a' : 'var(--success)'; }
             if (gxl) gxl.textContent = gxw >= 0 ? 'Gust XW (Right)' : 'Gust XW (Left)';
         }
@@ -2613,7 +2612,7 @@ function cwUpdateStats() {
     }
 }
 
-// â”€â”€ Event handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Event handlers ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function cwOnSpeedChange(val) {
     _cw.wspd = parseInt(val) || 0;
     const wspdInp = document.getElementById('cw-wspd');
@@ -2634,7 +2633,7 @@ function cwOnLimitChange(val) {
     cwDraw(); cwUpdateStats();
 }
 
-// â”€â”€ Drag interaction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Drag interaction ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function cwBindDrag(canvas) {
     function getClientPos(e) {
         return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
@@ -2705,7 +2704,7 @@ function cwBindDrag(canvas) {
     window.addEventListener('touchend',   onEnd);
 }
 
-// â”€â”€ TYPE-IN mode calculation (unchanged logic, new container IDs) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ TYPE-IN mode calculation (unchanged logic, new container IDs) ?€?€?€?€?€?€?€?€?€
 function calcCrosswind() {
     const rwyRaw  = document.getElementById('cw-rwy')?.value.trim();
     const wdirRaw = document.getElementById('cw-wdir')?.value.trim();
@@ -2747,7 +2746,7 @@ function calcCrosswind() {
     const hwEl = document.getElementById('cw-hw'), hwLbl = document.getElementById('cw-hw-lbl');
     const xwEl = document.getElementById('cw-xw'), xwLbl = document.getElementById('cw-xw-lbl');
     if (hwEl)  { hwEl.textContent = Math.abs(headwind).toFixed(1); hwEl.style.color = headwind < 0 ? '#ff453a' : 'var(--accent)'; }
-    if (hwLbl) hwLbl.textContent = headwind >= 0 ? 'Headwind' : 'Tailwind âš ï¸';
+    if (hwLbl) hwLbl.textContent = headwind >= 0 ? 'Headwind' : 'Tailwind ? ï?';
     if (xwEl)  { xwEl.textContent = xwAbs.toFixed(1); xwEl.style.color = limit>0 && xwAbs>=limit ? '#ff453a' : limit>0 && xwAbs>=limit*0.85 ? '#ff9f0a' : 'var(--success)'; }
     if (xwLbl) xwLbl.textContent = crosswind >= 0 ? 'Crosswind (from right)' : 'Crosswind (from left)';
 
@@ -2758,7 +2757,7 @@ function calcCrosswind() {
         const ghe = document.getElementById('cw-ghw'), ghl = document.getElementById('cw-ghw-lbl');
         const gxe = document.getElementById('cw-gxw'), gxl = document.getElementById('cw-gxw-lbl');
         if (ghe) { ghe.textContent = Math.abs(gustHW).toFixed(1); ghe.style.color = gustHW < 0 ? '#ff453a' : '#e8a020'; }
-        if (ghl) ghl.textContent = gustHW >= 0 ? 'Gust Headwind' : 'Gust Tailwind âš ï¸';
+        if (ghl) ghl.textContent = gustHW >= 0 ? 'Gust Headwind' : 'Gust Tailwind ? ï?';
         if (gxe) { gxe.textContent = gxa.toFixed(1); gxe.style.color = limit>0 && gxa>=limit ? '#ff453a' : '#e8a020'; }
         if (gxl) gxl.textContent = gustXW >= 0 ? 'Gust XW (from right)' : 'Gust XW (from left)';
     } else if (gustRow) { gustRow.style.display = 'none'; }
@@ -2767,13 +2766,13 @@ function calcCrosswind() {
     if (statusEl) {
         const checkXW = gustHW !== null ? Math.abs(gustXW) : xwAbs;
         if (limit > 0 && checkXW >= limit) {
-            statusEl.textContent = `âœ— NO-GO â€” Crosswind ${checkXW.toFixed(1)} kt exceeds ${limit} kt limit`;
+            statusEl.textContent = `??NO-GO ??Crosswind ${checkXW.toFixed(1)} kt exceeds ${limit} kt limit`;
             statusEl.style.cssText = 'text-align:center;padding:12px;border-radius:10px;font-size:15px;font-weight:800;letter-spacing:0.5px;margin-bottom:12px;background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.5);color:#ff453a;';
         } else if (headwind < 0) {
-            statusEl.textContent = `âš ï¸ TAILWIND â€” ${Math.abs(headwind).toFixed(1)} kt â€” Check POH limits`;
+            statusEl.textContent = `? ï? TAILWIND ??${Math.abs(headwind).toFixed(1)} kt ??Check POH limits`;
             statusEl.style.cssText = 'text-align:center;padding:12px;border-radius:10px;font-size:15px;font-weight:800;letter-spacing:0.5px;margin-bottom:12px;background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.5);color:#ff9f0a;';
         } else if (limit > 0) {
-            statusEl.textContent = `âœ“ GO â€” Crosswind ${xwAbs.toFixed(1)} kt within ${limit} kt limit`;
+            statusEl.textContent = `??GO ??Crosswind ${xwAbs.toFixed(1)} kt within ${limit} kt limit`;
             statusEl.style.cssText = 'text-align:center;padding:12px;border-radius:10px;font-size:15px;font-weight:800;letter-spacing:0.5px;margin-bottom:12px;background:rgba(50,215,75,0.12);border:1px solid rgba(50,215,75,0.4);color:var(--success);';
         } else {
             statusEl.textContent = `Crosswind ${xwAbs.toFixed(1)} kt Â· ${headwind>=0?'Headwind':'Tailwind'} ${Math.abs(headwind).toFixed(1)} kt`;
@@ -2819,16 +2818,16 @@ function cwDrawDiagram(rwyHdg, windDir, windSpd, gust) {
 const AM_DATA = [
     {
         cls: 'A', color: '#ff453a',
-        altitude: 'FL180 â€“ FL600',
+        altitude: 'FL180 ??FL600',
         chart: { color: 'Not depicted on VFR sectionals', stroke: 'none', shape: 'IFR en-route charts only (blue horizontal lines)' },
         qualifications: ['Instrument Rating required', 'IFR flight plan filed & ATC clearance', 'Mode C transponder & encoder', 'RVSM equipment above FL290'],
-        special: 'IFR ONLY â€” VFR flight is not permitted in Class A airspace.',
+        special: 'IFR ONLY ??VFR flight is not permitted in Class A airspace.',
         rows: []
     },
     {
         cls: 'B', color: '#0a84ff',
-        altitude: 'SFC â€“ 10,000 ft MSL (individually tailored)',
-        chart: { color: 'Solid blue lines', stroke: 'solid', shape: 'Inverted wedding cake â€” multiple arcs around busiest airports (e.g. LAX, JFK, ORD)' },
+        altitude: 'SFC ??10,000 ft MSL (individually tailored)',
+        chart: { color: 'Solid blue lines', stroke: 'solid', shape: 'Inverted wedding cake ??multiple arcs around busiest airports (e.g. LAX, JFK, ORD)' },
         qualifications: ['Student Pilot Certificate minimum (with endorsement)', 'Explicit ATC clearance required ("cleared into Bravo")', 'Two-way radio communication', 'Mode C transponder within 30 NM of Bravo airport', 'Sport/Rec pilots need specific endorsement'],
         rows: [
             { modes: ['day','night'], label: 'All operations', vis: '3 SM', cloud: 'Clear of clouds' }
@@ -2836,27 +2835,27 @@ const AM_DATA = [
     },
     {
         cls: 'C', color: '#ff6b8a',
-        altitude: 'SFC â€“ 4,000 ft AGL (approx.)',
-        chart: { color: 'Solid magenta lines', stroke: 'solid', shape: 'Two concentric solid magenta circles â€” inner 5 NM (SFC), outer 10 NM (1,200 ft AGL floor)' },
-        qualifications: ['Any certificated pilot (student solo needs logbook endorsement)', 'Two-way radio contact established before entry â€” not a clearance', 'Mode C transponder required', 'No explicit ATC clearance needed'],
+        altitude: 'SFC ??4,000 ft AGL (approx.)',
+        chart: { color: 'Solid magenta lines', stroke: 'solid', shape: 'Two concentric solid magenta circles ??inner 5 NM (SFC), outer 10 NM (1,200 ft AGL floor)' },
+        qualifications: ['Any certificated pilot (student solo needs logbook endorsement)', 'Two-way radio contact established before entry ??not a clearance', 'Mode C transponder required', 'No explicit ATC clearance needed'],
         rows: [
             { modes: ['day','night'], label: 'All altitudes', vis: '3 SM', cloud: '500 below Â· 1,000 above Â· 2,000 horiz' }
         ]
     },
     {
         cls: 'D', color: '#5ac8fa',
-        altitude: 'SFC â€“ 2,500 ft AGL (approx.)',
+        altitude: 'SFC ??2,500 ft AGL (approx.)',
         chart: { color: 'Dashed blue lines', stroke: 'dashed', shape: 'Single dashed blue circle (or rectangle) around tower-controlled airport' },
-        qualifications: ['Any certificated pilot (student solo needs logbook endorsement)', 'Two-way radio contact established before entry', 'No transponder required (Mode C veil may apply nearby)', 'No ATC clearance â€” contact suffices'],
+        qualifications: ['Any certificated pilot (student solo needs logbook endorsement)', 'Two-way radio contact established before entry', 'No transponder required (Mode C veil may apply nearby)', 'No ATC clearance ??contact suffices'],
         rows: [
             { modes: ['day','night'], label: 'All altitudes', vis: '3 SM', cloud: '500 below Â· 1,000 above Â· 2,000 horiz' }
         ]
     },
     {
         cls: 'E', color: '#bf5af2',
-        altitude: 'Varies (700/1,200 ft AGL â€“ FL180)',
+        altitude: 'Varies (700/1,200 ft AGL ??FL180)',
         chart: { color: 'Magenta vignette / dashed magenta', stroke: 'vignette', shape: 'Dashed magenta circle = surface E. Faded magenta edge (vignette) = 700 ft AGL floor. No marking = 1,200 ft AGL floor' },
-        qualifications: ['Any certificated pilot â€” no special requirements for VFR', 'Student pilots may fly solo', 'No radio, transponder, or ATC clearance required for VFR', 'IFR requires ATC clearance'],
+        qualifications: ['Any certificated pilot ??no special requirements for VFR', 'Student pilots may fly solo', 'No radio, transponder, or ATC clearance required for VFR', 'IFR requires ATC clearance'],
         rows: [
             { modes: ['day','night'], label: 'Below 10,000 ft MSL',    vis: '3 SM', cloud: '500 below Â· 1,000 above Â· 2,000 horiz' },
             { modes: ['day','night'], label: 'At/above 10,000 ft MSL', vis: '5 SM', cloud: '1,000 below Â· 1,000 above Â· 1 SM horiz' }
@@ -2864,12 +2863,12 @@ const AM_DATA = [
     },
     {
         cls: 'G', color: '#ffd60a',
-        altitude: 'SFC â€“ base of overlying Class E',
+        altitude: 'SFC ??base of overlying Class E',
         chart: { color: 'No marking (white space on sectional)', stroke: 'none', shape: 'Depicted by absence of Class E markings. Fills all remaining uncontrolled airspace.' },
-        qualifications: ['All pilots â€” most permissive airspace', 'Student pilots may fly solo without endorsement', 'No radio, transponder, or ATC clearance required', 'No ATC separation provided'],
+        qualifications: ['All pilots ??most permissive airspace', 'Student pilots may fly solo without endorsement', 'No radio, transponder, or ATC clearance required', 'No ATC separation provided'],
         rows: [
             { modes: ['day'],         label: 'Day Â· Below 1,200 ft AGL',               vis: '1 SM',  cloud: 'Clear of clouds' },
-            { modes: ['night'],       label: 'Night Â· Below 1,200 ft AGL âš ï¸',           vis: '3 SM',  cloud: '500 below Â· 1,000 above Â· 2,000 horiz' },
+            { modes: ['night'],       label: 'Night Â· Below 1,200 ft AGL ? ï?',           vis: '3 SM',  cloud: '500 below Â· 1,000 above Â· 2,000 horiz' },
             { modes: ['day'],         label: 'Day Â· 1,200 ft AGL to 10,000 ft MSL',    vis: '1 SM',  cloud: '500 below Â· 1,000 above Â· 2,000 horiz' },
             { modes: ['night'],       label: 'Night Â· 1,200 ft AGL to 10,000 ft MSL',  vis: '3 SM',  cloud: '500 below Â· 1,000 above Â· 2,000 horiz' },
             { modes: ['day','night'], label: 'At/above 10,000 ft MSL',                 vis: '5 SM',  cloud: '1,000 below Â· 1,000 above Â· 1 SM horiz' }
@@ -2950,7 +2949,7 @@ function amRender() {
         const c = d.color;
         const textColor = d.cls === 'G' ? '#000' : '#fff';
 
-        // Chart appearance mini-badge â€” matches actual sectional symbology
+        // Chart appearance mini-badge ??matches actual sectional symbology
         let chartBadge;
         switch (d.cls) {
             case 'A':
@@ -2960,7 +2959,7 @@ function amRender() {
                 </svg>`;
                 break;
             case 'B':
-                // Solid thick blue bar â€” matches sectional solid blue line
+                // Solid thick blue bar ??matches sectional solid blue line
                 chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
                     <rect width="64" height="22" rx="4" fill="#070f1a"/>
                     <rect x="6" y="7" width="52" height="8" rx="1.5" fill="#1a6fba"/>
@@ -2968,7 +2967,7 @@ function amRender() {
                 </svg>`;
                 break;
             case 'C':
-                // Solid thick magenta/crimson bar â€” matches sectional solid magenta line
+                // Solid thick magenta/crimson bar ??matches sectional solid magenta line
                 chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
                     <rect width="64" height="22" rx="4" fill="#120a0e"/>
                     <rect x="6" y="7" width="52" height="8" rx="1.5" fill="#8b1a42"/>
@@ -2976,7 +2975,7 @@ function amRender() {
                 </svg>`;
                 break;
             case 'D':
-                // Dashed blue line â€” matches sectional dashed blue circle
+                // Dashed blue line ??matches sectional dashed blue circle
                 chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
                     <rect width="64" height="22" rx="4" fill="#070f1a"/>
                     <line x1="6" y1="11" x2="58" y2="11" stroke="#1a6fba" stroke-width="3" stroke-dasharray="6,4" stroke-linecap="round"/>
@@ -3009,7 +3008,7 @@ function amRender() {
                 </svg>`;
                 break;
             case 'G':
-                // "CLASS G" bold text â€” matches the sectional label treatment
+                // "CLASS G" bold text ??matches the sectional label treatment
                 chartBadge = `<svg width="64" height="22" viewBox="0 0 64 22" xmlns="http://www.w3.org/2000/svg">
                     <rect width="64" height="22" rx="4" fill="#f5f5ee"/>
                     <text x="32" y="15" text-anchor="middle" fill="#1a5fa8" font-size="9.5" font-family="Arial,sans-serif" font-weight="900" letter-spacing="0.3">CLASS G</text>
@@ -3022,7 +3021,7 @@ function amRender() {
         // Qualifications bullets
         const qualHtml = d.qualifications.map(q =>
             `<div style="display:flex; gap:6px; align-items:flex-start; margin-bottom:5px;">
-                <span style="color:${c}; font-size:10px; margin-top:1px; flex-shrink:0;">â–¸</span>
+                <span style="color:${c}; font-size:10px; margin-top:1px; flex-shrink:0;">??/span>
                 <span style="font-size:11px; color:#aaa; line-height:1.45;">${q}</span>
             </div>`
         ).join('');
@@ -3039,7 +3038,7 @@ function amRender() {
                 </div>
                 <div style="padding:14px 16px; background:#0a0a0c; display:flex; flex-direction:column; gap:12px;">
                     <div style="display:flex; align-items:center; gap:10px; background:${c}15; border:1px solid ${c}33; border-radius:8px; padding:11px 14px;">
-                        <span style="font-size:18px; flex-shrink:0;">ğŸš«</span>
+                        <span style="font-size:18px; flex-shrink:0;">?š«</span>
                         <span style="font-size:12px; color:${c}; font-weight:700; line-height:1.4;">${d.special}</span>
                     </div>
                     <div style="background:#111; border-radius:8px; padding:10px 12px; border:1px solid #1e1e1e;">
@@ -3085,7 +3084,7 @@ function amRender() {
                     <div style="flex-shrink:0; margin-top:1px;">${chartBadge}</div>
                     <div style="flex:1; min-width:0;">
                         <div style="font-size:9px; color:#555; font-weight:700; letter-spacing:0.5px; margin-bottom:2px;">SECTIONAL CHART</div>
-                        <div style="font-size:11px; color:#888; line-height:1.4;">${d.chart.color} â€” ${d.chart.shape}</div>
+                        <div style="font-size:11px; color:#888; line-height:1.4;">${d.chart.color} ??${d.chart.shape}</div>
                     </div>
                 </div>
                 <!-- Weather rows -->
@@ -3109,7 +3108,7 @@ function amCloudSVG(cloud) {
 
     if (isClear) {
         return `<div style="margin:8px 0 2px; padding:10px 12px; background:#0d1f0d; border-radius:8px; border:1px solid #1a3a1a; text-align:center;">
-            <span style="font-size:11px; color:#32d74b; font-weight:700; letter-spacing:0.4px;">CLEAR OF CLOUDS â€” no separation required</span>
+            <span style="font-size:11px; color:#32d74b; font-weight:700; letter-spacing:0.4px;">CLEAR OF CLOUDS ??no separation required</span>
         </div>`;
     }
 
@@ -3117,19 +3116,19 @@ function amCloudSVG(cloud) {
         <div style="font-size:9px; color:#3a3a3a; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;">CLEARANCE DIAGRAM</div>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 132" width="100%" style="display:block; overflow:visible;">
           <defs>
-            <!-- Cloud body gradient â€” top cloud -->
+            <!-- Cloud body gradient ??top cloud -->
             <radialGradient id="acg-t" cx="48%" cy="38%" r="62%">
               <stop offset="0%"   stop-color="#3e5580"/>
               <stop offset="55%"  stop-color="#1e2e4a"/>
               <stop offset="100%" stop-color="#0e1624" stop-opacity="0.55"/>
             </radialGradient>
-            <!-- Cloud body gradient â€” bottom cloud (flipped) -->
+            <!-- Cloud body gradient ??bottom cloud (flipped) -->
             <radialGradient id="acg-b" cx="48%" cy="62%" r="62%">
               <stop offset="0%"   stop-color="#3e5580"/>
               <stop offset="55%"  stop-color="#1e2e4a"/>
               <stop offset="100%" stop-color="#0e1624" stop-opacity="0.55"/>
             </radialGradient>
-            <!-- Cloud body gradient â€” side cloud -->
+            <!-- Cloud body gradient ??side cloud -->
             <radialGradient id="acg-s" cx="48%" cy="38%" r="62%">
               <stop offset="0%"   stop-color="#3e5580"/>
               <stop offset="55%"  stop-color="#1e2e4a"/>
@@ -3149,7 +3148,7 @@ function amCloudSVG(cloud) {
             </filter>
           </defs>
 
-          <!-- â•â• CLOUD ABOVE â•â• -->
+          <!-- ?â? CLOUD ABOVE ?â? -->
           <g filter="url(#acf-cld)">
             <!-- depth shadow -->
             <ellipse cx="83" cy="22" rx="32" ry="11" fill="#090e18" opacity="0.6"/>
@@ -3168,7 +3167,7 @@ function amCloudSVG(cloud) {
             <text x="82" y="16" text-anchor="middle" fill="#6888b8" font-size="7" font-family="monospace" font-weight="700" letter-spacing="0.8">CLOUD</text>
           </g>
 
-          <!-- â•â• VERTICAL MEASURE â€” above aircraft â•â• -->
+          <!-- ?â? VERTICAL MEASURE ??above aircraft ?â? -->
           <line x1="82" y1="28" x2="82" y2="52" stroke="#ff9f0a" stroke-width="1.2" stroke-dasharray="3,2.5" opacity="0.9"/>
           <!-- tick marks -->
           <line x1="78" y1="28" x2="86" y2="28" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
@@ -3176,19 +3175,19 @@ function amCloudSVG(cloud) {
           <text x="91" y="39" fill="#ff9f0a" font-size="9.5" font-family="monospace" font-weight="800">${belowLbl}</text>
           <text x="91" y="51" fill="#4a5060"  font-size="8"   font-family="monospace">below</text>
 
-          <!-- â•â• AIRCRAFT (diamond.png) â•â• -->
+          <!-- ?â? AIRCRAFT (diamond.png) ?â? -->
           <g filter="url(#acf-plane)">
             <image href="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/diamond.png" x="69" y="52" width="26" height="26" opacity="0.97"/>
           </g>
 
-          <!-- â•â• VERTICAL MEASURE â€” below aircraft â•â• -->
+          <!-- ?â? VERTICAL MEASURE ??below aircraft ?â? -->
           <line x1="82" y1="80" x2="82" y2="104" stroke="#ff9f0a" stroke-width="1.2" stroke-dasharray="3,2.5" opacity="0.9"/>
           <line x1="78" y1="80"  x2="86" y2="80"  stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
           <line x1="78" y1="104" x2="86" y2="104" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
           <text x="91" y="91"  fill="#ff9f0a" font-size="9.5" font-family="monospace" font-weight="800">${aboveLbl}</text>
           <text x="91" y="102" fill="#4a5060"  font-size="8"   font-family="monospace">above</text>
 
-          <!-- â•â• CLOUD BELOW â•â• -->
+          <!-- ?â? CLOUD BELOW ?â? -->
           <g filter="url(#acf-cld)">
             <ellipse cx="83" cy="110" rx="32" ry="11" fill="#090e18" opacity="0.6"/>
             <ellipse cx="62"  cy="111" rx="22" ry="10" fill="url(#acg-b)"/>
@@ -3202,14 +3201,14 @@ function amCloudSVG(cloud) {
             <text x="82" y="118" text-anchor="middle" fill="#6888b8" font-size="7" font-family="monospace" font-weight="700" letter-spacing="0.8">CLOUD</text>
           </g>
 
-          <!-- â•â• HORIZONTAL MEASURE â€” side cloud â•â• -->
+          <!-- ?â? HORIZONTAL MEASURE ??side cloud ?â? -->
           <line x1="120" y1="65" x2="222" y2="65" stroke="#ff9f0a" stroke-width="1.2" stroke-dasharray="3,2.5" opacity="0.9"/>
           <line x1="120" y1="61" x2="120" y2="69" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
           <line x1="222" y1="61" x2="222" y2="69" stroke="#ff9f0a" stroke-width="1" opacity="0.7"/>
           <text x="171" y="58" text-anchor="middle" fill="#ff9f0a" font-size="9.5" font-family="monospace" font-weight="800">${horizLbl}</text>
           <text x="171" y="76" text-anchor="middle" fill="#4a5060"  font-size="8"   font-family="monospace">horizontal</text>
 
-          <!-- â•â• SIDE CLOUD â•â• -->
+          <!-- ?â? SIDE CLOUD ?â? -->
           <g filter="url(#acf-cld)">
             <ellipse cx="250" cy="66" rx="28" ry="11" fill="#090e18" opacity="0.6"/>
             <ellipse cx="234" cy="63" rx="20" ry="10" fill="url(#acg-s)"/>
@@ -3282,7 +3281,7 @@ function setMorseMode(mode) {
     }
 }
 
-// â”€â”€ LEARN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ LEARN ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function renderMorseTable(filter = '', cat = 'all') {
     const grid = document.getElementById('morseTableGrid');
     if (!grid) return;
@@ -3307,7 +3306,7 @@ function filterMorseTable(val) {
     renderMorseTable(val, cat);
 }
 
-// â”€â”€ AUDIO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ AUDIO ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function getMorseAudioCtx() {
     if (!_morseAudioCtx) _morseAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (_morseAudioCtx.state === 'suspended') _morseAudioCtx.resume();
@@ -3338,7 +3337,7 @@ function playMorseChar(char) {
     if (code) playMorse(code);
 }
 
-// â”€â”€ LISTEN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ LISTEN ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function newMorseListenChar() {
     const keys = Object.keys(MORSE_TABLE);
     _morseListenChar = keys[Math.floor(Math.random() * keys.length)];
@@ -3360,16 +3359,16 @@ function checkMorseListenAnswer(val) {
     const disp = document.getElementById('morseListenDisplay');
     const inp = document.getElementById('morseListenInput');
     if (val.toUpperCase() === _morseListenChar) {
-        if (fb) { fb.textContent = 'âœ“ Correct! â€” ' + MORSE_TABLE[_morseListenChar]; fb.style.color = 'var(--success)'; }
+        if (fb) { fb.textContent = '??Correct! ??' + MORSE_TABLE[_morseListenChar]; fb.style.color = 'var(--success)'; }
         if (disp) disp.textContent = _morseListenChar;
         setTimeout(() => { newMorseListenChar(); if (inp) inp.value = ''; }, 1200);
     } else if (val.length >= 1) {
-        if (fb) { fb.textContent = 'âœ— Try again'; fb.style.color = 'var(--danger)'; }
+        if (fb) { fb.textContent = '??Try again'; fb.style.color = 'var(--danger)'; }
         setTimeout(() => { if (inp) inp.value = ''; }, 400);
     }
 }
 
-// â”€â”€ QUIZ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ QUIZ ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function startMorseQuiz() {
     _morseScore = 0; _morseStreak = 0; _morseQNum = 0;
     updateMorseQuizStats();
@@ -3398,7 +3397,7 @@ function nextMorseQuiz() {
     if (fb) { fb.textContent = ''; }
     if (nextBtn) nextBtn.style.display = 'none';
 
-    // Decide question direction (50/50): charâ†’code or codeâ†’char
+    // Decide question direction (50/50): char?’code or code?’char
     const mode = Math.random() > 0.5 ? 'char2code' : 'code2char';
     const correct = MORSE_TABLE[_morseQuizChar];
 
@@ -3432,12 +3431,12 @@ function answerMorseQuiz(chosen, correct, mode) {
 
     if (chosen === correct) {
         _morseScore++; _morseStreak++;
-        if (fb) { fb.textContent = 'âœ“ Correct!'; fb.style.color = 'var(--success)'; }
+        if (fb) { fb.textContent = '??Correct!'; fb.style.color = 'var(--success)'; }
         opts.forEach(b => { if (b.textContent.trim() === correct) b.style.background = 'rgba(48,209,88,0.2)'; });
         playMorseChar(_morseQuizChar);
     } else {
         _morseStreak = 0;
-        if (fb) { fb.textContent = `âœ— It was: ${correct}`; fb.style.color = 'var(--danger)'; }
+        if (fb) { fb.textContent = `??It was: ${correct}`; fb.style.color = 'var(--danger)'; }
         opts.forEach(b => {
             if (b.textContent.trim() === chosen) b.style.background = 'rgba(255,69,58,0.2)';
             if (b.textContent.trim() === correct) b.style.background = 'rgba(48,209,88,0.15)';
@@ -3452,7 +3451,7 @@ function answerMorseQuiz(chosen, correct, mode) {
 
 function playMorseQuizHint() { playMorseChar(_morseQuizChar); }
 
-// â”€â”€ WORDS MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ WORDS MODE ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 const MORSE_WORD_LISTS = {
     aviation: [
         'METAR','ATIS','SIGMET','AIRMET','NOTAM','TACAN','VORTAC',
@@ -3539,7 +3538,7 @@ function playWordsCustom() {
     if (!val) return;
     _morseCurrentWord = val;
     const disp = document.getElementById('morseWordsDisplay');
-    if (disp) disp.innerHTML = '<span style="font-size:32px;letter-spacing:6px;font-family:\'SF Mono\',monospace;color:#666;font-weight:900;">â–¶ Playing...</span>';
+    if (disp) disp.innerHTML = '<span style="font-size:32px;letter-spacing:6px;font-family:\'SF Mono\',monospace;color:#666;font-weight:900;">??Playing...</span>';
     playMorseWord();
 }
 
@@ -3551,7 +3550,7 @@ function checkMorseWordAnswer(inp) {
     if (val === _morseCurrentWord) {
         _morseWordsScore++;
         updateWordsScore();
-        if (fb) { fb.textContent = `âœ“ Correct! â€” ${_morseCurrentWord}`; fb.style.color = '#30d158'; }
+        if (fb) { fb.textContent = `??Correct! ??${_morseCurrentWord}`; fb.style.color = '#30d158'; }
         if (disp) disp.innerHTML = `<span style="font-size:28px;letter-spacing:4px;font-family:'SF Mono',monospace;color:#30d158;font-weight:900;">${_morseCurrentWord}</span>`;
         setTimeout(() => { inp.value = ''; newMorseWord(); }, 1400);
     }
@@ -3581,7 +3580,7 @@ function init160Rule() {
     set160Topic('course');
 }
 
-/* â”€â”€ Topic & mode navigation â”€â”€ */
+/* ?€?€ Topic & mode navigation ?€?€ */
 function set160Topic(t) {
     _160.topic = t;
     ['course','wind','tod','rod','tri','alt'].forEach(id => {
@@ -3600,7 +3599,7 @@ function set160Mode(m) {
     render160();
 }
 
-/* â”€â”€ Master renderer â”€â”€ */
+/* ?€?€ Master renderer ?€?€ */
 function render160() {
     const el = document.getElementById('r60Content');
     if (!el) return;
@@ -3618,7 +3617,7 @@ function render160() {
     if (key === 'tri_calc') renderTriInputs();
 }
 
-/* â”€â”€ Helpers â”€â”€ */
+/* ?€?€ Helpers ?€?€ */
 function _card(title, body) { return `<div style="background:#111;border:1px solid #333;border-radius:10px;padding:14px;margin-bottom:12px;"><div style="font-weight:800;font-size:13px;margin-bottom:8px;color:#e8a020;">${title}</div><div style="font-size:12px;color:#ccc;line-height:1.7;">${body}</div></div>`; }
 function _formula(f) { return `<div style="background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 14px;margin:8px 0;font-family:'SF Mono',monospace;font-size:13px;color:#e8a020;text-align:center;font-weight:700;">${f}</div>`; }
 function _inp(id, ph, w) { return `<input id="${id}" type="number" placeholder="${ph}" style="width:${w||'100%'};background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">`; }
@@ -3628,17 +3627,17 @@ function _rand(a,b) { return Math.floor(Math.random()*(b-a+1))+a; }
 // ========================= COURSE CORRECTION =========================
 
 function r60_courseRef() {
-    return _card('1:60 Rule â€” Basic Principle',
+    return _card('1:60 Rule ??Basic Principle',
         'For small angles (< 15Â°), 1Â° off course at 60 NM = 1 NM displacement.<br><br>' +
-        _formula('sin Î¸ â‰ˆ tan Î¸ â‰ˆ Î¸ / 60 &nbsp; (Î¸ in degrees)') +
-        'At any distance: <b>Î¸Â°</b> off course at <b>D</b> NM = <b>D Ã— Î¸ / 60</b> NM displacement.'
+        _formula('sin Î¸ ??tan Î¸ ??Î¸ / 60 &nbsp; (Î¸ in degrees)') +
+        'At any distance: <b>Î¸Â°</b> off course at <b>D</b> NM = <b>D ? Î¸ / 60</b> NM displacement.'
     ) +
     _card('Track Error (TE)',
-        _formula('TE = (Distance Off Ã— 60) / Distance Flown') +
+        _formula('TE = (Distance Off ? 60) / Distance Flown') +
         'TE tells you how many degrees you have drifted from the planned course.'
     ) +
     _card('Closing Angle (CA)',
-        _formula('CA = (Distance Off Ã— 60) / Distance Remaining') +
+        _formula('CA = (Distance Off ? 60) / Distance Remaining') +
         'CA is the angle needed to fly from current position to the destination.'
     ) +
     _card('Direct to Waypoint',
@@ -3646,9 +3645,9 @@ function r60_courseRef() {
         '1. Calculate TE from distance flown<br>2. Calculate CA from distance remaining<br>3. Add both for total heading change toward the destination.'
     ) +
     _card('Double Track Error',
-        _formula('Heading Change = 2 Ã— TE') +
+        _formula('Heading Change = 2 ? TE') +
         'Used when you want to regain the <b>original course line</b> (not fly direct to destination).<br>' +
-        'Fly the corrected heading for the <b>same distance</b> already flown, then reduce correction to 1 Ã— TE to maintain course.'
+        'Fly the corrected heading for the <b>same distance</b> already flown, then reduce correction to 1 ? TE to maintain course.'
     );
 }
 
@@ -3689,26 +3688,26 @@ function calcCourse160() {
             html += `<b>Direct-to heading change (TE + CA):</b> ${(te + ca).toFixed(1)}Â°`;
         }
     } else {
-        html = '<span style="color:#555;">Enter values above to calculateâ€¦</span>';
+        html = '<span style="color:#555;">Enter values above to calculate??/span>';
     }
     el.innerHTML = html;
 }
 
 function r60_courseExample() {
-    return _card('Example â€” Oxford to Cambridge',
+    return _card('Example ??Oxford to Cambridge',
         '<b>Given:</b> Course 074Â°M, Distance 70 NM, Heading 065Â°M.<br>After 30 NM, pinpointed 4 NM left of track at Cranfield.<br><br>' +
-        '<b>Step 1 â€” Track Error:</b>' + _formula('TE = (4 Ã— 60) / 30 = 8Â° Left') +
-        '<b>Step 2 â€” TMG:</b> 074Â° âˆ’ 8Â° = 066Â°M<br><br>' +
-        '<b>Step 3 â€” Closing Angle:</b> Distance remaining = 70 âˆ’ 30 = 40 NM' + _formula('CA = (4 Ã— 60) / 40 = 6Â°') +
-        '<b>Step 4 â€” Heading Change:</b>' + _formula('TE + CA = 8Â° + 6Â° = 14Â° Right') +
+        '<b>Step 1 ??Track Error:</b>' + _formula('TE = (4 ? 60) / 30 = 8Â° Left') +
+        '<b>Step 2 ??TMG:</b> 074Â° ??8Â° = 066Â°M<br><br>' +
+        '<b>Step 3 ??Closing Angle:</b> Distance remaining = 70 ??30 = 40 NM' + _formula('CA = (4 ? 60) / 40 = 6Â°') +
+        '<b>Step 4 ??Heading Change:</b>' + _formula('TE + CA = 8Â° + 6Â° = 14Â° Right') +
         '<b>New Heading:</b> 065Â° + 14Â° = <b style="color:#30d158;">079Â°M</b>'
     ) +
-    _card('Example â€” Double Track Error',
-        '<b>Given:</b> Route Xâ†’Y, 60 NM, GS 90 kt. Depart 0940.<br>At 0956, fixed 4 NM right of track.<br><br>' +
-        '<b>Time flown:</b> 16 min â†’ Distance = 90 Ã— 16/60 = 24 NM<br>' +
-        '<b>TE:</b> (4 Ã— 60) / 24 = <b>10Â° Right</b><br><br>' +
-        '<b>Correction:</b> 2 Ã— TE = <b>20Â° Left</b><br>' +
-        '<b>Fly for:</b> same time (16 min) â†’ regain track at <b>1012</b><br>' +
+    _card('Example ??Double Track Error',
+        '<b>Given:</b> Route X?’Y, 60 NM, GS 90 kt. Depart 0940.<br>At 0956, fixed 4 NM right of track.<br><br>' +
+        '<b>Time flown:</b> 16 min ??Distance = 90 ? 16/60 = 24 NM<br>' +
+        '<b>TE:</b> (4 ? 60) / 24 = <b>10Â° Right</b><br><br>' +
+        '<b>Correction:</b> 2 ? TE = <b>20Â° Left</b><br>' +
+        '<b>Fly for:</b> same time (16 min) ??regain track at <b>1012</b><br>' +
         '<b>Then:</b> turn <b>10Â° Right</b> to maintain course.'
     );
 }
@@ -3721,26 +3720,26 @@ function r60_courseQuiz() {
 
 function r60_windRef() {
     return _card('Crosswind Component (CWC)',
-        _formula('CWC = Wind Speed Ã— sin(Wind Angle)') +
-        '<b>Quick sine table</b> (wind angle â†’ factor):<br>' +
+        _formula('CWC = Wind Speed ? sin(Wind Angle)') +
+        '<b>Quick sine table</b> (wind angle ??factor):<br>' +
         '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;text-align:center;font-size:11px;">' +
-        ['10Â°â†’0.2','20Â°â†’0.3','30Â°â†’0.5','40Â°â†’0.6','50Â°â†’0.7','60Â°â†’0.8','70Â°â†’0.9','80Â°â†’1.0','90Â°â†’1.0',''].map(s =>
+        ['10Â°??.2','20Â°??.3','30Â°??.5','40Â°??.6','50Â°??.7','60Â°??.8','70Â°??.9','80Â°??.0','90Â°??.0',''].map(s =>
             s ? `<span style="background:#1a1a1a;border-radius:4px;padding:4px;">${s}</span>` : '<span></span>'
         ).join('') + '</div>'
     ) +
     _card('Wind Correction Angle (WCA)',
-        _formula('WCA = (CWC Ã— 60) / TAS') +
+        _formula('WCA = (CWC ? 60) / TAS') +
         'Apply WCA <b>into</b> the wind: if wind from left, correct left.'
     ) +
     _card('Ground Speed (GS)',
-        _formula('LWC = Wind Speed Ã— cos(Wind Angle)') +
+        _formula('LWC = Wind Speed ? cos(Wind Angle)') +
         _formula('GS = TAS Â± LWC') +
         'Headwind: subtract. Tailwind: add.<br>' +
-        '<b>Quick cosine:</b> cos Î¸ = sin(90Â° âˆ’ Î¸)'
+        '<b>Quick cosine:</b> cos Î¸ = sin(90Â° ??Î¸)'
     ) +
     _card('Sine Shortcut',
-        'For mental math: <b>sin(NÂ°) â‰ˆ (NÃ·10 + 2) / 10</b><br>' +
-        'Works for 10Â°â€“80Â°. Examples: sin 30 = (3+2)/10 = 0.5 âœ“'
+        'For mental math: <b>sin(NÂ°) ??(NÃ·10 + 2) / 10</b><br>' +
+        'Works for 10Â°??0Â°. Examples: sin 30 = (3+2)/10 = 0.5 ??
     );
 }
 
@@ -3764,7 +3763,7 @@ function calcWind160() {
     const tas = parseFloat(document.getElementById('r60_tas')?.value);
     const el = document.getElementById('r60_windResult');
     if (!el) return;
-    if (isNaN(rwy) || isNaN(wDir) || isNaN(wSpd)) { el.innerHTML = '<span style="color:#555;">Enter values aboveâ€¦</span>'; return; }
+    if (isNaN(rwy) || isNaN(wDir) || isNaN(wSpd)) { el.innerHTML = '<span style="color:#555;">Enter values above??/span>'; return; }
     let ww = wDir - rwy;
     if (ww > 180) ww -= 360;
     if (ww < -180) ww += 360;
@@ -3788,20 +3787,20 @@ function calcWind160() {
 }
 
 function r60_windExample() {
-    return _card('Example â€” Downwind Leg RWY 19',
+    return _card('Example ??Downwind Leg RWY 19',
         '<b>Given:</b> Course 010Â°M (downwind RWY 19), TAS 100 kt, Wind 230Â°/10 kt.<br><br>' +
-        '<b>Wind Angle:</b> 230Â° âˆ’ 010Â° = 220Â° â†’ use 360Â° âˆ’ 220Â° = <b>40Â°</b> (from left)<br><br>' +
-        '<b>CWC:</b> 10 Ã— sin(40Â°) = 10 Ã— 0.6 = <b>6 kt</b> from left<br>' +
-        '<b>WCA:</b> 6 Ã— 60 / 100 = <b>4Â° left</b><br>' +
-        '<b>Heading:</b> 010Â° âˆ’ 4Â° = <b style="color:#30d158;">006Â°M</b><br><br>' +
-        '<b>Tailwind component:</b> 10 Ã— cos(40Â°) = 10 Ã— 0.7 = 7 kt tailwind<br>' +
+        '<b>Wind Angle:</b> 230Â° ??010Â° = 220Â° ??use 360Â° ??220Â° = <b>40Â°</b> (from left)<br><br>' +
+        '<b>CWC:</b> 10 ? sin(40Â°) = 10 ? 0.6 = <b>6 kt</b> from left<br>' +
+        '<b>WCA:</b> 6 ? 60 / 100 = <b>4Â° left</b><br>' +
+        '<b>Heading:</b> 010Â° ??4Â° = <b style="color:#30d158;">006Â°M</b><br><br>' +
+        '<b>Tailwind component:</b> 10 ? cos(40Â°) = 10 ? 0.7 = 7 kt tailwind<br>' +
         '<b>GS:</b> 100 + 7 = <b style="color:#30d158;">107 kt</b>'
     ) +
-    _card('Mental Math â€” Tower Clearance',
+    _card('Mental Math ??Tower Clearance',
         '<b>ATC:</b> "EVA 1, Runway 36, clear to land, wind 320 at 10"<br><br>' +
-        '<b>Wind angle:</b> 360 âˆ’ 320 = <b>40Â°</b><br>' +
-        '<b>CWC:</b> 10 Ã— sin(40) = 10 Ã— 0.6 = <b>6 kt</b><br>' +
-        '<b>HWC:</b> 10 Ã— cos(40) = 10 Ã— 0.7 = <b>7 kt</b><br><br>' +
+        '<b>Wind angle:</b> 360 ??320 = <b>40Â°</b><br>' +
+        '<b>CWC:</b> 10 ? sin(40) = 10 ? 0.6 = <b>6 kt</b><br>' +
+        '<b>HWC:</b> 10 ? cos(40) = 10 ? 0.7 = <b>7 kt</b><br><br>' +
         '<span style="color:#e8a020;">Practice doing this in your head every time tower gives you wind!</span>'
     );
 }
@@ -3813,15 +3812,15 @@ function r60_windQuiz() { return _genQuiz('wind'); }
 function r60_todRef() {
     return _card('Top of Descent (TOD)',
         'On a 3Â° glideslope, the aircraft descends <b>300 ft per NM</b>.' +
-        _formula('TOD (NM) = Î”Altitude / 300 &nbsp; (for 3Â°)') +
-        _formula('TOD (NM) = Î”Flight Level / 3 &nbsp; (for 3Â°)') +
-        'For other angles:' + _formula('TOD (NM) = Î”Altitude / (Î¸ Ã— 100)')
+        _formula('TOD (NM) = ?Altitude / 300 &nbsp; (for 3Â°)') +
+        _formula('TOD (NM) = ?Flight Level / 3 &nbsp; (for 3Â°)') +
+        'For other angles:' + _formula('TOD (NM) = ?Altitude / (Î¸ ? 100)')
     ) +
     _card('Height at Distance',
         'To check you\'re on the correct glideslope:' +
-        _formula('Height (ft AGL) = 300 Ã— Range (NM) &nbsp; (for 3Â°)') +
-        _formula('Height (ft AGL) = Î¸ Ã— 100 Ã— Range &nbsp; (for Î¸Â°)') +
-        'Example: 4 NM from runway on 3Â° â†’ should be at 1200 ft AGL.'
+        _formula('Height (ft AGL) = 300 ? Range (NM) &nbsp; (for 3Â°)') +
+        _formula('Height (ft AGL) = Î¸ ? 100 ? Range &nbsp; (for Î¸Â°)') +
+        'Example: 4 NM from runway on 3Â° ??should be at 1200 ft AGL.'
     ) +
     _card('1Â° = 100 ft / NM',
         'Key relationship from the 1:60 rule applied to descent:<br>' +
@@ -3862,27 +3861,27 @@ function calcTOD160() {
         if (!isNaN(elev)) html += `<b>Correct altitude:</b> ${(correctHt + elev).toLocaleString()} ft MSL`;
         if (!isNaN(alt) && !isNaN(elev)) {
             const diff = alt - (correctHt + elev);
-            html += `<br><b>${diff > 0 ? 'âš ï¸ TOO HIGH' : diff < 0 ? 'âš ï¸ TOO LOW' : 'âœ… On path'}</b> by ${Math.abs(diff).toFixed(0)} ft`;
+            html += `<br><b>${diff > 0 ? '? ï? TOO HIGH' : diff < 0 ? '? ï? TOO LOW' : '??On path'}</b> by ${Math.abs(diff).toFixed(0)} ft`;
         }
     }
-    if (!html) html = '<span style="color:#555;">Enter altitude & elevation for TOD, or range for height checkâ€¦</span>';
+    if (!html) html = '<span style="color:#555;">Enter altitude & elevation for TOD, or range for height check??/span>';
     el.innerHTML = html;
 }
 
 function r60_todExample() {
-    return _card('Example â€” FL350 to Sea Level',
+    return _card('Example ??FL350 to Sea Level',
         '<b>Given:</b> FL350, airport at sea level, 3Â° descent.<br><br>' +
-        '<b>TOD:</b> Î”FL / 3 = 350 / 3 = <b style="color:#30d158;">117 NM</b> before destination.'
+        '<b>TOD:</b> ?FL / 3 = 350 / 3 = <b style="color:#30d158;">117 NM</b> before destination.'
     ) +
-    _card('Example â€” 6500 ft to 800 ft Elevation',
+    _card('Example ??6500 ft to 800 ft Elevation',
         '<b>Given:</b> Alt 6500 ft, airport elevation 800 ft MSL, 3Â° path.<br><br>' +
-        '<b>TOD:</b> (6500 âˆ’ 800) / 300 = 5700 / 300 = <b style="color:#30d158;">19 NM</b> before destination.'
+        '<b>TOD:</b> (6500 ??800) / 300 = 5700 / 300 = <b style="color:#30d158;">19 NM</b> before destination.'
     ) +
-    _card('Example â€” Height Check at 15 NM',
+    _card('Example ??Height Check at 15 NM',
         '<b>Given:</b> DA-40 at 6500 ft, 15 NM from airport, elevation 1200 ft.<br><br>' +
-        '<b>Correct height (3Â°):</b> 300 Ã— 15 = 4500 ft AGL<br>' +
+        '<b>Correct height (3Â°):</b> 300 ? 15 = 4500 ft AGL<br>' +
         '<b>Correct altitude:</b> 4500 + 1200 = 5700 ft MSL<br><br>' +
-        'Aircraft is at 6500 ft â†’ <b style="color:#ff453a;">800 ft too high!</b>'
+        'Aircraft is at 6500 ft ??<b style="color:#ff453a;">800 ft too high!</b>'
     );
 }
 
@@ -3892,25 +3891,25 @@ function r60_todQuiz() { return _genQuiz('tod'); }
 
 function r60_rodRef() {
     return _card('Vertical Speed from Flight Path Angle',
-        _formula('V/S = (GS Ã— Î¸ Ã— 100) / 60') +
+        _formula('V/S = (GS ? Î¸ ? 100) / 60') +
         'Where GS is in knots, Î¸ is flight path angle in degrees.<br><br>' +
         'Simplified for 3Â° glideslope:' +
-        _formula('V/S = GS Ã— 5') +
-        'Example: GS 80 kt on 3Â° â†’ V/S = 80 Ã— 5 = 400 fpm'
+        _formula('V/S = GS ? 5') +
+        'Example: GS 80 kt on 3Â° ??V/S = 80 ? 5 = 400 fpm'
     ) +
     _card('Flight Path Angle from Gradient',
-        _formula('Î¸Â° = (1/100) Ã— (Î”Alt / Distance)') +
-        'Since 1Â° â‰ˆ 100 ft/NM, gradient in ft/NM divided by 100 gives FPA.'
+        _formula('Î¸Â° = (1/100) ? (?Alt / Distance)') +
+        'Since 1Â° ??100 ft/NM, gradient in ft/NM divided by 100 gives FPA.'
     ) +
     _card('V/S from Gradient + GS',
-        _formula('V/S = Speed Factor Ã— (Î”Alt / Distance)') +
+        _formula('V/S = Speed Factor ? (?Alt / Distance)') +
         _formula('Speed Factor (SF) = GS / 60') +
         'When you know gradient (ft/NM) and ground speed, this gives required V/S directly.'
     ) +
     _card('Constant Rate Descent',
         'When given a fixed ROD (e.g. 500 fpm):<br>' +
-        _formula('Descent Time = Î”Altitude / ROD') +
-        _formula('Descent Distance = GS Ã— Time / 60') +
+        _formula('Descent Time = ?Altitude / ROD') +
+        _formula('Descent Distance = GS ? Time / 60') +
         'Useful for ATC step-down clearances.'
     );
 }
@@ -3921,9 +3920,9 @@ function r60_rodCalc() {
         _inp('r60_rodGS','Ground Speed (kt)','100%') +
         _inp('r60_rodAngle','Flight Path Angle (Â°)','100%') +
     '</div>' +
-    '<div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 6px;font-weight:700;">â€” or gradient mode â€”</div>' +
+    '<div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 6px;font-weight:700;">??or gradient mode ??/div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-        _inp('r60_rodDAlt','Î”Altitude (ft)','100%') +
+        _inp('r60_rodDAlt','?Altitude (ft)','100%') +
         _inp('r60_rodDist','Distance (NM)','100%') +
     '</div>' +
     _result('r60_rodResult');
@@ -3941,7 +3940,7 @@ function calcROD160() {
     if (!isNaN(gs) && gs > 0 && !isNaN(angle) && angle > 0) {
         const vs = (gs * angle * 100) / 60;
         html += `<b style="color:#e8a020;">V/S from ${angle}Â° at ${gs} kt:</b> ${Math.round(vs)} fpm<br>`;
-        if (angle === 3) html += `<span style="color:#888;">Shortcut check: ${gs} Ã— 5 = ${gs * 5} fpm</span><br>`;
+        if (angle === 3) html += `<span style="color:#888;">Shortcut check: ${gs} ? 5 = ${gs * 5} fpm</span><br>`;
     }
     // Method 2: Gradient
     if (!isNaN(dAlt) && dAlt > 0 && !isNaN(dist) && dist > 0) {
@@ -3955,29 +3954,29 @@ function calcROD160() {
             html += `<b>Required V/S at ${gs} kt:</b> ${Math.round(vs2)} fpm`;
         }
     }
-    if (!html) html = '<span style="color:#555;">Enter GS + angle, or Î”Alt + distanceâ€¦</span>';
+    if (!html) html = '<span style="color:#555;">Enter GS + angle, or ?Alt + distance??/span>';
     el.innerHTML = html;
 }
 
 function r60_rodExample() {
-    return _card('Example â€” DA-40 on 5Â° Descent',
+    return _card('Example ??DA-40 on 5Â° Descent',
         '<b>Given:</b> GS 100 kt, descent angle 5Â°.<br><br>' +
-        '<b>V/S</b> = (100 Ã— 5 Ã— 100) / 60 = <b style="color:#30d158;">833 fpm</b>'
+        '<b>V/S</b> = (100 ? 5 ? 100) / 60 = <b style="color:#30d158;">833 fpm</b>'
     ) +
-    _card('Example â€” 3Â° ILS, 75 kt + 5 kt Tailwind',
+    _card('Example ??3Â° ILS, 75 kt + 5 kt Tailwind',
         '<b>GS:</b> 75 + 5 = 80 kt<br>' +
-        '<b>V/S:</b> 80 Ã— 5 = <b style="color:#30d158;">400 fpm</b>'
+        '<b>V/S:</b> 80 ? 5 = <b style="color:#30d158;">400 fpm</b>'
     ) +
-    _card('Example â€” Gradient to V/S',
+    _card('Example ??Gradient to V/S',
         '<b>Given:</b> DA-42 at 12000 ft, 9 NM from VOR, need to be at 7000 ft. GS 140 kt.<br><br>' +
-        '<b>Î”Alt:</b> 12000 âˆ’ 7000 = 5000 ft<br>' +
-        '<b>V/S:</b> (140/60) Ã— (5000/9) = 2.33 Ã— 555.6 = <b style="color:#30d158;">1296 fpm</b>'
+        '<b>?Alt:</b> 12000 ??7000 = 5000 ft<br>' +
+        '<b>V/S:</b> (140/60) ? (5000/9) = 2.33 ? 555.6 = <b style="color:#30d158;">1296 fpm</b>'
     ) +
-    _card('Example â€” Constant Rate Descent',
-        '<b>Given:</b> GS 135 kt, 11500 ft â†’ 5500 ft, ROD 500 fpm.<br><br>' +
+    _card('Example ??Constant Rate Descent',
+        '<b>Given:</b> GS 135 kt, 11500 ft ??5500 ft, ROD 500 fpm.<br><br>' +
         '<b>Alt to lose:</b> 6000 ft<br>' +
         '<b>Time:</b> 6000 / 500 = 12 min<br>' +
-        '<b>Distance:</b> 135 Ã— 12 / 60 = <b style="color:#30d158;">27 NM</b>'
+        '<b>Distance:</b> 135 ? 12 / 60 = <b style="color:#30d158;">27 NM</b>'
     );
 }
 
@@ -3988,28 +3987,28 @@ function r60_rodQuiz() { return _genQuiz('rod'); }
 function r60_altRef() {
     return _card('ISA Standard Atmosphere',
         'The International Standard Atmosphere (ISA) defines baseline conditions:<br><br>' +
-        _formula('ISA Temp = 15Â°C âˆ’ (Altitude Ã— 2Â°C / 1000 ft)') +
-        _formula('ISA Pressure = 1013.25 hPa at MSL, âˆ’1 hPa per 30 ft') +
-        'ISA Deviation = Actual Temperature âˆ’ ISA Temperature'
+        _formula('ISA Temp = 15Â°C ??(Altitude ? 2Â°C / 1000 ft)') +
+        _formula('ISA Pressure = 1013.25 hPa at MSL, ?? hPa per 30 ft') +
+        'ISA Deviation = Actual Temperature ??ISA Temperature'
     ) +
     _card('Pressure Altitude (PA)',
         'The altitude at which the current pressure exists in the standard atmosphere.' +
-        _formula('PA = Field Elevation + (1013.25 âˆ’ QNH) Ã— 30 ft/hPa') +
+        _formula('PA = Field Elevation + (1013.25 ??QNH) ? 30 ft/hPa') +
         'When QNH < 1013: PA is <b>higher</b> than indicated (pressure is lower than standard).<br>' +
         'When QNH > 1013: PA is <b>lower</b> than indicated.'
     ) +
     _card('True Altitude',
         'The actual altitude above MSL, corrected for non-standard temperature. The air column expands (warm) or contracts (cold) by <b>0.4% per Â°C</b> deviation from ISA.' +
-        _formula('True Alt = Ind Alt + (Ind Alt âˆ’ Terrain Elev) Ã— ISA Dev Ã— 0.4%') +
-        'Only the air column above terrain is affected â€” terrain elevation itself does not change.<br><br>' +
-        '<span style="color:#ff9f0a;">âš ï¸ Warmer than ISA â†’ True altitude is HIGHER than indicated</span><br>' +
-        '<span style="color:#00bfff;">â„ï¸ Colder than ISA â†’ True altitude is LOWER than indicated (dangerous!)</span>'
+        _formula('True Alt = Ind Alt + (Ind Alt ??Terrain Elev) ? ISA Dev ? 0.4%') +
+        'Only the air column above terrain is affected ??terrain elevation itself does not change.<br><br>' +
+        '<span style="color:#ff9f0a;">? ï? Warmer than ISA ??True altitude is HIGHER than indicated</span><br>' +
+        '<span style="color:#00bfff;">?„ï? Colder than ISA ??True altitude is LOWER than indicated (dangerous!)</span>'
     ) +
     _card('Density Altitude (DA)',
         'The altitude in the standard atmosphere at which the current air density would exist. Critical for aircraft performance.' +
-        _formula('DA = Pressure Altitude + ISA Deviation Ã— 120 ft/Â°C') +
-        'Warmer â†’ higher DA â†’ worse performance (longer takeoff, reduced climb).<br>' +
-        'Cooler â†’ lower DA â†’ better performance.'
+        _formula('DA = Pressure Altitude + ISA Deviation ? 120 ft/Â°C') +
+        'Warmer ??higher DA ??worse performance (longer takeoff, reduced climb).<br>' +
+        'Cooler ??lower DA ??better performance.'
     );
 }
 
@@ -4021,7 +4020,7 @@ function r60_altCalc() {
     '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
         _inp('r60_altQNH','QNH (hPa)','100%') +
-        _inp('r60_altOAT','OAT â€” Actual Temp (Â°C)','100%') +
+        _inp('r60_altOAT','OAT ??Actual Temp (Â°C)','100%') +
     '</div>' +
     _result('r60_altResult');
 }
@@ -4043,7 +4042,7 @@ function calcAlt160() {
     if (paRef !== null && !isNaN(qnh)) {
         pa = paRef + (1013.25 - qnh) * 30;
         html += row('Pressure Altitude', `${Math.round(pa).toLocaleString()} ft`, '#e8a020');
-        html += `<div style="font-size:10px;color:#555;padding:2px 0 6px;">PA = ${paRef.toLocaleString()} + (1013.25 âˆ’ ${qnh}) Ã— 30 = ${Math.round(pa).toLocaleString()}</div>`;
+        html += `<div style="font-size:10px;color:#555;padding:2px 0 6px;">PA = ${paRef.toLocaleString()} + (1013.25 ??${qnh}) ? 30 = ${Math.round(pa).toLocaleString()}</div>`;
     }
 
     // ISA at indicated altitude (for True Altitude)
@@ -4076,41 +4075,41 @@ function calcAlt160() {
         html += row('ISA Temp at PA', `${isaAtPA.toFixed(1)}Â°C`, '#888');
         html += row('ISA Deviation (at PA)', `${isaDevPA >= 0 ? '+' : ''}${isaDevPA.toFixed(1)}Â°C`, isaDevPA >= 0 ? '#ff9f0a' : '#00bfff');
         html += row('Density Altitude', `${Math.round(da).toLocaleString()} ft`, daColor);
-        html += `<div style="font-size:10px;color:#555;padding:2px 0;">DA = ${Math.round(pa).toLocaleString()} + (${isaDevPA.toFixed(1)} Ã— 120) = ${Math.round(da).toLocaleString()}</div>`;
+        html += `<div style="font-size:10px;color:#555;padding:2px 0;">DA = ${Math.round(pa).toLocaleString()} + (${isaDevPA.toFixed(1)} ? 120) = ${Math.round(da).toLocaleString()}</div>`;
         if (!isNaN(elev) && da > elev + 2000) {
-            html += `<div style="color:#ff453a;font-weight:700;font-size:12px;padding:6px 0;">âš ï¸ DA exceeds field by ${Math.round(da - elev).toLocaleString()} ft â€” expect degraded performance</div>`;
+            html += `<div style="color:#ff453a;font-weight:700;font-size:12px;padding:6px 0;">? ï? DA exceeds field by ${Math.round(da - elev).toLocaleString()} ft ??expect degraded performance</div>`;
         }
     }
 
-    if (!html) html = '<span style="color:#555;">Enter indicated altitude + QNH for PA, add OAT for ISA/True/DA, add elevation for True Altâ€¦</span>';
+    if (!html) html = '<span style="color:#555;">Enter indicated altitude + QNH for PA, add OAT for ISA/True/DA, add elevation for True Alt??/span>';
     el.innerHTML = html;
 }
 
 function r60_altExample() {
-    return _card('Example â€” True Altitude',
+    return _card('Example ??True Altitude',
         '<b>Given:</b> Indicated Alt 4,500 ft, QNH 1017 hPa, Terrain 1,700 ft, OAT 11Â°C.<br><br>' +
-        '<b>Step 1 â€” ISA Temp at 4,500 ft:</b><br>' +
-        '15Â°C âˆ’ (4,500 Ã— 2 / 1000) = <b>6Â°C</b><br><br>' +
-        '<b>Step 2 â€” ISA Deviation:</b><br>' +
-        '11Â°C âˆ’ 6Â°C = <b>+5Â°C</b> (warmer than ISA)<br><br>' +
-        '<b>Step 3 â€” Air column correction:</b><br>' +
-        '5Â°C Ã— 0.4% = 2% expansion<br>' +
-        '(4,500 âˆ’ 1,700) Ã— 1.02 + 1,700 = <b style="color:#30d158;">4,556 ft</b><br><br>' +
-        '<b>Step 4 â€” Distance to pylon (250 ft high):</b><br>' +
-        '4,556 âˆ’ (1,700 + 250) = <b style="color:#30d158;">2,606 ft</b> clearance'
+        '<b>Step 1 ??ISA Temp at 4,500 ft:</b><br>' +
+        '15Â°C ??(4,500 ? 2 / 1000) = <b>6Â°C</b><br><br>' +
+        '<b>Step 2 ??ISA Deviation:</b><br>' +
+        '11Â°C ??6Â°C = <b>+5Â°C</b> (warmer than ISA)<br><br>' +
+        '<b>Step 3 ??Air column correction:</b><br>' +
+        '5Â°C ? 0.4% = 2% expansion<br>' +
+        '(4,500 ??1,700) ? 1.02 + 1,700 = <b style="color:#30d158;">4,556 ft</b><br><br>' +
+        '<b>Step 4 ??Distance to pylon (250 ft high):</b><br>' +
+        '4,556 ??(1,700 + 250) = <b style="color:#30d158;">2,606 ft</b> clearance'
     ) +
-    _card('Example â€” Density Altitude',
+    _card('Example ??Density Altitude',
         '<b>Given:</b> Stuttgart airport, elevation 1,276 ft, QNH 1002 hPa, OAT 25Â°C.<br><br>' +
-        '<b>Step 1 â€” Pressure Altitude:</b><br>' +
-        'QNH deviation: 1013.25 âˆ’ 1002 = 11.25 hPa<br>' +
-        'PA = 1,276 + (11.25 Ã— 30) = <b>1,614 ft</b><br><br>' +
-        '<b>Step 2 â€” ISA Temp at PA:</b><br>' +
-        '15Â°C âˆ’ (1,614 Ã— 2 / 1000) = <b>11.8Â°C</b><br><br>' +
-        '<b>Step 3 â€” ISA Deviation:</b><br>' +
-        '25Â°C âˆ’ 11.8Â°C = <b>+13.2Â°C</b><br><br>' +
-        '<b>Step 4 â€” Density Altitude:</b><br>' +
-        '1,614 + (13.2 Ã— 120) = <b style="color:#ff453a;">3,198 ft</b><br>' +
-        '<span style="color:#ff453a;">âš ï¸ Nearly 2,000 ft above field â€” significant performance impact!</span>'
+        '<b>Step 1 ??Pressure Altitude:</b><br>' +
+        'QNH deviation: 1013.25 ??1002 = 11.25 hPa<br>' +
+        'PA = 1,276 + (11.25 ? 30) = <b>1,614 ft</b><br><br>' +
+        '<b>Step 2 ??ISA Temp at PA:</b><br>' +
+        '15Â°C ??(1,614 ? 2 / 1000) = <b>11.8Â°C</b><br><br>' +
+        '<b>Step 3 ??ISA Deviation:</b><br>' +
+        '25Â°C ??11.8Â°C = <b>+13.2Â°C</b><br><br>' +
+        '<b>Step 4 ??Density Altitude:</b><br>' +
+        '1,614 + (13.2 ? 120) = <b style="color:#ff453a;">3,198 ft</b><br>' +
+        '<span style="color:#ff453a;">? ï? Nearly 2,000 ft above field ??significant performance impact!</span>'
     );
 }
 
@@ -4173,7 +4172,7 @@ function r60NewQ() {
         if (variant === 0) { q = `GS ${gs} kt on 3Â° glideslope. Required V/S?`; answer = gs * 5; unit = 'fpm'; }
         else { const angle = _rand(2, 6); q = `GS ${gs} kt, descent angle ${angle}Â°. Required V/S?`; answer = (gs * angle * 100) / 60; unit = 'fpm'; }
     } else if (_160.topic === 'tri') {
-        // Wind triangle quiz â€” find track or GS
+        // Wind triangle quiz ??find track or GS
         const hdg = _rand(1, 36) * 10;
         const tas = _rand(80, 150);
         const wdir = _rand(1, 36) * 10;
@@ -4272,9 +4271,9 @@ function r60CheckAns() {
     _160.quizTotal++;
     if (isCorrect) {
         _160.quizScore++;
-        fb.innerHTML = `<span style="color:#30d158;">âœ“ Correct! (${correct.toFixed(1)} ${unit})</span>`;
+        fb.innerHTML = `<span style="color:#30d158;">??Correct! (${correct.toFixed(1)} ${unit})</span>`;
     } else {
-        fb.innerHTML = `<span style="color:#ff453a;">âœ— Answer: ${correct.toFixed(1)} ${unit}</span>`;
+        fb.innerHTML = `<span style="color:#ff453a;">??Answer: ${correct.toFixed(1)} ${unit}</span>`;
     }
     const sc = document.getElementById('r60score');
     if (sc) sc.textContent = `Score: ${_160.quizScore}/${_160.quizTotal}`;
@@ -4289,34 +4288,34 @@ let _triMode = 'find_heading'; // find_track | find_heading | find_wind
 function r60_triRef() {
     return _card('The Wind Triangle',
         'The wind triangle is the vector relationship between three quantities:<br><br>' +
-        'â€¢ <b style="color:#fff;">Air Vector</b> â€” TH (True Heading) + TAS<br>' +
-        'â€¢ <b style="color:#30d158;">Ground Vector</b> â€” TT (True Track) + GS<br>' +
-        'â€¢ <b style="color:#00bfff;">Wind Vector</b> â€” Wind direction + speed<br><br>' +
+        '??<b style="color:#fff;">Air Vector</b> ??TH (True Heading) + TAS<br>' +
+        '??<b style="color:#30d158;">Ground Vector</b> ??TT (True Track) + GS<br>' +
+        '??<b style="color:#00bfff;">Wind Vector</b> ??Wind direction + speed<br><br>' +
         '<b>Vector equation:</b>' +
         _formula('Air Vector + Wind Vector = Ground Vector') +
         'The wind "pushes" the air vector to produce the ground vector.'
     ) +
     _card('Terminology',
-        '<b>TC</b> (True Course) â€” planned direction on the chart<br>' +
-        '<b>TH</b> (True Heading) â€” direction the nose points (TC Â± WCA)<br>' +
-        '<b>TT</b> (True Track) â€” actual path over the ground<br>' +
-        '<b>MC</b> (Magnetic Course) â€” TC corrected for variation<br>' +
-        '<b>MH</b> (Magnetic Heading) â€” TH corrected for variation<br>' +
-        '<b>DA</b> (Drift Angle) â€” angle between TH and TT<br>' +
-        '<b>WCA</b> (Wind Correction Angle) â€” angle applied to TC to get TH<br><br>' +
-        _formula('MH = TH âˆ’ Var(E) &nbsp; or &nbsp; TH + Var(W)') +
+        '<b>TC</b> (True Course) ??planned direction on the chart<br>' +
+        '<b>TH</b> (True Heading) ??direction the nose points (TC Â± WCA)<br>' +
+        '<b>TT</b> (True Track) ??actual path over the ground<br>' +
+        '<b>MC</b> (Magnetic Course) ??TC corrected for variation<br>' +
+        '<b>MH</b> (Magnetic Heading) ??TH corrected for variation<br>' +
+        '<b>DA</b> (Drift Angle) ??angle between TH and TT<br>' +
+        '<b>WCA</b> (Wind Correction Angle) ??angle applied to TC to get TH<br><br>' +
+        _formula('MH = TH ??Var(E) &nbsp; or &nbsp; TH + Var(W)') +
         'In no-wind conditions: TC = TH = TT. With wind: TH = TC + WCA.'
     ) +
     _card('Three Solve Modes',
-        '<b>Find TT & GS</b> â€” Given TH, TAS, and wind â†’ solve for true track and ground speed.<br><br>' +
-        '<b>Find TH & GS</b> â€” Given TC (desired course), TAS, and wind â†’ solve for true heading to steer and resulting GS.<br><br>' +
-        '<b>Find Wind</b> â€” Given TH, TAS, TT, and GS â†’ solve for wind direction and speed. Used in-flight.'
+        '<b>Find TT & GS</b> ??Given TH, TAS, and wind ??solve for true track and ground speed.<br><br>' +
+        '<b>Find TH & GS</b> ??Given TC (desired course), TAS, and wind ??solve for true heading to steer and resulting GS.<br><br>' +
+        '<b>Find Wind</b> ??Given TH, TAS, TT, and GS ??solve for wind direction and speed. Used in-flight.'
     ) +
     _card('Key Formulas',
         _formula('TT = TH + Drift Angle') +
-        _formula('CWC = Wind Speed Ã— sin(WW)') +
-        _formula('LWC = Wind Speed Ã— cos(WW)') +
-        _formula('GS = TAS âˆ’ Headwind &nbsp;(or + Tailwind)') +
+        _formula('CWC = Wind Speed ? sin(WW)') +
+        _formula('LWC = Wind Speed ? cos(WW)') +
+        _formula('GS = TAS ??Headwind &nbsp;(or + Tailwind)') +
         'WW (Wind Angle) = angle between wind FROM direction and TH.'
     );
 }
@@ -4347,25 +4346,25 @@ function renderTriInputs() {
     let html;
     if (_triMode === 'find_heading') {
         html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_trk','TC â€” True Course (Â°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+            _inp('tri_trk','TC ??True Course (Â°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
             '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
             _inp('tri_wdir','Wind FROM (Â°)','100%') + _inp('tri_wspd','Wind Speed (kt)','100%') +
             '</div>' +
-            '<input id="tri_var" type="number" placeholder="Variation (+ East / âˆ’ West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
+            '<input id="tri_var" type="number" placeholder="Variation (+ East / ??West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
     } else if (_triMode === 'find_track') {
         html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_hdg','TH â€” True Heading (Â°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+            _inp('tri_hdg','TH ??True Heading (Â°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
             '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
             _inp('tri_wdir','Wind FROM (Â°)','100%') + _inp('tri_wspd','Wind Speed (kt)','100%') +
             '</div>' +
-            '<input id="tri_var" type="number" placeholder="Variation (+ East / âˆ’ West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
+            '<input id="tri_var" type="number" placeholder="Variation (+ East / ??West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
     } else {
         html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_hdg','TH â€” True Heading (Â°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
+            _inp('tri_hdg','TH ??True Heading (Â°)','100%') + _inp('tri_tas','TAS (kt)','100%') +
             '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            _inp('tri_trk','TT â€” True Track (Â°)','100%') + _inp('tri_gs','GS (kt)','100%') +
+            _inp('tri_trk','TT ??True Track (Â°)','100%') + _inp('tri_gs','GS (kt)','100%') +
             '</div>' +
-            '<input id="tri_var" type="number" placeholder="Variation (+ East / âˆ’ West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
+            '<input id="tri_var" type="number" placeholder="Variation (+ East / ??West)" style="width:100%;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;margin-bottom:8px;" oninput="r60AutoCalc()">';
     }
     el.innerHTML = html;
 }
@@ -4383,7 +4382,7 @@ function calcTri() {
 
     if (_triMode === 'find_track') {
         hdg = v('tri_hdg'); tas = v('tri_tas'); wdir = v('tri_wdir'); wspd = v('tri_wspd');
-        if ([hdg,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all valuesâ€¦</span>'; drawTri(null); return; }
+        if ([hdg,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values??/span>'; drawTri(null); return; }
         const wRad = toRad(wdir + 180);
         const hRad = toRad(hdg);
         const gx = tas * Math.sin(hRad) + wspd * Math.sin(wRad);
@@ -4392,11 +4391,11 @@ function calcTri() {
         trk = normDeg(toDeg(Math.atan2(gx, gy)));
     } else if (_triMode === 'find_heading') {
         trk = v('tri_trk'); tas = v('tri_tas'); wdir = v('tri_wdir'); wspd = v('tri_wspd');
-        if ([trk,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all valuesâ€¦</span>'; drawTri(null); return; }
+        if ([trk,tas,wdir,wspd].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values??/span>'; drawTri(null); return; }
         const wRad = toRad(wdir + 180);
         const wwFromTrk = wdir - trk;
         const sinWCA = (wspd * Math.sin(toRad(wwFromTrk))) / tas;
-        if (Math.abs(sinWCA) > 1) { el.innerHTML = '<span style="color:#ff453a;">Wind too strong for this TAS â€” no solution</span>'; drawTri(null); return; }
+        if (Math.abs(sinWCA) > 1) { el.innerHTML = '<span style="color:#ff453a;">Wind too strong for this TAS ??no solution</span>'; drawTri(null); return; }
         wca = toDeg(Math.asin(sinWCA));
         hdg = normDeg(trk + wca);
         const hRad = toRad(hdg);
@@ -4405,7 +4404,7 @@ function calcTri() {
         gs = Math.sqrt(gx * gx + gy * gy);
     } else { // find_wind
         hdg = v('tri_hdg'); tas = v('tri_tas'); trk = v('tri_trk'); gs = v('tri_gs');
-        if ([hdg,tas,trk,gs].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all valuesâ€¦</span>'; drawTri(null); return; }
+        if ([hdg,tas,trk,gs].some(isNaN)) { el.innerHTML = '<span style="color:#555;">Enter all values??/span>'; drawTri(null); return; }
         const hRad = toRad(hdg), tRad = toRad(trk);
         const wx = gs * Math.sin(tRad) - tas * Math.sin(hRad);
         const wy = gs * Math.cos(tRad) - tas * Math.cos(hRad);
@@ -4425,7 +4424,7 @@ function calcTri() {
     const wcaDir = wca > 0.1 ? 'R' : wca < -0.1 ? 'L' : '';
     const daDir = da > 0.1 ? 'R' : da < -0.1 ? 'L' : '';
 
-    // Variation â€” positive = East, negative = West
+    // Variation ??positive = East, negative = West
     const variation = parseFloat(document.getElementById('tri_var')?.value);
     const hasVar = !isNaN(variation);
 
@@ -4464,7 +4463,7 @@ function calcTri() {
     html += row('WCA', `${Math.abs(wca).toFixed(1)}Â° ${wcaDir}`, '#e8a020');
     html += row('Drift Angle', `${Math.abs(da).toFixed(1)}Â° ${daDir}`, '#e8a020');
     html += '</div>';
-    if (!hasVar) html += '<div style="font-size:10px;color:#555;margin-top:8px;">Enter Variation above to see MH / MC. Convention: + East, âˆ’ West.</div>';
+    if (!hasVar) html += '<div style="font-size:10px;color:#555;margin-top:8px;">Enter Variation above to see MH / MC. Convention: + East, ??West.</div>';
 
     el.innerHTML = html;
     drawTri({ hdg: normDeg(hdg), tas, trk: normDeg(trk), gs, wdir: normDeg(wdir), wspd });
@@ -4551,7 +4550,7 @@ function drawTri(d) {
     drawArrow(cx, cy, airTip.x, airTip.y, '#ffffff', 2.5, false);
     drawArrow(airTip.x, airTip.y, windTip.x, windTip.y, '#00bfff', 2, true);
 
-    // Smart label placement â€” staggered positions + opposite sides + collision avoidance
+    // Smart label placement ??staggered positions + opposite sides + collision avoidance
     const labels = [];
 
     // Air label at 35% along vector, offset LEFT of vector direction
@@ -4572,7 +4571,7 @@ function drawTri(d) {
     labels.push({ x: wMidX + 18 * Math.cos(wAngle + Math.PI/2), y: wMidY + 18 * Math.sin(wAngle + Math.PI/2),
         text: `W ${d.wdir.toFixed(0)}Â°/${d.wspd.toFixed(0)}kt`, color: '#00bfff' });
 
-    // Collision avoidance â€” push overlapping labels apart (larger threshold)
+    // Collision avoidance ??push overlapping labels apart (larger threshold)
     for (let pass = 0; pass < 5; pass++) {
         for (let i = 0; i < labels.length; i++) {
             for (let j = i + 1; j < labels.length; j++) {
@@ -4600,31 +4599,31 @@ function drawTri(d) {
 }
 
 function r60_triExample() {
-    return _card('Example â€” Ground School Format',
+    return _card('Example ??Ground School Format',
         '<b>Given:</b> Wind 060Â°(T) at 22 kt, TC 270Â°, TAS 180 kt, Variation 11Â°E.<br><br>' +
-        '<b>WW from TC:</b> 060Â° âˆ’ 270Â° = âˆ’210Â° â†’ 150Â°<br>' +
-        '<b>sinWCA:</b> (22 Ã— sin 150Â°) / 180 = (22 Ã— 0.5) / 180 = 0.061<br>' +
-        '<b>WCA:</b> sinâ»Â¹(0.061) = <b>3.5Â° Right</b><br>' +
+        '<b>WW from TC:</b> 060Â° ??270Â° = ??10Â° ??150Â°<br>' +
+        '<b>sinWCA:</b> (22 ? sin 150Â°) / 180 = (22 ? 0.5) / 180 = 0.061<br>' +
+        '<b>WCA:</b> sin?»Â?0.061) = <b>3.5Â° Right</b><br>' +
         '<b>TH:</b> 270Â° + 3.5Â° = <b style="color:#fff;">274Â°</b><br><br>' +
-        '<b>WW from TH:</b> 060Â° âˆ’ 274Â° = âˆ’214Â° â†’ 146Â°<br>' +
-        '<b>CWC:</b> 22 Ã— sin(146Â°) = <b>12.3 kt L</b><br>' +
-        '<b>LWC:</b> 22 Ã— cos(146Â°) = <b>âˆ’18.2 kt (TW)</b><br>' +
-        '<b>GS:</b> 180 âˆ’ (âˆ’18.2) = <b style="color:#30d158;">198 kt</b><br><br>' +
-        '<b style="color:#bf5af2;">MH:</b> 274Â° âˆ’ 11Â° = <b style="color:#bf5af2;">263Â°</b><br>' +
-        '<b style="color:#bf5af2;">MC:</b> 270Â° âˆ’ 11Â° = <b style="color:#bf5af2;">259Â°</b>'
+        '<b>WW from TH:</b> 060Â° ??274Â° = ??14Â° ??146Â°<br>' +
+        '<b>CWC:</b> 22 ? sin(146Â°) = <b>12.3 kt L</b><br>' +
+        '<b>LWC:</b> 22 ? cos(146Â°) = <b>??8.2 kt (TW)</b><br>' +
+        '<b>GS:</b> 180 ??(??8.2) = <b style="color:#30d158;">198 kt</b><br><br>' +
+        '<b style="color:#bf5af2;">MH:</b> 274Â° ??11Â° = <b style="color:#bf5af2;">263Â°</b><br>' +
+        '<b style="color:#bf5af2;">MC:</b> 270Â° ??11Â° = <b style="color:#bf5af2;">259Â°</b>'
     ) +
-    _card('Example â€” Find TT & GS',
+    _card('Example ??Find TT & GS',
         '<b>Given:</b> TH 360Â°, TAS 120 kt, Wind 270Â°/30 kt.<br><br>' +
-        '<b>CWC:</b> 30 Ã— sin(90Â°) = 30 kt (drifting right)<br>' +
-        '<b>HWC:</b> 30 Ã— cos(90Â°) = 0 kt (pure crosswind)<br>' +
+        '<b>CWC:</b> 30 ? sin(90Â°) = 30 kt (drifting right)<br>' +
+        '<b>HWC:</b> 30 ? cos(90Â°) = 0 kt (pure crosswind)<br>' +
         '<b>TT:</b> 360Â° + 14.5Â° = <b style="color:#30d158;">014Â°</b><br>' +
-        '<b>GS:</b> âˆš(120Â² + 30Â²) â‰ˆ <b style="color:#30d158;">124 kt</b>'
+        '<b>GS:</b> ??120Â² + 30Â²) ??<b style="color:#30d158;">124 kt</b>'
     ) +
-    _card('Example â€” Find Wind In-Flight',
+    _card('Example ??Find Wind In-Flight',
         '<b>Given:</b> TH 180Â°, TAS 110 kt, TT 175Â° (from GPS), GS 95 kt.<br><br>' +
-        '<b>Drift:</b> TT âˆ’ TH = 175Â° âˆ’ 180Â° = 5Â° left â†’ wind from the right<br>' +
-        '<b>GS vs TAS:</b> 95 < 110 â†’ headwind component present<br>' +
-        '<b>Wind:</b> solved vectorially â†’ <b style="color:#00bfff;">210Â° / 18 kt</b>'
+        '<b>Drift:</b> TT ??TH = 175Â° ??180Â° = 5Â° left ??wind from the right<br>' +
+        '<b>GS vs TAS:</b> 95 < 110 ??headwind component present<br>' +
+        '<b>Wind:</b> solved vectorially ??<b style="color:#00bfff;">210Â° / 18 kt</b>'
     );
 }
 
@@ -4665,7 +4664,7 @@ function applyToolVisibility() {
                     const badge = document.createElement('div');
                     badge.className = 'admin-hidden-badge';
                     badge.style.cssText = 'font-size:9px;color:#ff9f0a;font-weight:800;letter-spacing:0.5px;margin-top:4px;';
-                    badge.textContent = 'ğŸ‘ HIDDEN';
+                    badge.textContent = '?? HIDDEN';
                     card.appendChild(badge);
                 }
             } else if (existing) {
@@ -4691,26 +4690,27 @@ async function adminSetToolVisibility(toolId, hidden) {
         const adminTabContent = document.getElementById('adminTabContent');
         if (adminTabContent && adminTabContent.querySelector('[onchange*="adminSetToolVisibility"]')) {
             adminTabContent.innerHTML = `
-                <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tool Visibility â€” toggle to show/hide for all users</div>
-                <div style="font-size:11px;color:#888;margin-bottom:14px;">Hidden tools are invisible to normal users. Admin always sees all tools with a <span style="color:#ff9f0a;">ğŸ‘ HIDDEN</span> badge.</div>
+                <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tool Visibility ??toggle to show/hide for all users</div>
+                <div style="font-size:11px;color:#888;margin-bottom:14px;">Hidden tools are invisible to normal users. Admin always sees all tools with a <span style="color:#ff9f0a;">?? HIDDEN</span> badge.</div>
                 ${renderAdminToolsPanel()}`;
         }
-        if (typeof showToast === 'function') showToast(hidden ? 'ğŸ”’ Tool hidden' : 'ğŸ”“ Tool visible');
-    } catch(e) { if (typeof showToast === 'function') showToast('âš ï¸ Failed to update'); }
+        if (typeof showToast === 'function') showToast(hidden ? '?? Tool hidden' : '?? Tool visible');
+    } catch(e) { if (typeof showToast === 'function') showToast('? ï? Failed to update'); }
 }
 
 // Tool metadata for admin panel
 const TOOL_META = [
-    { id: 'unit-converter', icon: 'ğŸ“', name: 'Unit Converter' },
-    { id: 'e6b-calculator', icon: 'âœˆï¸', name: 'E6B Calculator' },
-    { id: 'great-circle', icon: 'ğŸŒ', name: 'Great Circle' },
-    { id: 'e6b-trainer', icon: 'ğŸ“', name: 'E6B Trainer' },
-    { id: 'weather-terms', icon: 'ğŸŒ¦ï¸', name: 'Weather Terms' },
-    { id: 'abbreviations', icon: 'ğŸ“–', name: 'Abbreviations' },
-    { id: 'crosswind', icon: 'ğŸ’¨', name: 'Crosswind Calc' },
-    { id: 'airspace-mins', icon: 'ğŸ“‹', name: 'Airspace Mins' },
-    { id: 'morse-trainer', icon: 'ğŸ“¡', name: 'Morse Code' },
-    { id: 'training-area', icon: 'ğŸ“', name: 'Training Area' },
+    { id: 'metar-decoder', icon: 'WX', name: 'METAR Decoder' },
+    { id: 'unit-converter', icon: '??', name: 'Unit Converter' },
+    { id: 'e6b-calculator', icon: '?ˆï?', name: 'E6B Calculator' },
+    { id: 'great-circle', icon: '??', name: 'Great Circle' },
+    { id: 'e6b-trainer', icon: '??', name: 'E6B Trainer' },
+    { id: 'weather-terms', icon: '?Œ¦ï¸?, name: 'Weather Terms' },
+    { id: 'abbreviations', icon: '??', name: 'Abbreviations' },
+    { id: 'crosswind', icon: '?’¨', name: 'Crosswind Calc' },
+    { id: 'airspace-mins', icon: '??', name: 'Airspace Mins' },
+    { id: 'morse-trainer', icon: '?“¡', name: 'Morse Code' },
+    { id: 'training-area', icon: '??', name: 'Training Area' },
 ];
 
 function renderAdminToolsPanel() {
@@ -4730,3 +4730,4 @@ function renderAdminToolsPanel() {
         </div>`;
     }).join('');
 }
+

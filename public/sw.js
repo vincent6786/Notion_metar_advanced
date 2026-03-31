@@ -1,9 +1,9 @@
 // ================================================================
-// METAR GO â€” Service Worker
+// METAR GO ??Service Worker
 // Offline-first for static assets, network-first for API calls
 // ================================================================
 
-const CACHE_VERSION = 'metar-go-v4.3.6';
+const CACHE_VERSION = 'metar-go-v4.3.7';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
@@ -31,7 +31,7 @@ const STATIC_ASSETS = [
     'https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/plane.png',
 ];
 
-// API routes â€” network-first, cache fallback
+// API routes ??network-first, cache fallback
 const API_ROUTES = [
     '/api/weather',
     '/api/awos',
@@ -39,7 +39,7 @@ const API_ROUTES = [
     '/api/status',
 ];
 
-// â”€â”€ Install: pre-cache all static assets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Install: pre-cache all static assets ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(STATIC_CACHE).then(cache => {
@@ -55,7 +55,7 @@ self.addEventListener('install', event => {
     );
 });
 
-// â”€â”€ Activate: remove old caches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Activate: remove old caches ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys =>
@@ -68,7 +68,7 @@ self.addEventListener('activate', event => {
     );
 });
 
-// â”€â”€ Fetch: route requests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Fetch: route requests ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
@@ -77,18 +77,18 @@ self.addEventListener('fetch', event => {
     if (request.method !== 'GET') return;
     if (!url.protocol.startsWith('http')) return;
 
-    // â”€â”€ API calls: network-first, stale fallback â”€â”€
+    // ?€?€ API calls: network-first, stale fallback ?€?€
     const isApiCall = API_ROUTES.some(r => url.pathname.startsWith(r));
     if (isApiCall) {
         event.respondWith(networkFirstApi(request));
         return;
     }
 
-    // â”€â”€ Static assets: cache-first â”€â”€
+    // ?€?€ Static assets: cache-first ?€?€
     event.respondWith(cacheFirstStatic(request));
 });
 
-// â”€â”€ Strategy: Network-first for API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Strategy: Network-first for API ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 async function networkFirstApi(request) {
     const cache = await caches.open(API_CACHE);
     try {
@@ -107,7 +107,7 @@ async function networkFirstApi(request) {
         }
         return response;
     } catch (err) {
-        // Network failed â€” serve stale cache with offline flag
+        // Network failed ??serve stale cache with offline flag
         const cached = await cache.match(request.url);
         if (cached) {
             const body    = await cached.json().catch(() => ({}));
@@ -128,7 +128,7 @@ async function networkFirstApi(request) {
     }
 }
 
-// â”€â”€ Strategy: Cache-first for static assets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Strategy: Cache-first for static assets ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 async function cacheFirstStatic(request) {
     const cached = await caches.match(request);
     if (cached) return cached;
@@ -150,7 +150,7 @@ async function cacheFirstStatic(request) {
     }
 }
 
-// â”€â”€ Helper: fetch with timeout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Helper: fetch with timeout ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 function fetchWithTimeout(request, ms) {
     return new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error('timeout')), ms);
@@ -160,3 +160,4 @@ function fetchWithTimeout(request, ms) {
         );
     });
 }
+
