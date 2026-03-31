@@ -3,16 +3,16 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.3.7',  // ??set once in index.html
-            title: 'METAR GO ??Training Edition',
+            version: window.APP_VERSION || '4.3.6',  // ← set once in index.html
+            title: 'METAR GO — Training Edition',
             changes: [
                 {
-                    icon: '??',
-                    title: 'Training Area ??6 Topics',
-                    desc: 'New ALT module: Pressure Altitude, True Altitude (0.4%/°C), and Density Altitude (?120 ft/°C) with worked examples from EVA ground school. Plus Wind Triangle with Variation ??MH/MC.'
+                    icon: '📐',
+                    title: 'Training Area — 6 Topics',
+                    desc: 'New ALT module: Pressure Altitude, True Altitude (0.4%/°C), and Density Altitude (×120 ft/°C) with worked examples from EVA ground school. Plus Wind Triangle with Variation → MH/MC.'
                 },
                 {
-                    icon: '?��',
+                    icon: '🔧',
                     title: 'Admin Tool Control',
                     desc: 'Admins can toggle tool visibility for all users via the Tools tab in the admin panel.'
                 }
@@ -67,7 +67,7 @@
                 // Add chevron to title
                 const chevron = document.createElement('span');
                 chevron.className = 'help-chevron';
-                chevron.innerText = '>';
+                chevron.innerText = '▼';
                 titleEl.appendChild(chevron);
         
                 // Wrap all siblings after the title in a .help-body div
@@ -93,7 +93,7 @@
         }
 
         function initVersionLabels() {
-            const v = window.APP_VERSION || '-';
+            const v = window.APP_VERSION || '—';
             const launch = document.getElementById('launchVersion');
             const help   = document.getElementById('helpVersionLabel');
             if (launch) launch.textContent = `TRAINING EDITION · v${v}`;
@@ -177,10 +177,10 @@
                     body: JSON.stringify({ pin, key, value })
                 });
                 if (!res.ok) throw new Error('Save failed');
-                updateSyncStatus('??Synced', 'var(--success)');
+                updateSyncStatus('✅ Synced', 'var(--success)');
             } catch(e) {
                 console.warn('Cloud save failed:', e);
-                updateSyncStatus('?��? Sync failed', 'var(--warn)');
+                updateSyncStatus('⚠️ Sync failed', 'var(--warn)');
             }
         }
 
@@ -204,7 +204,8 @@
 
                 const entries = Object.entries(data.settings || {});
                 if (entries.length === 0 && data.migrated) {
-                    // Old backup confirmed to exist in Redis but no recoverable data ??                    // this means the account exists but settings were stored in a legacy
+                    // Old backup confirmed to exist in Redis but no recoverable data —
+                    // this means the account exists but settings were stored in a legacy
                     // format we can't read. Treat as a fresh cloud-linked account.
                     console.warn('[Cloud] Backup found but no recoverable data (legacy format).');
                     return 'empty';
@@ -223,11 +224,11 @@
         async function deleteCloudProfile() {
             const pin = localStorage.getItem('efb_cloud_pin');
             if (!pin) return;
-            if (!confirm('?��? Delete Cloud Backup?\n\nThis removes all your saved airports and\nsettings from the cloud permanently.\n\nYour data on this device is kept.\nYou cannot undo this.')) return;
+            if (!confirm('⚠️ Delete Cloud Backup?\n\nThis removes all your saved airports and\nsettings from the cloud permanently.\n\nYour data on this device is kept.\nYou cannot undo this.')) return;
             try {
                 const res = await fetch(`/api/settings?pin=${pin}`, { method: 'DELETE' });
                 if (res.ok) {
-                    // Strip cloud credentials only ??keep all local data
+                    // Strip cloud credentials only — keep all local data
                     localStorage.removeItem('efb_cloud_pin');
                     localStorage.removeItem('efb_worldclock_backup');
                     localStorage.removeItem('efb_worldclock_backup_asked');
@@ -240,12 +241,12 @@
                     // Refresh Settings UI to show new mode
                     renderStorageModeUI();
         
-                    showToast('??�?Cloud backup deleted ??now running locally');
+                    showToast('🗑️ Cloud backup deleted — now running locally');
                 } else {
-                    showToast('?��? Delete failed. Try again.');
+                    showToast('⚠️ Delete failed. Try again.');
                 }
             } catch(e) {
-                showToast('?��? No connection. Try again.');
+                showToast('⚠️ No connection. Try again.');
             }
         }
 
@@ -270,12 +271,12 @@
                         localStorage.setItem('efb_storage_mode', recovered);
                         const pin = await EFB_DB.get('_efb_cloud_pin');
                         if (pin) localStorage.setItem('efb_cloud_pin', pin);
-                        console.log('??Session recovered from IndexedDB');
+                        console.log('✅ Session recovered from IndexedDB');
                         return true;
                     }
                 }
 
-                // 3. Truly first launch ??show setup
+                // 3. Truly first launch — show setup
                 if (!this.mode) { showStorageSetup(); return false; }
 
                 // 4. Start keep-alive to prevent future purges
@@ -319,13 +320,13 @@
             const pinDisp = document.getElementById('cloudPinDisplay');
             if (!label) return;
             if (mode === 'cloud') {
-                label.innerText = '?��? Cloud Backup ??Active';
+                label.innerText = '☁️ Cloud Backup — Active';
                 label.style.color = 'var(--accent)';
                 if (pinRow) pinRow.style.display = 'block';
-                if (pinDisp && pin) pinDisp.innerText = '*'.repeat(pin.length);
+                if (pinDisp && pin) pinDisp.innerText = '•'.repeat(pin.length);
                 updateLastSyncTime();
             } else {
-                label.innerText = '?�� This Device Only';
+                label.innerText = '📱 This Device Only';
                 label.style.color = 'var(--success)';
                 if (pinRow) pinRow.style.display = 'none';
             }
@@ -370,7 +371,7 @@
                 await Storage.setMode('local');
                 document.getElementById('storageSetup').style.display = 'none';
                 renderStorageModeUI();
-                showToast('?�� Saved to this device only');
+                showToast('📱 Saved to this device only');
                 initApp();
                 showOnboarding();
                 return;
@@ -383,7 +384,7 @@
         function resetPinUI(step) {
             window._pinEntry = ''; window._pinStep = step; window._pinFirst = '';
             const isRestore = step === 'restore';
-            document.getElementById('pinIcon').innerText    = isRestore ? '??' : '?��?';
+            document.getElementById('pinIcon').innerText    = isRestore ? '🔄' : '☁️';
             document.getElementById('pinTitle').innerText   = isRestore ? 'Restore Cloud Backup' : 'Set Up Cloud Backup';
             document.getElementById('pinSubtitle').innerHTML = isRestore
                 ? 'Enter the Backup Code you created on your other device.'
@@ -409,13 +410,13 @@
             const confirmBtn = document.getElementById('pinConfirmBtn');
             if (count >= 4) {
                 confirmBtn.style.display = 'block';
-                confirmBtn.innerText = window._pinStep === 'confirm' ? 'Confirm Code' :
-                                       window._pinStep === 'restore' ? 'Restore' : 'Continue';
+                confirmBtn.innerText = window._pinStep === 'confirm' ? 'Confirm Code →' :
+                                       window._pinStep === 'restore' ? 'Restore →' : 'Continue →';
             } else { confirmBtn.style.display = 'none'; }
         }
 
         function pinPadPress(val) {
-            if (val === 'BACK') { window._pinEntry = window._pinEntry.slice(0, -1); updatePinDots(window._pinEntry.length); return; }
+            if (val === '⌫') { window._pinEntry = window._pinEntry.slice(0, -1); updatePinDots(window._pinEntry.length); return; }
             if (window._pinEntry.length >= 6) return;
             window._pinEntry += val;
             updatePinDots(window._pinEntry.length);
@@ -428,14 +429,14 @@
                 const data = await res.json();
                 return data.found === true;
             } catch(e) {
-                return false; // fail open ??don't block new backup creation on network errors
+                return false; // fail open — don't block new backup creation on network errors
             }
         }
 
         async function submitPinEntry() {
             const entered = window._pinEntry;
             const msg = document.getElementById('pinMsg');
-            if (entered.length < 4) { msg.innerText = '?��? Enter at least 4 digits'; msg.style.color = 'var(--warn)'; return; }
+            if (entered.length < 4) { msg.innerText = '⚠️ Enter at least 4 digits'; msg.style.color = 'var(--warn)'; return; }
 
             if (window._pinStep === 'create') {
                 window._pinFirst = entered; window._pinEntry = ''; window._pinStep = 'confirm';
@@ -445,7 +446,7 @@
 
             } else if (window._pinStep === 'confirm') {
                 if (entered === window._pinFirst) {
-                    msg.innerText = '?? Checking availability...'; msg.style.color = '#8e8e93';
+                    msg.innerText = '🔍 Checking availability...'; msg.style.color = '#8e8e93';
                     const inUse = await checkCodeAvailability(entered);
                     if (inUse) {
                         msg.innerText = '';
@@ -453,7 +454,7 @@
                         warningDiv.style.cssText = `background:rgba(255,159,10,0.12);border:1px solid rgba(255,159,10,0.4);border-radius:10px;padding:14px;margin:0 0 16px 0;text-align:center;max-width:260px;`;
                         warningDiv.id = 'codeWarning';
                         warningDiv.innerHTML = `
-                            <div style="color:#ff9f0a;font-weight:800;margin-bottom:6px;font-size:13px;">?��? Code Already In Use</div>
+                            <div style="color:#ff9f0a;font-weight:800;margin-bottom:6px;font-size:13px;">⚠️ Code Already In Use</div>
                             <div style="color:#8e8e93;font-size:11px;line-height:1.6;margin-bottom:12px;">
                                 This Backup Code already has saved data.<br>Choose a different code or restore the existing backup instead.
                             </div>
@@ -464,11 +465,11 @@
                         const numpad = document.querySelector('#pinSetup > div[style*="grid-template-columns"]');
                         if (numpad) numpad.before(warningDiv);
                     } else {
-                        msg.innerText = '??Backup Code confirmed!'; msg.style.color = 'var(--success)';
+                        msg.innerText = '✅ Backup Code confirmed!'; msg.style.color = 'var(--success)';
                         setTimeout(() => finalizePinSetup(entered), 600);
                     }
                 } else {
-                    msg.innerText = '??Codes did not match. Try again.'; msg.style.color = 'var(--danger)';
+                    msg.innerText = '❌ Codes did not match. Try again.'; msg.style.color = 'var(--danger)';
                     window._pinEntry = ''; window._pinFirst = ''; window._pinStep = 'create';
                     document.getElementById('pinTitle').innerText    = 'Set Up Cloud Backup';
                     document.getElementById('pinSubtitle').innerHTML = 'Create a 4-6 digit Backup Code to save your airports and settings to the cloud.';
@@ -476,23 +477,23 @@
                 }
 
             } else if (window._pinStep === 'restore') {
-                msg.innerText = '?? Looking up your backup...'; msg.style.color = '#8e8e93';
+                msg.innerText = '🔍 Looking up your backup...'; msg.style.color = '#8e8e93';
                 const confirmBtn = document.getElementById('pinConfirmBtn');
                 confirmBtn.disabled = true; confirmBtn.innerText = 'Checking...';
                 try {
                     const res  = await fetch(`/api/settings?pin=${entered}`);
                     const data = await res.json();
                     if (data.found) {
-                        msg.innerText = '??Backup found!'; msg.style.color = 'var(--success)';
+                        msg.innerText = '✅ Backup found!'; msg.style.color = 'var(--success)';
                         setTimeout(() => finalizePinSetup(entered), 600);
                     } else {
-                        msg.innerText = '??No backup found for this code.'; msg.style.color = 'var(--danger)';
+                        msg.innerText = '❌ No backup found for this code.'; msg.style.color = 'var(--danger)';
                         window._pinEntry = ''; confirmBtn.disabled = false;
-                        setTimeout(() => { updatePinDots(0); msg.innerText = 'Enter your Backup Code'; msg.style.color = '#8e8e93'; confirmBtn.innerText = 'Restore'; }, 2000);
+                        setTimeout(() => { updatePinDots(0); msg.innerText = 'Enter your Backup Code'; msg.style.color = '#8e8e93'; confirmBtn.innerText = 'Restore →'; }, 2000);
                     }
                 } catch(e) {
-                    msg.innerText = '?��? No connection. Check internet.'; msg.style.color = 'var(--warn)';
-                    window._pinEntry = ''; confirmBtn.disabled = false; confirmBtn.innerText = 'Restore';
+                    msg.innerText = '⚠️ No connection. Check internet.'; msg.style.color = 'var(--warn)';
+                    window._pinEntry = ''; confirmBtn.disabled = false; confirmBtn.innerText = 'Restore →';
                     setTimeout(() => { updatePinDots(0); msg.innerText = 'Enter your Backup Code'; msg.style.color = '#8e8e93'; }, 2000);
                 }
             }
@@ -502,14 +503,14 @@
             document.getElementById('codeWarning')?.remove();
             resetPinUI('create');
             const msg = document.getElementById('pinMsg');
-            msg.innerText = '?��? Choose a different code'; msg.style.color = 'var(--warn)';
+            msg.innerText = '⚠️ Choose a different code'; msg.style.color = 'var(--warn)';
             setTimeout(() => { msg.innerText = 'Enter 4-6 digits'; msg.style.color = '#8e8e93'; }, 2500);
         }
 
         async function restoreExistingInstead(code) {
             document.getElementById('codeWarning')?.remove();
             const msg = document.getElementById('pinMsg');
-            msg.innerText = '?��? Restoring your backup...'; msg.style.color = 'var(--accent)';
+            msg.innerText = '☁️ Restoring your backup...'; msg.style.color = 'var(--accent)';
             setTimeout(() => finalizePinSetup(code), 600);
         }
 
@@ -521,12 +522,12 @@
             document.getElementById('pinSetup').style.display    = 'none';
             document.getElementById('storageSetup').style.display = 'none';
             if (restored === true) {
-                showToast('?��? Backup restored successfully!');
+                showToast('☁️ Backup restored successfully!');
                 sessionStorage.setItem('_efb_just_restored', '1');
             } else if (restored === 'empty') {
-                showToast('?��? Cloud linked ??no prior data found');
+                showToast('☁️ Cloud linked — no prior data found');
             } else {
-                showToast('??Cloud Backup activated!');
+                showToast('✅ Cloud Backup activated!');
             }
             initApp();
             if (!restored) showOnboarding();
@@ -544,7 +545,7 @@
             const modal = document.getElementById('apiStatsModal');
             modal.classList.add('active');
             if (_adminPasswordCache) {
-                // Already authed ??go straight to stats
+                // Already authed — go straight to stats
                 showAdminPanel(_adminPasswordCache);
             } else {
                 renderAdminLoginPrompt();
@@ -564,14 +565,14 @@
             const content = document.getElementById('apiStatsContent');
             content.innerHTML = `
                 <div style="text-align:center;padding:40px;color:#8e8e93;">
-                    <div style="font-size:32px;margin-bottom:12px;">??</div>
+                    <div style="font-size:32px;margin-bottom:12px;">🔐</div>
                     <div style="font-weight:700;margin-bottom:8px;color:#fff;">Admin Access Required</div>
                     <div style="font-size:12px;margin-bottom:20px;">Enter admin password to view statistics and manage users</div>
                     <input type="password" id="apiAdminPassword" placeholder="Password"
                            onkeypress="if(event.key==='Enter') fetchApiStats()"
                            style="background:#1c1c1e;border:1px solid #555;color:#fff;padding:12px;border-radius:8px;width:200px;font-size:14px;text-align:center;margin-bottom:12px;">
                     <br>
-                    <button onclick="fetchApiStats()" style="background:var(--accent);border:none;color:#fff;padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">Unlock ??/button>
+                    <button onclick="fetchApiStats()" style="background:var(--accent);border:none;color:#fff;padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">Unlock →</button>
                 </div>`;
         }
 
@@ -580,7 +581,7 @@
             const passwordInput = document.getElementById('apiAdminPassword');
             const password      = passwordInput?.value;
             if (!password) { alert('Please enter password'); return; }
-            content.innerHTML = `<div style="text-align:center;padding:40px;color:#8e8e93;"><div style="font-size:32px;margin-bottom:12px;">??/div><div>Unlocking...</div></div>`;
+            content.innerHTML = `<div style="text-align:center;padding:40px;color:#8e8e93;"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Unlocking...</div></div>`;
             try {
                 const res = await fetch('/api/api-stats', {
                     method: 'POST',
@@ -588,7 +589,7 @@
                     body: JSON.stringify({ password })
                 });
                 if (res.status === 401) {
-                    content.innerHTML = `<div style="text-align:center;padding:40px;"><div style="font-size:32px;margin-bottom:12px;">??/div><div style="color:var(--danger);font-weight:700;margin-bottom:16px;">Incorrect Password</div><button onclick="renderAdminLoginPrompt()" style="background:#333;border:1px solid #555;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Try Again</button></div>`;
+                    content.innerHTML = `<div style="text-align:center;padding:40px;"><div style="font-size:32px;margin-bottom:12px;">❌</div><div style="color:var(--danger);font-weight:700;margin-bottom:16px;">Incorrect Password</div><button onclick="renderAdminLoginPrompt()" style="background:#333;border:1px solid #555;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Try Again</button></div>`;
                     return;
                 }
                 const data = await res.json();
@@ -598,7 +599,7 @@
                 showAdminConsoleLink(); // reveal shortcut in Settings
                 showAdminPanel(password, 'stats');
             } catch (err) {
-                content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);"><div style="font-size:32px;margin-bottom:12px;">?��?</div><div>Error: ${err.message}</div></div>`;
+                content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div>Error: ${err.message}</div></div>`;
             }
         }
 
@@ -614,19 +615,19 @@
                     <button id="adminTab-stats" onclick="switchAdminTab('stats','${password}')"
                             style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
                             background:${activeTab==='stats'?'var(--accent)':'transparent'};
-                            color:${activeTab==='stats'?'#fff':'#8e8e93'};">?? Stats</button>
+                            color:${activeTab==='stats'?'#fff':'#8e8e93'};">📊 Stats</button>
                     <button id="adminTab-users" onclick="switchAdminTab('users','${password}')"
                             style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
                             background:${activeTab==='users'?'var(--accent)':'transparent'};
-                            color:${activeTab==='users'?'#fff':'#8e8e93'};">?�� Users</button>
+                            color:${activeTab==='users'?'#fff':'#8e8e93'};">👥 Users</button>
                     <button id="adminTab-tools" onclick="switchAdminTab('tools','${password}')"
                             style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
                             background:${activeTab==='tools'?'var(--accent)':'transparent'};
-                            color:${activeTab==='tools'?'#fff':'#8e8e93'};">?�� Tools</button>
+                            color:${activeTab==='tools'?'#fff':'#8e8e93'};">🔧 Tools</button>
                 </div>
                 <div id="adminTabContent"></div>`;
 
-            // Always fetch fresh on open ??accurate across devices
+            // Always fetch fresh on open — accurate across devices
             if (activeTab === 'users') loadUsersTab(password);
             else if (activeTab === 'tools') loadToolsTab();
             else                       loadStatsAndRender(password);
@@ -639,7 +640,7 @@
                 btn.style.background = t === tab ? 'var(--accent)' : 'transparent';
                 btn.style.color      = t === tab ? '#fff'           : '#8e8e93';
             });
-            // Always fetch fresh ??ensures stats are current across all devices
+            // Always fetch fresh — ensures stats are current across all devices
             if (tab === 'stats') await loadStatsAndRender(password);
             else if (tab === 'tools') loadToolsTab();
             else                 await loadUsersTab(password);
@@ -651,14 +652,14 @@
             // Fetch latest config
             await fetchToolVisibility();
             tabContent.innerHTML = `
-                <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tool Visibility ??toggle to show/hide for all users</div>
-                <div style="font-size:11px;color:#888;margin-bottom:14px;">Hidden tools are invisible to normal users. Admin always sees all tools with a <span style="color:#ff9f0a;">?? HIDDEN</span> badge.</div>
+                <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tool Visibility — toggle to show/hide for all users</div>
+                <div style="font-size:11px;color:#888;margin-bottom:14px;">Hidden tools are invisible to normal users. Admin always sees all tools with a <span style="color:#ff9f0a;">👁 HIDDEN</span> badge.</div>
                 ${typeof renderAdminToolsPanel === 'function' ? renderAdminToolsPanel() : '<div style="color:#ff453a;">renderAdminToolsPanel not loaded</div>'}`;
         }
 
         async function loadStatsAndRender(password) {
             const tabContent = document.getElementById('adminTabContent');
-            if (tabContent) tabContent.innerHTML = `<div style="text-align:center;padding:30px;color:#8e8e93;">??Loading...</div>`;
+            if (tabContent) tabContent.innerHTML = `<div style="text-align:center;padding:30px;color:#8e8e93;">⏳ Loading...</div>`;
             try {
                 const res  = await fetch('/api/api-stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
                 const data = await res.json();
@@ -672,7 +673,7 @@
         async function loadUsersTab(password) {
             const tabContent = document.getElementById('adminTabContent');
             if (!tabContent) return;
-            tabContent.innerHTML = `<div style="text-align:center;padding:30px;color:#8e8e93;">??Loading users...</div>`;
+            tabContent.innerHTML = `<div style="text-align:center;padding:30px;color:#8e8e93;">⏳ Loading users...</div>`;
             try {
                 const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'list', password }) });
                 const data = await res.json();
@@ -712,7 +713,7 @@
 
                 <!-- Create new user -->
                 <div style="background:#1c1c1e;border:1px solid #333;border-radius:10px;padding:14px;margin-bottom:16px;">
-                    <div style="font-size:11px;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">??New Access Code</div>
+                    <div style="font-size:11px;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">➕ New Access Code</div>
                     <div style="display:flex;gap:8px;margin-bottom:8px;">
                         <input id="newUserName" placeholder="Name (e.g. John)" type="text"
                                style="flex:1;background:#111;border:1px solid #444;color:#fff;padding:9px 10px;border-radius:8px;font-size:13px;outline:none;">
@@ -721,9 +722,9 @@
                                oninput="this.value=this.value.toUpperCase()">
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;">
-                        <button onclick="generateRandomCode()" style="background:#2c2c2e;border:1px solid #444;color:#8e8e93;padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer;white-space:nowrap;">?�� Random</button>
+                        <button onclick="generateRandomCode()" style="background:#2c2c2e;border:1px solid #444;color:#8e8e93;padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer;white-space:nowrap;">🎲 Random</button>
                         <button onclick="createUser('${password}')" id="createUserBtn"
-                                style="flex:1;background:var(--accent);border:none;color:#fff;padding:9px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Create ??/button>
+                                style="flex:1;background:var(--accent);border:none;color:#fff;padding:9px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Create →</button>
                     </div>
                     <div id="createUserMsg" style="font-size:11px;margin-top:8px;height:14px;"></div>
                 </div>
@@ -738,7 +739,7 @@
                     const statusColor = u.active ? 'var(--success)' : 'var(--danger)';
                     const statusBg    = u.active ? 'rgba(50,215,75,0.1)' : 'rgba(255,69,58,0.1)';
                     const statusText  = u.active ? 'ACTIVE' : 'REVOKED';
-                    const created     = u.created ? new Date(u.created).toLocaleDateString() : '-';
+                    const created     = u.created ? new Date(u.created).toLocaleDateString() : '—';
                     html += `
                         <div onclick="openInAppUserDrawer('${u.code}')"
                              style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;"
@@ -750,7 +751,7 @@
                                 </div>
                                 <div style="display:flex;align-items:center;gap:6px;">
                                     <span style="font-size:10px;font-weight:800;color:${statusColor};background:${statusBg};padding:2px 8px;border-radius:6px;">${statusText}</span>
-                                    <span style="color:#444;font-size:13px;">??/span>
+                                    <span style="color:#444;font-size:13px;">›</span>
                                 </div>
                             </div>
                             <div style="font-size:11px;color:#555;">Created ${created} · ${u.calls_today} calls today</div>
@@ -787,15 +788,15 @@
                             <div style="font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Share</div>
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
                                 <button onclick="inAppCopyCode()" id="inAppCopyCodeBtn"
-                                        style="background:#2c2c2e;border:1px solid #444;color:#fff;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">?? Copy Code</button>
+                                        style="background:#2c2c2e;border:1px solid #444;color:#fff;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📋 Copy Code</button>
                                 <button onclick="inAppCopyMsg()" id="inAppCopyMsgBtn"
-                                        style="background:#2c2c2e;border:1px solid #444;color:#fff;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">?�� Copy Message</button>
+                                        style="background:#2c2c2e;border:1px solid #444;color:#fff;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">💬 Copy Message</button>
                             </div>
 
                             <button id="inAppStatusBtn" onclick="inAppToggleStatus()"
-                                    style="width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;border:1px solid #555;">??/button>
+                                    style="width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;border:1px solid #555;">—</button>
                             <button onclick="inAppDelete()"
-                                    style="width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.25);color:var(--danger);">?? Delete Permanently</button>
+                                    style="width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.25);color:var(--danger);">🗑 Delete Permanently</button>
                         </div>
                     </div>
                 </div>`;
@@ -814,15 +815,15 @@
             document.getElementById('inAppDrawerCode').textContent  = code;
             document.getElementById('inAppDrawerName').value        = u.name || '';
             document.getElementById('inAppDrawerMsg').textContent   = '';
-            document.getElementById('inAppCopyCodeBtn').textContent = '?? Copy Code';
-            document.getElementById('inAppCopyMsgBtn').textContent  = '?�� Copy Message';
+            document.getElementById('inAppCopyCodeBtn').textContent = '📋 Copy Code';
+            document.getElementById('inAppCopyMsgBtn').textContent  = '💬 Copy Message';
 
             const statusBtn = document.getElementById('inAppStatusBtn');
             if (u.active) {
-                statusBtn.textContent = '?? Revoke Access';
+                statusBtn.textContent = '🔒 Revoke Access';
                 statusBtn.style.cssText = 'width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;background:rgba(255,69,58,0.12);border:1px solid rgba(255,69,58,0.3);color:var(--danger);';
             } else {
-                statusBtn.textContent = '??Restore Access';
+                statusBtn.textContent = '✅ Restore Access';
                 statusBtn.style.cssText = 'width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;background:rgba(50,215,75,0.12);border:1px solid rgba(50,215,75,0.3);color:var(--success);';
             }
 
@@ -846,27 +847,27 @@
             const name = document.getElementById('inAppDrawerName')?.value.trim();
             const msg  = document.getElementById('inAppDrawerMsg');
             const btn  = document.getElementById('inAppSaveBtn');
-            if (!name) { msg.style.color = 'var(--warn)'; msg.textContent = '?��? Name cannot be empty'; return; }
-            btn.disabled = true; btn.textContent = 'Saving...'; msg.textContent = '';
+            if (!name) { msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Name cannot be empty'; return; }
+            btn.disabled = true; btn.textContent = 'Saving…'; msg.textContent = '';
             try {
                 const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ action:'update', code: window._inAppDrawerCode, name, password: window._adminPwd }) });
                 const data = await res.json();
                 if (data.success) {
-                    msg.style.color = 'var(--success)'; msg.textContent = '??Saved';
+                    msg.style.color = 'var(--success)'; msg.textContent = '✅ Saved';
                     loadUsersTab(window._adminPwd);
                 } else {
-                    msg.style.color = 'var(--danger)'; msg.textContent = `??${data.error || 'Failed'}`;
+                    msg.style.color = 'var(--danger)'; msg.textContent = `❌ ${data.error || 'Failed'}`;
                 }
-            } catch(e) { msg.style.color = 'var(--warn)'; msg.textContent = '?��? Network error'; }
+            } catch(e) { msg.style.color = 'var(--warn)'; msg.textContent = '⚠️ Network error'; }
             btn.disabled = false; btn.textContent = 'Save';
         }
 
         function inAppCopyCode() {
             navigator.clipboard.writeText(window._inAppDrawerCode || '');
             const btn = document.getElementById('inAppCopyCodeBtn');
-            btn.textContent = '??Copied!';
-            setTimeout(() => btn.textContent = '?? Copy Code', 1500);
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy Code', 1500);
         }
 
         function inAppCopyMsg() {
@@ -874,11 +875,11 @@
             const u = users.find(x => x.code === window._inAppDrawerCode);
             const name = document.getElementById('inAppDrawerName')?.value.trim() || u?.name || '';
             const appUrl = window.location.origin;
-            const msg = `Hi ${name}! ??\n\nYou've been given access to METAR GO, a weather app for pilots.\n\n?? Your access code: ${window._inAppDrawerCode}\n?��? Open the app: ${appUrl}\n\nEnter your code on the first screen. Let me know if you need help!`;
+            const msg = `Hi ${name}! 👋\n\nYou've been given access to METAR GO, a weather app for pilots.\n\n🔑 Your access code: ${window._inAppDrawerCode}\n✈️ Open the app: ${appUrl}\n\nEnter your code on the first screen. Let me know if you need help!`;
             navigator.clipboard.writeText(msg);
             const btn = document.getElementById('inAppCopyMsgBtn');
-            btn.textContent = '??Copied!';
-            setTimeout(() => btn.textContent = '?�� Copy Message', 1500);
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '💬 Copy Message', 1500);
         }
 
         async function inAppToggleStatus() {
@@ -919,8 +920,8 @@
             const msg     = document.getElementById('createUserMsg');
             const btn     = document.getElementById('createUserBtn');
 
-            if (!name) { msg.innerText = '?��? Enter a name'; msg.style.color = 'var(--warn)'; return; }
-            if (!code || code.length < 4) { msg.innerText = '?��? Code must be 4+ characters'; msg.style.color = 'var(--warn)'; return; }
+            if (!name) { msg.innerText = '⚠️ Enter a name'; msg.style.color = 'var(--warn)'; return; }
+            if (!code || code.length < 4) { msg.innerText = '⚠️ Code must be 4+ characters'; msg.style.color = 'var(--warn)'; return; }
 
             btn.disabled = true; btn.innerText = 'Creating...';
             msg.innerText = ''; 
@@ -929,20 +930,20 @@
                 const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'create', code, name, password }) });
                 const data = await res.json();
                 if (res.status === 409) {
-                    msg.innerText = '??Code already exists. Try another.'; msg.style.color = 'var(--danger)';
+                    msg.innerText = '❌ Code already exists. Try another.'; msg.style.color = 'var(--danger)';
                 } else if (data.success) {
-                    msg.innerText = `??Created: ${data.code}`; msg.style.color = 'var(--success)';
+                    msg.innerText = `✅ Created: ${data.code}`; msg.style.color = 'var(--success)';
                     document.getElementById('newUserName').value = '';
                     document.getElementById('newUserCode').value = '';
                     await loadUsersTab(password);
                     openInAppUserDrawer(data.code);
                 } else {
-                    msg.innerText = `??${data.error || 'Failed'}`; msg.style.color = 'var(--danger)';
+                    msg.innerText = `❌ ${data.error || 'Failed'}`; msg.style.color = 'var(--danger)';
                 }
             } catch(e) {
-                msg.innerText = '?��? Network error'; msg.style.color = 'var(--warn)';
+                msg.innerText = '⚠️ Network error'; msg.style.color = 'var(--warn)';
             }
-            btn.disabled = false; btn.innerText = 'Create';
+            btn.disabled = false; btn.innerText = 'Create →';
         }
 
 
@@ -976,7 +977,7 @@
                         </div>
                     </div>`;
             });
-            html += `<div style="margin-top:24px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:11px;color:#555;line-height:1.6;">?��? Stats reset daily at midnight UTC. Keys rotate automatically based on usage.</div>`;
+            html += `<div style="margin-top:24px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:11px;color:#555;line-height:1.6;">ℹ️ Stats reset daily at midnight UTC. Keys rotate automatically based on usage.</div>`;
             content.innerHTML = html;
         }
 
@@ -994,21 +995,21 @@
                     const pct   = limit > 0 ? Math.round(total / limit * 100) : 0;
                     const exhausted = data.keys.every(k => (k.usage || 0) >= (k.limit || 1));
                     if (exhausted) {
-                        label.innerText = '?��? Keys exhausted';
+                        label.innerText = '⚠️ Keys exhausted';
                         label.style.color = 'var(--danger)';
                     } else {
-                        label.innerText = `??Active (${total}/${limit} calls today)`;
+                        label.innerText = `✅ Active (${total}/${limit} calls today)`;
                         label.style.color = pct > 80 ? 'var(--warn)' : 'var(--success)';
                     }
                 } else if (data.maintenance) {
-                    label.innerText = '?�� Maintenance';
+                    label.innerText = '🔧 Maintenance';
                     label.style.color = 'var(--warn)';
                 } else {
-                    label.innerText = '??Active';
+                    label.innerText = '✅ Active';
                     label.style.color = 'var(--success)';
                 }
             } catch(e) {
-                label.innerText = '?��? API unreachable';
+                label.innerText = '⚠️ API unreachable';
                 label.style.color = 'var(--warn)';
             }
         }
@@ -1019,8 +1020,8 @@
             const pin     = localStorage.getItem('efb_cloud_pin') || '';
             if (btn.innerText === 'Show') {
                 display.innerText = pin; btn.innerText = 'Hide';
-                setTimeout(() => { display.innerText = '*'.repeat(pin.length); btn.innerText = 'Show'; }, 5000);
-            } else { display.innerText = '*'.repeat(pin.length); btn.innerText = 'Show'; }
+                setTimeout(() => { display.innerText = '•'.repeat(pin.length); btn.innerText = 'Show'; }, 5000);
+            } else { display.innerText = '•'.repeat(pin.length); btn.innerText = 'Show'; }
         }
 
         // ================================================================
@@ -1090,7 +1091,7 @@
             }
             // Statute miles
             if (smValue >= 10) return 'P6SM';
-            // Round to nearest quarter-mile for clean display (e.g. 1.75 ??1¾ SM)
+            // Round to nearest quarter-mile for clean display (e.g. 1.75 → 1¾ SM)
             const rounded = Math.round(smValue * 4) / 4;
             return `${rounded} SM`;
         }
@@ -1216,7 +1217,7 @@
             const inputField   = document.getElementById('defaultIcaoInput');
             const dashEnabled  = await Storage.get('efb_multi_dashboard_enabled', false);
     
-            // ?�?� Apply correct starting tab BEFORE loading data ?�?�
+            // ── Apply correct starting tab BEFORE loading data ──
             // This prevents any flash of the METAR tab when dashboard mode is on.
             // Land on 'dashboard' (multi-airport grid) so restored airports are visible immediately.
             if (dashEnabled) {
@@ -1231,7 +1232,7 @@
                 const lastLoad = parseInt(localStorage.getItem('efb_last_load_ts') || '0');
                 const isStale = (Date.now() - lastLoad) > 3600000; // 1 hour
                 if (isStale) {
-                    console.log('[Init] Last data > 1 hour old ??force refreshing');
+                    console.log('[Init] Last data > 1 hour old — force refreshing');
                     loadData(true);
                 } else {
                     loadData();
@@ -1262,7 +1263,7 @@
                 const lastLoad = parseInt(localStorage.getItem('efb_last_load_ts') || '0');
                 const elapsed = Date.now() - lastLoad;
                 if (elapsed > 3600000) {
-                    console.log('[Auto-refresh] Data > 1hr stale ??force refreshing', icao);
+                    console.log('[Auto-refresh] Data > 1hr stale — force refreshing', icao);
                     loadData(true);
                 } else {
                     console.log('[Auto-refresh] Refreshing', icao);
@@ -1281,12 +1282,12 @@
             const cached   = localStorage.getItem(cacheKey);
             const cachedObj = cached ? (() => { try { return JSON.parse(cached); } catch(e) { return null; } })() : null;
 
-            // Fresh cache (< 10 min) ??return immediately
+            // Fresh cache (< 10 min) → return immediately
             if (cachedObj && Date.now() - cachedObj.ts < 300000) {
                 return cachedObj.data;
             }
 
-            // Build request headers ??always send access code if stored
+            // Build request headers — always send access code if stored
             const headers = {};
             const accessCode = localStorage.getItem('efb_access_code');
             if (accessCode) headers['x-access-code'] = accessCode;
@@ -1294,10 +1295,10 @@
             try {
                 const res = await fetch(endpoint, { headers });
 
-                // Access revoked ??clear code and show gate
+                // Access revoked — clear code and show gate
                 if (res.status === 403) {
                     localStorage.removeItem('efb_access_code');
-                    showAccessGate('?? Access revoked. Enter a new access code.');
+                    showAccessGate('🔒 Access revoked. Enter a new access code.');
                     throw new Error('Access revoked');
                 }
 
@@ -1308,7 +1309,7 @@
                 return data;
             } catch (err) {
                 if (err.message === 'Access revoked') throw err;
-                // Network failure ??fall back to stale cache if available
+                // Network failure — fall back to stale cache if available
                 if (cachedObj) {
                     const ageMin = Math.round((Date.now() - cachedObj.ts) / 60000);
                     console.warn(`[Offline] Serving stale cache for ${endpoint} (${ageMin}m old)`);
@@ -1330,7 +1331,7 @@
         async function checkAccessGate() {
             const code = getStoredAccessCode();
 
-            // No code stored ??show gate immediately
+            // No code stored — show gate immediately
             if (!code) {
                 showAccessGate();
                 return false;
@@ -1349,14 +1350,14 @@
                     return true;
                 }
             } catch(e) {
-                // Network error ??allow app to load (offline tolerance)
+                // Network error — allow app to load (offline tolerance)
                 console.warn('[Access] Validation failed (network), allowing offline load');
                 return true;
             }
 
             // Code was invalid / revoked
             localStorage.removeItem('efb_access_code');
-            showAccessGate('?? Your access code was revoked. Contact the admin for a new one.');
+            showAccessGate('🔒 Your access code was revoked. Contact the admin for a new one.');
             return false;
         }
 
@@ -1382,12 +1383,12 @@
             const code   = (input?.value || '').trim().toUpperCase();
 
             if (code.length < 4) {
-                msg.innerText   = '?��? Access code must be at least 4 characters';
+                msg.innerText   = '⚠️ Access code must be at least 4 characters';
                 msg.style.color = 'var(--warn)';
                 return;
             }
 
-            msg.innerText   = '?? Verifying...';
+            msg.innerText   = '🔍 Verifying...';
             msg.style.color = '#8e8e93';
             if (btn) { btn.disabled = true; btn.innerText = 'Checking...'; }
 
@@ -1400,7 +1401,7 @@
                 const data = await res.json();
 
                 if (data.valid) {
-                    msg.innerText   = `??Welcome, ${data.name}!`;
+                    msg.innerText   = `✅ Welcome, ${data.name}!`;
                     msg.style.color = 'var(--success)';
                     localStorage.setItem('efb_access_code', code);
                     setTimeout(() => {
@@ -1408,16 +1409,16 @@
                         initApp();
                     }, 700);
                 } else {
-                    msg.innerText   = '??Invalid access code. Contact admin for access.';
+                    msg.innerText   = '❌ Invalid access code. Contact admin for access.';
                     msg.style.color = 'var(--danger)';
-                    if (btn) { btn.disabled = false; btn.innerText = 'Enter'; }
+                    if (btn) { btn.disabled = false; btn.innerText = 'Enter →'; }
                     input.value = '';
                     input.focus();
                 }
             } catch(e) {
-                msg.innerText   = '?��? Could not connect. Check your internet.';
+                msg.innerText   = '⚠️ Could not connect. Check your internet.';
                 msg.style.color = 'var(--warn)';
-                if (btn) { btn.disabled = false; btn.innerText = 'Enter'; }
+                if (btn) { btn.disabled = false; btn.innerText = 'Enter →'; }
             }
         }
 
@@ -1432,13 +1433,13 @@
             const msg   = document.getElementById('saveMsg');
             if (val.length >= 3) {
                 await Storage.set('efb_default_station', val);
-                msg.innerText = "??Saved!"; msg.style.color = "var(--success)";
-                showToast(`??Default airport set to ${val}`);
+                msg.innerText = "✅ Saved!"; msg.style.color = "var(--success)";
+                showToast(`✅ Default airport set to ${val}`);
                 dismissWelcomeOverlay();
                 if (document.getElementById('icao').value === "") { document.getElementById('icao').value = val; loadData(); }
                 // Load runway options for the new default airport
                 loadPreferredRunwaySettings(val);
-            } else { msg.innerText = "?��? Invalid ICAO"; msg.style.color = "var(--warn)"; }
+            } else { msg.innerText = "⚠️ Invalid ICAO"; msg.style.color = "var(--warn)"; }
             setTimeout(() => { msg.innerText = ""; }, 3000);
         }
 
@@ -1459,7 +1460,7 @@
         
                 const savedPref = await Storage.get(`efb_pref_rwy_${icao}`) || '';
         
-                sel.innerHTML = '<option value="">?? Auto ??Best for wind</option>';
+                sel.innerHTML = '<option value="">🔀 Auto — Best for wind</option>';
                 runways.forEach(r => {
                     [r.ident1, r.ident2].forEach(ident => {
                         const opt = document.createElement('option');
@@ -1482,7 +1483,7 @@
             if (!icao || !sel) return;
             const val = sel.value;
             await Storage.set(`efb_pref_rwy_${icao}`, val);
-            showToast(val ? `??RWY ${val} set as preferred for ${icao}` : `??${icao} will auto-select best runway`);
+            showToast(val ? `✅ RWY ${val} set as preferred for ${icao}` : `✅ ${icao} will auto-select best runway`);
         
             // If this airport is currently loaded, instantly apply to METAR tab
             const currentIcao = document.getElementById('icao').value.trim().toUpperCase();
@@ -1494,7 +1495,7 @@
                     if (val && rwyEl.querySelector(`option[value="${val}"]`)) {
                         rwyEl.value = val;
                     } else if (!val) {
-                        // Auto ??recalculate best runway for wind
+                        // Auto — recalculate best runway for wind
                         const mv      = stationData.magnetic_variation || 0;
                         const safeDir = (currentWind.dir === 'VRB') ? 0 : currentWind.dir;
                         const windMag = safeDir - mv;
@@ -1518,9 +1519,9 @@
     
         async function resetApp() {
             const mode = localStorage.getItem('efb_storage_mode');
-            let message = "?��? Factory Reset App?\n\nThis will:\n??Clear all local settings\n??Remove saved airports & preferences\n??Return to the initial setup screen\n";
+            let message = "⚠️ Factory Reset App?\n\nThis will:\n• Clear all local settings\n• Remove saved airports & preferences\n• Return to the initial setup screen\n";
             if (mode === 'cloud') {
-                message += "\n?��? Your Cloud Backup is NOT deleted.\nYou can restore it with your Backup Code on the next setup screen.";
+                message += "\n☁️ Your Cloud Backup is NOT deleted.\nYou can restore it with your Backup Code on the next setup screen.";
             } else {
                 message += "\nThis cannot be undone.";
             }
@@ -1529,21 +1530,21 @@
             // 1. Clear localStorage first
             localStorage.clear();
         
-            // 2. Close open IndexedDB connection BEFORE deleting ??otherwise delete is blocked
+            // 2. Close open IndexedDB connection BEFORE deleting — otherwise delete is blocked
             if (EFB_DB.db) {
                 EFB_DB.db.close();
                 EFB_DB.db = null;
             }
         
-            // 3. Delete IndexedDB ??handle blocked event so it doesn't silently fail
+            // 3. Delete IndexedDB — handle blocked event so it doesn't silently fail
             await new Promise((resolve) => {
                 const req = indexedDB.deleteDatabase('efb_storage_v1');
-                req.onsuccess  = () => { console.log('[Reset] IndexedDB deleted'); resolve(); };
+                req.onsuccess  = () => { console.log('[Reset] IndexedDB deleted ✅'); resolve(); };
                 req.onerror    = () => { console.warn('[Reset] IndexedDB delete error');   resolve(); };
                 req.onblocked  = () => { console.warn('[Reset] IndexedDB delete blocked'); resolve(); };
             });
         
-            showToast('App reset - returning to setup...');
+            showToast('🗑️ App reset — returning to setup...');
             setTimeout(() => location.reload(), 800);
         }
 
@@ -1555,7 +1556,7 @@
             favs.forEach(code => {
                 const chip = document.createElement('div');
                 chip.className = 'quick-chip fav';
-                chip.innerText = '??' + code;
+                chip.innerText = '★ ' + code;
                 chip.onclick = () => quickLoad(code);
                 container.appendChild(chip);
             });
@@ -1594,7 +1595,7 @@
                 favs.push(code);
                 await Storage.set('efb_favorites', favs);
                 renderFavoritesSettings(); renderHistory();
-                showToast(`??${code} added to favorites`);
+                showToast(`✅ ${code} added to favorites`);
             }
             input.value = '';
         }
@@ -1603,7 +1604,7 @@
             let favs = getFavorites().filter(f => f !== code);
             await Storage.set('efb_favorites', favs);
             renderFavoritesSettings(); renderHistory();
-            showToast(`??�?${code} removed`);
+            showToast(`🗑️ ${code} removed`);
         }
 
         function renderFavoritesSettings() {
@@ -1617,7 +1618,7 @@
             favs.forEach(code => {
                 const chip = document.createElement('div');
                 chip.className = 'quick-chip fav';
-                chip.innerHTML = `${code} <span class="chip-del" onclick="removeFavorite('${code}')">??/span>`;
+                chip.innerHTML = `${code} <span class="chip-del" onclick="removeFavorite('${code}')">✕</span>`;
                 list.appendChild(chip);
             });
         }
@@ -1628,11 +1629,11 @@
         function locateUser() {
             const btn = document.querySelector('.search-box button[onclick="locateUser()"]')
                      || document.querySelector('.search-box button');
-            btn.innerHTML = 'LOC';
+            btn.innerHTML = '⏳';
 
             if (!navigator.geolocation) {
-                showToast('?��? Geolocation not supported on this device');
-                btn.innerHTML = '??';
+                showToast('⚠️ Geolocation not supported on this device');
+                btn.innerHTML = '📍';
                 return;
             }
 
@@ -1645,7 +1646,7 @@
                     );
 
                     if (!data || data.length === 0) {
-                        showToast('?��? No aviation weather stations found within 150nm');
+                        showToast('⚠️ No aviation weather stations found within 150nm');
                         return;
                     }
 
@@ -1658,7 +1659,7 @@
                     loadData();
 
                     // Friendly toast with airport info and distance
-                    showToast(`?? Nearest: ${icao} ??${name} · ${nm}nm away`);
+                    showToast(`📍 Nearest: ${icao} — ${name} · ${nm}nm away`);
 
                     // If there are more results, log them quietly for debugging
                     if (data.length > 1) {
@@ -1672,17 +1673,17 @@
 
                 } catch(e) {
                     console.error('GPS locate error:', e);
-                    showToast('??Error searching for nearby stations ??check connection');
+                    showToast('❌ Error searching for nearby stations — check connection');
                 } finally {
-                    btn.innerHTML = '??';
+                    btn.innerHTML = '📍';
                 }
 
             }, (err) => {
                 const msg = err.code === 1
-                    ? '?? Location permission denied ??enable in browser settings'
-                    : '??GPS unavailable or timed out';
+                    ? '🔒 Location permission denied — enable in browser settings'
+                    : '❌ GPS unavailable or timed out';
                 showToast(msg);
-                btn.innerHTML = '??';
+                btn.innerHTML = '📍';
             }, {
                 enableHighAccuracy: true,
                 timeout: 10000,
@@ -1811,10 +1812,10 @@
             
             // Show skeletons immediately for instant feedback
             showLoadingSkeletons();
-            document.getElementById('nearList').innerHTML = '<span style="color:#555;font-size:12px;">Scanning??/span>';
+            document.getElementById('nearList').innerHTML = '<span style="color:#555;font-size:12px;">Scanning…</span>';
 
             try {
-                // ?�?� PHASE 1: Station data (fastest, ~100ms) ?�?�
+                // ── PHASE 1: Station data (fastest, ~100ms) ──
                 stationData = await secureFetch(`/api/weather?type=station&station=${icao}`);
 
                 // Guard: AVWX may return {error: "..."} on key exhaustion / 500
@@ -1829,10 +1830,11 @@
                     });
                     document.getElementById('freqContainer').innerHTML =
                         `<div style="grid-column:1/-1;color:var(--warn);font-size:12px;padding:8px;">
-                            ?��? Station data unavailable (${errMsg}).
+                            ⚠️ Station data unavailable (${errMsg}).
                             <a href="https://ourairports.com/airports/${icao}/frequencies.html"
                                target="_blank" style="color:var(--accent);margin-left:6px;text-decoration:none;">
-                                OurAirports ??                            </a>
+                                OurAirports ↗
+                            </a>
                         </div>`;
                     // Still try frequencies from local DB
                     const dbFreqs = (typeof lookupFrequencies === 'function') ? lookupFrequencies(icao) : null;
@@ -1851,21 +1853,21 @@
                     if (stationData._meta) console.log(`%c[AVWX] Station - Key #${stationData._meta.key_used}`, 'color:#0a84ff;font-weight:bold;');
                     renderInfo(stationData);
                     updateAudioSection(icao);
-                    // Populate frequencies directly ??not via renderInfo to avoid timing issues
+                    // Populate frequencies directly — not via renderInfo to avoid timing issues
                     const fc = document.getElementById('freqContainer');
                     if (fc) renderInfoFrequencies(stationData, fc);
                 }
                 
-                // ?�?� PHASE 2: Start slow tasks in background (don't block) ?�?�
+                // ── PHASE 2: Start slow tasks in background (don't block) ──
                 if (stationData?.latitude != null && stationData?.longitude != null) {
                     findNearbyStations(stationData.latitude, stationData.longitude);
                     fetchMeteogram(stationData.latitude, stationData.longitude);
                 } else {
                     document.getElementById('nearList').innerHTML =
-                        '<span style="color:#555;font-size:12px;">No station data ??coordinates unavailable.</span>';
+                        '<span style="color:#555;font-size:12px;">No station data — coordinates unavailable.</span>';
                 }
                 
-                // ?�?� PHASE 3: Weather data in parallel - render each as it completes ?�?�
+                // ── PHASE 3: Weather data in parallel - render each as it completes ──
                 const weatherPromises = Promise.allSettled([
                     secureFetch(`/api/weather?type=metar&station=${icao}`),
                     secureFetch(`/api/weather?type=taf&station=${icao}`),
@@ -1914,7 +1916,7 @@
                         
                         // Store for trend analysis
                         storeMetarForTrend(icao, m);
-                        // ?�?� Sync dashboard card if this airport is tracked ?�?�
+                        // ── Sync dashboard card if this airport is tracked ──
                         if (multiAirports.includes(icao)) {
                             fetchMultiAirportData(icao);
                         }
@@ -1959,7 +1961,7 @@
                             el.innerHTML = `<div style="color:#555;font-size:11px;padding:4px 0;line-height:1.6;">
                                 SIGMET/AIRMET via AWC covers US airspace only.<br>
                                 For this airport, check <a href="${authority.url}" target="_blank"
-                                    style="color:var(--accent);text-decoration:none;font-weight:700;">${authority.name} ??/a>.
+                                    style="color:var(--accent);text-decoration:none;font-weight:700;">${authority.name} ↗</a>.
                             </div>`;
                         } else {
                             renderSigairmet(sigData, id);
@@ -1971,7 +1973,7 @@
                     mirrorToWeatherTab();
                     } catch(renderErr) {
                         console.error('[loadData] Render error:', renderErr);
-                        showToast('?��? Data loaded but render failed ??check console');
+                        showToast('⚠️ Data loaded but render failed — check console');
                     }
                 });;
 
@@ -1983,18 +1985,18 @@
 
                 document.getElementById('rawMetar').innerHTML = isOffline ? `
                     <div style="text-align:center;padding:24px 16px;">
-                        <div style="font-size:32px;margin-bottom:12px;">?��</div>
+                        <div style="font-size:32px;margin-bottom:12px;">📡</div>
                         <div style="color:var(--danger);font-weight:800;margin-bottom:8px;">NO NETWORK</div>
                         <div style="color:#aaa;font-size:12px;line-height:1.7;margin-bottom:16px;">
                             Weather data requires an internet connection.<br>
-                            Open the <b style="color:#fff;">Aviation Tools</b> tab ??all calculators work offline.
+                            Open the <b style="color:#fff;">Aviation Tools</b> tab — all calculators work offline.
                         </div>
                     </div>` : `
                     <div style="text-align:center;padding:20px 10px;">
                         <div style="color:var(--danger);font-weight:800;margin-bottom:15px;">STATION DATA UNAVAILABLE</div>
                         <a href="https://metar-taf.com/${ic}" target="_blank" class="atc-btn"
                            style="justify-content:center;background:var(--accent);border:none;color:#fff;">
-                            <span>View on Metar-Taf.com ??/span>
+                            <span>View on Metar-Taf.com ↗</span>
                         </a>
                     </div>`;
 
@@ -2068,7 +2070,7 @@
                         <div style="margin-bottom:8px;border-left:3px solid ${color};background:rgba(255,255,255,0.03);border-radius:4px;padding:7px 8px;">
                             <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
                                 <span style="color:${color};font-size:10px;font-weight:800;">${n.number || ''}</span>
-                                <span style="color:#555;font-size:9px;">${formatDate(n.start)}${n.end ? ' ??' + formatDate(n.end) : ''}</span>
+                                <span style="color:#555;font-size:9px;">${formatDate(n.start)}${n.end ? ' → ' + formatDate(n.end) : ''}</span>
                             </div>
                             <div style="font-size:11px;font-family:'SF Mono',monospace;line-height:1.5;color:#ccc;white-space:pre-wrap;word-break:break-word;">
                                 ${formatNotamText(n.raw)}
@@ -2076,16 +2078,16 @@
                         </div>`).join('')}`;
             };
 
-            const html = renderGroup(critical, '??CRITICAL', '#ff453a')
-                       + renderGroup(warning,  '?��? CAUTION',  '#ff9f0a')
-                       + renderGroup(info,     '?��? INFO',      '#8e8e93');
+            const html = renderGroup(critical, '⛔ CRITICAL', '#ff453a')
+                       + renderGroup(warning,  '⚠️ CAUTION',  '#ff9f0a')
+                       + renderGroup(info,     'ℹ️ INFO',      '#8e8e93');
 
             container.innerHTML = html ||
                 '<div style="color:#555;font-style:italic;padding:8px;">No active NOTAMs.</div>';
         }
 
         // ================================================================
-        // 13b. FAA NOTAM FETCH (aviationweather.gov ??free, no key)
+        // 13b. FAA NOTAM FETCH (aviationweather.gov — free, no key)
         // ================================================================
         async function fetchNotamsFAA(icao) {
             const url = `https://aviationweather.gov/api/data/notam?icaos=${icao}&format=json`;
@@ -2106,7 +2108,7 @@
         }
     
         // ================================================================
-        // 13c. SIGMET / AIRMET FETCH & RENDER (aviationweather.gov ??free, no key)
+        // 13c. SIGMET / AIRMET FETCH & RENDER (aviationweather.gov — free, no key)
         // ================================================================
         /**
          * Returns true for US domestic airspace ICAO prefixes:
@@ -2205,7 +2207,7 @@
 
             if (!items || items.length === 0) {
                 container.innerHTML = `<div style="color:#555;font-style:italic;padding:6px 0;font-size:11px;">
-                    ??No active SIGMETs or AIRMETs in the area.<br>
+                    ✅ No active SIGMETs or AIRMETs in the area.<br>
                     <span style="font-size:10px;color:#444;">AIRMETs are issued at 03, 09, 15, 21Z. SIGMETs only when hazardous conditions exist.</span>
                 </div>`;
                 return;
@@ -2235,31 +2237,31 @@
                         const from  = fmtTime(item.validTimeFrom);
                         const to    = fmtTime(item.validTimeTo);
                         const alt   = item.altitudeLow1 != null
-                            ? `${item.altitudeLow1}??{item.altitudeHi1 ?? '?'} ft`
+                            ? `${item.altitudeLow1}–${item.altitudeHi1 ?? '?'} ft`
                             : '';
                         const hazard = item.hazard || item.phenomenon || '';
                         return `
                         <div style="margin-bottom:8px;border-left:3px solid ${color};background:${bg};border-radius:4px;padding:7px 10px;">
                             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
                                 <span style="color:${color};font-size:10px;font-weight:800;">${item.airSigmetType || ''}${hazard ? ' · ' + hazard : ''}</span>
-                                <span style="color:#555;font-size:9px;white-space:nowrap;">${from}${to ? ' ??' + to : ''}</span>
+                                <span style="color:#555;font-size:9px;white-space:nowrap;">${from}${to ? ' → ' + to : ''}</span>
                             </div>
-                            ${alt ? `<div style="color:#888;font-size:10px;margin-bottom:4px;">??${alt}</div>` : ''}
+                            ${alt ? `<div style="color:#888;font-size:10px;margin-bottom:4px;">✈ ${alt}</div>` : ''}
                             <div style="font-size:11px;font-family:'SF Mono',monospace;line-height:1.5;color:#ccc;white-space:pre-wrap;word-break:break-word;">${raw}</div>
                         </div>`;
                     }).join('')}`;
             };
 
             container.innerHTML =
-                renderGroup(sigmets, '?�� SIGMET',        '#ff453a', 'rgba(255,69,58,0.06)')  +
-                renderGroup(sierras, '?�� AIRMET SIERRA', '#ff9f0a', 'rgba(255,159,10,0.06)') +
-                renderGroup(tangos,  '?�� AIRMET TANGO',  '#30d158', 'rgba(48,209,88,0.06)')  +
-                renderGroup(zulus,   '?�� AIRMET ZULU',   '#0a84ff', 'rgba(10,132,255,0.06)') +
-                renderGroup(other,   '?��? OTHER',          '#8e8e93', 'rgba(255,255,255,0.03)');
+                renderGroup(sigmets, '🔴 SIGMET',        '#ff453a', 'rgba(255,69,58,0.06)')  +
+                renderGroup(sierras, '🟡 AIRMET SIERRA', '#ff9f0a', 'rgba(255,159,10,0.06)') +
+                renderGroup(tangos,  '🟢 AIRMET TANGO',  '#30d158', 'rgba(48,209,88,0.06)')  +
+                renderGroup(zulus,   '🔵 AIRMET ZULU',   '#0a84ff', 'rgba(10,132,255,0.06)') +
+                renderGroup(other,   'ℹ️ OTHER',          '#8e8e93', 'rgba(255,255,255,0.03)');
         }
 
 
-        /** Force re-fetch SIGMET/AIRMET ??busts 10-min cache */
+        /** Force re-fetch SIGMET/AIRMET — busts 10-min cache */
         async function refreshSigairmet() {
             if (!stationData?.latitude || !stationData?.longitude) {
                 showToast('Load an airport first');
@@ -2288,7 +2290,7 @@
             } catch(e) {
                 ['sigairmetList', 'sigairmetList2'].forEach(id => {
                     const el = document.getElementById(id);
-                    if (el) el.innerHTML = '<div style="color:var(--danger);font-size:11px;padding:8px 0;">??Failed to refresh. Check connection.</div>';
+                    if (el) el.innerHTML = '<div style="color:var(--danger);font-size:11px;padding:8px 0;">⚠ Failed to refresh. Check connection.</div>';
                 });
             }
         }
@@ -2300,14 +2302,14 @@
             const liveAtcBtn = document.getElementById('btnLiveAtc');
             if (liveAtcBtn) {
                 liveAtcBtn.onclick = () => showLiveAtcChoice(icao);
-                liveAtcBtn.querySelector('span').innerText = `?�� LiveATC (${icao})`;
+                liveAtcBtn.querySelector('span').innerText = `📡 LiveATC (${icao})`;
             }
 
             // Update Metar-Taf link with current airport
             const metarTafBtn = document.getElementById('btnMetarTaf');
             if (metarTafBtn) {
                 metarTafBtn.onclick = () => openExternal(`https://metar-taf.com/${icao}`);
-                metarTafBtn.querySelector('span').innerText = `?��? Metar-Taf.com (${icao})`;
+                metarTafBtn.querySelector('span').innerText = `☁️ Metar-Taf.com (${icao})`;
             }
 
             // Stream configs: [ICAO, labelText, streams[]]
@@ -2356,11 +2358,12 @@
                                     padding:8px 10px;background:rgba(255,159,10,0.08);
                                     border-radius:8px;border:1px solid rgba(255,159,10,0.25);
                                     align-items:center;justify-content:space-between;gap:8px;">
-                            <span>?��? Feed currently offline</span>
+                            <span>⚠️ Feed currently offline</span>
                             <span style="color:var(--accent);cursor:pointer;font-weight:700;
                                          white-space:nowrap;"
                                   onclick="openExternal('https://www.liveatc.net/search/?icao=${icao}')">
-                                Try LiveATC ??                            </span>
+                                Try LiveATC ↗
+                            </span>
                         </div>
                     </div>`).join('') +
                     `<div style="font-size:10px;color:#555;margin-top:8px;text-align:right;">Source: TWATC.net & LiveATC</div>`;
@@ -2389,7 +2392,7 @@
         
         function openLiveAtcApp() {
             closeLiveAtcChoice();
-            // App Store shows "Open" if installed, "Get" if not ??no custom scheme needed
+            // App Store shows "Open" if installed, "Get" if not — no custom scheme needed
             window.location.href = 'https://apps.apple.com/app/id317809458';
         }
         
@@ -2429,9 +2432,9 @@
                     const fmtT = t => `${Math.round(t)}°C`;
                     const windNote = (t, s) => {
                         const notes = [];
-                        if (t <= 0 && t > -20) notes.push('??Icing possible');
+                        if (t <= 0 && t > -20) notes.push('❄ Icing possible');
                         else if (t <= -20) notes.push('Ice crystals');
-                        if (s >= 50) notes.push('??Strong winds');
+                        if (s >= 50) notes.push('⚠ Strong winds');
                         else if (s >= 30) notes.push('Mod winds');
                         return notes[0] || 'Normal';
                     };
@@ -2461,7 +2464,7 @@
                         setColor('temp10k' + sfx, t10 <= 0 ? 'var(--warn)' : '#ccc');
                     });
                 }
-            } catch(e) { console.error("Meteo Error:", e); loader.style.display = 'block'; loader.innerText = "?��? Model Data Unavailable"; }
+            } catch(e) { console.error("Meteo Error:", e); loader.style.display = 'block'; loader.innerText = "⚠️ Model Data Unavailable"; }
         }
 
         function drawMeteogram(h, canvasId = 'meteoCanvas') {
@@ -2470,7 +2473,7 @@
             const ctx = cvs.getContext('2d');
             const dpr  = window.devicePixelRatio || 1;
             const rect = cvs.getBoundingClientRect();
-            // If canvas is inside a hidden pane rect will be 0 ??fall back to container/window width
+            // If canvas is inside a hidden pane rect will be 0 — fall back to container/window width
             const W = rect.width  || cvs.closest('.meteogram-container')?.clientWidth
                                    || window.innerWidth - 56
                                    || 360;
@@ -2486,9 +2489,9 @@
             const getX = (i) => padding.left + (i / (len - 1)) * (W - padding.left - padding.right);
             const getY = (v) => H - padding.bottom - ((v - minT) / rangeT) * (H - padding.top - padding.bottom);
             const getWxIcon = (code) => {
-                if (code <= 1) return 'CLR'; if (code <= 3) return 'PC'; if (code <= 48) return 'FG';
-                if (code <= 57) return 'DZ'; if (code <= 67) return 'RA'; if (code <= 77) return 'SN';
-                if (code <= 82) return 'SH'; if (code <= 99) return 'TS'; return 'WX';
+                if (code <= 1) return '☀️'; if (code <= 3) return '⛅'; if (code <= 48) return '🌫️';
+                if (code <= 57) return '🌧️'; if (code <= 67) return '☔'; if (code <= 77) return '❄️';
+                if (code <= 82) return '⛈️'; if (code <= 99) return '⚡'; return '☁️';
             };
             // Vertical grid
             ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.beginPath();
@@ -2658,9 +2661,9 @@
             if (!trend) return '';
             
             const icons = {
-                improving: '+',
-                worsening: '-',
-                steady: '='
+                improving: '↗',
+                worsening: '↘',
+                steady: '→'
             };
             
             const labels = {
@@ -2680,29 +2683,29 @@
             const now = new Date(), metarTime = new Date(d.time.dt);
             const minAgo = Math.floor((now - metarTime) / 60000);
             rawContainer.innerHTML = formatRawMetar(d.raw);
-            if (minAgo > 60) rawContainer.insertAdjacentHTML('beforeend', `<div style="margin-top:12px;padding:10px;background:rgba(255,69,58,0.1);border:1px solid var(--danger);border-radius:6px;text-align:center;"><div style="color:var(--danger);font-weight:800;font-size:12px;">?��? DATA OUTDATED (${minAgo}m old)</div></div>`);
+            if (minAgo > 60) rawContainer.insertAdjacentHTML('beforeend', `<div style="margin-top:12px;padding:10px;background:rgba(255,69,58,0.1);border:1px solid var(--danger);border-radius:6px;text-align:center;"><div style="color:var(--danger);font-weight:800;font-size:12px;">⚠️ DATA OUTDATED (${minAgo}m old)</div></div>`);
             const rules = d.flight_rules;
             let css = 'cat-vfr';
             if (rules === 'MVFR') css = 'cat-mvfr'; if (rules === 'IFR') css = 'cat-ifr'; if (rules === 'LIFR') css = 'cat-lifr';
             updateHeaderCat(rules, css);
             
-            // ?�?� GET CURRENT ICAO FOR TREND ANALYSIS ?�?�
+            // ── GET CURRENT ICAO FOR TREND ANALYSIS ──
             const icao = document.getElementById('icao').value.toUpperCase();
             
-            // ?�?� WIND with trend ?�?�
+            // ── WIND with trend ──
             const gustStr = currentWind.gust > 0 ? `G${currentWind.gust}` : '';
             const windText = `${currentWind.dir.toString().padStart(3,'0')}° / ${currentWind.spd}${gustStr}kt`;
             const windTrend = analyzeTrend(icao, 'windSpd', currentWind.spd);
             document.getElementById('mWind').innerHTML = windText + getTrendBadge(windTrend);
             
-            // ?�?� VISIBILITY with trend ?�?�
+            // ── VISIBILITY with trend ──
             const visSM = visToSM(d.visibility?.value, d.units?.visibility);
             // Display raw value as the METAR gives it (e.g. "3500m", "10SM", "9999m")
             const rawVisUnit = (d.units?.visibility || 'sm').toLowerCase();
             let visText = '--';
             if (d.visibility?.value != null) {
                 if (rawVisUnit === 'm') {
-                    // Meters: show as-is (e.g. "3500m") or "10km+" if ??999m
+                    // Meters: show as-is (e.g. "3500m") or "10km+" if ≥9999m
                     visText = d.visibility.value >= 9999 ? '10km+' : `${d.visibility.value}m`;
                 } else if (rawVisUnit === 'km') {
                     visText = d.visibility.value >= 10 ? '10km+' : `${d.visibility.value}km`;
@@ -2714,14 +2717,14 @@
             const visTrend = analyzeTrend(icao, 'vis', visSM ?? 10);
             document.getElementById('mVis').innerHTML = visText + getTrendBadge(visTrend);
             
-            // ?�?� CEILING with trend ?�?�
+            // ── CEILING with trend ──
             const c = d.clouds?.[0];
             const ceilText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
             const ceilValue = c ? c.altitude * 100 : 99999; // Convert to feet AGL
             const ceilTrend = analyzeTrend(icao, 'ceil', ceilValue);
             document.getElementById('mCeil').innerHTML = ceilText + getTrendBadge(ceilTrend);
             
-            // ?�?� ALTIMETER with trend ?�?�
+            // ── ALTIMETER with trend ──
             const alt = d.altimeter?.value;
             if (alt) {
                 const altHpa = currentMetar.altUnit === 'inHg' ? Math.round(alt * 33.8639) : alt;
@@ -2759,22 +2762,22 @@
             ageEl.style.color      = minAgo > 60 ? 'var(--danger)' : minAgo > 45 ? 'var(--warn)' : 'var(--sub-text)';
             ageEl.style.fontWeight = minAgo > 60 ? '700' : '400';
 
-            // ?�?� SPECI / COR badge ?�?�
+            // ── SPECI / COR badge ──
             const speciBadge = document.getElementById('mSpeciBadge');
             if (speciBadge) {
                 const type = (d.type || '').toUpperCase();
                 if (type === 'SPECI') {
-                    speciBadge.innerHTML = '<span style="background:rgba(255,159,10,0.15);border:1px solid var(--warn);color:var(--warn);font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:0.5px;animation:lightPulse 1.5s infinite;">??SPECI</span>';
-                    speciBadge.title = 'Special observation ??sudden significant change in conditions';
+                    speciBadge.innerHTML = '<span style="background:rgba(255,159,10,0.15);border:1px solid var(--warn);color:var(--warn);font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:0.5px;animation:lightPulse 1.5s infinite;">⚡ SPECI</span>';
+                    speciBadge.title = 'Special observation — sudden significant change in conditions';
                 } else if (type === 'COR') {
-                    speciBadge.innerHTML = '<span style="background:rgba(10,132,255,0.1);border:1px solid var(--accent);color:var(--accent);font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:0.5px;">??COR</span>';
+                    speciBadge.innerHTML = '<span style="background:rgba(10,132,255,0.1);border:1px solid var(--accent);color:var(--accent);font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:0.5px;">✎ COR</span>';
                     speciBadge.title = 'Corrected observation';
                 } else {
                     speciBadge.innerHTML = '';
                 }
             }
 
-            // ?�?� PRESENT WEATHER (wx_codes) ?�?�
+            // ── PRESENT WEATHER (wx_codes) ──
             const wxEl = document.getElementById('mWx');
             if (wxEl) {
                 const wxCodes = d.wx_codes || [];
@@ -2841,7 +2844,7 @@
             document.getElementById('labelCeilVal').innerText = ceiling === 99999 ? 'Unlimited' : `${ceiling} ft`;
             document.getElementById('labelCeilVal').style.color = cStats.color;
             const visBar  = document.getElementById('gaugeVis'); visBar.style.width  = vStats.width; visBar.style.backgroundColor = vStats.color;
-            // Show raw METAR visibility value (same as the card above ??no unit conversion)
+            // Show raw METAR visibility value (same as the card above — no unit conversion)
             const rawVisUnit = (m.units?.visibility || 'sm').toLowerCase();
             let visLabel = '--';
             if (m.visibility?.value != null) {
@@ -2859,16 +2862,16 @@
 
         // Calculate bearing from point A to point B
         function getBearing(lat1, lon1, lat2, lon2) {
-            const phi1 = lat1 * Math.PI / 180;
-            const phi2 = lat2 * Math.PI / 180;
-            const dLambda = (lon2 - lon1) * Math.PI / 180;
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
             
-            const y = Math.sin(dLambda) * Math.cos(phi2);
-            const x = Math.cos(phi1) * Math.sin(phi2) -
-                      Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) -
+                      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
             
-            let theta = Math.atan2(y, x);
-            let bearing = (theta * 180 / Math.PI + 360) % 360;
+            let θ = Math.atan2(y, x);
+            let bearing = (θ * 180 / Math.PI + 360) % 360;
             return Math.round(bearing);
         }
         
@@ -2880,7 +2883,7 @@
             return dirs[index];
         }
     
-        // Safe distance extractor ??handles both AVWX and cached shapes
+        // Safe distance extractor — handles both AVWX and cached shapes
         function getNm(item) {
             if (item.nautical_miles != null) return item.nautical_miles;      // cached old shape
             if (item.distance?.value != null) return item.distance.value;     // AVWX live shape
@@ -2891,28 +2894,28 @@
         let _nearbyModalData = null;
 
         async function findNearbyStations(lat, lon) {
-            console.log(`[Nearby] ?? Called with lat=${lat}, lon=${lon}`);
+            console.log(`[Nearby] 🔍 Called with lat=${lat}, lon=${lon}`);
         
             const list  = document.getElementById('nearList');
             const list2 = document.getElementById('nearList2');
         
             if (!list) {
-                console.error('[Nearby] ??Element #nearList not found!');
+                console.error('[Nearby] ❌ Element #nearList not found!');
                 return;
             }
         
-            const loadingHTML = '<span style="color:#555;font-size:12px;">Scanning??/span>';
+            const loadingHTML = '<span style="color:#555;font-size:12px;">Scanning…</span>';
             list.innerHTML  = loadingHTML;
             if (list2) list2.innerHTML = loadingHTML;
         
             try {
                 const url = `/api/weather?type=near&station=${lat},${lon}&distance=150`;
-                console.log(`[Nearby] ?�� Fetching: ${url}`);
+                console.log(`[Nearby] 📡 Fetching: ${url}`);
         
                 const data = await secureFetch(url);
-                console.log('[Nearby] ?�� Raw API response:', data);
+                console.log('[Nearby] 📦 Raw API response:', data);
         
-                // AVWX returns {0:{...}, 1:{...}, _meta:{...}} ??convert to array
+                // AVWX returns {0:{...}, 1:{...}, _meta:{...}} — convert to array
                 let items;
                 if (Array.isArray(data)) {
                     items = data;
@@ -2924,7 +2927,7 @@
                     items = [];
                 }
         
-                console.log(`[Nearby] ?? Extracted ${items.length} items`);
+                console.log(`[Nearby] 📊 Extracted ${items.length} items`);
         
                 const currentIcao = document.getElementById('icao').value.toUpperCase();
         
@@ -2936,7 +2939,7 @@
                     .sort((a, b) => getNm(a) - getNm(b))
                     .slice(0, 5);
         
-                console.log(`[Nearby] ?��?  After filter: ${others.length} stations`);
+                console.log(`[Nearby] ✂️  After filter: ${others.length} stations`);
         
                 // Clear both lists
                 list.innerHTML  = '';
@@ -2963,18 +2966,18 @@
                     }
         
                     const innerHTML = `
-                        <span>??/span>
+                        <span>✈</span>
                         <span>${icao}</span>
                         <span style="color:var(--sub-text);font-size:10px;">${nm}nm${bearingStr}</span>`;
         
-                    // ?�?� Primary list (METAR tab) ?�?�
+                    // ── Primary list (METAR tab) ──
                     const btn = document.createElement('div');
                     btn.className = 'nearby-btn';
                     btn.innerHTML = innerHTML;
                     btn.onclick   = () => openNearbyModal(item);
                     list.appendChild(btn);
         
-                    // ?�?� Mirror list (Weather tab) ??clone with LIVE onclick handler ?�?�
+                    // ── Mirror list (Weather tab) — clone with LIVE onclick handler ──
                     if (list2) {
                         const btn2 = document.createElement('div');
                         btn2.className = 'nearby-btn';
@@ -2984,10 +2987,10 @@
                     }
                 });
         
-                console.log('[Nearby] ??Rendered successfully in both lists');
+                console.log('[Nearby] ✅ Rendered successfully in both lists');
         
             } catch(e) {
-                console.error('[Nearby] ??Error:', e);
+                console.error('[Nearby] ❌ Error:', e);
                 const errHTML = '<span style="color:#555;font-size:12px;">Failed to load nearby stations.</span>';
                 list.innerHTML  = errHTML;
                 if (list2) list2.innerHTML = errHTML;
@@ -3014,7 +3017,7 @@
             catEl.innerText = '--'; catEl.className = 'badge badge-cat';
             document.getElementById('nearModalWeather').innerHTML =
                 '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;">' +
-                '<span style="color:var(--accent);">??/span><span>Fetching current weather...</span></div>';
+                '<span style="color:var(--accent);">⏳</span><span>Fetching current weather...</span></div>';
 
             document.getElementById('nearbyModal').classList.add('active');
 
@@ -3059,7 +3062,7 @@
                             </div>
                         </div>
                         <div style="font-size:10px;color:${ageColor};text-align:right;padding-top:4px;border-top:1px solid var(--border);">
-                            ${mins > 60 ? '?��? ' : ''}Updated ${mins}m ago
+                            ${mins > 60 ? '⚠️ ' : ''}Updated ${mins}m ago
                         </div>`;
                 } else {
                     document.getElementById('nearModalWeather').innerHTML =
@@ -3133,7 +3136,7 @@
             // Phone container
             const phoneContainer = document.getElementById('atisPhones');
 
-            // ?�?� Layer 1: embedded FREQ_DB ?�?�
+            // ── Layer 1: embedded FREQ_DB ──
             let dbFreqs = null;
             try {
                 if (typeof lookupFrequencies === 'function') {
@@ -3156,10 +3159,10 @@
                 });
                 const note = document.createElement('div');
                 note.style.cssText = 'grid-column:1/-1;font-size:9px;color:#444;text-align:right;margin-top:4px;';
-                note.innerHTML = `<a href="https://ourairports.com/airports/${icao}/frequencies.html" target="_blank" style="color:#555;text-decoration:none;">OurAirports ??/a>`;
+                note.innerHTML = `<a href="https://ourairports.com/airports/${icao}/frequencies.html" target="_blank" style="color:#555;text-decoration:none;">OurAirports ↗</a>`;
                 fContainer.appendChild(note);
             } else {
-                // ?�?� Layer 2: AVWX frequencies[] ?�?�
+                // ── Layer 2: AVWX frequencies[] ──
                 const avwxFreqs = (d.frequencies || []).slice(0, 12);
                 if (avwxFreqs.length > 0) {
                     fContainer.innerHTML = '';
@@ -3169,8 +3172,8 @@
                         fContainer.appendChild(card);
                     });
                 } else {
-                    // ?�?� Layer 3: aviationweather.gov ?�?�
-                    fContainer.innerHTML = '<div style="color:#555;font-size:11px;padding:6px;">Checking online??/div>';
+                    // ── Layer 3: aviationweather.gov ──
+                    fContainer.innerHTML = '<div style="color:#555;font-size:11px;padding:6px;">Checking online…</div>';
                     fetchAirportSupplementary(icao).then(awData => {
                         const awFreqs = awData?.comms || [];
                         if (awFreqs.length > 0) {
@@ -3185,14 +3188,14 @@
                                 <div style="grid-column:1/-1;font-size:11px;color:#555;padding:8px;text-align:center;">
                                     No frequency data available.
                                     <a href="https://ourairports.com/airports/${icao}/frequencies.html" target="_blank"
-                                       style="color:#e8a020;margin-left:6px;text-decoration:none;">OurAirports ??/a>
+                                       style="color:#e8a020;margin-left:6px;text-decoration:none;">OurAirports ↗</a>
                                 </div>`;
                         }
                     });
                 }
             }
 
-            // ?�?� ATIS/AWOS phones ?�?�
+            // ── ATIS/AWOS phones ──
             if (phoneContainer) {
                 const atisEntry = dbFreqs?.find(f => f.t === 'ATIS');
                 let phones = [];
@@ -3205,12 +3208,12 @@
                     phoneContainer.innerHTML = phones.map(p => `
                         <div class="phone-card">
                             <div class="phone-label">${p.type}${p.freq ? ' · ' + p.freq : ''}</div>
-                            <a href="tel:${p.phone.replace(/[^\d+]/g,'')}" class="phone-number">?? ${p.phone}</a>
+                            <a href="tel:${p.phone.replace(/[^\d+]/g,'')}" class="phone-number">📞 ${p.phone}</a>
                         </div>`).join('');
                 } else if (atisEntry) {
-                    phoneContainer.innerHTML = `<div style="color:#555;font-size:12px;padding:8px;">ATIS ${atisEntry.f} MHz ??no phone on file</div>`;
+                    phoneContainer.innerHTML = `<div style="color:#555;font-size:12px;padding:8px;">ATIS ${atisEntry.f} MHz — no phone on file</div>`;
                 } else {
-                    phoneContainer.innerHTML = `<div style="color:#555;font-size:12px;padding:8px;">No phone data ??<a href="https://www.airnav.com/airport/${icao}" target="_blank" style="color:#e8a020;text-decoration:none;">AirNav ??/a></div>`;
+                    phoneContainer.innerHTML = `<div style="color:#555;font-size:12px;padding:8px;">No phone data — <a href="https://www.airnav.com/airport/${icao}" target="_blank" style="color:#e8a020;text-decoration:none;">AirNav ↗</a></div>`;
                 }
             }
         }
@@ -3256,11 +3259,11 @@
 
         function checkDAWarning(da, elev) {
             const daEl = document.getElementById('calcDA');
-            if (da > elev + 2000) { daEl.style.color = "var(--warn)"; daEl.innerHTML = `${da} ft ?��?`; }
+            if (da > elev + 2000) { daEl.style.color = "var(--warn)"; daEl.innerHTML = `${da} ft ⚠️`; }
             else { daEl.style.color = "var(--text)"; }
         }
 
-        // ?�?� Opens formula-modal with dynamic title + body ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+        // ── Opens formula-modal with dynamic title + body ─────────────────
         function showMetarCardDetail(card) {
             const sep = () => '<div style="height:1px;background:#1e1e1e;margin:10px 0;"></div>';
             const div = (html, style='') => `<div style="${style}">${html}</div>`;
@@ -3279,8 +3282,8 @@
                         ${_iRow('DDD', 'True direction wind is coming FROM (°)')}
                         ${_iRow('SS', 'Speed in knots (kt)')}
                         ${_iRow('Gust', 'e.g. 28015G28KT = 150° at 15kt gusting 28kt')}
-                        ${_iRow('VRB', 'Variable ??direction shifts >60° at ??kt')}
-                        ${_iRow('CALM', '00000KT ??no significant wind')}
+                        ${_iRow('VRB', 'Variable — direction shifts >60° at ≤6kt')}
+                        ${_iRow('CALM', '00000KT — no significant wind')}
                         ${sep()}
                         ${div('Wind in a METAR is <b style="color:#fff;">True north</b>. On the ground, ATC uses <b style="color:#fff;">magnetic</b>. Apply mag variation to align with your runway heading.', 'font-size:11px;color:#888;line-height:1.7;')}
                         ${_iNote('Rule of thumb: a 90° crosswind at half the stall speed is typically at your limit. Always check your POH for the certified crosswind component.')}
@@ -3289,14 +3292,14 @@
                 case 'vis':
                     _openInfoModal('Visibility', `
                         ${_iRow('P6SM', 'Prevailing vis > 6 statute miles (US)')}
-                        ${_iRow('SM', 'Statute miles ??used in US & Canada')}
-                        ${_iRow('m', 'Meters ??used internationally (ICAO)')}
+                        ${_iRow('SM', 'Statute miles — used in US & Canada')}
+                        ${_iRow('m', 'Meters — used internationally (ICAO)')}
                         ${_iRow('9999', '10 km or more (ICAO standard ceiling)')}
                         ${sep()}
                         ${div('<b style="color:#fff;font-size:11px;">VFR FLIGHT CATEGORY THRESHOLDS</b>', 'font-size:11px;margin-bottom:4px;')}
                         ${_iRow('VFR',  '> 5 SM',  'var(--success)')}
-                        ${_iRow('MVFR', '3 ??5 SM',  'var(--mvfr)')}
-                        ${_iRow('IFR',  '1 ??3 SM',  'var(--danger)')}
+                        ${_iRow('MVFR', '3 – 5 SM',  'var(--mvfr)')}
+                        ${_iRow('IFR',  '1 – 3 SM',  'var(--danger)')}
                         ${_iRow('LIFR', '< 1 SM',  'var(--lifr)')}
                         ${sep()}
                         ${_iNote('Prevailing visibility is the greatest distance seen over at least half the horizon. RVR (Runway Visual Range) may supplement this for low-vis approaches.')}
@@ -3305,61 +3308,61 @@
                 case 'ceil':
                     _openInfoModal('Sky Cover & Ceiling', `
                         ${div('<b style="color:#fff;font-size:11px;">SKY COVER CODES (OKTAS = eighths of sky)</b>', 'font-size:11px;margin-bottom:2px;')}
-                        ${sky('SKC', '0 / 8', 'Sky clear ??human observer. No clouds.', 'var(--success)')}
-                        ${sky('CLR', '0 / 8', 'Clear below 12,000 ft ??automated station.', 'var(--success)')}
-                        ${sky('FEW', '1?? / 8', 'Few clouds. VFR maintained. Not a ceiling.', '#30d158')}
-                        ${sky('SCT', '3?? / 8', 'Scattered. Sky 3?? eighths covered. Not a ceiling.', '#ff9f0a')}
-                        ${sky('BKN', '5?? / 8', 'Broken. More sky covered than not ??IS a ceiling.', 'var(--danger)')}
-                        ${sky('OVC', '8 / 8', 'Overcast. Total coverage ??always a ceiling.', '#ff453a')}
-                        ${sky('VV',  'N/A', 'Vertical visibility into obscured sky (fog/smoke/dust).', '#8e8e93')}
+                        ${sky('SKC', '0 / 8', 'Sky clear — human observer. No clouds.', 'var(--success)')}
+                        ${sky('CLR', '0 / 8', 'Clear below 12,000 ft — automated station.', 'var(--success)')}
+                        ${sky('FEW', '1–2 / 8', 'Few clouds. VFR maintained. Not a ceiling.', '#30d158')}
+                        ${sky('SCT', '3–4 / 8', 'Scattered. Sky 3–4 eighths covered. Not a ceiling.', '#ff9f0a')}
+                        ${sky('BKN', '5–7 / 8', 'Broken. More sky covered than not — IS a ceiling.', 'var(--danger)')}
+                        ${sky('OVC', '8 / 8', 'Overcast. Total coverage — always a ceiling.', '#ff453a')}
+                        ${sky('VV',  '—', 'Vertical visibility into obscured sky (fog/smoke/dust).', '#8e8e93')}
                         ${sep()}
                         ${div('<b style="color:#fff;">What is a Ceiling?</b><br>The lowest <b style="color:var(--danger);">BKN</b> or <b style="color:#ff453a;">OVC</b> layer, or a VV obscuration. FEW and SCT are <em>not</em> ceilings. Altitude is in hundreds of feet <b style="color:#fff;">AGL</b>.', 'font-size:11px;color:#888;line-height:1.7;')}
                         ${sep()}
                         ${div('<b style="color:#fff;font-size:11px;">CEILING FLIGHT CATEGORIES</b>', 'font-size:11px;margin-bottom:4px;')}
                         ${_iRow('VFR',  '> 3,000 ft AGL',  'var(--success)')}
-                        ${_iRow('MVFR', '1,000 ??3,000 ft', 'var(--mvfr)')}
-                        ${_iRow('IFR',  '500 ??1,000 ft',   'var(--danger)')}
+                        ${_iRow('MVFR', '1,000 – 3,000 ft', 'var(--mvfr)')}
+                        ${_iRow('IFR',  '500 – 1,000 ft',   'var(--danger)')}
                         ${_iRow('LIFR', '< 500 ft AGL',     'var(--lifr)')}
-                        ${_iNote('Both ceiling AND visibility determine flight category ??whichever gives the lower category wins.')}
+                        ${_iNote('Both ceiling AND visibility determine flight category — whichever gives the lower category wins.')}
                     `); break;
 
                 case 'alt':
                     _openInfoModal('Altimeter Setting', `
-                        ${_iRow('QNH (hPa/mb)', 'Sea-level pressure ??ICAO standard')}
-                        ${_iRow('A (inHg)', 'US format ??e.g. A2992 = 29.92 inHg')}
+                        ${_iRow('QNH (hPa/mb)', 'Sea-level pressure — ICAO standard')}
+                        ${_iRow('A (inHg)', 'US format — e.g. A2992 = 29.92 inHg')}
                         ${_iRow('Standard ATM', '1013.25 hPa / 29.92 inHg')}
                         ${sep()}
-                        ${div('<b style="color:#fff;">Why it matters:</b> Setting QNH makes your altimeter read altitude <b style="color:#fff;">above mean sea level (MSL)</b>. Terrain on your chart is also in MSL ??so a correct altimeter setting keeps terrain clearance accurate.', 'font-size:11px;color:#888;line-height:1.7;')}
+                        ${div('<b style="color:#fff;">Why it matters:</b> Setting QNH makes your altimeter read altitude <b style="color:#fff;">above mean sea level (MSL)</b>. Terrain on your chart is also in MSL — so a correct altimeter setting keeps terrain clearance accurate.', 'font-size:11px;color:#888;line-height:1.7;')}
                         ${sep()}
-                        ${_iRow('QNH > 1013 hPa', 'High pressure ??altimeter reads HIGH (denser air)', 'var(--success)')}
-                        ${_iRow('QNH < 1013 hPa', 'Low pressure ??altimeter reads LOW (less dense)', 'var(--warn)')}
+                        ${_iRow('QNH > 1013 hPa', 'High pressure → altimeter reads HIGH (denser air)', 'var(--success)')}
+                        ${_iRow('QNH < 1013 hPa', 'Low pressure → altimeter reads LOW (less dense)', 'var(--warn)')}
                         ${sep()}
-                        ${div('?? <b style="color:#fff;">"High to Low, Look Out Below"</b> ??flying into lower QNH without resetting means you are <em>lower</em> than your altimeter shows.', 'font-size:11px;color:#888;line-height:1.7;')}
-                        ${_iNote('Pressure altitude (PA) uses standard 1013.25 hPa and is used for density altitude and performance calculations ??see the E6B tool.')}
+                        ${div('📌 <b style="color:#fff;">"High to Low, Look Out Below"</b> — flying into lower QNH without resetting means you are <em>lower</em> than your altimeter shows.', 'font-size:11px;color:#888;line-height:1.7;')}
+                        ${_iNote('Pressure altitude (PA) uses standard 1013.25 hPa and is used for density altitude and performance calculations — see the E6B tool.')}
                     `); break;
 
                 case 'wx': {
                     _openInfoModal('Present Weather', `
                         ${div('<b style="color:#fff;font-size:11px;">INTENSITY PREFIX</b>', 'font-size:11px;margin-bottom:4px;')}
-                        ${_iRow('?? (light)', 'Below moderate intensity')}
-                        ${_iRow('(none)', 'Moderate ??default when no prefix')}
+                        ${_iRow('–  (light)', 'Below moderate intensity')}
+                        ${_iRow('(none)', 'Moderate — default when no prefix')}
                         ${_iRow('+  (heavy)', 'Heavy intensity', 'var(--danger)')}
-                        ${_iRow('VC', 'In the vicinity ??5 to 10 SM from airport')}
+                        ${_iRow('VC', 'In the vicinity — 5 to 10 SM from airport')}
                         ${sep()}
                         ${div('<b style="color:#fff;font-size:11px;">PHENOMENA</b>', 'font-size:11px;margin-bottom:4px;')}
                         ${_iRow('RA', 'Rain')}
                         ${_iRow('SN', 'Snow', '#85B7EB')}
                         ${_iRow('DZ', 'Drizzle')}
                         ${_iRow('GR / GS', 'Hail / Small hail (graupel)', 'var(--warn)')}
-                        ${_iRow('TS', 'Thunderstorm ??e.g. +TSRA = heavy TS/rain', 'var(--danger)')}
-                        ${_iRow('SH', 'Shower descriptor ??e.g. SHRA = rain showers')}
-                        ${_iRow('FG', 'Fog ??vis < 1,000 m', 'var(--warn)')}
-                        ${_iRow('BR', 'Mist ??vis 1,000??,999 m, RH ??95%')}
-                        ${_iRow('HZ', 'Haze ??dry visibility reduction')}
-                        ${_iRow('FZ', 'Freezing descriptor ??e.g. FZRA = freezing rain', 'var(--warn)')}
+                        ${_iRow('TS', 'Thunderstorm — e.g. +TSRA = heavy TS/rain', 'var(--danger)')}
+                        ${_iRow('SH', 'Shower descriptor — e.g. SHRA = rain showers')}
+                        ${_iRow('FG', 'Fog — vis < 1,000 m', 'var(--warn)')}
+                        ${_iRow('BR', 'Mist — vis 1,000–9,999 m, RH ≥ 95%')}
+                        ${_iRow('HZ', 'Haze — dry visibility reduction')}
+                        ${_iRow('FZ', 'Freezing descriptor — e.g. FZRA = freezing rain', 'var(--warn)')}
                         ${_iRow('BLSN', 'Blowing snow')}
                         ${_iRow('NSW', 'No significant weather at this time')}
-                        ${_iNote('Groups are concatenated: RASN = rain and snow. Descriptors (FZ, SH, TS, BL?? always precede the phenomenon.')}
+                        ${_iNote('Groups are concatenated: RASN = rain and snow. Descriptors (FZ, SH, TS, BL…) always precede the phenomenon.')}
                     `);
                     break;
                 }
@@ -3375,16 +3378,16 @@
                     _openInfoModal('Temperature & Dewpoint', `
                         ${_iRow('Temperature (OAT)', t != null ? `${t}°C  /  ${Math.round(t*1.8+32)}°F` : '--')}
                         ${_iRow('Dewpoint', d != null ? `${d}°C  /  ${Math.round(d*1.8+32)}°F` : '--')}
-                        ${_iRow('Spread (T ??Dp)', spread != null ? `${spread}°C` : '--', spreadColor)}
+                        ${_iRow('Spread (T − Dp)', spread != null ? `${spread}°C` : '--', spreadColor)}
                         ${_iRow('Rel. Humidity', rh != null ? `${rh}%` : '--')}
                         ${sep()}
                         ${div('<b style="color:#fff;font-size:11px;">CLOUD BASE ESTIMATE (rule of thumb)</b>', 'font-size:11px;margin-bottom:4px;')}
-                        ${div('Cloud base ??Spread ÷ 2.5 ? 1,000 ft AGL<br>' + (spread != null ? `??${spread}°C spread ??<b style="color:var(--accent);">${Math.round(spread/2.5*1000).toLocaleString()} ft AGL</b>` : '(load an airport for a live estimate)'), 'font-size:12px;color:#888;font-family:\'SF Mono\',monospace;line-height:1.8;background:#111;padding:10px 14px;border-radius:8px;margin:8px 0;')}
+                        ${div('Cloud base ≈ Spread ÷ 2.5 × 1,000 ft AGL<br>' + (spread != null ? `→ ${spread}°C spread ≈ <b style="color:var(--accent);">${Math.round(spread/2.5*1000).toLocaleString()} ft AGL</b>` : '(load an airport for a live estimate)'), 'font-size:12px;color:#888;font-family:\'SF Mono\',monospace;line-height:1.8;background:#111;padding:10px 14px;border-radius:8px;margin:8px 0;')}
                         ${sep()}
                         ${div('<b style="color:#fff;font-size:11px;">SPREAD WARNINGS</b>', 'font-size:11px;margin-bottom:4px;')}
-                        ${_iRow('??2°C spread', 'Fog / low cloud imminent ??monitor closely', 'var(--danger)')}
-                        ${_iRow('??4°C spread', 'High humidity, possible visibility reduction', 'var(--warn)')}
-                        ${_iRow('OAT ??0°C + moisture', 'Structural icing possible', 'var(--warn)')}
+                        ${_iRow('≤ 2°C spread', 'Fog / low cloud imminent — monitor closely', 'var(--danger)')}
+                        ${_iRow('≤ 4°C spread', 'High humidity, possible visibility reduction', 'var(--warn)')}
+                        ${_iRow('OAT ≤ 0°C + moisture', 'Structural icing possible', 'var(--warn)')}
                         ${_iNote('Dewpoint is the temperature at which the air reaches saturation (RH = 100%) and condensation begins. When OAT = Dp, you are in cloud or fog.')}
                     `);
                     break;
@@ -3486,4 +3489,3 @@
                     : n.isaDev < 0 ? 'ISA' + n.isaDev + ' \u2014 cooler than standard. Denser air, better performance.'
                     : 'ISA+0 \u2014 exactly standard conditions.')));
         }
-

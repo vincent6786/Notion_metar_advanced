@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-    <!-- Single version source of truth ??bump this on every release -->
-    <script>window.APP_VERSION = '4.3.7';</script>
+    <!-- Single version source of truth — bump this on every release -->
+    <script>window.APP_VERSION = '4.3.6';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -77,7 +77,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v4.3.7</div> 
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v4.3.6</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -87,7 +87,7 @@
     <div class="top-bar">
         <div class="search-wrapper">
             <div class="search-box">
-                <span style="padding-left:4px">??</span>
+                <span style="padding-left:4px">🔍</span>
                 <input type="text" id="icao"
                        placeholder="Search (e.g. KJFK)"
                        onkeydown="if(event.key==='Enter') loadData()"
@@ -96,19 +96,19 @@
                        autocomplete="off"
                        autocorrect="off"
                        spellcheck="false">
-                <span id="clearBtn" class="clear-btn" onclick="clearSearch()">??/span>
+                <span id="clearBtn" class="clear-btn" onclick="clearSearch()">✖</span>
                 <button class="icon-btn" onclick="locateUser()" title="Near Me (GPS)"
-                        style="border:none; background:transparent; width:30px; font-size:16px;">??</button>
+                        style="border:none; background:transparent; width:30px; font-size:16px;">📍</button>
             </div>
         </div>
-        <button class="icon-btn" onclick="loadData(true)" title="Force Refresh">??/button>
+        <button class="icon-btn" onclick="loadData(true)" title="Force Refresh">↻</button>
         <div id="headerCat" class="badge badge-cat" onclick="toggleLegend(true)"
              style="cursor:pointer;" title="Tap for Legend">--</div>
         <div id="zuluTime" class="badge badge-time" onclick="toggleTimeDisplay()">
             <span id="zuluTimeMain" class="badge-time-main">--:--Z</span>
             <span id="zuluTimeOffset" class="badge-time-offset">UTC</span>
         </div>
-        <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">?���?/a>
+        <a id="linkSkyVector" href="#" target="_blank" class="icon-btn" title="Charts">🗺️</a>
     </div>
 
     <!-- Quick-select / Recent History -->
@@ -118,7 +118,7 @@
     <div id="minBanner" class="hidden"
          style="padding:8px; text-align:center; font-weight:800; font-size:14px; margin-bottom:8px; border-radius:6px; cursor:pointer; background:var(--danger);"
          onclick="setTab('tools')">
-        ?��? NO-GO CHECK TOOLS
+        ⚠️ NO-GO CHECK TOOLS
     </div>
 
     <!-- Offline mode banner: pre-created for CSS Grid placement -->
@@ -144,7 +144,7 @@
     </div>
 
     <!-- ================================================================
-         SCROLLABLE CONTENT AREA ??only this div scrolls
+         SCROLLABLE CONTENT AREA — only this div scrolls
     ================================================================ -->
     <div id="content-scroll">
 
@@ -172,7 +172,7 @@
         <button id="btnFetchLive" class="tool-btn hidden"
                 style="margin-top:10px; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;"
                 onclick="openAwosModal()">
-            ?�� Open Live Sensor View AWOS (KMHR)
+            📡 Open Live Sensor View AWOS (KMHR)
         </button>
     
         <!-- METAR Data Grid -->
@@ -221,16 +221,16 @@
                 </div>
                 <div id="frMessage" class="fr-msg">--</div>
             </div>
-            <div class="metar-card" onclick="showMetarCardDetail('wind')" style="cursor:pointer;"><div class="m-label">WIND ??/div><div class="m-value" id="mWind">--</div></div>
-            <div class="metar-card" onclick="showMetarCardDetail('vis')" style="cursor:pointer;"><div class="m-label">VISIBILITY ??/div><div class="m-value" id="mVis">--</div></div>
-            <div class="metar-card" onclick="showMetarCardDetail('ceil')" style="cursor:pointer;"><div class="m-label">CEILING ??/div><div class="m-value" id="mCeil">--</div></div>
-            <div class="metar-card" onclick="showMetarCardDetail('alt')" style="cursor:pointer;"><div class="m-label">ALTIMETER ??/div><div class="m-value" id="mAlt">--</div></div>
+            <div class="metar-card" onclick="showMetarCardDetail('wind')" style="cursor:pointer;"><div class="m-label">WIND ⓘ</div><div class="m-value" id="mWind">--</div></div>
+            <div class="metar-card" onclick="showMetarCardDetail('vis')" style="cursor:pointer;"><div class="m-label">VISIBILITY ⓘ</div><div class="m-value" id="mVis">--</div></div>
+            <div class="metar-card" onclick="showMetarCardDetail('ceil')" style="cursor:pointer;"><div class="m-label">CEILING ⓘ</div><div class="m-value" id="mCeil">--</div></div>
+            <div class="metar-card" onclick="showMetarCardDetail('alt')" style="cursor:pointer;"><div class="m-label">ALTIMETER ⓘ</div><div class="m-value" id="mAlt">--</div></div>
             <div class="metar-card full-width" onclick="showMetarCardDetail('wx')" style="cursor:pointer;">
-                <div class="m-label">PRESENT WEATHER ??/div>
+                <div class="m-label">PRESENT WEATHER ⓘ</div>
                 <div class="m-value" id="mWx" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;"><span style="color:var(--sub-text);font-size:12px;">--</span></div>
             </div>
             <div class="metar-card full-width" onclick="showMetarCardDetail('temp')" style="cursor:pointer;">
-                <div class="m-label">TEMP / DEWPOINT ??/div>
+                <div class="m-label">TEMP / DEWPOINT ⓘ</div>
                 <div class="m-value">
                     <span id="mTempC">--</span>
                     <span id="mTempF" class="m-sub">--</span>
@@ -249,9 +249,9 @@
                         style="background:rgba(50,215,75,0.1);
                                border-color:var(--success);
                                color:var(--success);">
-                    ?? Decode
+                    🔍 Decode
                 </button>
-                <button class="copy-btn" onclick="copyMetar()">?? Copy</button>
+                <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
             </div>
         </div>
         <div class="raw-text" id="rawMetar">Select an airport above.</div>
@@ -271,7 +271,7 @@
              style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
                     gap:6px;margin-top:12px;padding:8px 4px;
                     border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
-            <span>?�� DATA</span>
+            <span>📡 DATA</span>
             <span style="color:#222;">·</span>
             <a href="https://avwx.rest" target="_blank"
                style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
@@ -292,7 +292,7 @@
     <div id="tab-taf" class="view-section">
         <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px;">
             <span>24H Trend (Open-Meteo)</span>
-            <span style="background:var(--warn); color:#000; padding:2px 6px; border-radius:4px; font-weight:800; font-size:10px;">?��? ADVISORY only</span>
+            <span style="background:var(--warn); color:#000; padding:2px 6px; border-radius:4px; font-weight:800; font-size:10px;">⚠️ ADVISORY only</span>
         </div>
         <div class="meteogram-container">
             <canvas id="meteoCanvas" height="150"></canvas>
@@ -331,7 +331,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
             <div style="display:flex; align-items:center; gap:6px;">
                 <span>Official Forecast Visualization</span>
-                <span onclick="toggleLegend(true)" style="cursor:pointer; opacity:0.6;">??/span>
+                <span onclick="toggleLegend(true)" style="cursor:pointer; opacity:0.6;">ⓘ</span>
             </div>
             <span id="tafIssued">--</span>
         </div>
@@ -363,9 +363,9 @@
                         style="background:rgba(50,215,75,0.1);
                                border-color:var(--success);
                                color:var(--success);">
-                    ?? Decode
+                    🔍 Decode
                 </button>
-                <button class="copy-btn" onclick="copyTaf()">?? Copy</button>
+                <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
             </div>
         </div>
         <div class="raw-text" id="rawTaf">--</div>
@@ -377,7 +377,7 @@
             <div style="font-weight:700; color:var(--sub-text);">SIGMET / AIRMET</div>
             <div style="display:flex;align-items:center;gap:8px;">
                 <span id="sigairmetCheckedAt" style="font-size:9px;color:#444;font-weight:600;letter-spacing:0.4px;">--</span>
-                <button onclick="refreshSigairmet()" style="font-size:10px;color:var(--accent);background:transparent;border:none;cursor:pointer;padding:2px 6px;font-weight:700;">??/button>
+                <button onclick="refreshSigairmet()" style="font-size:10px;color:var(--accent);background:transparent;border:none;cursor:pointer;padding:2px 6px;font-weight:700;">↻</button>
             </div>
         </div>
         <div id="sigairmetList"
@@ -388,7 +388,7 @@
          style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
                 gap:6px;margin-top:12px;padding:8px 4px;
                 border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
-        <span>?�� DATA</span>
+        <span>📡 DATA</span>
         <span style="color:#222;">·</span>
         <a href="https://avwx.rest" target="_blank"
            style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
@@ -431,7 +431,7 @@
             <button id="btnFetchLive2" class="tool-btn hidden"
                     style="margin-top:10px; margin-bottom:10px; background:#1c1c1e; border:1px solid #ff453a; color:#ff453a;"
                     onclick="openAwosModal()">
-                ?�� Open Live Sensor View (KMHR)
+                📡 Open Live Sensor View (KMHR)
             </button>
             <div class="metar-grid">
                 <div id="skyVisuals2" class="sky-section">
@@ -472,16 +472,16 @@
                     </div>
                     <div id="frMessage2" class="fr-msg">--</div>
                 </div>
-                <div class="metar-card" onclick="showMetarCardDetail('wind')" style="cursor:pointer;"><div class="m-label">WIND ??/div><div class="m-value" id="mWind2">--</div></div>
-                <div class="metar-card" onclick="showMetarCardDetail('vis')" style="cursor:pointer;"><div class="m-label">VISIBILITY ??/div><div class="m-value" id="mVis2">--</div></div>
-                <div class="metar-card" onclick="showMetarCardDetail('ceil')" style="cursor:pointer;"><div class="m-label">CEILING ??/div><div class="m-value" id="mCeil2">--</div></div>
-                <div class="metar-card" onclick="showMetarCardDetail('alt')" style="cursor:pointer;"><div class="m-label">ALTIMETER ??/div><div class="m-value" id="mAlt2">--</div></div>
+                <div class="metar-card" onclick="showMetarCardDetail('wind')" style="cursor:pointer;"><div class="m-label">WIND ⓘ</div><div class="m-value" id="mWind2">--</div></div>
+                <div class="metar-card" onclick="showMetarCardDetail('vis')" style="cursor:pointer;"><div class="m-label">VISIBILITY ⓘ</div><div class="m-value" id="mVis2">--</div></div>
+                <div class="metar-card" onclick="showMetarCardDetail('ceil')" style="cursor:pointer;"><div class="m-label">CEILING ⓘ</div><div class="m-value" id="mCeil2">--</div></div>
+                <div class="metar-card" onclick="showMetarCardDetail('alt')" style="cursor:pointer;"><div class="m-label">ALTIMETER ⓘ</div><div class="m-value" id="mAlt2">--</div></div>
                 <div class="metar-card full-width" onclick="showMetarCardDetail('wx')" style="cursor:pointer;">
-                    <div class="m-label">PRESENT WEATHER ??/div>
+                    <div class="m-label">PRESENT WEATHER ⓘ</div>
                     <div class="m-value" id="mWx2" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;"><span style="color:var(--sub-text);font-size:12px;">--</span></div>
                 </div>
                 <div class="metar-card full-width" onclick="showMetarCardDetail('temp')" style="cursor:pointer;">
-                    <div class="m-label">TEMP / DEWPOINT ??/div>
+                    <div class="m-label">TEMP / DEWPOINT ⓘ</div>
                     <div class="m-value">
                         <span id="mTempC2">--</span>
                         <span id="mTempF2" class="m-sub">--</span>
@@ -499,9 +499,9 @@
                             style="background:rgba(50,215,75,0.1);
                                    border-color:var(--success);
                                    color:var(--success);">
-                        ?? Decode
+                        🔍 Decode
                     </button>
-                    <button class="copy-btn" onclick="copyMetar()">?? Copy</button>
+                    <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
                 </div>
             </div>
             <div class="raw-text" id="rawMetar2">Select an airport above.</div>
@@ -517,12 +517,12 @@
                 </div>
             </div>
 
-            <!-- Source footer ??inside METAR pane so it hides with it -->
+            <!-- Source footer — inside METAR pane so it hides with it -->
             <div id="weatherMetarSourceFooter" class="hidden"
                  style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
                         gap:6px;margin-top:12px;padding:8px 4px;
                         border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
-                <span>?�� DATA</span>
+                <span>📡 DATA</span>
                 <span style="color:#222;">·</span>
                 <a href="https://avwx.rest" target="_blank"
                    style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
@@ -540,7 +540,7 @@
         <div id="weather-taf-pane" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px;">
                 <span>24H Trend (Open-Meteo)</span>
-                <span style="background:var(--warn); color:#000; padding:2px 6px; border-radius:4px; font-weight:800; font-size:10px;">?��? ADVISORY only</span>
+                <span style="background:var(--warn); color:#000; padding:2px 6px; border-radius:4px; font-weight:800; font-size:10px;">⚠️ ADVISORY only</span>
             </div>
             <div class="meteogram-container">
                 <canvas id="meteoCanvas2" height="150"></canvas>
@@ -576,7 +576,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
                 <div style="display:flex; align-items:center; gap:6px;">
                     <span>Official Forecast Visualization</span>
-                    <span onclick="toggleLegend(true)" style="cursor:pointer; opacity:0.6;">??/span>
+                    <span onclick="toggleLegend(true)" style="cursor:pointer; opacity:0.6;">ⓘ</span>
                 </div>
                 <span id="tafIssued2">--</span>
             </div>
@@ -608,9 +608,9 @@
                             style="background:rgba(50,215,75,0.1);
                                    border-color:var(--success);
                                    color:var(--success);">
-                        ?? Decode
+                        🔍 Decode
                     </button>
-                    <button class="copy-btn" onclick="copyTaf()">?? Copy</button>
+                    <button class="copy-btn" onclick="copyTaf()">📋 Copy</button>
                 </div>
             </div>
             <div class="raw-text" id="rawTaf2">--</div>
@@ -622,7 +622,7 @@
                 <div style="font-weight:700; color:var(--sub-text);">SIGMET / AIRMET</div>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span id="sigairmetCheckedAt2" style="font-size:9px;color:#444;font-weight:600;letter-spacing:0.4px;">--</span>
-                    <button onclick="refreshSigairmet()" style="font-size:10px;color:var(--accent);background:transparent;border:none;cursor:pointer;padding:2px 6px;font-weight:700;">??/button>
+                    <button onclick="refreshSigairmet()" style="font-size:10px;color:var(--accent);background:transparent;border:none;cursor:pointer;padding:2px 6px;font-weight:700;">↻</button>
                 </div>
             </div>
             <div id="sigairmetList2"
@@ -630,12 +630,12 @@
                 <div style="color:#555;font-style:italic;padding:8px 0;">Loading...</div>
             </div>
 
-            <!-- Source footer ??inside TAF pane so it hides with it -->
+            <!-- Source footer — inside TAF pane so it hides with it -->
             <div id="weatherTafSourceFooter" class="hidden"
                  style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
                         gap:6px;margin-top:12px;padding:8px 4px;
                         border-top:1px solid #1e1e1e;font-size:10px;color:#444;letter-spacing:0.3px;">
-                <span>?�� DATA</span>
+                <span>📡 DATA</span>
                 <span style="color:#222;">·</span>
                 <a href="https://avwx.rest" target="_blank"
                    style="color:#555;text-decoration:none;font-weight:700;">AVWX</a>
@@ -657,47 +657,47 @@
         ================================================================ -->
             <div id="tab-help" class="view-section">
 
-                <div style="font-size:20px; font-weight:800; margin-bottom:4px;">?? METAR GO ??User Guide</div>
-                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.3.7 · Training Edition · Quick reference for all features</div>
+                <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
+                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.3.6 · Training Edition · Quick reference for all features</div>
                 
-                <!-- WHAT'S NEW SECTION ??auto-populated from WHATS_NEW object -->
+                <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
                     <div class="help-section-title" style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>?? What's New</span>
+                        <span>🆕 What's New</span>
                         <span id="helpWhatsNewVersion" style="font-size:11px; background:rgba(10,132,255,0.15); border:1px solid rgba(10,132,255,0.4); color:var(--accent); padding:2px 8px; border-radius:10px; font-weight:700; letter-spacing:0.3px;"></span>
                     </div>
                     <div id="helpWhatsNewList"></div>
                     <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border); font-size:11px; color:#555;">
-                        ?�� This popup shows once on each update. You can always review it here.
+                        💡 This popup shows once on each update. You can always review it here.
                     </div>
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?�� WEATHER Tab (Dashboard Mode)</div>
+                    <div class="help-section-title">🌦 WEATHER Tab (Dashboard Mode)</div>
                     <div class="help-item">
                         <div class="help-q">What is the Weather Tab?</div>
                         <div class="help-a">When Dashboard Mode is enabled in Settings, the separate METAR and TAF tabs are replaced by a single <b>Weather</b> tab. It combines both into one view, switchable via a pill toggle at the top.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">METAR / TAF Pill Toggle</div>
-                        <div class="help-a">Tap <b>METAR</b> or <b>TAF</b> on the pill at the top of the Weather tab to switch panes. All the same data is shown ??wind rose, sky cover, gauges, meteogram, TAF timeline ??just in one unified tab.</div>
+                        <div class="help-a">Tap <b>METAR</b> or <b>TAF</b> on the pill at the top of the Weather tab to switch panes. All the same data is shown — wind rose, sky cover, gauges, meteogram, TAF timeline — just in one unified tab.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Smart Default Tab</div>
-                        <div class="help-a">When Dashboard Mode is on and a default airport is set, the app opens directly to the <b>Weather ??METAR</b> pane on launch. No manual navigation needed.</div>
+                        <div class="help-a">When Dashboard Mode is on and a default airport is set, the app opens directly to the <b>Weather → METAR</b> pane on launch. No manual navigation needed.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">TAF Tap-to-Decode</div>
-                        <div class="help-a">In the Weather tab's TAF pane, tap any coloured forecast block on the timeline bar to expand the decoded detail card ??showing wind, visibility, weather, and cloud for that period. Tap another block to switch periods.</div>
+                        <div class="help-a">In the Weather tab's TAF pane, tap any coloured forecast block on the timeline bar to expand the decoded detail card — showing wind, visibility, weather, and cloud for that period. Tap another block to switch periods.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Enabling / Disabling</div>
-                        <div class="help-a">Go to <b>Settings ??Multi-Airport Dashboard</b> and toggle it on or off. When off, the original separate METAR and TAF tabs return.</div>
+                        <div class="help-a">Go to <b>Settings → Multi-Airport Dashboard</b> and toggle it on or off. When off, the original separate METAR and TAF tabs return.</div>
                     </div>
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?�� METAR Tab</div>
+                    <div class="help-section-title">🌤 METAR Tab</div>
                     <div class="help-item">
                         <div class="help-q">Wind Rose</div>
                         <div class="help-a">Shows wind direction relative to the selected runway. <b style="color:var(--success);">Green = headwind</b>, <b style="color:var(--danger);">Red = tailwind</b>. The runway selector auto-picks the best runway for current winds. CALM and VRB winds are labelled directly on the rose.</div>
@@ -713,12 +713,12 @@
                         </div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">Trend Indicators (??????</div>
-                        <div class="help-a">Appear next to Wind, Visibility, and Ceiling values after loading the same airport at least twice. Compares the current reading against ~1 hour ago. <span style="color:var(--success);">??Better</span> · <span style="color:var(--danger);">??Worse</span> · <span style="color:var(--warn);">??Steady</span></div>
+                        <div class="help-q">Trend Indicators (↗ ↘ →)</div>
+                        <div class="help-a">Appear next to Wind, Visibility, and Ceiling values after loading the same airport at least twice. Compares the current reading against ~1 hour ago. <span style="color:var(--success);">↗ Better</span> · <span style="color:var(--danger);">↘ Worse</span> · <span style="color:var(--warn);">→ Steady</span></div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Relative Humidity (RH)</div>
-                        <div class="help-a">Shown in the footer below the raw METAR. <span style="color:var(--warn);">Orange</span> = dry (&lt;30%), <span style="color:var(--accent);">Blue</span> = very humid (&gt;80%). Temp?�Dewpoint spread and RH together indicate fog risk.</div>
+                        <div class="help-a">Shown in the footer below the raw METAR. <span style="color:var(--warn);">Orange</span> = dry (&lt;30%), <span style="color:var(--accent);">Blue</span> = very humid (&gt;80%). Temp–Dewpoint spread and RH together indicate fog risk.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Nearby Stations</div>
@@ -729,52 +729,52 @@
                         <div class="help-a"><span style="color:var(--danger);font-weight:800;">Red</span> = gusts / low ceiling &nbsp; <span style="color:var(--lifr);font-weight:800;">Purple</span> = low visibility &nbsp; <span style="color:var(--warn);font-weight:800;">Orange</span> = thunderstorm / heavy precip</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?? Copy Button</div>
+                        <div class="help-q">📋 Copy Button</div>
                         <div class="help-a">Copies the raw METAR string to your clipboard for pasting into flight planning tools or dispatch messages.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?? Time Badge (top right)</div>
-                        <div class="help-a">The clock badge in the top bar always shows <b>Zulu (UTC)</b> time. Tap it to toggle to <b>local airport time</b> ??the offset (e.g. UTC+8) is shown underneath. This requires an airport to be loaded and Open-Meteo data to be available. It is separate from the sunrise/sunset time toggle in the Info tab.</div>
+                        <div class="help-q">🕐 Time Badge (top right)</div>
+                        <div class="help-a">The clock badge in the top bar always shows <b>Zulu (UTC)</b> time. Tap it to toggle to <b>local airport time</b> — the offset (e.g. UTC+8) is shown underneath. This requires an airport to be loaded and Open-Meteo data to be available. It is separate from the sunrise/sunset time toggle in the Info tab.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?��? Sky Cover Visualization</div>
-                        <div class="help-a">The animated cloud icons in the Sky Cover card scale with actual coverage ??<b>FEW</b> shows 2 icons, <b>SCT</b> shows 4, <b>BKN</b> shows 7, and <b>OVC</b> fills the row with 8. Layers are sorted highest to lowest. Only <b>BKN, OVC, and VV</b> (vertical visibility) count as ceiling layers for flight rules calculation.</div>
+                        <div class="help-q">☁️ Sky Cover Visualization</div>
+                        <div class="help-a">The animated cloud icons in the Sky Cover card scale with actual coverage — <b>FEW</b> shows 2 icons, <b>SCT</b> shows 4, <b>BKN</b> shows 7, and <b>OVC</b> fills the row with 8. Layers are sorted highest to lowest. Only <b>BKN, OVC, and VV</b> (vertical visibility) count as ceiling layers for flight rules calculation.</div>
                     </div>
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?? TAF Tab</div>
+                    <div class="help-section-title">📅 TAF Tab</div>
                     <div class="help-item">
                         <div class="help-q">Meteogram (24h Trend)</div>
-                        <div class="help-a">Shows temperature (red line), dewpoint (blue line), wind arrows, speed, and weather icons from Open-Meteo. The <span style="color:#0a84ff;font-weight:700;">blue NOW line</span> marks your current time. When the red and blue lines nearly converge, fog risk is elevated. <b>Advisory only ??not official aviation data.</b></div>
+                        <div class="help-a">Shows temperature (red line), dewpoint (blue line), wind arrows, speed, and weather icons from Open-Meteo. The <span style="color:#0a84ff;font-weight:700;">blue NOW line</span> marks your current time. When the red and blue lines nearly converge, fog risk is elevated. <b>Advisory only — not official aviation data.</b></div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">TAF Timeline Bar</div>
-                        <div class="help-a">Each coloured block is a TAF forecast period. Tap a block to expand its details (wind, visibility, weather, clouds). The <span style="color:#ff453a;font-weight:700;">red needle</span> marks current time ??tap it to see UTC and local airport time. The thin strip below shows the day/night cycle.</div>
+                        <div class="help-a">Each coloured block is a TAF forecast period. Tap a block to expand its details (wind, visibility, weather, clouds). The <span style="color:#ff453a;font-weight:700;">red needle</span> marks current time — tap it to see UTC and local airport time. The thin strip below shows the day/night cycle.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">TAF Expiry Timer</div>
-                        <div class="help-a">Shows time remaining on the current TAF. Turns <span style="color:var(--warn);">orange</span> when under 30 minutes remain. An <span style="color:var(--danger);">?��? EXPIRED</span> badge appears if the TAF has lapsed.</div>
+                        <div class="help-a">Shows time remaining on the current TAF. Turns <span style="color:var(--warn);">orange</span> when under 30 minutes remain. An <span style="color:var(--danger);">⚠️ EXPIRED</span> badge appears if the TAF has lapsed.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">NOTAMs</div>
-                        <div class="help-a">Colour-coded notices: <span style="color:#ff453a;font-weight:800;">??Critical</span> (closures, unserviceable navaids), <span style="color:#ff9f0a;font-weight:800;">?��? Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">?��? Info</span> (general). Data from FAA aviationweather.gov ??updated every 10 minutes.</div>
+                        <div class="help-a">Colour-coded notices: <span style="color:#ff453a;font-weight:800;">⛔ Critical</span> (closures, unserviceable navaids), <span style="color:#ff9f0a;font-weight:800;">⚠️ Caution</span> (obstacles, work in progress), <span style="color:#8e8e93;">ℹ️ Info</span> (general). Data from FAA aviationweather.gov — updated every 10 minutes.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?���?SIGMET / AIRMET</div>
-                        <div class="help-a">Displays active SIGMETs (severe weather ??turbulence, icing, volcanic ash, thunderstorms) and AIRMETs (moderate-level hazards) for the loaded airport's region. US coverage via aviationweather.gov. For non-US airports, a link to the relevant national authority is shown. Tap <b>??/b> to manually refresh. Timestamps show when data was last checked.</div>
+                        <div class="help-q">🌩️ SIGMET / AIRMET</div>
+                        <div class="help-a">Displays active SIGMETs (severe weather — turbulence, icing, volcanic ash, thunderstorms) and AIRMETs (moderate-level hazards) for the loaded airport's region. US coverage via aviationweather.gov. For non-US airports, a link to the relevant national authority is shown. Tap <b>↻</b> to manually refresh. Timestamps show when data was last checked.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?? Copy Button</div>
+                        <div class="help-q">📋 Copy Button</div>
                         <div class="help-a">Copies the full raw TAF text to clipboard.</div>
                     </div>
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?��? INFO Tab</div>
+                    <div class="help-section-title">ℹ️ INFO Tab</div>
                     <div class="help-item">
                         <div class="help-q">Pressure &amp; Density Altitude</div>
-                        <div class="help-a"><b>Pressure Alt</b> = ISA-corrected altitude. <b>Density Alt</b> = performance altitude. A <span style="color:var(--warn);">?��? warning</span> appears when DA is more than 2000ft above field elevation ??expect degraded aircraft performance.</div>
+                        <div class="help-a"><b>Pressure Alt</b> = ISA-corrected altitude. <b>Density Alt</b> = performance altitude. A <span style="color:var(--warn);">⚠️ warning</span> appears when DA is more than 2000ft above field elevation — expect degraded aircraft performance.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">ISA Deviation</div>
@@ -782,7 +782,7 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">Sunrise / Sunset</div>
-                        <div class="help-a">Calculated from station coordinates using the NOAA algorithm. Defaults to Zulu. <b>Tap the time</b> to toggle UTC ??local airport time.</div>
+                        <div class="help-a">Calculated from station coordinates using the NOAA algorithm. Defaults to Zulu. <b>Tap the time</b> to toggle UTC ↔ local airport time.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Frequencies</div>
@@ -794,12 +794,12 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">Runway Wind Components</div>
-                        <div class="help-a">Headwind ??/ tailwind ??and crosswind ??/ �?for every runway. A <span style="color:var(--danger);">?��? LIMIT</span> badge appears when crosswind exceeds your personal limit set in Tools.</div>
+                        <div class="help-a">Headwind ↑ / tailwind ↓ and crosswind ➡ / ⬅ for every runway. A <span style="color:var(--danger);">⚠️ LIMIT</span> badge appears when crosswind exceeds your personal limit set in Tools.</div>
                     </div>
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?�� ATC Tab</div>
+                    <div class="help-section-title">📡 ATC Tab</div>
                     <div class="help-item">
                         <div class="help-q">CRAFT Clearance Recorder</div>
                         <div class="help-a">Scratchpad for IFR clearances using the standard format: <b>C</b>learance limit · <b>R</b>oute · <b>A</b>ltitude · <b>F</b>requency · <b>T</b>ransponder. Auto-saves as you type and persists between sessions.</div>
@@ -813,43 +813,43 @@
                         <div class="help-a">Metar-Taf.com and LiveATC.net links auto-update to your currently loaded airport's ICAO code.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?�� Emergency Squawk Codes</div>
+                        <div class="help-q">🚨 Emergency Squawk Codes</div>
                         <div class="help-a">A quick-reference card is always visible at the bottom of the ATC tab:<br><br>
-                            <b style="color:#ff453a;">7700</b> ??General Emergency<br>
-                            <b style="color:#ff9f0a;">7600</b> ??Radio Failure (NORDO)<br>
-                            <b style="color:#bf5af2;">7500</b> ??Unlawful Interference / Hijacking<br>
-                            <b style="color:#0a84ff;">1200</b> ??VFR flight (United States)<br>
-                            <b style="color:#32d74b;">2000</b> ??Uncontrolled / no ATC instruction (International)<br><br>
-                            These codes are displayed at all times ??no airport needs to be loaded.
+                            <b style="color:#ff453a;">7700</b> — General Emergency<br>
+                            <b style="color:#ff9f0a;">7600</b> — Radio Failure (NORDO)<br>
+                            <b style="color:#bf5af2;">7500</b> — Unlawful Interference / Hijacking<br>
+                            <b style="color:#0a84ff;">1200</b> — VFR flight (United States)<br>
+                            <b style="color:#32d74b;">2000</b> — Uncontrolled / no ATC instruction (International)<br><br>
+                            These codes are displayed at all times — no airport needs to be loaded.
                         </div>
                     </div>
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?? TOOLS Tab</div>
+                    <div class="help-section-title">🛠 TOOLS Tab</div>
                     <div class="help-item">
                         <div class="help-q">Cockpit Timer</div>
                         <div class="help-a">Countdown timer for fuel burn or holding patterns. Presets: 15 / 30 / 45 / 60 min. The card flashes red and vibrates on expiry. Use PAUSE / RESUME to interrupt without resetting.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Personal Minimums</div>
-                        <div class="help-a">Enter your crosswind and ceiling limits. The app checks live METAR data and shows <span style="color:var(--success);font-weight:800;">GO ??/span> or <span style="color:var(--danger);font-weight:800;">NO-GO ??/span>. A red banner also appears at the top of the screen. Limits are saved automatically.</div>
+                        <div class="help-a">Enter your crosswind and ceiling limits. The app checks live METAR data and shows <span style="color:var(--success);font-weight:800;">GO ✅</span> or <span style="color:var(--danger);font-weight:800;">NO-GO ⛔</span>. A red banner also appears at the top of the screen. Limits are saved automatically.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?��? Aviation Tools Collection</div>
-                        <div class="help-a">Tap <b>Open Aviation Tools</b> to launch the full tools overlay. Contains 10 tools: Unit Converter, E6B Flight Computer, E6B Trainer, Great Circle Distance, Crosswind Calculator, VFR Airspace Minimums, Weather Terms, Abbreviations, Morse Code Trainer, and 1:60 Rule. Use <b>??/b> to go back to the tool menu, and <b>??/b> to close the overlay entirely.</div>
+                        <div class="help-q">✈️ Aviation Tools Collection</div>
+                        <div class="help-a">Tap <b>Open Aviation Tools</b> to launch the full tools overlay. Contains 10 tools: Unit Converter, E6B Flight Computer, E6B Trainer, Great Circle Distance, Crosswind Calculator, VFR Airspace Minimums, Weather Terms, Abbreviations, Morse Code Trainer, and 1:60 Rule. Use <b>←</b> to go back to the tool menu, and <b>✕</b> to close the overlay entirely.</div>
                     </div>
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?? Aviation Tools ??Unit Converter</div>
+                    <div class="help-section-title">📏 Aviation Tools — Unit Converter</div>
                     <div class="help-item">
                         <div class="help-q">What units are supported?</div>
                         <div class="help-a">10 categories: <b>Distance</b> (NM, SM, km, m, ft) · <b>Altitude</b> (ft, m, FL) · <b>Speed</b> (kt, mph, km/h, m/s, fpm) · <b>Temperature</b> (°C, °F, K) · <b>Pressure</b> (hPa, inHg, mb, PSI) · <b>Fuel Volume</b> (US gal, Imp gal, L, qt) · <b>Weight</b> (lbs, kg, tons, metric tons) · <b>Fuel Flow</b> (GPH, L/h, PPH) · <b>Energy</b> (J, kJ, MJ, Wh, kWh, BTU, ft·lb) · <b>Power</b> (W, kW, MW, hp, PS, BTU/h).</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">??Swap Button</div>
-                        <div class="help-a">Tap the <b>??/b> button between FROM and TO to instantly flip the conversion direction ??swaps both unit selectors and moves the result back as the new input value.</div>
+                        <div class="help-q">⇅ Swap Button</div>
+                        <div class="help-a">Tap the <b>⇅</b> button between FROM and TO to instantly flip the conversion direction — swaps both unit selectors and moves the result back as the new input value.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Fuel Flow (PPH) note</div>
@@ -858,19 +858,19 @@
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?��? Aviation Tools ??E6B Flight Computer</div>
+                    <div class="help-section-title">✈️ Aviation Tools — E6B Flight Computer</div>
                     <div class="help-item">
                         <div class="help-q">What does it calculate?</div>
                         <div class="help-a">Enter Indicated Altitude, IAS, QNH, OAT, and Dewpoint to calculate: <b>Density Altitude</b>, <b>True Airspeed (TAS)</b>, <b>Estimated Cloud Base AGL</b>, and <b>Freezing Level</b>. Supports hPa / inHg for QNH and °C / °F for temperature.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Density Altitude colour warning</div>
-                        <div class="help-a">The Density Altitude value turns <span style="color:var(--warn);font-weight:800;">orange</span> when DA exceeds indicated altitude by more than 2,000 ft ??a performance caution flag for hot / high conditions.</div>
+                        <div class="help-a">The Density Altitude value turns <span style="color:var(--warn);font-weight:800;">orange</span> when DA exceeds indicated altitude by more than 2,000 ft — a performance caution flag for hot / high conditions.</div>
                     </div>
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?? Aviation Tools ??Great Circle Distance</div>
+                    <div class="help-section-title">🌍 Aviation Tools — Great Circle Distance</div>
                     <div class="help-item">
                         <div class="help-q">How it works</div>
                         <div class="help-a">Enter two ICAO airport codes to calculate the <b>great circle distance</b> (shortest path over the Earth's surface) and <b>initial track bearing</b> between them. Requires an airport coordinate database connection for live results.</div>
@@ -878,7 +878,7 @@
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?? Aviation Tools ??E6B Trainer</div>
+                    <div class="help-section-title">🎓 Aviation Tools — E6B Trainer</div>
                     <div class="help-item">
                         <div class="help-q">What is the E6B Trainer?</div>
                         <div class="help-a">An interactive E6B flight computer simulator from the <b>University of North Dakota (UND)</b>. Loads in-app so you can practice wind correction, fuel burn, time/distance problems, and TAS calculations without leaving METAR GO.</div>
@@ -886,19 +886,19 @@
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?���?Aviation Tools ??Weather Terms</div>
+                    <div class="help-section-title">🌦️ Aviation Tools — Weather Terms</div>
                     <div class="help-item">
                         <div class="help-q">What is shown?</div>
-                        <div class="help-a">A searchable reference of <b>present weather codes</b> used in METARs ??including phenomena symbols (RA, SN, TS, FG, etc.), intensity prefixes, and descriptor modifiers. Tap any category chip to filter by type. Includes wind barb symbology with live-generated SVG examples.</div>
+                        <div class="help-a">A searchable reference of <b>present weather codes</b> used in METARs — including phenomena symbols (RA, SN, TS, FG, etc.), intensity prefixes, and descriptor modifiers. Tap any category chip to filter by type. Includes wind barb symbology with live-generated SVG examples.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Searching</div>
-                        <div class="help-a">Type any code or description into the search box to filter the list in real time. Tap <b>??Back to Main View</b> to return to the full list after a category filter.</div>
+                        <div class="help-a">Type any code or description into the search box to filter the list in real time. Tap <b>← Back to Main View</b> to return to the full list after a category filter.</div>
                     </div>
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?? Aviation Tools ??Abbreviations</div>
+                    <div class="help-section-title">📖 Aviation Tools — Abbreviations</div>
                     <div class="help-item">
                         <div class="help-q">What is the Abbreviations tool?</div>
                         <div class="help-a">An embedded searchable dictionary of aviation acronyms and abbreviations, powered by <b>Simplify Acronym Search</b>. Look up any ICAO, FAA, or general aviation abbreviation directly in-app without switching browsers.</div>
@@ -906,19 +906,19 @@
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?���?Aviation Tools ??Crosswind Calculator</div>
+                    <div class="help-section-title">🌬️ Aviation Tools — Crosswind Calculator</div>
                     <div class="help-item">
                         <div class="help-q">Two input modes</div>
-                        <div class="help-a">The calculator has two modes: <b>Visual Compass</b> ??drag the wind arrow around the compass rose and adjust speed with the slider, or <b>Type-In</b> ??enter wind direction, speed, gust, and runway heading numerically. Both produce the same output.</div>
+                        <div class="help-a">The calculator has two modes: <b>Visual Compass</b> — drag the wind arrow around the compass rose and adjust speed with the slider, or <b>Type-In</b> — enter wind direction, speed, gust, and runway heading numerically. Both produce the same output.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Output</div>
-                        <div class="help-a">Shows computed <b>headwind/tailwind</b> and <b>crosswind</b> components with direction (left/right). When gust is entered, worst-case gust components are also displayed. A <span style="color:var(--danger);font-weight:700;">?��? LIMIT</span> badge appears if crosswind exceeds your personal minimum set in Personal Minimums.</div>
+                        <div class="help-a">Shows computed <b>headwind/tailwind</b> and <b>crosswind</b> components with direction (left/right). When gust is entered, worst-case gust components are also displayed. A <span style="color:var(--danger);font-weight:700;">⚠️ LIMIT</span> badge appears if crosswind exceeds your personal minimum set in Personal Minimums.</div>
                     </div>
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?���?Aviation Tools ??VFR Airspace Minimums</div>
+                    <div class="help-section-title">🛩️ Aviation Tools — VFR Airspace Minimums</div>
                     <div class="help-item">
                         <div class="help-q">What is shown?</div>
                         <div class="help-a">A quick-reference card for FAA VFR weather minimums by airspace class (B, C, D, E, G) and altitude band. Shows required <b>flight visibility</b> and <b>cloud clearance</b> (above, below, horizontal) for each class. Useful for preflight planning and in-flight reference.</div>
@@ -926,14 +926,14 @@
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?�� Aviation Tools ??Morse Code Trainer</div>
+                    <div class="help-section-title">📡 Aviation Tools — Morse Code Trainer</div>
                     <div class="help-item">
                         <div class="help-q">Modes</div>
                         <div class="help-a">Four training modes:<br><br>
-                            <b>Learn</b> ??browse the full Morse alphabet with visual dot/dash display and audio playback per character.<br><br>
-                            <b>Listen</b> ??hear a character played and identify it. Speed adjustable via WPM slider.<br><br>
-                            <b>Quiz</b> ??given a character, tap the correct Morse pattern from multiple choices. Tracks your score.<br><br>
-                            <b>Words</b> ??full word/sentence practice. Includes common VOR identifiers (e.g. TPE, LAX, SFO) for realistic navaid ident training.
+                            <b>Learn</b> — browse the full Morse alphabet with visual dot/dash display and audio playback per character.<br><br>
+                            <b>Listen</b> — hear a character played and identify it. Speed adjustable via WPM slider.<br><br>
+                            <b>Quiz</b> — given a character, tap the correct Morse pattern from multiple choices. Tracks your score.<br><br>
+                            <b>Words</b> — full word/sentence practice. Includes common VOR identifiers (e.g. TPE, LAX, SFO) for realistic navaid ident training.
                         </div>
                     </div>
                     <div class="help-item">
@@ -943,21 +943,21 @@
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?? Aviation Tools ??Training Area</div>
+                    <div class="help-section-title">📐 Aviation Tools — Training Area</div>
                     <div class="help-item">
                         <div class="help-q">What is the Training Area?</div>
-                        <div class="help-a">A comprehensive training tool covering the <b>1:60 Rule</b> and <b>Wind Triangle</b> ??the essential mental-math skills every pilot needs. The 1:60 rule states that at small angles, <b>1° off course at 60 NM = 1 NM displacement</b>.</div>
+                        <div class="help-a">A comprehensive training tool covering the <b>1:60 Rule</b> and <b>Wind Triangle</b> — the essential mental-math skills every pilot needs. The 1:60 rule states that at small angles, <b>1° off course at 60 NM = 1 NM displacement</b>.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Topics</div>
                         <div class="help-a">Six topic tabs:<br><br>
-                            <b>COURSE</b> ??Track Error (TE), Closing Angle (CA), Direct-to-Waypoint (TE+CA), and Double Track Error methods.<br><br>
-                            <b>WIND</b> ??Crosswind/headwind components using sine/cosine shortcuts, Wind Correction Angle (WCA), and ground speed estimation.<br><br>
-                            <b>TOD</b> ??Top of Descent distance, height-at-range checks, and the 300 ft/NM rule for 3° glideslopes.<br><br>
-                            <b>V/S</b> ??Rate of descent from flight path angle (GS ? 5 shortcut), gradient-to-FPA conversion, and constant-rate descent planning.<br><br>
-                            <b>WIND ??/b> ??Interactive Wind Triangle with canvas visualisation. Three solve modes: find TT/GS, find TH/GS (default, ground school format with Variation ??MH/MC), or find Wind.<br><br>
-                            <b>ALT</b> ??Pressure Altitude, True Altitude, and Density Altitude calculations. Uses ISA at indicated altitude for True Alt and ISA at PA for Density Alt. Includes the 0.4%/°C air column correction and 120 ft/°C DA rule.
-                            <b>ALT</b> ??Pressure Altitude, True Altitude (0.4%/°C air column correction), Density Altitude (PA + ISA dev ? 120 ft/°C), and ISA deviation calculations.
+                            <b>COURSE</b> — Track Error (TE), Closing Angle (CA), Direct-to-Waypoint (TE+CA), and Double Track Error methods.<br><br>
+                            <b>WIND</b> — Crosswind/headwind components using sine/cosine shortcuts, Wind Correction Angle (WCA), and ground speed estimation.<br><br>
+                            <b>TOD</b> — Top of Descent distance, height-at-range checks, and the 300 ft/NM rule for 3° glideslopes.<br><br>
+                            <b>V/S</b> — Rate of descent from flight path angle (GS × 5 shortcut), gradient-to-FPA conversion, and constant-rate descent planning.<br><br>
+                            <b>WIND △</b> — Interactive Wind Triangle with canvas visualisation. Three solve modes: find TT/GS, find TH/GS (default, ground school format with Variation → MH/MC), or find Wind.<br><br>
+                            <b>ALT</b> — Pressure Altitude, True Altitude, and Density Altitude calculations. Uses ISA at indicated altitude for True Alt and ISA at PA for Density Alt. Includes the 0.4%/°C air column correction and 120 ft/°C DA rule.
+                            <b>ALT</b> — Pressure Altitude, True Altitude (0.4%/°C air column correction), Density Altitude (PA + ISA dev × 120 ft/°C), and ISA deviation calculations.
                         </div>
                     </div>
                     <div class="help-item">
@@ -967,10 +967,10 @@
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?? WORLD Tab</div>
+                    <div class="help-section-title">🌍 WORLD Tab</div>
                     <div class="help-item">
                         <div class="help-q">World Clock</div>
-                        <div class="help-a">Live local times with UTC offset. Type any ICAO code (e.g. EGLL, KJFK) and tap <b>Add</b>. Timezone is resolved automatically via coordinates. Tap <b>??/b> to remove a city.</div>
+                        <div class="help-a">Live local times with UTC offset. Type any ICAO code (e.g. EGLL, KJFK) and tap <b>Add</b>. Timezone is resolved automatically via coordinates. Tap <b>✕</b> to remove a city.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Cloud Sync of Cities</div>
@@ -979,22 +979,22 @@
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?? MULTI Tab (Dashboard)</div>
+                    <div class="help-section-title">🗂 MULTI Tab (Dashboard)</div>
                     <div class="help-item">
                         <div class="help-q">Enabling the Dashboard</div>
-                        <div class="help-a">Go to <b>Settings ??Multi-Airport Dashboard</b> and toggle it on. The MULTI tab appears in the navigation. Track up to 8 airports at once.</div>
+                        <div class="help-a">Go to <b>Settings → Multi-Airport Dashboard</b> and toggle it on. The MULTI tab appears in the navigation. Track up to 8 airports at once.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Adding Airports (ICAO or IATA)</div>
-                        <div class="help-a">Type either a <b>4-letter ICAO code</b> (e.g. KJFK) or a <b>3-letter IATA code</b> (e.g. JFK) into the add field and tap <b>+ Add</b>. When an IATA code is entered the app automatically resolves it to the correct ICAO code and shows a brief confirmation toast (e.g. <b>?? JFK ??KJFK</b>). Both code types work identically once added.</div>
+                        <div class="help-a">Type either a <b>4-letter ICAO code</b> (e.g. KJFK) or a <b>3-letter IATA code</b> (e.g. JFK) into the add field and tap <b>+ Add</b>. When an IATA code is entered the app automatically resolves it to the correct ICAO code and shows a brief confirmation toast (e.g. <b>🔍 JFK → KJFK</b>). Both code types work identically once added.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Cards</div>
-                        <div class="help-a">Each card shows the raw METAR with colour-coded flight category and data age. Tap any card to load that airport's full data across all other tabs. The ? button removes an airport from the dashboard.</div>
+                        <div class="help-a">Each card shows the raw METAR with colour-coded flight category and data age. Tap any card to load that airport's full data across all other tabs. The × button removes an airport from the dashboard.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Auto-Refresh</div>
-                        <div class="help-a">Data refreshes automatically every 5 minutes while the app is open. A ?��? badge appears on cards with data older than 60 minutes.</div>
+                        <div class="help-a">Data refreshes automatically every 5 minutes while the app is open. A ⚠️ badge appears on cards with data older than 60 minutes.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Cloud Sync</div>
@@ -1003,10 +1003,10 @@
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?��? SETTINGS Tab</div>
+                    <div class="help-section-title">⚙️ SETTINGS Tab</div>
                     <div class="help-item">
-                        <div class="help-q">Favorite Airports ??/div>
-                        <div class="help-a">Appear as gold chips above the search bar for one-tap access. Synced to Cloud Backup when enabled. Add via Settings ??Favorite Airports.</div>
+                        <div class="help-q">Favorite Airports ★</div>
+                        <div class="help-a">Appear as gold chips above the search bar for one-tap access. Synced to Cloud Backup when enabled. Add via Settings → Favorite Airports.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Default Airport</div>
@@ -1014,109 +1014,109 @@
                     </div>
                     <div class="help-item">
                         <div class="help-q">Preferred Runway</div>
-                        <div class="help-a">After saving a Default Airport, a <b>Preferred Runway</b> selector appears beneath it. Choose a specific runway (e.g. RWY 05L) to lock the wind rose and runway component display to that runway on every launch ??useful if your home airport has a noise-preferred or one-way runway. Set it to <b>Auto</b> to always have the app pick the optimal headwind runway from current METAR winds.</div>
+                        <div class="help-a">After saving a Default Airport, a <b>Preferred Runway</b> selector appears beneath it. Choose a specific runway (e.g. RWY 05L) to lock the wind rose and runway component display to that runway on every launch — useful if your home airport has a noise-preferred or one-way runway. Set it to <b>Auto</b> to always have the app pick the optimal headwind runway from current METAR winds.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?? Unit Preferences</div>
-                        <div class="help-a">Found in <b>Settings ??Unit Preferences</b>. Three independent toggles:<br><br>
-                            <b>Visibility</b> ??switch between <b>statute miles (sm)</b> and <b>kilometres (km)</b>. Affects the Dashboard card and all visibility displays.<br><br>
-                            <b>Temperature</b> ??switch between <b>°C</b> and <b>°F</b>. Affects Dashboard cards and the temp/dewpoint display.<br><br>
-                            <b>Pressure</b> ??switch between <b>hPa</b> and <b>inHg</b>. Affects the altimeter/QNH display across all tabs.<br><br>
+                        <div class="help-q">📐 Unit Preferences</div>
+                        <div class="help-a">Found in <b>Settings → Unit Preferences</b>. Three independent toggles:<br><br>
+                            <b>Visibility</b> — switch between <b>statute miles (sm)</b> and <b>kilometres (km)</b>. Affects the Dashboard card and all visibility displays.<br><br>
+                            <b>Temperature</b> — switch between <b>°C</b> and <b>°F</b>. Affects Dashboard cards and the temp/dewpoint display.<br><br>
+                            <b>Pressure</b> — switch between <b>hPa</b> and <b>inHg</b>. Affects the altimeter/QNH display across all tabs.<br><br>
                             Preferences are saved automatically and persist between sessions.
                         </div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?�� App Theme</div>
+                        <div class="help-q">🎨 App Theme</div>
                         <div class="help-a">Choose from 6 themes: Default dark, Cockpit Night (red-on-black for night vision), Sectional (warm VFR chart tones), IFR Enroute (navy), Phosphor (green CRT terminal), and High Contrast. Selection syncs to cloud backup.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?��? Cloud Backup</div>
-                        <div class="help-a">Saves favorites, default airport, world clock cities, multi-airport list, app theme, and personal minimums using a 4?? digit code. No account or personal data needed. Restore on any device with your code. Choose <b>This Device Only</b> if you prefer local-only storage.</div>
+                        <div class="help-q">☁️ Cloud Backup</div>
+                        <div class="help-a">Saves favorites, default airport, world clock cities, multi-airport list, app theme, and personal minimums using a 4–6 digit code. No account or personal data needed. Restore on any device with your code. Choose <b>This Device Only</b> if you prefer local-only storage.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">API Usage Monitor</div>
                         <div class="help-a">Admin-only view showing daily AVWX API call counts across all keys. Requires admin password. Useful for monitoring usage before plan limits are reached.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?�� Admin Tool Control</div>
-                        <div class="help-a">Admins can hide/show individual tools for all users via the <b>?�� Tools</b> tab in the admin panel (in-app or admin.html). Hidden tools are invisible to normal users but always visible to the admin with a <span style="color:#ff9f0a;">?? HIDDEN</span> badge. Useful for staging new tools or restricting access during training.</div>
+                        <div class="help-q">🔧 Admin Tool Control</div>
+                        <div class="help-a">Admins can hide/show individual tools for all users via the <b>🔧 Tools</b> tab in the admin panel (in-app or admin.html). Hidden tools are invisible to normal users but always visible to the admin with a <span style="color:#ff9f0a;">👁 HIDDEN</span> badge. Useful for staging new tools or restricting access during training.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Dashboard Card Style (Raw vs Detailed)</div>
                         <div class="help-a">Visible in Settings only when Dashboard Mode is enabled. Controls how each airport card is displayed in the Dashboard tab:<br><br>
-                            <b>Raw</b> ??shows the full METAR string with colour-highlighted gusts, low visibility, and weather phenomena. Best for experienced users who read raw METARs directly.<br><br>
-                            <b>Detailed</b> ??decodes the METAR into a structured card showing wind direction arrow, speed, gust, visibility, cloud layer, temperature, dewpoint, RH, pressure, and data age. Also shows a TAF condition badge (initial ??worst category) if a TAF is available. Best for quick at-a-glance status across multiple airports.
+                            <b>Raw</b> — shows the full METAR string with colour-highlighted gusts, low visibility, and weather phenomena. Best for experienced users who read raw METARs directly.<br><br>
+                            <b>Detailed</b> — decodes the METAR into a structured card showing wind direction arrow, speed, gust, visibility, cloud layer, temperature, dewpoint, RH, pressure, and data age. Also shows a TAF condition badge (initial → worst category) if a TAF is available. Best for quick at-a-glance status across multiple airports.
                         </div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?? What's New Popup</div>
+                        <div class="help-q">🆕 What's New Popup</div>
                         <div class="help-a">On each app update, a popup shows once to highlight new features. Once dismissed it won't appear again for that version. You can always revisit the changelog here at the top of this Help tab.</div>
                     </div>
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">?? Search, GPS &amp; Navigation</div>
+                    <div class="help-section-title">🔍 Search, GPS &amp; Navigation</div>
                     <div class="help-item">
                         <div class="help-q">Search Bar</div>
-                        <div class="help-a">Type any ICAO code (4 letters, e.g. RCTP, KJFK, EGLL) and press Enter or tap ?? The field auto-capitalises. Recent airports appear as chips above the bar for quick re-loading.</div>
+                        <div class="help-a">Type any ICAO code (4 letters, e.g. RCTP, KJFK, EGLL) and press Enter or tap ↻. The field auto-capitalises. Recent airports appear as chips above the bar for quick re-loading.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">?? GPS Button</div>
+                        <div class="help-q">📍 GPS Button</div>
                         <div class="help-a">Uses your device GPS to find and load the nearest aviation weather station within 150nm. Distance and station name are shown in a toast notification. Allow location permission when prompted.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">??Force Refresh</div>
+                        <div class="help-q">↻ Force Refresh</div>
                         <div class="help-a">Clears the 10-minute data cache and fetches the latest METAR, TAF, and NOTAM data immediately from all sources.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Swipe Navigation</div>
                         <div class="help-a">
                             Swipe <b>left</b> to go to the next tab, <b>right</b> to go back.
-                            The tab bar and top bar stay fixed ??only the content area slides.<br><br>
+                            The tab bar and top bar stay fixed — only the content area slides.<br><br>
                             The gesture engine automatically distinguishes horizontal swipes from vertical scrolling:
                             once it detects you're swiping sideways, it locks scroll for a clean animation with no page drift.
-                            A short flick works too ??you don't need to drag the full way across.<br><br>
+                            A short flick works too — you don't need to drag the full way across.<br><br>
                             Swiping is intentionally ignored on inputs, buttons, the canvas, modals, and the reorder-drag handle.
                         </div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Offline Mode</div>
-                        <div class="help-a">When no connection is available, the app automatically serves the last cached data and shows an <span style="color:var(--warn);font-weight:700;">??OFFLINE MODE</span> banner with the cache age. Tap the banner to retry when back online.</div>
+                        <div class="help-a">When no connection is available, the app automatically serves the last cached data and shows an <span style="color:var(--warn);font-weight:700;">⚡ OFFLINE MODE</span> banner with the cache age. Tap the banner to retry when back online.</div>
                     </div>
                 </div>
 
                 <div class="help-section">
-                    <div class="help-section-title">?�� Data Sources &amp; Decoding Reference</div>
+                    <div class="help-section-title">📡 Data Sources &amp; Decoding Reference</div>
                     <div class="help-item">
-                        <div class="help-q">AVWX API ??Primary Weather Source</div>
+                        <div class="help-q">AVWX API — Primary Weather Source</div>
                         <div class="help-a">All METAR, TAF, and station data is fetched from <b><a href="https://avwx.rest" target="_blank" style="color:var(--accent);text-decoration:none;">avwx.rest</a></b>. Requests are load-balanced across multiple API keys and cached for 10 minutes to conserve quota. AVWX aggregates data from official national meteorological services worldwide.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">aviationweather.gov ??NOTAMs &amp; Airport Data</div>
+                        <div class="help-q">aviationweather.gov — NOTAMs &amp; Airport Data</div>
                         <div class="help-a">NOTAMs and supplementary airport frequencies/phones are sourced from <b><a href="https://aviationweather.gov" target="_blank" style="color:var(--accent);text-decoration:none;">aviationweather.gov</a></b>, the FAA/NOAA public API. NOTAM data is cached for 10 minutes. This is an official U.S. government source.</div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">Open-Meteo ??24h Meteogram &amp; Upper-Level Winds</div>
-                        <div class="help-a">The meteogram chart and upper-level wind data (925/850/700 hPa) use <b><a href="https://open-meteo.com" target="_blank" style="color:var(--accent);text-decoration:none;">open-meteo.com</a></b>, an open-source NWP model aggregator. This data is <b style="color:var(--warn);">advisory only</b> ??it is a numerical weather prediction model, not an official aviation forecast.</div>
+                        <div class="help-q">Open-Meteo — 24h Meteogram &amp; Upper-Level Winds</div>
+                        <div class="help-a">The meteogram chart and upper-level wind data (925/850/700 hPa) use <b><a href="https://open-meteo.com" target="_blank" style="color:var(--accent);text-decoration:none;">open-meteo.com</a></b>, an open-source NWP model aggregator. This data is <b style="color:var(--warn);">advisory only</b> — it is a numerical weather prediction model, not an official aviation forecast.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Flight Rules (VFR / MVFR / IFR / LIFR)</div>
                         <div class="help-a">Calculated using ICAO/FAA standard thresholds:<br>
-                            <b>VFR</b> ??Ceiling &gt; 3000 ft <i>and</i> Visibility &gt; 5 sm<br>
-                            <b>MVFR</b> ??Ceiling 1000??000 ft <i>or</i> Vis 3?? sm<br>
-                            <b>IFR</b> ??Ceiling &lt; 1000 ft <i>or</i> Vis &lt; 3 sm<br>
-                            <b>LIFR</b> ??Ceiling &lt; 500 ft <i>or</i> Vis &lt; 1 sm
+                            <b>VFR</b> — Ceiling &gt; 3000 ft <i>and</i> Visibility &gt; 5 sm<br>
+                            <b>MVFR</b> — Ceiling 1000–3000 ft <i>or</i> Vis 3–5 sm<br>
+                            <b>IFR</b> — Ceiling &lt; 1000 ft <i>or</i> Vis &lt; 3 sm<br>
+                            <b>LIFR</b> — Ceiling &lt; 500 ft <i>or</i> Vis &lt; 1 sm
                         </div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Sky Cover Codes</div>
                         <div class="help-a">
-                            <b>SKC / CLR</b> ??Sky Clear (0 oktas)<br>
-                            <b>FEW</b> ??Few clouds (1?? oktas)<br>
-                            <b>SCT</b> ??Scattered (3?? oktas)<br>
-                            <b>BKN</b> ??Broken ??<i>ceiling layer</i> (5?? oktas)<br>
-                            <b>OVC</b> ??Overcast ??<i>ceiling layer</i> (8 oktas)<br>
-                            <b>VV</b> ??Vertical Visibility (sky obscured ??ceiling layer)<br>
+                            <b>SKC / CLR</b> — Sky Clear (0 oktas)<br>
+                            <b>FEW</b> — Few clouds (1–2 oktas)<br>
+                            <b>SCT</b> — Scattered (3–4 oktas)<br>
+                            <b>BKN</b> — Broken — <i>ceiling layer</i> (5–7 oktas)<br>
+                            <b>OVC</b> — Overcast — <i>ceiling layer</i> (8 oktas)<br>
+                            <b>VV</b> — Vertical Visibility (sky obscured — ceiling layer)<br>
                             Altitudes are reported in hundreds of feet AGL (e.g. BKN025 = 2500 ft).
                         </div>
                     </div>
@@ -1124,37 +1124,37 @@
                         <div class="help-q">Weather Phenomena Codes</div>
                         <div class="help-a">
                             Common codes: <b>TS</b> Thunderstorm · <b>RA</b> Rain · <b>SN</b> Snow · <b>FG</b> Fog · <b>BR</b> Mist · <b>HZ</b> Haze · <b>DZ</b> Drizzle · <b>GR</b> Hail · <b>SQ</b> Squall · <b>FC</b> Funnel Cloud<br>
-                            Intensity prefixes: <b>??/b> Light · (none) Moderate · <b>+</b> Heavy<br>
+                            Intensity prefixes: <b>−</b> Light · (none) Moderate · <b>+</b> Heavy<br>
                             Descriptors: <b>SH</b> Showers · <b>FZ</b> Freezing · <b>BL</b> Blowing · <b>DR</b> Drifting · <b>MI</b> Shallow · <b>BC</b> Patches
                         </div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">Wind Component Calculation</div>
                         <div class="help-a">Headwind and crosswind are computed trigonometrically using the difference between the magnetic wind direction and the runway heading. Magnetic variation is sourced from the AVWX station record.<br>
-                            <b>Headwind</b> = Wind Speed ? cos(? heading)<br>
-                            <b>Crosswind</b> = Wind Speed ? sin(? heading)
+                            <b>Headwind</b> = Wind Speed × cos(Δ heading)<br>
+                            <b>Crosswind</b> = Wind Speed × sin(Δ heading)
                         </div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">ATC Audio ??Taiwan (TWATC.net)</div>
+                        <div class="help-q">ATC Audio — Taiwan (TWATC.net)</div>
                         <div class="help-a">In-app live audio streams for <b>RCTP, RCSS, RCKH, RCMQ, RCBS, RCFN</b> are provided by <b><a href="https://twatc.net" target="_blank" style="color:var(--accent);text-decoration:none;">TWATC.net</a></b>, a Taiwan-based ATC audio streaming service. Streams include ATIS and area scanner feeds.</div>
                     </div>
                     <div class="help-item">
                         <div class="help-q">US Airport Resources (AirNav, iFlightPlanner, 1800wxbrief)</div>
                         <div class="help-a">
                             When a US airport is loaded, three additional resource links appear in the ATC tab under the External Resources section.<br><br>
-                            <b>AirNav</b> ??<a href="https://www.airnav.com" target="_blank" style="color:var(--accent);text-decoration:none;">airnav.com</a> ??Comprehensive airport directory with frequencies, fuel, services, and runway data for US airports.<br><br>
-                            <b>iFlightPlanner</b> ??<a href="https://www.iflightplanner.com" target="_blank" style="color:var(--accent);text-decoration:none;">iflightplanner.com</a> ??Opens in-app with three tabs: <b>Airport</b> (info & diagram), <b>VFR Sectional</b> (interactive chart), and <b>IFR Low</b> (enroute chart centred on the airport).<br><br>
-                            <b>1800wxbrief / FlightService</b> ??<a href="https://www.1800wxbrief.com" target="_blank" style="color:var(--accent);text-decoration:none;">1800wxbrief.com</a> ??Official FAA Flight Service Station briefing portal. Links directly to the airport info page for standard weather briefings and NOTAMs.<br><br>
+                            <b>AirNav</b> — <a href="https://www.airnav.com" target="_blank" style="color:var(--accent);text-decoration:none;">airnav.com</a> — Comprehensive airport directory with frequencies, fuel, services, and runway data for US airports.<br><br>
+                            <b>iFlightPlanner</b> — <a href="https://www.iflightplanner.com" target="_blank" style="color:var(--accent);text-decoration:none;">iflightplanner.com</a> — Opens in-app with three tabs: <b>Airport</b> (info & diagram), <b>VFR Sectional</b> (interactive chart), and <b>IFR Low</b> (enroute chart centred on the airport).<br><br>
+                            <b>1800wxbrief / FlightService</b> — <a href="https://www.1800wxbrief.com" target="_blank" style="color:var(--accent);text-decoration:none;">1800wxbrief.com</a> — Official FAA Flight Service Station briefing portal. Links directly to the airport info page for standard weather briefings and NOTAMs.<br><br>
                             All three links update automatically when you search a different US airport.
                         </div>
                     </div>
                     <div class="help-item">
-                        <div class="help-q">ATC Audio ??Global (LiveATC.net)</div>
+                        <div class="help-q">ATC Audio — Global (LiveATC.net)</div>
                         <div class="help-a">For all other airports, METAR GO links to <b><a href="https://www.liveatc.net" target="_blank" style="color:var(--accent);text-decoration:none;">LiveATC.net</a></b>, which provides ATC audio streams for hundreds of airports worldwide. The button auto-searches by your current ICAO code.</div>
                     </div>
                     <div style="margin-top:14px;padding:10px 12px;background:rgba(255,159,10,0.08);border:1px solid rgba(255,159,10,0.25);border-radius:8px;font-size:11px;color:var(--sub-text);line-height:1.6;">
-                        ?��? <b style="color:var(--warn);">Disclaimer:</b> All data is for reference only. Always verify with official sources before flight. METAR GO is not certified for operational use and does not replace official pre-flight briefings.
+                        ⚠️ <b style="color:var(--warn);">Disclaimer:</b> All data is for reference only. Always verify with official sources before flight. METAR GO is not certified for operational use and does not replace official pre-flight briefings.
                     </div>
                 </div>
                 
@@ -1172,13 +1172,13 @@
                         style="background:rgba(10,132,255,0.12); border:1px solid var(--accent); color:var(--accent);
                                padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;
                                display:flex; align-items:center; gap:5px; white-space:nowrap; flex-shrink:0; margin-left:10px;">
-                    ??Refresh
+                    ↻ Refresh
                 </button>
                 <button id="btnReorderDashboard"
                         style="background:rgba(10,132,255,0.12); border:1px solid var(--accent);
                                color:var(--accent); padding:7px 12px; border-radius:8px;
                                font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0;">
-                    ??Reorder
+                    ⇅ Reorder
                 </button>
                 
             </div>
@@ -1258,18 +1258,18 @@
         <div class="section-title">EXTERNAL RESOURCES</div>
         <div id="btnMetarTaf" class="atc-btn" style="cursor:pointer;"
              onclick="openExternal('https://metar-taf.com/')">
-            <span>?��? Metar-Taf.com</span><span>??/span>
+            <span>☁️ Metar-Taf.com</span><span>↗</span>
         </div>
         <div class="atc-btn" style="cursor:pointer;"
              onclick="openInAppBrowser('https://beta.twatc.net/', 'Taiwan Virtual ATC')">
-            <span>?��?�� Taiwan Virtual ATC</span><span>??/span>
+            <span>🇹🇼 Taiwan Virtual ATC</span><span>↗</span>
         </div>
         <div id="btnLiveAtc" class="atc-btn" style="cursor:pointer;"
              onclick="showLiveAtcChoice(document.getElementById('icao').value.toUpperCase() || '')">
-            <span>?�� LiveATC.net</span><span>??/span>
+            <span>📡 LiveATC.net</span><span>↗</span>
         </div>
 
-        <!-- US AIRPORT RESOURCES ??hidden until a US airport is loaded -->
+        <!-- US AIRPORT RESOURCES — hidden until a US airport is loaded -->
         <div id="usAirportLinks" class="hidden">
             <div class="section-title" style="margin-top:24px;">US Airport Resources</div>
 
@@ -1279,13 +1279,13 @@
                 <div style="display:flex;align-items:center;gap:10px;">
                     <div style="width:32px;height:32px;background:linear-gradient(135deg,#e84c0e,#c23d0a);
                                 border-radius:8px;display:flex;align-items:center;justify-content:center;
-                                font-size:16px;flex-shrink:0;">?��</div>
+                                font-size:16px;flex-shrink:0;">🧭</div>
                     <div>
                         <div style="font-weight:700;font-size:14px;">AirNav</div>
                         <div style="font-size:11px;color:var(--sub-text);">Frequencies · Services · Fuel</div>
                     </div>
                 </div>
-                <span style="color:var(--sub-text);">??/span>
+                <span style="color:var(--sub-text);">↗</span>
             </div>
 
             <!-- iFlightPlanner (3-tab in-app) -->
@@ -1295,13 +1295,13 @@
                     <div style="width:32px;height:32px;
                                 background:linear-gradient(135deg,#1a7fc1,#0d5a8a);
                                 border-radius:8px;display:flex;align-items:center;justify-content:center;
-                                font-size:16px;flex-shrink:0;">?��?</div>
+                                font-size:16px;flex-shrink:0;">✈️</div>
                     <div>
                         <div style="font-weight:700;font-size:14px;">iFlightPlanner</div>
                         <div style="font-size:11px;color:var(--sub-text);">Airport · VFR Sectional · IFR Low</div>
                     </div>
                 </div>
-                <span style="color:var(--sub-text);">??/span>
+                <span style="color:var(--sub-text);">↗</span>
             </div>
 
             <!-- 1800wxbrief / FlightService -->
@@ -1317,7 +1317,7 @@
                         <div style="font-size:11px;color:var(--sub-text);">FAA briefing portal · Airport info</div>
                     </div>
                 </div>
-                <span style="color:var(--sub-text);">??/span>
+                <span style="color:var(--sub-text);">↗</span>
             </div>
         </div>
         
@@ -1363,7 +1363,7 @@
                     style="background:rgba(10,132,255,0.12); border:1px solid var(--accent);
                            color:var(--accent); padding:0 12px; border-radius:8px;
                            font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0;">
-                ??Reorder
+                ⇅ Reorder
             </button>
         </div>
         <div id="worldContainer" style="display:flex; flex-direction:column;"></div>
@@ -1410,7 +1410,7 @@
                             NOT SET
                         </div>
                     </div>
-                    <div id="minsExpandIcon" style="font-size:16px; color:var(--sub-text); transition:transform 0.2s;">??/div>
+                    <div id="minsExpandIcon" style="font-size:16px; color:var(--sub-text); transition:transform 0.2s;">▼</div>
                 </div>
                 
                 <!-- Status Display -->
@@ -1449,7 +1449,7 @@
                 <div id="kmhrAwosNotice" style="display:none; margin-bottom:16px; padding:12px; background:rgba(10,132,255,0.1); border:1px solid rgba(10,132,255,0.3); border-radius:8px;">
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
                         <div style="flex:1;">
-                            <div style="font-size:12px; font-weight:700; color:var(--accent); margin-bottom:4px;">?�� LIVE AWOS AVAILABLE</div>
+                            <div style="font-size:12px; font-weight:700; color:var(--accent); margin-bottom:4px;">📡 LIVE AWOS AVAILABLE</div>
                             <div style="font-size:11px; color:var(--sub-text);">Check real-time sensor data for most accurate conditions</div>
                         </div>
                         <button id="btnOpenAwosFromMins" onclick="openAwosModal()" 
@@ -1523,43 +1523,43 @@
 
                 <!-- Reference Info Expander -->
                 <button onclick="toggleEvaInfo()" style="width:100%; background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:12px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-                    <span>?? View All Profile Details</span>
-                    <span id="evaInfoIcon" style="transition:transform 0.2s;">??/span>
+                    <span>📋 View All Profile Details</span>
+                    <span id="evaInfoIcon" style="transition:transform 0.2s;">▼</span>
                 </button>
                 
                 <div id="evaInfoContent" style="display:none; margin-top:12px; padding:16px; background:rgba(10,132,255,0.05); border:1px solid rgba(10,132,255,0.2); border-radius:8px; font-size:12px; line-height:1.7; color:var(--sub-text);">
                     <div style="font-weight:700; color:#fff; margin-bottom:12px;">Personal Minimums Reference</div>
                     
                     <div style="margin-bottom:12px;">
-                        <div style="color:var(--accent); font-weight:700; margin-bottom:6px;">?��? SOLO (EVA FTA)</div>
-                        <div>??Cloud: 2,000ft ceiling / 5,000ft local X-country</div>
-                        <div>??Visibility: 5 SM</div>
-                        <div>??Steady Wind: 15kt</div>
-                        <div>??Peak Wind: 15kt</div>
-                        <div>??Gust Factor: 5kt</div>
-                        <div>??Max Crosswind: 10kt</div>
+                        <div style="color:var(--accent); font-weight:700; margin-bottom:6px;">✈️ SOLO (EVA FTA)</div>
+                        <div>• Cloud: 2,000ft ceiling / 5,000ft local X-country</div>
+                        <div>• Visibility: 5 SM</div>
+                        <div>• Steady Wind: 15kt</div>
+                        <div>• Peak Wind: 15kt</div>
+                        <div>• Gust Factor: 5kt</div>
+                        <div>• Max Crosswind: 10kt</div>
                     </div>
                     
                     <div style="margin-bottom:12px;">
-                        <div style="color:var(--success); font-weight:700; margin-bottom:6px;">?��?��?�?DUAL (EVA FTA)</div>
-                        <div>??Cloud: 1,500ft ceiling / 3,000ft X-country</div>
-                        <div>??Visibility: 3 SM</div>
-                        <div>??Steady Wind: 25kt</div>
-                        <div>??Peak Wind: 30kt</div>
-                        <div>??Gust Factor: 10kt</div>
-                        <div>??Max Crosswind: 17kt</div>
+                        <div style="color:var(--success); font-weight:700; margin-bottom:6px;">👨‍✈️ DUAL (EVA FTA)</div>
+                        <div>• Cloud: 1,500ft ceiling / 3,000ft X-country</div>
+                        <div>• Visibility: 3 SM</div>
+                        <div>• Steady Wind: 25kt</div>
+                        <div>• Peak Wind: 30kt</div>
+                        <div>• Gust Factor: 10kt</div>
+                        <div>• Max Crosswind: 17kt</div>
                     </div>
                     
                     <div style="margin-bottom:12px;">
-                        <div style="color:var(--warn); font-weight:700; margin-bottom:6px;">?? KMHR (Local Operations)</div>
-                        <div>??Cloud: 1,500ft ceiling / 3,000ft X-country</div>
-                        <div>??Visibility: 3 SM</div>
-                        <div>??Steady Wind: 20kt</div>
-                        <div>??Peak Wind: 25kt</div>
-                        <div>??Gust Factor: 8kt</div>
-                        <div>??Max Crosswind: 15kt</div>
+                        <div style="color:var(--warn); font-weight:700; margin-bottom:6px;">🏠 KMHR (Local Operations)</div>
+                        <div>• Cloud: 1,500ft ceiling / 3,000ft X-country</div>
+                        <div>• Visibility: 3 SM</div>
+                        <div>• Steady Wind: 20kt</div>
+                        <div>• Peak Wind: 25kt</div>
+                        <div>• Gust Factor: 8kt</div>
+                        <div>• Max Crosswind: 15kt</div>
                         <div style="margin-top:6px; padding:8px; background:rgba(10,132,255,0.1); border-radius:6px; font-size:11px;">
-                            ?�� <strong>AWOS Available:</strong> Check live sensor data at KMHR for real-time conditions (more accurate than METAR)
+                            📡 <strong>AWOS Available:</strong> Check live sensor data at KMHR for real-time conditions (more accurate than METAR)
                         </div>
                     </div>
                     
@@ -1576,7 +1576,7 @@
             <div style="display:flex; align-items:center; justify-content:space-between;">
                 <div style="flex:1;">
                     <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                        <div style="font-size:28px;">??�?/div>
+                        <div style="font-size:28px;">🛠️</div>
                         <div>
                             <div style="font-size:15px; font-weight:800; color:#fff;">Aviation Tools Collection</div>
                             <div style="font-size:11px; color:var(--sub-text);">6 essential tools for pilots - tap to explore</div>
@@ -1591,7 +1591,7 @@
                         <span style="font-size:10px; padding:4px 8px; background:rgba(10,132,255,0.2); border-radius:4px; color:var(--accent); font-weight:700;">ABBREV</span>
                     </div>
                 </div>
-                <div style="font-size:20px; color:var(--accent); margin-left:12px;">??/div>
+                <div style="font-size:20px; color:var(--accent); margin-left:12px;">→</div>
             </div>
         </div>
     </div>
@@ -1634,7 +1634,7 @@
             <div class="info-card" style="margin-top:8px; border-left: 3px solid var(--accent);">
                 <div class="conv-lbl" style="margin-bottom:6px;">Preferred Runway for <span id="prefRunwayIcaoLabel" style="color:var(--accent); font-weight:800;"></span></div>
                 <select id="prefRunwaySelect" class="stealth-select" onchange="savePreferredRunway()">
-                    <option value="">?? Auto ??Best for wind</option>
+                    <option value="">🔀 Auto — Best for wind</option>
                 </select>
                 <div style="font-size:11px; color:var(--sub-text); margin-top:8px; line-height:1.6;">
                     Overrides auto wind-selection on the METAR tab. Set to <b style="color:var(--text);">Auto</b> to always pick the headwind-optimal runway.
@@ -1650,11 +1650,11 @@
                 <span class="theme-swatch" id="themeSwatch"></span>
                 <select id="themeSelect" onchange="setTheme(this.value)">
                     <option value="default">Default (Dark)</option>
-                    <option value="cockpit">?�� Cockpit Night</option>
-                    <option value="sectional">?���?Sectional (VFR)</option>
-                    <option value="ifr">?? IFR Enroute</option>
-                    <option value="phosphor">?? Phosphor (CRT)</option>
-                    <option value="contrast">??High Contrast</option>
+                    <option value="cockpit">🔴 Cockpit Night</option>
+                    <option value="sectional">🗺️ Sectional (VFR)</option>
+                    <option value="ifr">📘 IFR Enroute</option>
+                    <option value="phosphor">💚 Phosphor (CRT)</option>
+                    <option value="contrast">⚪ High Contrast</option>
                 </select>
             </div>
             <div style="font-size:11px;color:var(--sub-text);margin-top:8px;line-height:1.5;">
@@ -1692,7 +1692,7 @@
             </div>
         </div>
 
-        <!-- ?�?� UNIT PREFERENCES (always visible) ?�?� -->
+        <!-- ── UNIT PREFERENCES (always visible) ── -->
         <div class="section-title">Unit Preferences</div>
         <div class="info-card" style="display:flex;flex-direction:column;gap:14px;">
         
@@ -1749,7 +1749,7 @@
             </div>
         </div>
         
-        <!-- ?�?� DASHBOARD CARD STYLE (only visible when Dashboard Mode is ON) ?�?� -->
+        <!-- ── DASHBOARD CARD STYLE (only visible when Dashboard Mode is ON) ── -->
         <div id="dashCardStyleSection" class="hidden">
             <div class="section-title">Dashboard Card Style</div>
             <div class="info-card">
@@ -1757,8 +1757,8 @@
                     <div>
                         <div style="font-weight:700;font-size:14px;margin-bottom:4px;">Card View</div>
                         <div style="font-size:12px;color:var(--sub-text);line-height:1.5;">
-                            Raw ??compact METAR string<br>
-                            Detailed ??decoded weather card
+                            Raw — compact METAR string<br>
+                            Detailed — decoded weather card
                         </div>
                     </div>
                     <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);flex-shrink:0;margin-left:12px;">
@@ -1777,7 +1777,7 @@
                     <div class="ic-lbl">AVWX API Status</div>
                     <div class="ic-val" id="apiStatusLabel">Loading...</div>
                 </div>
-                <div style="font-size:24px;">??</div>
+                <div style="font-size:24px;">📊</div>
             </div>
             <div id="apiQuickStats"
                  style="margin-top:8px; padding-top:8px; border-top:1px solid #333; font-size:11px; color:#8e8e93;">
@@ -1785,20 +1785,20 @@
             </div>
         </div>
 
-        <!-- Admin Console shortcut ??only shown after admin password used this session -->
+        <!-- Admin Console shortcut — only shown after admin password used this session -->
         <div id="adminConsoleLink" style="display:none; margin-bottom:16px;">
             <a href="/admin.html" target="_blank"
                style="display:flex; align-items:center; justify-content:space-between;
                       background:rgba(10,132,255,0.08); border:1px solid rgba(10,132,255,0.25);
                       border-radius:12px; padding:14px 16px; text-decoration:none; cursor:pointer;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span style="font-size:20px;">?���?/span>
+                    <span style="font-size:20px;">🛡️</span>
                     <div>
                         <div style="font-weight:700; color:#fff; font-size:14px;">Admin Console</div>
                         <div style="font-size:11px; color:var(--sub-text); margin-top:1px;">Manage users · API stats</div>
                     </div>
                 </div>
-                <span style="color:var(--accent); font-size:16px;">??/span>
+                <span style="color:var(--accent); font-size:16px;">↗</span>
             </a>
         </div>
 
@@ -1816,7 +1816,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span>Backup Code</span>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span id="cloudPinDisplay" style="font-family:monospace; letter-spacing:4px; color:#fff;">?�••�?/span>
+                        <span id="cloudPinDisplay" style="font-family:monospace; letter-spacing:4px; color:#fff;">••••</span>
                         <button onclick="toggleShowCode()" id="showCodeBtn"
                                 style="background:transparent; border:1px solid #555; color:#8e8e93; border-radius:6px; padding:2px 8px; font-size:10px; cursor:pointer;">
                             Show
@@ -1825,19 +1825,19 @@
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span>Sync Status</span>
-                    <span id="syncStatus" style="color:var(--success);">??Synced</span>
+                    <span id="syncStatus" style="color:var(--success);">✅ Synced</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span>Last Saved</span>
                     <span id="lastSyncTime" style="color:var(--sub-text);">--</span>
                 </div>
                 <div style="background:rgba(255,255,255,0.03); border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:11px; color:#555; line-height:1.5;">
-                    ?��? Only your airport preferences are stored.<br>No personal information is collected.
+                    ℹ️ Only your airport preferences are stored.<br>No personal information is collected.
                 </div>
                 <button class="tool-btn"
                         style="background:transparent; border:1px solid var(--danger); color:var(--danger);"
                         onclick="deleteCloudProfile()">
-                    ??�?Delete Cloud Backup Data
+                    🗑️ Delete Cloud Backup Data
                 </button>
             </div>
         </div>
@@ -1883,7 +1883,7 @@
                 text-align:center;
                 transition:opacity 0.4s ease;">
     
-        <div style="font-size:56px;margin-bottom:16px;line-height:1;">?��?</div>
+        <div style="font-size:56px;margin-bottom:16px;line-height:1;">✈️</div>
         <div style="font-size:22px;font-weight:800;color:#fff;
                     margin-bottom:8px;letter-spacing:0.3px;">
             Welcome to METAR GO
@@ -1903,7 +1903,8 @@
                            font-size:15px;font-weight:800;cursor:pointer;
                            box-shadow:0 4px 20px rgba(10,132,255,0.45);
                            transition:opacity 0.2s;">
-                ?? Set Default Airport ??            </button>
+                🏠 Set Default Airport →
+            </button>
     
             <div style="font-size:11px;color:#3a3a3a;margin-top:2px;">
                 Or search any ICAO code in the bar above
@@ -1914,7 +1915,7 @@
                            color:#444;padding:11px 24px;border-radius:10px;
                            font-size:13px;cursor:pointer;margin-top:2px;
                            transition:border-color 0.2s,color 0.2s;">
-                Skip ??browse without saving
+                Skip — browse without saving
             </button>
         </div>
     </div>
@@ -1934,9 +1935,9 @@
                     <div id="nearModalCat" class="badge badge-cat" style="font-size:14px; padding:6px 14px; border-radius:8px;">--</div>
                 </div>
                 <div style="display:flex; gap:16px; margin-top:8px; font-size:11px; color:rgba(255,255,255,0.5);">
-                    <span>?? <span id="nearModalDist">-- nm</span> away</span>
-                    <span>??<span id="nearModalElev">-- ft</span> elev</span>
-                    <span>?? <span id="nearModalCoords">--</span></span>
+                    <span>📍 <span id="nearModalDist">-- nm</span> away</span>
+                    <span>⛰ <span id="nearModalElev">-- ft</span> elev</span>
+                    <span>🌐 <span id="nearModalCoords">--</span></span>
                 </div>
             </div>
 
@@ -1953,7 +1954,7 @@
                     Cancel
                 </button>
                 <button id="nearModalLoadBtn" onclick="loadNearbyFromModal()" style="flex:2; background:var(--accent); border:none; color:#fff; padding:12px; border-radius:10px; font-size:14px; font-weight:800; cursor:pointer;">
-                    ?��? Load Full Data
+                    ✈️ Load Full Data
                 </button>
             </div>
         </div>
@@ -1962,12 +1963,13 @@
     <!-- AWOS Modal -->
     <div id="awosModal" class="modal-overlay">
         <div class="modal-header">
-            <div style="font-weight:700;">?�� LIVE SENSOR (KMHR)</div>
+            <div style="font-weight:700;">📡 LIVE SENSOR (KMHR)</div>
             <div style="display:flex; gap:8px; align-items:center;">
                 <button onclick="window.open('http://kmhr.awosnet.com/', '_blank')" 
                         class="tool-btn" 
                         style="background:var(--accent); border:none; color:#000; padding:6px 12px; font-size:11px; font-weight:700;">
-                    OPEN SITE ??                </button>
+                    OPEN SITE ↗
+                </button>
                 <button class="modal-close" onclick="closeAwosModal()">DONE</button>
             </div>
         </div>
@@ -1979,7 +1981,7 @@
     <!-- API Stats Modal -->
     <div id="apiStatsModal" class="modal-overlay">
         <div class="modal-header">
-            <div style="font-weight:700;">?���?Admin Panel</div>
+            <div style="font-weight:700;">🛡️ Admin Panel</div>
             <button class="modal-close" onclick="closeApiStatsModal()">CLOSE</button>
         </div>
         <div style="padding:20px; overflow-y:auto; height:100%;">
@@ -1993,7 +1995,7 @@
              onclick="event.stopPropagation()">
             <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px;">
                 <span style="font-weight:700;">FLIGHT RULES LEGEND</span>
-                <button class="modal-close" onclick="toggleLegend(false)">??/button>
+                <button class="modal-close" onclick="toggleLegend(false)">✕</button>
             </div>
             <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center;">
                 <div style="width:40px; height:25px; background:var(--success); border-radius:4px;"></div>
@@ -2027,10 +2029,10 @@
     </div>
 
     <!-- ================================================================
-         ACCESS GATE ??shown on first launch until valid code entered
+         ACCESS GATE — shown on first launch until valid code entered
     ================================================================ -->
     <div id="accessGate" class="setup-overlay" style="display:none;">
-        <div style="font-size:48px; margin-bottom:8px;">?��?</div>
+        <div style="font-size:48px; margin-bottom:8px;">✈️</div>
         <div style="font-size:24px; font-weight:800; color:#fff; margin-bottom:4px; letter-spacing:0.5px;">METAR GO</div>
         <div style="font-size:12px; color:#0a84ff; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:28px;">Restricted Access</div>
 
@@ -2065,33 +2067,34 @@
                        padding:14px 48px; border-radius:13px; font-size:16px;
                        font-weight:800; cursor:pointer; width:100%; max-width:280px;
                        box-shadow:0 4px 20px rgba(10,132,255,0.45);">
-            Enter ??        </button>
+            Enter →
+        </button>
     </div>
 
     <!-- ================================================================
          STORAGE MODE SETUP SCREEN
     ================================================================ -->
     <div id="storageSetup" class="setup-overlay" style="display:none;">
-        <div style="font-size:40px; margin-bottom:12px;">?��?</div>
+        <div style="font-size:40px; margin-bottom:12px;">✈️</div>
         <div style="font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; text-align:center;">METAR GO</div>
         <div style="font-size:13px; color:#8e8e93; margin-bottom:32px; text-align:center; max-width:280px; line-height:1.6;">
             Choose how to save your airport preferences.
         </div>
         <div class="setup-card" onclick="chooseStorageMode('local')">
-            <div style="font-size:24px; margin-bottom:8px;">?��</div>
+            <div style="font-size:24px; margin-bottom:8px;">📱</div>
             <div style="font-weight:800; font-size:16px; margin-bottom:6px; color:#fff;">This Device Only</div>
             <div style="font-size:12px; color:#8e8e93; line-height:1.6;">
                 Your airports and settings stay on this device.<br>No account or code needed.<br>
-                <span style="color:#ff9f0a;">?��? May reset if iOS clears app data.</span>
+                <span style="color:#ff9f0a;">⚠️ May reset if iOS clears app data.</span>
             </div>
         </div>
         <div class="setup-card highlighted" onclick="chooseStorageMode('cloud')">
-            <div style="font-size:24px; margin-bottom:8px;">?��?</div>
+            <div style="font-size:24px; margin-bottom:8px;">☁️</div>
             <div style="font-weight:800; font-size:16px; margin-bottom:6px; color:#fff;">Cloud Backup</div>
             <div style="font-size:12px; color:#8e8e93; line-height:1.6;">
                 Backs up your airports and settings online.<br>Restore anytime on any device.<br>
-                No account or personal info needed ??br>just a simple 4-6 digit Backup Code.<br>
-                <span style="color:#32d74b;">??Recommended ??survives app resets.</span>
+                No account or personal info needed —<br>just a simple 4-6 digit Backup Code.<br>
+                <span style="color:#32d74b;">✅ Recommended — survives app resets.</span>
             </div>
         </div>
         <div style="font-size:11px; color:#555; text-align:center; margin-top:12px;">
@@ -2103,7 +2106,7 @@
          BACKUP CODE SETUP SCREEN
     ================================================================ -->
     <div id="pinSetup" class="setup-overlay" style="display:none;">
-        <div style="font-size:32px; margin-bottom:8px;" id="pinIcon">?��?</div>
+        <div style="font-size:32px; margin-bottom:8px;" id="pinIcon">☁️</div>
         <div style="font-size:20px; font-weight:800; color:#fff; margin-bottom:6px; text-align:center;" id="pinTitle">
             Set Up Cloud Backup
         </div>
@@ -2113,7 +2116,7 @@
         <div id="privacyNote"
              style="background:rgba(50,215,75,0.08); border:1px solid rgba(50,215,75,0.2); border-radius:10px; padding:10px 14px; margin-bottom:20px; max-width:280px; text-align:center;">
             <div style="font-size:11px; color:#32d74b; line-height:1.6;">
-                ?? Not linked to any account or personal info.<br>We only store your airport preferences.
+                🔒 Not linked to any account or personal info.<br>We only store your airport preferences.
             </div>
         </div>
         <!-- PIN Dots -->
@@ -2141,12 +2144,13 @@
             <button class="pin-btn" onclick="pinPadPress('9')">9</button>
             <button class="pin-btn empty"></button>
             <button class="pin-btn" onclick="pinPadPress('0')">0</button>
-            <button class="pin-btn delete" onclick="pinPadPress('??)">??/button>
+            <button class="pin-btn delete" onclick="pinPadPress('⌫')">⌫</button>
         </div>
         <!-- Confirm Button -->
         <button id="pinConfirmBtn" onclick="submitPinEntry()"
                 style="display:none; background:var(--accent); border:none; color:#fff; padding:14px 40px; border-radius:12px; font-size:16px; font-weight:800; cursor:pointer; margin-bottom:16px; width:100%; max-width:250px;">
-            Continue ??        </button>
+            Continue →
+        </button>
         <!-- Restore Option -->
         <div style="border-top:1px solid #222; padding-top:16px; width:100%; max-width:280px; text-align:center;" id="restoreSection">
             <div style="font-size:12px; color:#555; margin-bottom:10px;">
@@ -2159,7 +2163,7 @@
         </div>
         <button onclick="backToStorageSetup()"
                 style="background:transparent; border:none; color:#555; font-size:13px; cursor:pointer; margin-top:16px;">
-            ??Back
+            ← Back
         </button>
     </div>
 
@@ -2168,11 +2172,11 @@
         ================================================================ -->
         <div id="whatsNewModal" class="whatsnew-overlay">
             <div class="whatsnew-card">
-                <div class="whatsnew-badge">??What's New</div>
+                <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 4.3.7</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 4.3.6</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
-                <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ??/button>
+                <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
         </div>
 
@@ -2181,36 +2185,36 @@
         ================================================================ -->
         <div id="onboardingModal" class="whatsnew-overlay">
             <div class="whatsnew-card">
-                <div class="whatsnew-badge">?��? Welcome</div>
+                <div class="whatsnew-badge">✈️ Welcome</div>
                 <div class="whatsnew-title">Let's Get Set Up</div>
                 <div class="whatsnew-sub">Take 30 seconds to personalise METAR GO</div>
                 <div class="whatsnew-list">
                     <div class="whatsnew-item" style="cursor:pointer;" onclick="closeOnboardingAndGo('settings','defaultIcaoInput')">
-                        <div class="whatsnew-icon">??</div>
+                        <div class="whatsnew-icon">🏠</div>
                         <div class="whatsnew-item-text">
                             <div class="whatsnew-item-title">Set a Default Airport</div>
                             <div class="whatsnew-item-desc">The app will load your home airport automatically on every launch.</div>
                         </div>
-                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">??/div>
+                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">›</div>
                     </div>
                     <div class="whatsnew-item" style="cursor:pointer;" onclick="closeOnboardingAndGo('settings','favInput')">
-                        <div class="whatsnew-icon">??/div>
+                        <div class="whatsnew-icon">★</div>
                         <div class="whatsnew-item-text">
                             <div class="whatsnew-item-title">Add Favourite Airports</div>
                             <div class="whatsnew-item-desc">Pin your frequent airports as gold chips above the search bar for one-tap access.</div>
                         </div>
-                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">??/div>
+                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">›</div>
                     </div>
                     <div class="whatsnew-item" style="cursor:pointer;" onclick="closeOnboardingAndGo('settings','toggleMultiDashboard')">
-                        <div class="whatsnew-icon">??</div>
+                        <div class="whatsnew-icon">📊</div>
                         <div class="whatsnew-item-text">
                             <div class="whatsnew-item-title">Try Dashboard Mode</div>
                             <div class="whatsnew-item-desc">Track up to 8 airports at once with combined METAR + TAF view. Toggle it in Settings.</div>
                         </div>
-                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">??/div>
+                        <div style="color:var(--sub-text);font-size:16px;margin-left:4px;">›</div>
                     </div>
                 </div>
-                <button class="whatsnew-btn" onclick="dismissOnboarding()">Skip ??I'll set up later</button>
+                <button class="whatsnew-btn" onclick="dismissOnboarding()">Skip — I'll set up later</button>
             </div>
         </div>
 
@@ -2224,7 +2228,7 @@
                         background:#000;
                         padding-top:max(env(safe-area-inset-top),12px);">
     
-                <!-- ?�?� Title bar ?�?� -->
+                <!-- ── Title bar ── -->
                 <div style="display:flex;align-items:center;justify-content:space-between;
                             padding:10px 16px 8px;gap:12px;border-bottom:1px solid #1a1a1a;">
                     <div id="usLinkModalTitle"
@@ -2237,7 +2241,8 @@
                                 style="background:rgba(10,132,255,0.12);border:1px solid var(--accent);
                                        color:var(--accent);padding:5px 12px;border-radius:8px;
                                        font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">
-                            Open ??                        </button>
+                            Open ↗
+                        </button>
                         <button onclick="closeUsLinkModal()"
                                 style="background:#222;border:1px solid #444;color:#aaa;
                                        padding:5px 14px;border-radius:8px;font-size:13px;
@@ -2247,7 +2252,7 @@
                     </div>
                 </div>
     
-                <!-- ?�?� iFlightPlanner sub-tabs (hidden for AirNav / FlightService) ?�?� -->
+                <!-- ── iFlightPlanner sub-tabs (hidden for AirNav / FlightService) ── -->
                 <div id="iflightplannerTabs"
                      style="display:none;background:#111;border-bottom:1px solid #1a1a1a;
                             padding:8px 12px 0;">
@@ -2280,7 +2285,7 @@
                     </div>
                 </div>
     
-                <!-- ?�?� Loading indicator ?�?� -->
+                <!-- ── Loading indicator ── -->
                 <div id="usLinkLoader"
                      style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
                             display:flex;flex-direction:column;align-items:center;gap:14px;
@@ -2291,7 +2296,7 @@
                     <div style="font-size:12px;color:#555;">Loading...</div>
                 </div>
     
-                <!-- ?�?� iframe ?�?� -->
+                <!-- ── iframe ── -->
                 <iframe id="usLinkFrame"
                         style="flex:1;width:100%;border:none;background:#fff;"
                         onload="document.getElementById('usLinkLoader').style.display='none';"
@@ -2324,7 +2329,7 @@
                                color:#fff;padding:14px;border-radius:12px;
                                font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;
                                display:flex;align-items:center;justify-content:space-between;">
-                    <span>?�� Open / Get LiveATC App</span>
+                    <span>📻 Open / Get LiveATC App</span>
                     <span style="font-size:11px;color:rgba(255,255,255,0.5);">App Store</span>
                 </button>
 
@@ -2337,7 +2342,7 @@
                                font-size:14px;font-weight:700;cursor:pointer;
                                margin-bottom:10px;display:flex;align-items:center;
                                justify-content:space-between;">
-                    <span>?? Open in Browser</span>
+                    <span>🌐 Open in Browser</span>
                     <span style="font-size:11px;color:var(--sub-text);">Safari / Chrome</span>
                 </button>
         
@@ -2354,8 +2359,8 @@
 
     <!-- Offline indicator banner -->
     <div id="offline-banner">
-        <span>?��</span>
-        OFFLINE MODE ??Aviation tools available · Weather data may be stale
+        <span>📡</span>
+        OFFLINE MODE — Aviation tools available · Weather data may be stale
         <span class="offline-stale" id="offline-stale-time"></span>
     </div>
 
@@ -2370,7 +2375,7 @@
             <div style="display:flex; align-items:center; justify-content:space-between;">
                 <!-- Left: Back to Menu button (shown when viewing a tool) -->
                 <button id="back-to-menu-btn" onclick="showToolsMenu()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; font-size:20px; min-width:50px; justify-content:center; opacity:0; pointer-events:none; transition: opacity 0.2s ease;">
-                    <span>??/span>
+                    <span>←</span>
                 </button>
                 
                 <!-- Title -->
@@ -2380,7 +2385,7 @@
                 
                 <!-- Right: Close button (always visible) -->
                 <button onclick="closeToolsExtension()" class="icon-btn" style="background:#1c1c1e; border:1px solid #333; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; font-size:20px; min-width:50px; justify-content:center;">
-                    <span>??/span>
+                    <span>✕</span>
                 </button>
             </div>
         </div>
@@ -2393,56 +2398,56 @@
                 
                 <!-- Unit Converter -->
                 <div onclick="openTool('unit-converter')" class="tool-card" data-tool-id="unit-converter" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">??</div>
+                    <div style="font-size:32px; margin-bottom:12px;">📏</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Unit Converter</div>
                     <div style="font-size:11px; color:var(--sub-text);">10 categories: speed, energy, power, more</div>
                 </div>
                 
                 <!-- E6B Flight Computer -->
                 <div onclick="openTool('e6b-calculator')" class="tool-card" data-tool-id="e6b-calculator" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">?��?</div>
+                    <div style="font-size:32px; margin-bottom:12px;">✈️</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Calculator</div>
                     <div style="font-size:11px; color:var(--sub-text);">DA, TAS, cloud base, freezing</div>
                 </div>
                 
                 <!-- Great Circle -->
                 <div onclick="openTool('great-circle')" class="tool-card" data-tool-id="great-circle" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">??</div>
+                    <div style="font-size:32px; margin-bottom:12px;">🌍</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Great Circle</div>
                     <div style="font-size:11px; color:var(--sub-text);">Distance & bearing calc</div>
                 </div>
                 
-                <!-- METAR Decoder -->
-                <div onclick="openTool('metar-decoder')" class="tool-card" data-tool-id="metar-decoder" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">??</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">METAR Decoder</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Decoded METAR + TAF in plain English</div>
+                <!-- E6B Trainer -->
+                <div onclick="openTool('e6b-trainer')" class="tool-card" data-tool-id="e6b-trainer" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
+                    <div style="font-size:32px; margin-bottom:12px;">🎓</div>
+                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Trainer</div>
+                    <div style="font-size:11px; color:var(--sub-text);">Interactive UND trainer</div>
                 </div>
                 
                 <!-- Weather Terms -->
                 <div onclick="openTool('weather-terms')" class="tool-card" data-tool-id="weather-terms" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">?���?/div>
+                    <div style="font-size:32px; margin-bottom:12px;">🌦️</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Weather Terms</div>
                     <div style="font-size:11px; color:var(--sub-text);">METAR abbreviations & symbols</div>
                 </div>
                 
                 <!-- Abbreviations -->
                 <div onclick="openTool('abbreviations')" class="tool-card" data-tool-id="abbreviations" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">??</div>
+                    <div style="font-size:32px; margin-bottom:12px;">📖</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Abbreviations</div>
                     <div style="font-size:11px; color:var(--sub-text);">Aviation terminology</div>
                 </div>
 
                 <!-- Crosswind Calculator -->
                 <div onclick="openTool('crosswind')" class="tool-card" data-tool-id="crosswind" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">?��</div>
+                    <div style="font-size:32px; margin-bottom:12px;">💨</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Crosswind Calc</div>
                     <div style="font-size:11px; color:var(--sub-text);">Headwind & crosswind components</div>
                 </div>
 
                 <!-- Airspace Minimums -->
                 <div onclick="openTool('airspace-mins')" class="tool-card" data-tool-id="airspace-mins" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">??</div>
+                    <div style="font-size:32px; margin-bottom:12px;">📋</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Airspace Mins</div>
                     <div style="font-size:11px; color:var(--sub-text);">VFR cloud &amp; vis requirements</div>
                 </div>
@@ -2455,21 +2460,14 @@
 
                 <!-- Morse Code Trainer -->
                 <div onclick="openTool('morse-trainer')" class="tool-card" data-tool-id="morse-trainer" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">?��</div>
+                    <div style="font-size:32px; margin-bottom:12px;">📡</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Morse Code</div>
                     <div style="font-size:11px; color:var(--sub-text);">Learn &amp; practice aviation Morse</div>
                 </div>
 
-                <!-- E6B Trainer -->
-                <div onclick="openTool('e6b-trainer')" class="tool-card" data-tool-id="e6b-trainer" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">??</div>
-                    <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">E6B Trainer</div>
-                    <div style="font-size:11px; color:var(--sub-text);">Interactive UND trainer</div>
-                </div>
-
                 <!-- Training Area -->
                 <div onclick="openTool('training-area')" class="tool-card" data-tool-id="training-area" style="background:#111; padding:20px; border-radius:12px; cursor:pointer; border:2px solid #333; transition:all 0.2s;">
-                    <div style="font-size:32px; margin-bottom:12px;">??</div>
+                    <div style="font-size:32px; margin-bottom:12px;">📐</div>
                     <div style="font-size:13px; font-weight:700; color:#fff; margin-bottom:4px;">Training Area</div>
                     <div style="font-size:11px; color:var(--sub-text);">1:60 rule, wind triangle &amp; more</div>
                 </div>
@@ -2481,7 +2479,7 @@
              MORSE CODE TRAINER
         ================================================================ -->
         <div id="tool-morse-trainer" class="tool-view" style="display:none;">
-            <!-- Mode selector ??4 modes -->
+            <!-- Mode selector — 4 modes -->
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:#111;border-radius:10px;padding:3px;gap:2px;border:1px solid #333;margin-bottom:16px;">
                 <button id="morseBtn-learn" onclick="setMorseMode('learn')"
                         style="padding:9px 4px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#e8a020;color:#000;transition:all 0.2s;">LEARN</button>
@@ -2511,14 +2509,14 @@
 
             <!-- LISTEN mode -->
             <div id="morseListenPanel" style="display:none;text-align:center;">
-                <div style="font-size:13px;color:#aaa;margin-bottom:16px;">Press Play ??identify the character you hear.</div>
+                <div style="font-size:13px;color:#aaa;margin-bottom:16px;">Press Play — identify the character you hear.</div>
                 <div id="morseListenDisplay"
                      style="font-size:60px;font-weight:900;font-family:'SF Mono',monospace;
                             color:#e8a020;min-height:80px;display:flex;align-items:center;
                             justify-content:center;letter-spacing:8px;margin-bottom:16px;
                             background:#111;border:2px solid #333;border-radius:12px;padding:12px;">?</div>
                 <button onclick="playMorseListenChar()"
-                        style="background:#e8a020;border:none;color:#000;padding:12px 36px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:20px;letter-spacing:0.5px;">??PLAY</button>
+                        style="background:#e8a020;border:none;color:#000;padding:12px 36px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:20px;letter-spacing:0.5px;">▶ PLAY</button>
                 <input id="morseListenInput" type="text" maxlength="1" placeholder="Type the character"
                        oninput="checkMorseListenAnswer(this.value)"
                        style="width:100%;background:#111;border:2px solid #444;border-radius:8px;color:#fff;padding:14px;font-size:24px;text-align:center;font-family:'SF Mono',monospace;letter-spacing:6px;text-transform:uppercase;outline:none;margin-bottom:8px;">
@@ -2537,11 +2535,11 @@
                      style="font-size:68px;font-weight:900;font-family:'SF Mono',monospace;color:#fff;
                             margin-bottom:10px;background:#111;border:2px solid #333;border-radius:12px;padding:10px;">A</div>
                 <button onclick="playMorseQuizHint()"
-                        style="background:#222;border:2px solid #555;color:#e8a020;padding:7px 20px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:18px;">?? Hear it</button>
+                        style="background:#222;border:2px solid #555;color:#e8a020;padding:7px 20px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:18px;">🔊 Hear it</button>
                 <div id="morseQuizOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
                 <div id="morseQuizFeedback" style="margin-top:14px;font-size:13px;font-weight:700;min-height:20px;"></div>
                 <button id="morseNextBtn" onclick="nextMorseQuiz()"
-                        style="display:none;margin-top:14px;background:#e8a020;border:none;color:#000;padding:12px 30px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;">Next ??/button>
+                        style="display:none;margin-top:14px;background:#e8a020;border:none;color:#000;padding:12px 30px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;">Next →</button>
             </div>
 
             <!-- WORDS mode -->
@@ -2559,17 +2557,17 @@
                 </div>
                 <!-- Custom input row (hidden unless custom selected) -->
                 <div id="morseWordsCustomRow" style="display:none;margin-bottom:12px;gap:6px;display:flex;">
-                    <input id="morseWordsCustomInput" type="text" maxlength="20" placeholder="Type a word or callsign (A?�Z, 0??)"
+                    <input id="morseWordsCustomInput" type="text" maxlength="20" placeholder="Type a word or callsign (A–Z, 0–9)"
                            style="flex:1;background:#111;border:2px solid #444;border-radius:8px;color:#fff;padding:10px 12px;font-size:14px;font-family:'SF Mono',monospace;text-transform:uppercase;outline:none;"
                            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9 ]/g,'')">
-                    <button onclick="playWordsCustom()" style="background:#e8a020;border:none;color:#000;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">??/button>
+                    <button onclick="playWordsCustom()" style="background:#e8a020;border:none;color:#000;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">▶</button>
                 </div>
                 <div id="morseWordsDisplay"
                      style="background:#111;border:2px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;text-align:center;min-height:70px;display:flex;align-items:center;justify-content:center;">
                     <span style="font-size:32px;letter-spacing:6px;font-family:'SF Mono',monospace;color:#e8a020;font-weight:900;">?</span>
                 </div>
                 <div style="display:flex;gap:8px;margin-bottom:14px;">
-                    <button onclick="playMorseWord()" style="flex:1;background:#e8a020;border:none;color:#000;padding:12px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;">??PLAY</button>
+                    <button onclick="playMorseWord()" style="flex:1;background:#e8a020;border:none;color:#000;padding:12px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;">▶ PLAY</button>
                     <button onclick="skipMorseWord()" style="background:#222;border:2px solid #444;color:#888;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">Skip</button>
                 </div>
                 <input id="morseWordsInput" type="text" placeholder="Type what you heard..."
@@ -2586,7 +2584,7 @@
             </div>
 
             <div style="margin-top:16px;padding:10px 12px;background:#0d1a0d;border-radius:8px;border:1px solid #1a3a1a;font-size:11px;color:#666;line-height:1.6;">
-                ?�� <b style="color:#aaa;">Aviation use:</b> VOR and NDB stations broadcast their 2?? letter identifier in Morse on their nav frequency. Pilots verify the station ident before using it for navigation.
+                📡 <b style="color:#aaa;">Aviation use:</b> VOR and NDB stations broadcast their 2–3 letter identifier in Morse on their nav frequency. Pilots verify the station ident before using it for navigation.
             </div>
         </div>
 
@@ -2621,7 +2619,7 @@
                             style="background:#111; border:2px solid #555; color:#e8a020;
                                    width:38px; height:38px; border-radius:50%; font-size:18px;
                                    cursor:pointer; display:flex; align-items:center; justify-content:center;
-                                   flex-shrink:0; transition:transform 0.25s ease;">??/button>
+                                   flex-shrink:0; transition:transform 0.25s ease;">⇅</button>
                     <div style="flex:1; height:1px; background:var(--border);"></div>
                 </div>
 
@@ -2640,19 +2638,20 @@
         ================================================================ -->
         <div id="tool-e6b-calculator" class="tool-view" style="display:none;">
 
-            <!-- ?�?� AUTOFILL BAR ?�?� -->
+            <!-- ── AUTOFILL BAR ── -->
             <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
                 <button onclick="e6bAutofillCurrent()"
                         style="flex:1; background:#0a2a40; border:1px solid var(--accent); color:var(--accent);
                                padding:10px 12px; border-radius:10px; font-size:12px; font-weight:700;
                                cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
-                    <span>?��</span><span id="e6bAutofillLabel">Fill from current airport</span>
+                    <span>📡</span><span id="e6bAutofillLabel">Fill from current airport</span>
                 </button>
                 <button onclick="e6bCustomFill()"
                         style="background:#1c1c1e; border:1px solid #3a3a3c; color:var(--sub-text);
                                padding:10px 12px; border-radius:10px; font-size:12px; font-weight:700;
                                cursor:pointer; white-space:nowrap;">
-                    Custom ??                </button>
+                    Custom ↗
+                </button>
             </div>
             <!-- Custom ICAO input (hidden by default) -->
             <div id="e6bCustomRow" style="display:none; margin-bottom:10px;">
@@ -2670,7 +2669,7 @@
                 <div id="e6bCustomStatus" style="font-size:11px; color:var(--sub-text); margin-top:5px; min-height:16px;"></div>
             </div>
 
-            <!-- ?�?� SECTION 1: ATMOSPHERE ?�?� -->
+            <!-- ── SECTION 1: ATMOSPHERE ── -->
             <div class="info-card" style="margin-bottom:12px;">
                 <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:12px;">ATMOSPHERE · DENSITY · PERFORMANCE</div>
                 <div class="conv-row">
@@ -2713,33 +2712,33 @@
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; padding-top:15px; border-top:1px solid #333;">
                     <div onclick="showFormulaModal('pa')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Pressure Alt <span style="font-size:9px; color:#555;">??/span></div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Pressure Alt <span style="font-size:9px; color:#555;">ⓘ</span></div>
                         <div class="ic-val" id="resPA" style="color:var(--accent);">--</div>
                     </div>
                     <div onclick="showFormulaModal('da')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Density Alt <span style="font-size:9px; color:#555;">??/span></div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Density Alt <span style="font-size:9px; color:#555;">ⓘ</span></div>
                         <div class="ic-val" id="resDA" style="color:var(--accent);">--</div>
                     </div>
                     <div onclick="showFormulaModal('isa')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">ISA Deviation <span style="font-size:9px; color:#555;">??/span></div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">ISA Deviation <span style="font-size:9px; color:#555;">ⓘ</span></div>
                         <div class="ic-val" id="resISA">--</div>
                     </div>
                     <div onclick="showFormulaModal('tas')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">True Airspeed <span style="font-size:9px; color:#555;">??/span></div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">True Airspeed <span style="font-size:9px; color:#555;">ⓘ</span></div>
                         <div class="ic-val" id="resTAS" style="color:var(--success);">--</div>
                     </div>
                     <div onclick="showFormulaModal('cloudbase')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Cloud Base (AGL) <span style="font-size:9px; color:#555;">??/span></div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Cloud Base (AGL) <span style="font-size:9px; color:#555;">ⓘ</span></div>
                         <div class="ic-val" id="resCloud">--</div>
                     </div>
                     <div onclick="showFormulaModal('frz')" style="cursor:pointer; -webkit-tap-highlight-color:transparent;">
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Freezing Lvl <span style="font-size:9px; color:#555;">??/span></div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;">Freezing Lvl <span style="font-size:9px; color:#555;">ⓘ</span></div>
                         <div class="ic-val" id="resFrz">--</div>
                     </div>
                 </div>
             </div>
 
-            <!-- ?�?� SECTION 2: WIND TRIANGLE ?�?� -->
+            <!-- ── SECTION 2: WIND TRIANGLE ── -->
             <div class="info-card" style="margin-bottom:12px;">
                 <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:12px;">WIND TRIANGLE · HEADING &amp; GROUND SPEED</div>
 
@@ -2755,10 +2754,11 @@
                             style="background:#1c1c1e; border:1px solid #3a3a3c; color:var(--accent);
                                    padding:6px 10px; border-radius:7px; font-size:10px; font-weight:700;
                                    cursor:pointer; white-space:nowrap;">
-                        Airport ??                    </button>
+                        Airport ↓
+                    </button>
                 </div>
                 <div style="font-size:10px; color:#555; margin-bottom:12px; padding:0 2px; line-height:1.6;">
-                    <span id="wtMagVarNote">Type <b style="color:#888;">14W</b> for West or <b style="color:#888;">3E</b> for East. <b style="color:#ff9f0a;">East is least · West is best</b> ??tap Airport ??to auto-fill from loaded station.</span>
+                    <span id="wtMagVarNote">Type <b style="color:#888;">14W</b> for West or <b style="color:#888;">3E</b> for East. <b style="color:#ff9f0a;">East is least · West is best</b> — tap Airport ↓ to auto-fill from loaded station.</span>
                 </div>
 
                 <!-- Course inputs: MC and TC linked -->
@@ -2807,38 +2807,38 @@
                         style="width:100%; margin:4px 0 14px; background:#1c1c1e; border:1px solid #3a3a3c;
                                color:var(--sub-text); padding:8px; border-radius:8px; font-size:11px;
                                font-weight:700; cursor:pointer;">
-                    ??Fill wind from current METAR
+                    ↓ Fill wind from current METAR
                 </button>
 
-                <!-- Results grid ??colors match SVG lines (shown FIRST) -->
+                <!-- Results grid — colors match SVG lines (shown FIRST) -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #333;">
                     <div>
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#0a84ff; font-size:14px;">??/span> True Heading</div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#0a84ff; font-size:14px;">━</span> True Heading</div>
                         <div class="ic-val" id="resHdg" style="color:#0a84ff;">--</div>
                     </div>
                     <div>
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#0a84ff; font-size:14px;">??/span> Mag Heading</div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#0a84ff; font-size:14px;">━</span> Mag Heading</div>
                         <div class="ic-val" id="resMh" style="color:#0a84ff;">--</div>
                     </div>
                     <div>
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#32d74b; font-size:14px;">??/span> Ground Speed</div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#32d74b; font-size:14px;">━</span> Ground Speed</div>
                         <div class="ic-val" id="resGs" style="color:#32d74b;">--</div>
                     </div>
                     <div>
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#ff453a; font-size:14px;">?�</span> Wind Correction</div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#ff453a; font-size:14px;">─</span> Wind Correction</div>
                         <div class="ic-val" id="resWca" style="color:#ff453a;">--</div>
                     </div>
                     <div>
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#32d74b; font-size:14px;">??/span> Wind Effect</div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#32d74b; font-size:14px;">━</span> Wind Effect</div>
                         <div class="ic-val" id="resWe">--</div>
                     </div>
                     <div>
-                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#ff453a; font-size:14px;">?�</span> Crosswind</div>
+                        <div class="ic-lbl" style="display:flex; align-items:center; gap:4px;"><span style="color:#ff453a; font-size:14px;">─</span> Crosswind</div>
                         <div class="ic-val" id="resXw">--</div>
                     </div>
                 </div>
 
-                <!-- ?�?� SVG DIAGRAM ??capped width so it doesn't dominate on iPad/desktop ?�?� -->
+                <!-- ── SVG DIAGRAM — capped width so it doesn't dominate on iPad/desktop ── -->
                 <div style="max-width:280px; margin:0 auto 6px;">
                     <svg id="wtSvg" viewBox="0 0 220 220" width="100%"
                          style="display:block; background:#0a0a0c; border-radius:10px; border:1px solid #1e1e1e;">
@@ -2847,14 +2847,14 @@
                     </svg>
                     <!-- Legend -->
                     <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; font-size:10px; color:var(--sub-text);">
-                        <span><span style="color:#0a84ff;">??/span> TAS / HDG</span>
-                        <span><span style="color:#ff453a;">?� ?�</span> Wind</span>
-                        <span><span style="color:#32d74b;">??/span> GS / Track</span>
+                        <span><span style="color:#0a84ff;">━</span> TAS / HDG</span>
+                        <span><span style="color:#ff453a;">─ ─</span> Wind</span>
+                        <span><span style="color:#32d74b;">━</span> GS / Track</span>
                     </div>
                 </div>
             </div>
 
-            <!-- ?�?� SECTION 3: FUEL ENDURANCE ?�?� -->
+            <!-- ── SECTION 3: FUEL ENDURANCE ── -->
             <div class="info-card">
                 <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:12px;">FUEL ENDURANCE &amp; RANGE</div>
                 <div class="conv-row">
@@ -2946,7 +2946,7 @@
                 <div id="gc-from-name" style="font-size:11px; min-height:18px; padding:3px 2px; color:var(--sub-text); transition:color 0.2s;"></div>
 
                 <div style="text-align:center; margin:10px 0 6px;">
-                    <button onclick="gcSwap()" style="background:#2c2c2e; border:1px solid #444; color:#aaa; padding:5px 22px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:0.5px;">??SWAP</button>
+                    <button onclick="gcSwap()" style="background:#2c2c2e; border:1px solid #444; color:#aaa; padding:5px 22px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:0.5px;">⇅ SWAP</button>
                 </div>
 
                 <div class="conv-lbl" style="margin-bottom:6px;">TO</div>
@@ -3007,19 +3007,19 @@
                         style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;
                                font-weight:700;cursor:pointer;transition:all 0.2s;
                                background:#0a84ff;color:#fff;">
-                    ?�� Visual
+                    🧭 Visual
                 </button>
                 <button id="cw-btn-type" onclick="cwSetMode('type')"
                         style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;
                                font-weight:700;cursor:pointer;transition:all 0.2s;
                                background:transparent;color:#555;">
-                    ?��? Type In
+                    ⌨️ Type In
                 </button>
             </div>
 
-            <!-- ?��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��?
+            <!-- ════════════════════════════════════
                  VISUAL MODE
-            ?��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��? -->
+            ════════════════════════════════════ -->
             <div id="cw-visual-mode">
 
                 <!-- Both runway ends -->
@@ -3061,7 +3061,7 @@
 
                 <!-- Interaction hint -->
                 <div style="text-align:center;font-size:10px;color:#333;margin-bottom:10px;letter-spacing:0.3px;">
-                    Drag inner disc ??runway heading &nbsp;·&nbsp; Drag outer ring ??wind direction
+                    Drag inner disc → runway heading &nbsp;·&nbsp; Drag outer ring → wind direction
                 </div>
 
                 <!-- Wind readout display -->
@@ -3081,9 +3081,9 @@
                     <div class="conv-lbl" style="margin:0;white-space:nowrap;font-size:12px;">Limit:</div>
                     <select id="cw-limit-v" class="stealth-select" onchange="cwOnLimitChange(this.value)"
                             style="flex:1.5;height:34px;font-size:12px;">
-                        <option value="15">15 kt ??EVA Solo</option>
-                        <option value="12">12 kt ??EVA Dual</option>
-                        <option value="20">20 kt ??C172 POH</option>
+                        <option value="15">15 kt — EVA Solo</option>
+                        <option value="12">12 kt — EVA Dual</option>
+                        <option value="20">20 kt — C172 POH</option>
                         <option value="25">25 kt</option>
                         <option value="0">No limit</option>
                     </select>
@@ -3115,9 +3115,9 @@
                 </div>
             </div>
 
-            <!-- ?��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��?
+            <!-- ════════════════════════════════════
                  TYPE IN MODE
-            ?��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��??��? -->
+            ════════════════════════════════════ -->
             <div id="cw-type-mode" style="display:none;">
                 <div class="info-card" style="margin-bottom:12px;">
                     <div class="conv-row">
@@ -3147,10 +3147,10 @@
                     <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
                         <div class="conv-lbl" style="margin:0;white-space:nowrap;">XWind Limit:</div>
                         <select id="cw-limit" class="stealth-select" onchange="calcCrosswind()" style="flex:1;height:34px;font-size:13px;">
-                            <option value="15">15 kt ??EVA Solo / C172 Demo</option>
-                            <option value="12">12 kt ??EVA Dual Student</option>
-                            <option value="20">20 kt ??C172 POH Max</option>
-                            <option value="25">25 kt ??Custom 25 kt</option>
+                            <option value="15">15 kt — EVA Solo / C172 Demo</option>
+                            <option value="12">12 kt — EVA Dual Student</option>
+                            <option value="20">20 kt — C172 POH Max</option>
+                            <option value="25">25 kt — Custom 25 kt</option>
                             <option value="0">No limit</option>
                         </select>
                     </div>
@@ -3204,14 +3204,14 @@
                 <div class="conv-lbl" style="margin-bottom:8px;">SEARCH WEATHER TERMS</div>
                 <div style="position:relative; margin-bottom:16px;">
                     <input type="text" id="wx-search" class="conv-inp" placeholder="Search by code or term..." oninput="searchWeatherTerms()" style="padding-left:36px; padding-right:36px;">
-                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">??</span>
-                    <button onclick="clearWeatherSearch()" id="wx-clear-btn" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1;">??/button>
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px;">🔍</span>
+                    <button onclick="clearWeatherSearch()" id="wx-clear-btn" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
                 </div>
                 
                 <!-- More Sources Button -->
                 <div style="margin-bottom:16px;">
                     <button onclick="toggleSourcesMenu()" class="tool-btn" style="width:100%; background:#111; border:2px solid #444; color:#e8a020; padding:12px; font-size:12px; font-weight:700; border-radius:8px;">
-                        ?? REFERENCE MATERIALS
+                        🌐 REFERENCE MATERIALS
                     </button>
                 </div>
                 
@@ -3220,19 +3220,19 @@
                     
                     <div style="font-size:11px; font-weight:700; color:var(--sub-text); margin-bottom:8px; letter-spacing:0.5px;">REFERENCE MATERIALS</div>
                     <button onclick="window.open('https://aviationweather.gov/gfa/help/#symbols', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:8px; text-align:left; display:flex; align-items:center; gap:8px;">
-                        <span>??</span>
+                        <span>🌐</span>
                         <span style="flex:1;">AWC GFA Symbols (Web)</span>
-                        <span style="color:var(--sub-text);">??/span>
+                        <span style="color:var(--sub-text);">↗</span>
                     </button>
                     <button onclick="window.open('https://remotepilot101.com/wp-content/uploads/2016/08/WxSymbols.pdf', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; margin-bottom:8px; text-align:left; display:flex; align-items:center; gap:8px;">
-                        <span>??</span>
+                        <span>📄</span>
                         <span style="flex:1;">WX Symbols Reference (PDF)</span>
-                        <span style="color:var(--sub-text);">??/span>
+                        <span style="color:var(--sub-text);">↗</span>
                     </button>
                     <button onclick="window.open('https://www.blondsinaviation.com/wp-content/uploads/2019/05/NOAA-Legends-1407.pdf', '_blank')" class="tool-btn" style="width:100%; background:#2c2c2e; border:1px solid #444; color:#fff; padding:10px; font-size:11px; text-align:left; display:flex; align-items:center; gap:8px;">
-                        <span>??</span>
+                        <span>📄</span>
                         <span style="flex:1;">NOAA Chart Legends (PDF)</span>
-                        <span style="color:var(--sub-text);">??/span>
+                        <span style="color:var(--sub-text);">↗</span>
                     </button>
                 </div>
                 
@@ -3246,7 +3246,7 @@
              ABBREVIATIONS TOOL
         ================================================================ -->
         <div id="tool-abbreviations" class="tool-view" style="display:none;">
-            <!-- No info-card wrapper ??AeroSearch native manages its own layout -->
+            <!-- No info-card wrapper — AeroSearch native manages its own layout -->
             <div id="abbrev-content" style="padding:0 4px;"></div>
         </div>
 
@@ -3259,8 +3259,8 @@
                 <!-- Visual Reference Chart (collapsible) -->
                 <div style="margin-bottom:14px;">
                     <button id="amChartToggle" onclick="toggleAirspaceChart()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:#111;border:1px solid #333;border-radius:10px;padding:10px 14px;cursor:pointer;color:#fff;font-size:12px;font-weight:700;">
-                        <span>?���?VFR Weather Minimums Chart</span>
-                        <span id="amChartChevron" style="color:var(--sub-text);font-size:11px;transition:transform 0.25s;">??/span>
+                        <span>🗺️ VFR Weather Minimums Chart</span>
+                        <span id="amChartChevron" style="color:var(--sub-text);font-size:11px;transition:transform 0.25s;">▼</span>
                     </button>
                     <div id="amChartBody" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;border-radius:0 0 10px 10px;">
                         <img src="/airspace-chart.jpg" alt="VFR Airspace Minimums Diagram" 
@@ -3279,11 +3279,11 @@
                 <div style="display:flex; gap:4px; margin-bottom:18px; background:#1c1c1e; border-radius:10px; padding:4px; border:1px solid #333;">
                     <button id="amDayBtn" onclick="amSetMode('day')"
                             style="flex:1; padding:9px; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:all 0.2s;">
-                        ?��?DAY
+                        ☀️ DAY
                     </button>
                     <button id="amNightBtn" onclick="amSetMode('night')"
                             style="flex:1; padding:9px; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; background:transparent; color:var(--sub-text); transition:all 0.2s;">
-                        ?? NIGHT
+                        🌙 NIGHT
                     </button>
                 </div>
 
@@ -3295,25 +3295,25 @@
                     <div style="font-size:10px; color:var(--sub-text); font-weight:700; letter-spacing:0.5px; margin-bottom:8px;">REGULATORY REFERENCE</div>
                     <button onclick="window.open('https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91/subpart-B/subject-group-ECFR4d5279ba676bedc/section-91.155','_blank')"
                             style="width:100%; background:#1c1c1e; border:1px solid #333; color:var(--accent); padding:10px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                        <span>??</span>
-                        <span style="flex:1;">FAR 91.155 ??Official eCFR Source</span>
-                        <span style="color:var(--sub-text); font-size:11px;">??/span>
+                        <span>📖</span>
+                        <span style="flex:1;">FAR 91.155 — Official eCFR Source</span>
+                        <span style="color:var(--sub-text); font-size:11px;">↗</span>
                     </button>
                     <button onclick="window.open('https://www.faasafety.gov/files/gslac/courses/content/25/185/vfr%20weather%20minimums.pdf','_blank')"
                             style="width:100%; background:#1c1c1e; border:1px solid #333; color:#bf5af2; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                        <span>??</span>
-                        <span style="flex:1;">FAA Safety ??VFR Minimums Guide (PDF)</span>
-                        <span style="color:var(--sub-text); font-size:11px;">??/span>
+                        <span>📄</span>
+                        <span style="flex:1;">FAA Safety — VFR Minimums Guide (PDF)</span>
+                        <span style="color:var(--sub-text); font-size:11px;">↗</span>
                     </button>
                     <button onclick="window.open('/Airspace_JEPPSEN.pdf','_blank')"
                             style="width:100%; background:#1c1c1e; border:1px solid #333; color:#ff9f0a; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                        <span>??</span>
-                        <span style="flex:1;">Jeppesen ??Airspace Reference (PDF)</span>
-                        <span style="color:var(--sub-text); font-size:11px;">??/span>
+                        <span>📄</span>
+                        <span style="flex:1;">Jeppesen — Airspace Reference (PDF)</span>
+                        <span style="color:var(--sub-text); font-size:11px;">↗</span>
                     </button>
                     <div style="font-size:11px; color:#555; line-height:1.7;">
                         Values shown are minimums per FAR 91.155. Always comply with instructor guidance &amp; NOTAMs.<br>
-                        <span style="color:#ff9f0a;">??/span> Class G night below 1,200 ft AGL is the most commonly missed on the PPL written.
+                        <span style="color:#ff9f0a;">★</span> Class G night below 1,200 ft AGL is the most commonly missed on the PPL written.
                     </div>
                 </div>
 
@@ -3330,7 +3330,7 @@
                 <button id="r60t-wind" onclick="set160Topic('wind')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">WIND</button>
                 <button id="r60t-tod" onclick="set160Topic('tod')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">TOD</button>
                 <button id="r60t-rod" onclick="set160Topic('rod')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">V/S</button>
-                <button id="r60t-tri" onclick="set160Topic('tri')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">WIND ??/button>
+                <button id="r60t-tri" onclick="set160Topic('tri')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">WIND △</button>
                 <button id="r60t-alt" onclick="set160Topic('alt')" style="padding:9px 2px;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">ALT</button>
             </div>
             <!-- Mode selector -->
@@ -3353,7 +3353,7 @@
                 <div style="display:flex; justify-content:center; padding:12px 0 0;">
                     <div style="width:36px; height:4px; background:#444; border-radius:2px;"></div>
                 </div>
-                <button onclick="closeFormulaModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#666; font-size:20px; cursor:pointer; padding:4px 8px;">??/button>
+                <button onclick="closeFormulaModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#666; font-size:20px; cursor:pointer; padding:4px 8px;">✕</button>
                 <div id="formula-modal-body" style="padding:16px 20px 24px;"></div>
             </div>
         </div>
@@ -3361,7 +3361,7 @@
 </body>
 
 <script>
-// ?�?� Service Worker Registration + Offline Detection ?�?�
+// ── Service Worker Registration + Offline Detection ──
 (function () {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -3465,6 +3465,3 @@ body.fullscreen-mode {
 }
 </style>
 </html>
-
-
-
