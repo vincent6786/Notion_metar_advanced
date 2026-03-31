@@ -77,7 +77,7 @@ function toggleFullScreen() {
         }
         
         // Change icon to exit full-screen
-        if (fullscreenIcon) fullscreenIcon.textContent = '??;
+        if (fullscreenIcon) fullscreenIcon.textContent = 'X';
         
         console.log('Entered full-screen mode with safe area support');
     } else {
@@ -122,7 +122,7 @@ function toggleFullScreen() {
         }
         
         // Change icon back to full-screen
-        if (fullscreenIcon) fullscreenIcon.textContent = '??;
+        if (fullscreenIcon) fullscreenIcon.textContent = '[ ]';
         
         console.log('Exited full-screen mode');
     }
@@ -1227,7 +1227,7 @@ function _aeroSetupListeners() {
             topBtn.style.transform = 'translateY(8px)';
             _aeroScrollTop();
         };
-        topBtn.textContent = '??;
+        topBtn.textContent = 'UP';
         topBtn.style.cssText = `position:fixed;bottom:max(28px,env(safe-area-inset-bottom));
             left:20px;width:40px;height:40px;border-radius:12px;
             background:#1c1c1e;border:1px solid #444;color:#0a84ff;
@@ -1350,7 +1350,7 @@ async function _aeroLoadData(forceRefresh) {
     }
 
     _aeroShowLoading();
-    _aeroUpdateSyncBtn('Syncing??, true);
+    _aeroUpdateSyncBtn('Syncing...', true);
 
     const keys    = Object.keys(AERO_SOURCES);
     const results = await Promise.allSettled(keys.map(k => _aeroFetchSource(k)));
@@ -1681,7 +1681,7 @@ async function e6bFetchCustom() {
     const status = document.getElementById('e6bCustomStatus');
     const icao   = input?.value?.trim().toUpperCase();
     if (!icao || icao.length < 3) { if (status) status.textContent = 'Enter a valid ICAO code.'; return; }
-    if (status) status.textContent = 'Fetching??;
+    if (status) status.textContent = 'Fetching...';
 
     try {
         const [metarRes, stnRes] = await Promise.all([
@@ -3738,10 +3738,10 @@ function r60_windRef() {
         '<b>Quick cosine:</b> cos Î¸ = sin(90Â° ??Î¸)'
     ) +
     _card('Sine Shortcut',
-        'For mental math: <b>sin(NÂ°) ??(NÃ·10 + 2) / 10</b><br>' +
-        'Works for 10Â°??0Â°. Examples: sin 30 = (3+2)/10 = 0.5 ??
+        'Works for 10 to 60 degrees. Example: sin 30 = (3+2)/10 = 0.5'
     );
 }
+
 
 function r60_windCalc() {
     return '<div style="font-weight:800;font-size:13px;margin-bottom:12px;color:#fff;">Wind Correction Calculator</div>' +
@@ -4701,16 +4701,16 @@ async function adminSetToolVisibility(toolId, hidden) {
 // Tool metadata for admin panel
 const TOOL_META = [
     { id: 'metar-decoder', icon: 'WX', name: 'METAR Decoder' },
-    { id: 'unit-converter', icon: '??', name: 'Unit Converter' },
-    { id: 'e6b-calculator', icon: '?ˆï?', name: 'E6B Calculator' },
-    { id: 'great-circle', icon: '??', name: 'Great Circle' },
-    { id: 'e6b-trainer', icon: '??', name: 'E6B Trainer' },
-    { id: 'weather-terms', icon: '?Œ¦ï¸?, name: 'Weather Terms' },
-    { id: 'abbreviations', icon: '??', name: 'Abbreviations' },
-    { id: 'crosswind', icon: '?’¨', name: 'Crosswind Calc' },
-    { id: 'airspace-mins', icon: '??', name: 'Airspace Mins' },
-    { id: 'morse-trainer', icon: '?“¡', name: 'Morse Code' },
-    { id: 'training-area', icon: '??', name: 'Training Area' },
+    { id: 'unit-converter', icon: 'UC', name: 'Unit Converter' },
+    { id: 'e6b-calculator', icon: 'E6', name: 'E6B Calculator' },
+    { id: 'great-circle', icon: 'GC', name: 'Great Circle' },
+    { id: 'e6b-trainer', icon: 'TR', name: 'E6B Trainer' },
+    { id: 'weather-terms', icon: 'WT', name: 'Weather Terms' },
+    { id: 'abbreviations', icon: 'AB', name: 'Abbreviations' },
+    { id: 'crosswind', icon: 'CW', name: 'Crosswind Calc' },
+    { id: 'airspace-mins', icon: 'AM', name: 'Airspace Mins' },
+    { id: 'morse-trainer', icon: 'MC', name: 'Morse Code' },
+    { id: 'training-area', icon: 'TA', name: 'Training Area' },
 ];
 
 function renderAdminToolsPanel() {

@@ -67,7 +67,7 @@
                 // Add chevron to title
                 const chevron = document.createElement('span');
                 chevron.className = 'help-chevron';
-                chevron.innerText = '??;
+                chevron.innerText = '>';
                 titleEl.appendChild(chevron);
         
                 // Wrap all siblings after the title in a .help-body div
@@ -93,7 +93,7 @@
         }
 
         function initVersionLabels() {
-            const v = window.APP_VERSION || '??;
+            const v = window.APP_VERSION || '-';
             const launch = document.getElementById('launchVersion');
             const help   = document.getElementById('helpVersionLabel');
             if (launch) launch.textContent = `TRAINING EDITION 路 v${v}`;
@@ -322,7 +322,7 @@
                 label.innerText = '?侊? Cloud Backup ??Active';
                 label.style.color = 'var(--accent)';
                 if (pinRow) pinRow.style.display = 'block';
-                if (pinDisp && pin) pinDisp.innerText = '??.repeat(pin.length);
+                if (pinDisp && pin) pinDisp.innerText = '*'.repeat(pin.length);
                 updateLastSyncTime();
             } else {
                 label.innerText = '?摫 This Device Only';
@@ -409,13 +409,13 @@
             const confirmBtn = document.getElementById('pinConfirmBtn');
             if (count >= 4) {
                 confirmBtn.style.display = 'block';
-                confirmBtn.innerText = window._pinStep === 'confirm' ? 'Confirm Code ?? :
-                                       window._pinStep === 'restore' ? 'Restore ?? : 'Continue ??;
+                confirmBtn.innerText = window._pinStep === 'confirm' ? 'Confirm Code' :
+                                       window._pinStep === 'restore' ? 'Restore' : 'Continue';
             } else { confirmBtn.style.display = 'none'; }
         }
 
         function pinPadPress(val) {
-            if (val === '??) { window._pinEntry = window._pinEntry.slice(0, -1); updatePinDots(window._pinEntry.length); return; }
+            if (val === 'BACK') { window._pinEntry = window._pinEntry.slice(0, -1); updatePinDots(window._pinEntry.length); return; }
             if (window._pinEntry.length >= 6) return;
             window._pinEntry += val;
             updatePinDots(window._pinEntry.length);
@@ -488,11 +488,11 @@
                     } else {
                         msg.innerText = '??No backup found for this code.'; msg.style.color = 'var(--danger)';
                         window._pinEntry = ''; confirmBtn.disabled = false;
-                        setTimeout(() => { updatePinDots(0); msg.innerText = 'Enter your Backup Code'; msg.style.color = '#8e8e93'; confirmBtn.innerText = 'Restore ??; }, 2000);
+                        setTimeout(() => { updatePinDots(0); msg.innerText = 'Enter your Backup Code'; msg.style.color = '#8e8e93'; confirmBtn.innerText = 'Restore'; }, 2000);
                     }
                 } catch(e) {
                     msg.innerText = '?狅? No connection. Check internet.'; msg.style.color = 'var(--warn)';
-                    window._pinEntry = ''; confirmBtn.disabled = false; confirmBtn.innerText = 'Restore ??;
+                    window._pinEntry = ''; confirmBtn.disabled = false; confirmBtn.innerText = 'Restore';
                     setTimeout(() => { updatePinDots(0); msg.innerText = 'Enter your Backup Code'; msg.style.color = '#8e8e93'; }, 2000);
                 }
             }
@@ -738,7 +738,7 @@
                     const statusColor = u.active ? 'var(--success)' : 'var(--danger)';
                     const statusBg    = u.active ? 'rgba(50,215,75,0.1)' : 'rgba(255,69,58,0.1)';
                     const statusText  = u.active ? 'ACTIVE' : 'REVOKED';
-                    const created     = u.created ? new Date(u.created).toLocaleDateString() : '??;
+                    const created     = u.created ? new Date(u.created).toLocaleDateString() : '-';
                     html += `
                         <div onclick="openInAppUserDrawer('${u.code}')"
                              style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;"
@@ -847,7 +847,7 @@
             const msg  = document.getElementById('inAppDrawerMsg');
             const btn  = document.getElementById('inAppSaveBtn');
             if (!name) { msg.style.color = 'var(--warn)'; msg.textContent = '?狅? Name cannot be empty'; return; }
-            btn.disabled = true; btn.textContent = 'Saving??; msg.textContent = '';
+            btn.disabled = true; btn.textContent = 'Saving...'; msg.textContent = '';
             try {
                 const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ action:'update', code: window._inAppDrawerCode, name, password: window._adminPwd }) });
@@ -942,7 +942,7 @@
             } catch(e) {
                 msg.innerText = '?狅? Network error'; msg.style.color = 'var(--warn)';
             }
-            btn.disabled = false; btn.innerText = 'Create ??;
+            btn.disabled = false; btn.innerText = 'Create';
         }
 
 
@@ -1019,8 +1019,8 @@
             const pin     = localStorage.getItem('efb_cloud_pin') || '';
             if (btn.innerText === 'Show') {
                 display.innerText = pin; btn.innerText = 'Hide';
-                setTimeout(() => { display.innerText = '??.repeat(pin.length); btn.innerText = 'Show'; }, 5000);
-            } else { display.innerText = '??.repeat(pin.length); btn.innerText = 'Show'; }
+                setTimeout(() => { display.innerText = '*'.repeat(pin.length); btn.innerText = 'Show'; }, 5000);
+            } else { display.innerText = '*'.repeat(pin.length); btn.innerText = 'Show'; }
         }
 
         // ================================================================
@@ -1410,14 +1410,14 @@
                 } else {
                     msg.innerText   = '??Invalid access code. Contact admin for access.';
                     msg.style.color = 'var(--danger)';
-                    if (btn) { btn.disabled = false; btn.innerText = 'Enter ??; }
+                    if (btn) { btn.disabled = false; btn.innerText = 'Enter'; }
                     input.value = '';
                     input.focus();
                 }
             } catch(e) {
                 msg.innerText   = '?狅? Could not connect. Check your internet.';
                 msg.style.color = 'var(--warn)';
-                if (btn) { btn.disabled = false; btn.innerText = 'Enter ??; }
+                if (btn) { btn.disabled = false; btn.innerText = 'Enter'; }
             }
         }
 
@@ -1538,12 +1538,12 @@
             // 3. Delete IndexedDB ??handle blocked event so it doesn't silently fail
             await new Promise((resolve) => {
                 const req = indexedDB.deleteDatabase('efb_storage_v1');
-                req.onsuccess  = () => { console.log('[Reset] IndexedDB deleted ??); resolve(); };
+                req.onsuccess  = () => { console.log('[Reset] IndexedDB deleted'); resolve(); };
                 req.onerror    = () => { console.warn('[Reset] IndexedDB delete error');   resolve(); };
                 req.onblocked  = () => { console.warn('[Reset] IndexedDB delete blocked'); resolve(); };
             });
         
-            showToast('??锔?App reset ??returning to setup...');
+            showToast('App reset - returning to setup...');
             setTimeout(() => location.reload(), 800);
         }
 
@@ -1628,7 +1628,7 @@
         function locateUser() {
             const btn = document.querySelector('.search-box button[onclick="locateUser()"]')
                      || document.querySelector('.search-box button');
-            btn.innerHTML = '??;
+            btn.innerHTML = 'LOC';
 
             if (!navigator.geolocation) {
                 showToast('?狅? Geolocation not supported on this device');
@@ -2486,9 +2486,9 @@
             const getX = (i) => padding.left + (i / (len - 1)) * (W - padding.left - padding.right);
             const getY = (v) => H - padding.bottom - ((v - minT) / rangeT) * (H - padding.top - padding.bottom);
             const getWxIcon = (code) => {
-                if (code <= 1) return '?�锔?; if (code <= 3) return '??; if (code <= 48) return '?尗锔?;
-                if (code <= 57) return '?導锔?; if (code <= 67) return '??; if (code <= 77) return '?勶?';
-                if (code <= 82) return '?堬?'; if (code <= 99) return '??; return '?侊?';
+                if (code <= 1) return 'CLR'; if (code <= 3) return 'PC'; if (code <= 48) return 'FG';
+                if (code <= 57) return 'DZ'; if (code <= 67) return 'RA'; if (code <= 77) return 'SN';
+                if (code <= 82) return 'SH'; if (code <= 99) return 'TS'; return 'WX';
             };
             // Vertical grid
             ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.beginPath();
@@ -2658,9 +2658,9 @@
             if (!trend) return '';
             
             const icons = {
-                improving: '??,
-                worsening: '??,
-                steady: '??
+                improving: '+',
+                worsening: '-',
+                steady: '='
             };
             
             const labels = {
@@ -2859,16 +2859,16 @@
 
         // Calculate bearing from point A to point B
         function getBearing(lat1, lon1, lat2, lon2) {
-            const ?1 = lat1 * Math.PI / 180;
-            const ?2 = lat2 * Math.PI / 180;
-            const ?位 = (lon2 - lon1) * Math.PI / 180;
+            const phi1 = lat1 * Math.PI / 180;
+            const phi2 = lat2 * Math.PI / 180;
+            const dLambda = (lon2 - lon1) * Math.PI / 180;
             
-            const y = Math.sin(?位) * Math.cos(?2);
-            const x = Math.cos(?1) * Math.sin(?2) -
-                      Math.sin(?1) * Math.cos(?2) * Math.cos(?位);
+            const y = Math.sin(dLambda) * Math.cos(phi2);
+            const x = Math.cos(phi1) * Math.sin(phi2) -
+                      Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
             
-            let 胃 = Math.atan2(y, x);
-            let bearing = (胃 * 180 / Math.PI + 360) % 360;
+            let theta = Math.atan2(y, x);
+            let bearing = (theta * 180 / Math.PI + 360) % 360;
             return Math.round(bearing);
         }
         
@@ -3311,7 +3311,7 @@
                         ${sky('SCT', '3?? / 8', 'Scattered. Sky 3?? eighths covered. Not a ceiling.', '#ff9f0a')}
                         ${sky('BKN', '5?? / 8', 'Broken. More sky covered than not ??IS a ceiling.', 'var(--danger)')}
                         ${sky('OVC', '8 / 8', 'Overcast. Total coverage ??always a ceiling.', '#ff453a')}
-                        ${sky('VV',  '??, 'Vertical visibility into obscured sky (fog/smoke/dust).', '#8e8e93')}
+                        ${sky('VV',  'N/A', 'Vertical visibility into obscured sky (fog/smoke/dust).', '#8e8e93')}
                         ${sep()}
                         ${div('<b style="color:#fff;">What is a Ceiling?</b><br>The lowest <b style="color:var(--danger);">BKN</b> or <b style="color:#ff453a;">OVC</b> layer, or a VV obscuration. FEW and SCT are <em>not</em> ceilings. Altitude is in hundreds of feet <b style="color:#fff;">AGL</b>.', 'font-size:11px;color:#888;line-height:1.7;')}
                         ${sep()}
