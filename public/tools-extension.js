@@ -3611,6 +3611,11 @@ function init160Rule() {
 /* ── Topic & mode navigation ── */
 function set160Topic(t) {
     _160.topic = t;
+    // BUG FIX: reset quiz state on topic switch — score from Course quiz was
+    // carrying over to Wind quiz, and the button said "Next Question" on a fresh topic.
+    _160.quizScore = 0;
+    _160.quizTotal = 0;
+    _160.quizQ = null;
     ['course','wind','tod','rod','tri','alt'].forEach(id => {
         const b = document.getElementById('r60t-' + id);
         if (b) { b.style.background = id === t ? '#e8a020' : 'transparent'; b.style.color = id === t ? '#000' : '#888'; }
@@ -3767,7 +3772,8 @@ function r60_windRef() {
     ) +
     _card('Sine Shortcut',
         'For mental math: <b>sin(N°) ≈ (N÷10 + 2) / 10</b><br>' +
-        'Works for 10°–80°. Examples: sin 30 = (3+2)/10 = 0.5 ✓'
+        'Works for <b>20°–80°</b>. Examples: sin 30 = (3+2)/10 = 0.5 ✓, sin 60 = (6+2)/10 = 0.8 ✓<br>' +
+        '<span style="color:#888;font-size:11px;">⚠️ Below 20° use the quick table above — the formula over-estimates sin(10°) as 0.3 (actual ≈ 0.17).</span>'
     );
 }
 
@@ -3817,8 +3823,9 @@ function calcWind160() {
 function r60_windExample() {
     return _card('Example — Downwind Leg RWY 19',
         '<b>Given:</b> Course 010°M (downwind RWY 19), TAS 100 kt, Wind 230°/10 kt.<br><br>' +
-        '<b>Wind Angle:</b> 230° − 010° = 220° → use 360° − 220° = <b>40°</b> (from left)<br><br>' +
-        '<b>CWC:</b> 10 × sin(40°) = 10 × 0.6 = <b>6 kt</b> from left<br>' +
+        '<b>Wind Angle:</b> 230° − 010° = 220° → normalise: 360° − 220° = <b>140°</b> (from left)<br>' +
+        '<span style="font-size:11px;color:#888;">Note: sin(140°) = sin(180°−140°) = sin(40°) ≈ 0.64 — use the acute equivalent for the quick table.</span><br><br>' +
+        '<b>CWC:</b> 10 × sin(140°) = 10 × 0.64 ≈ <b>6 kt</b> from left<br>' +
         '<b>WCA:</b> 6 × 60 / 100 = <b>4° left</b><br>' +
         '<b>Heading:</b> 010° − 4° = <b style="color:#30d158;">006°M</b><br><br>' +
         '<b>Tailwind component:</b> 10 × cos(40°) = 10 × 0.7 = 7 kt tailwind<br>' +
@@ -4064,13 +4071,17 @@ function calcAlt160() {
     const row = (label, val, color) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a1a1a;"><span style="color:#888;font-size:12px;">${label}</span><span style="color:${color||'#fff'};font-size:13px;font-weight:700;">${val}</span></div>`;
     let html = '';
 
-    // Pressure Altitude
+    // Pressure Altitude — ALWAYS based on field elevation (not indicated altitude).
+    // PA = Field Elevation + (1013.25 − QNH) × 30
+    // BUG FIX: was using indAlt as first preference, which is wrong. PA is defined
+    // against field elevation; fall back to indAlt only when elev is not entered.
     let pa = null;
-    const paRef = !isNaN(indAlt) ? indAlt : (!isNaN(elev) ? elev : null);
+    const paRef = !isNaN(elev) ? elev : (!isNaN(indAlt) ? indAlt : null);
     if (paRef !== null && !isNaN(qnh)) {
         pa = paRef + (1013.25 - qnh) * 30;
+        const paLabel = !isNaN(elev) ? 'Field Elevation' : 'Ind Alt (no elev)';
         html += row('Pressure Altitude', `${Math.round(pa).toLocaleString()} ft`, '#e8a020');
-        html += `<div style="font-size:10px;color:#555;padding:2px 0 6px;">PA = ${paRef.toLocaleString()} + (1013.25 − ${qnh}) × 30 = ${Math.round(pa).toLocaleString()}</div>`;
+        html += `<div style="font-size:10px;color:#555;padding:2px 0 6px;">PA = ${paRef.toLocaleString()} (${paLabel}) + (1013.25 − ${qnh}) × 30 = ${Math.round(pa).toLocaleString()}</div>`;
     }
 
     // ISA at indicated altitude (for True Altitude)
