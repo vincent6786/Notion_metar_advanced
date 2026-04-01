@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.6.8',  // ← set once in index.html
-            title: 'METAR GO — v4.6.8',
+            version: window.APP_VERSION || '4.7.0',  // ← set once in index.html
+            title: 'METAR GO — v4.7.0',
             changes: [
                 {
                     icon: '🌬️',
@@ -2011,9 +2011,21 @@
         // ================================================================
         function renderNotams(rawData) {
             const container = document.getElementById('notamList');
+            const icao = document.getElementById('icao')?.value.trim().toUpperCase() || '';
 
             if (!Array.isArray(rawData) || rawData.length === 0) {
-                container.innerHTML = "No NOTAMs Found";
+                // For non-US airports: AWC doesn't carry international NOTAMs — show authority link
+                if (icao && !isUSAirspace(icao)) {
+                    const auth = getSigairmetAuthority(icao);
+                    container.innerHTML = `<div style="color:#555;font-size:11px;padding:6px 0;line-height:1.7;">
+                        NOTAMs via AWC cover US airspace only.<br>
+                        For this airport, check <a href="${auth.url}" target="_blank"
+                            style="color:var(--accent);text-decoration:none;font-weight:700;">${auth.name} ↗</a><br>
+                        <span style="font-size:10px;color:#444;">Or use the 🔍 FAA NOTAM Search button above to search manually.</span>
+                    </div>`;
+                } else {
+                    container.innerHTML = '<div style="color:#555;font-style:italic;padding:8px 0;">No active NOTAMs.</div>';
+                }
                 return;
             }
 
@@ -2077,13 +2089,12 @@
         // 13b. FAA NOTAM FETCH (aviationweather.gov — free, no key)
         // ================================================================
         async function fetchNotamsFAA(icao) {
-            // Use our server-side proxy (/api/notam) which:
-            //   K/P prefix → notams.aim.faa.gov (official FAA, most complete)
-            //   International → aviationweather.gov fallback
-            // Direct browser calls to notams.aim.faa.gov are CORS-blocked.
+            // aviationweather.gov/api/data/notam — free public API, CORS enabled,
+            // no key needed, browser can call it directly.
+            // Coverage: US airports (K/P prefix) only — returns [] for international.
             const cacheKey = `cache_notam_${icao}`;
 
-            // Check cache first (5 min — NOTAMs can change during flight ops)
+            // Check cache first (5 min)
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
                 try {
@@ -2092,11 +2103,11 @@
                 } catch(e) {}
             }
 
-            const res  = await fetch(`/api/notam?station=${icao}`);
-            if (!res.ok) throw new Error(`NOTAM API: ${res.status}`);
+            const url  = `https://aviationweather.gov/api/data/notam?icaos=${icao}&format=json`;
+            const res  = await fetch(url);
+            if (!res.ok) throw new Error(`AWC NOTAM ${res.status}`);
             const data = await res.json();
 
-            // data is already a normalised array from the proxy
             const notams = Array.isArray(data) ? data : [];
             localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: notams }));
             return notams;
