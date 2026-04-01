@@ -2196,6 +2196,10 @@
                 return t.closest('.quick-select-row') ||
                        t.closest('.tabs') ||
                        t.closest('#tools-extension-panel') ||
+                       t.closest('#windsAloftModal') ||        // modal content — don't swipe
+                       (t.tagName === 'INPUT' && t.type === 'range') || // sliders are horizontal too
+                       document.getElementById('windsAloftModal')?.style.display === 'flex' || // backdrop tap
+                       document.getElementById('formula-modal')?.style.display === 'flex' ||   // other modals
                        (typeof toolsExtensionState !== 'undefined' && toolsExtensionState.isOpen) ||
                        window._sortMode?.active;
             }
