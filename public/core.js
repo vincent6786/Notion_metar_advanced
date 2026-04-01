@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.6.0',  // ← set once in index.html
-            title: 'METAR GO — v4.6.0',
+            version: window.APP_VERSION || '4.5.8',  // ← set once in index.html
+            title: 'METAR GO — v4.5.8',
             changes: [
                 {
                     icon: '🌬️',
@@ -2433,8 +2433,6 @@
                     const idx = now.getUTCHours();
                     const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
                     const setColor = (id, col) => { const el = document.getElementById(id); if (el) el.style.color = col; };
-                    const fmtW = (d, s) => `${Math.round(d)}° / ${Math.round(s)}kt`;
-                    const fmtT = t => `${Math.round(t)}°C`;
                     const windNote = (t, s) => {
                         const notes = [];
                         if (t <= 0 && t > -20) notes.push('❄ Icing possible');
@@ -2608,7 +2606,8 @@
 
         function meteoTap(event, canvas) {
             if (!meteoDataCache) return;
-            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            // Use changedTouches for touch events (touches[] is empty on touchend)
+            const clientX = (event.changedTouches?.[0] ?? event).clientX;
             const hour = _meteoXtoHour(canvas, clientX);
             showWindsAloftModal(hour);
         }
@@ -2628,15 +2627,28 @@
 
             const isaStd = ft => 15 - (2 * ft / 1000);
             const now = new Date();
-            const isNow = hour === now.getUTCHours();
 
-            // Parse the hour's UTC time label
-            let timeLabel = `${String(hour).padStart(2,'0')}:00Z`;
+            // Find which array index corresponds to NOW — same algorithm as drawMeteogram's NOW line
+            // Open-Meteo timezone=auto → h.time[] entries are local airport time (no Z suffix)
+            // Appending 'Z' lets us compare UTC hours correctly across any timezone
+            const nowUTCFrac = now.getUTCHours() + now.getUTCMinutes() / 60;
+            let nowIndex = 0;
+            if (h.time) {
+                let smallest = 999;
+                h.time.slice(0, 24).forEach((t, i) => {
+                    const d = new Date(t + 'Z');
+                    const diff = Math.abs(d.getUTCHours() + d.getUTCMinutes() / 60 - nowUTCFrac);
+                    if (diff < smallest) { smallest = diff; nowIndex = i; }
+                });
+            }
+            const isNow = hour === nowIndex;
+
+            // Parse time label from local time string directly (avoid Z-forcing timezone shift)
+            // h.time[hour] looks like "2025-04-01T08:00" — extract HH:MM as local airport time
+            let timeLabel = `${String(hour).padStart(2,'0')}:00`;
             if (h.time?.[hour]) {
-                try {
-                    const d = new Date(h.time[hour] + 'Z');
-                    timeLabel = `${String(d.getUTCHours()).padStart(2,'0')}:00Z`;
-                } catch(e) {}
+                const tPart = h.time[hour].split('T')[1];
+                if (tPart) timeLabel = tPart.slice(0, 5) + ' LCL';
             }
 
             // Wind arrow SVG generator
@@ -2653,7 +2665,6 @@
 
             // Build rows
             let rows = '';
-            let icingLevels = [];
             LEVELS.forEach(lv => {
                 const dir  = h[lv.dirKey]?.[hour];
                 const spd  = h[lv.spdKey]?.[hour];
@@ -2670,7 +2681,7 @@
                 const tempStr = temp != null ? `${Math.round(temp)}°C` : '—';
 
                 let hazard = '';
-                if (temp != null && temp <= 0 && temp > -20 && spd > 0) { hazard = '❄️ Icing possible'; icingLevels.push(lv.label); }
+                if (temp != null && temp <= 0 && temp > -20 && spd > 0) { hazard = '❄️ Icing possible'; }
                 else if (temp != null && temp <= -20) hazard = '🧊 Ice crystals';
                 else if (spd != null && spd >= 50) hazard = '⚠️ Strong winds';
                 else if (spd != null && spd >= 30) hazard = '💨 Mod winds';
