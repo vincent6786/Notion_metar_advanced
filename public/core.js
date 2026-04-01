@@ -3,23 +3,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.5.8',  // ← set once in index.html
-            title: 'METAR GO — v4.5.8',
+            version: window.APP_VERSION || '4.5.9',  // ← set once in index.html
+            title: 'METAR GO — v4.5.9',
             changes: [
+                {
+                    icon: '📤',
+                    title: 'Share Briefing',
+                    desc: 'Tap 📤 Brief next to the raw METAR to generate and share a full flight briefing — METAR decoded, TAF summary (current + worst in next 12h), and top NOTAMs. Uses the native iOS/Android share sheet (LINE, WhatsApp, AirDrop, Messages) or copies to clipboard on desktop.'
+                },
                 {
                     icon: '🌬️',
                     title: 'Interactive Winds Aloft',
-                    desc: 'Tap any hour column on the 24h meteogram to see a full winds aloft breakdown — wind direction arrows, temperatures, ISA deviation, and freezing level estimate for Surface through ~18,000 ft (500 hPa). Works in both the TAF and Weather tabs.'
-                },
-                {
-                    icon: '📊',
-                    title: 'Winds Aloft Table Upgraded',
-                    desc: 'The static winds aloft table now shows wind direction arrows, ISA deviation per level, and a new ~18k ft (500 hPa) row. Icing and strong wind conditions are colour-coded in both the table and the detail modal.'
-                },
-                {
-                    icon: '🐛',
-                    title: 'Bug Fixes (v4.5.0)',
-                    desc: 'Ceiling card now shows actual ceiling layer (BKN/OVC/VV). Service worker correctly routes access-code validation. Storage keep-alive timer no longer stacks. Training Area: PA calculator, quiz score reset, wind example, and sine shortcut range all fixed.'
+                    desc: 'Tap any hour on the 24h meteogram for a full winds aloft card from Surface to ~18,000 ft — wind arrows, ISA deviation, and freezing level estimate. Table now includes a ~18k ft row and wind direction arrows. Meteogram uses aspect-ratio sizing for better proportions on iPad.'
                 }
             ]
         };
@@ -2492,11 +2487,12 @@
             const ctx = cvs.getContext('2d');
             const dpr  = window.devicePixelRatio || 1;
             const rect = cvs.getBoundingClientRect();
-            // If canvas is inside a hidden pane rect will be 0 — fall back to container/window width
+            // W: use CSS rendered width (fallback for hidden pane)
+            // H: read from CSS too — aspect-ratio CSS sets this, no more hardcode
             const W = rect.width  || cvs.closest('.meteogram-container')?.clientWidth
                                    || window.innerWidth - 56
                                    || 360;
-            const H = 150;
+            const H = Math.round(rect.height) || 150;
             cvs.width  = W * dpr; cvs.height = H * dpr;
             ctx.scale(dpr, dpr);
             const padding = { top: 40, bottom: 35, left: 15, right: 15 };

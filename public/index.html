@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.5.8';</script>
+    <script>window.APP_VERSION = '4.5.9';</script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -77,7 +77,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v4.5.8</div> 
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v4.5.9</div> 
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -251,6 +251,10 @@
                                color:var(--success);">
                     🔍 Decode
                 </button>
+                <button class="copy-btn" onclick="shareBriefing()"
+                        style="background:rgba(10,132,255,0.1);border-color:var(--accent);color:var(--accent);">
+                    📤 Brief
+                </button>
                 <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
             </div>
         </div>
@@ -295,9 +299,7 @@
             <span style="background:var(--warn); color:#000; padding:2px 6px; border-radius:4px; font-weight:800; font-size:10px;">⚠️ ADVISORY only</span>
         </div>
         <div class="meteogram-container">
-            <canvas id="meteoCanvas" height="150"
-                    onclick="meteoTap(event, this)"
-                    style="cursor:pointer;touch-action:manipulation;"></canvas>
+            <canvas id="meteoCanvas" height="150"></canvas>
             <div id="meteoLoading" class="sky-no-data"
                  style="position:absolute; top:50%; left:0; right:0; text-align:center;">Select Airport</div>
         </div>
@@ -306,38 +308,28 @@
         <div style="margin-top:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                 <div style="font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;">Winds Aloft</div>
-                <span style="font-size:9px;color:#444;font-weight:600;letter-spacing:0.4px;">NWP MODEL · ADVISORY · TAP DIAGRAM FOR DETAIL</span>
+                <span style="font-size:9px;color:#444;font-weight:600;letter-spacing:0.4px;">NWP MODEL · ADVISORY</span>
             </div>
-            <div id="windsAloftTable" style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:0;border:1px solid #222;border-radius:8px;overflow:hidden;font-size:12px;">
+            <div id="windsAloftTable" style="display:grid;grid-template-columns:auto 1fr 1fr auto;gap:0;border:1px solid #222;border-radius:8px;overflow:hidden;font-size:12px;">
                 <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Level</div>
                 <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Wind</div>
                 <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Temp</div>
-                <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">ISA</div>
                 <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Note</div>
-                <!-- 2,500 ft / 925 hPa -->
+                <!-- 3,000 ft / 925 hPa -->
                 <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~3k ft</div>
-                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:4px;" id="wind3k">--</div>
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind3k">--</div>
                 <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp3k">--</div>
-                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;font-weight:700;" id="isa3k">--</div>
                 <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note3k">--</div>
                 <!-- 5,000 ft / 850 hPa -->
                 <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~5k ft</div>
-                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:4px;" id="wind5k">--</div>
+                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind5k">--</div>
                 <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp5k">--</div>
-                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;font-weight:700;" id="isa5k">--</div>
                 <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note5k">--</div>
                 <!-- 10,000 ft / 700 hPa -->
                 <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~10k ft</div>
-                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:4px;" id="wind10k">--</div>
+                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind10k">--</div>
                 <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp10k">--</div>
-                <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;font-weight:700;" id="isa10k">--</div>
                 <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note10k">--</div>
-                <!-- 18,000 ft / 500 hPa -->
-                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~18k ft</div>
-                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:4px;" id="wind18k">--</div>
-                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp18k">--</div>
-                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;font-weight:700;" id="isa18k">--</div>
-                <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note18k">--</div>
             </div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
@@ -513,6 +505,10 @@
                                    color:var(--success);">
                         🔍 Decode
                     </button>
+                    <button class="copy-btn" onclick="shareBriefing()"
+                            style="background:rgba(10,132,255,0.1);border-color:var(--accent);color:var(--accent);">
+                        📤 Brief
+                    </button>
                     <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
                 </div>
             </div>
@@ -555,9 +551,7 @@
                 <span style="background:var(--warn); color:#000; padding:2px 6px; border-radius:4px; font-weight:800; font-size:10px;">⚠️ ADVISORY only</span>
             </div>
             <div class="meteogram-container">
-                <canvas id="meteoCanvas2" height="150"
-                        onclick="meteoTap(event, this)"
-                        style="cursor:pointer;touch-action:manipulation;"></canvas>
+                <canvas id="meteoCanvas2" height="150"></canvas>
                 <div id="meteoLoading2" class="sky-no-data"
                      style="position:absolute; top:50%; left:0; right:0; text-align:center;">Select Airport</div>
             </div>
@@ -566,34 +560,25 @@
             <div style="margin-top:14px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                     <div style="font-size:11px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.5px;">Winds Aloft</div>
-                    <span style="font-size:9px;color:#444;font-weight:600;letter-spacing:0.4px;">NWP MODEL · ADVISORY · TAP DIAGRAM FOR DETAIL</span>
+                    <span style="font-size:9px;color:#444;font-weight:600;letter-spacing:0.4px;">NWP MODEL · ADVISORY</span>
                 </div>
-                <div id="windsAloftTable2" style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:0;border:1px solid #222;border-radius:8px;overflow:hidden;font-size:12px;">
+                <div id="windsAloftTable2" style="display:grid;grid-template-columns:auto 1fr 1fr auto;gap:0;border:1px solid #222;border-radius:8px;overflow:hidden;font-size:12px;">
                     <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Level</div>
                     <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Wind</div>
                     <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Temp</div>
-                    <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">ISA</div>
                     <div style="background:#111;color:#666;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:6px 10px;">Note</div>
                     <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~3k ft</div>
-                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:4px;" id="wind3k2">--</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind3k2">--</div>
                     <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp3k2">--</div>
-                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;font-weight:700;" id="isa3k2">--</div>
                     <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note3k2">--</div>
                     <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~5k ft</div>
-                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:4px;" id="wind5k2">--</div>
+                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind5k2">--</div>
                     <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp5k2">--</div>
-                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;font-weight:700;" id="isa5k2">--</div>
                     <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note5k2">--</div>
                     <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~10k ft</div>
-                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:4px;" id="wind10k2">--</div>
+                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;" id="wind10k2">--</div>
                     <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp10k2">--</div>
-                    <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;font-weight:700;" id="isa10k2">--</div>
                     <div style="background:#1a1a1a;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note10k2">--</div>
-                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">~18k ft</div>
-                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;color:#fff;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:4px;" id="wind18k2">--</div>
-                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-family:'SF Mono',monospace;" id="temp18k2">--</div>
-                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;font-weight:700;" id="isa18k2">--</div>
-                    <div style="background:#151515;padding:8px 10px;border-top:1px solid #222;font-size:10px;color:var(--sub-text);" id="note18k2">--</div>
                 </div>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; color:var(--sub-text); font-size:12px; margin-bottom:8px; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
@@ -681,7 +666,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.5.8 · Training Edition · Quick reference for all features</div>
+                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.5.9 · Training Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -2205,7 +2190,7 @@
             <div class="whatsnew-card">
                 <div class="whatsnew-badge">✦ What's New</div>
                 <div class="whatsnew-title">METAR GO</div>
-                <div class="whatsnew-sub" id="whatsNewVersion">Version 4.5.8</div>
+                <div class="whatsnew-sub" id="whatsNewVersion">Version 4.5.9</div>
                 <div class="whatsnew-list" id="whatsNewList"></div>
                 <button class="whatsnew-btn" onclick="closeWhatsNew()">Got it  ✓</button>
             </div>
@@ -3453,15 +3438,6 @@
                 </div>
                 <button onclick="closeFormulaModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#666; font-size:20px; cursor:pointer; padding:4px 8px;">✕</button>
                 <div id="formula-modal-body" style="padding:16px 20px 24px;"></div>
-            </div>
-        </div>
-
-        <!-- ── WINDS ALOFT DETAIL MODAL — must be direct child of body (position:fixed + display:none parent fix) ── -->
-        <div id="windsAloftModal" onclick="closeWindsAloftModal()" style="display:none;position:fixed;inset:0;z-index:5100;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
-            <div onclick="event.stopPropagation()" id="windsAloftModalSheet"
-                 style="background:#1a1a1c;border-radius:20px 20px 0 0;border:1px solid #2a2a2a;width:100%;max-width:520px;max-height:75vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.22,1,0.36,1);padding-bottom:env(safe-area-inset-bottom);">
-                <div style="width:36px;height:4px;background:#444;border-radius:2px;margin:12px auto 0;"></div>
-                <div id="windsAloftModalBody"></div>
             </div>
         </div>
 

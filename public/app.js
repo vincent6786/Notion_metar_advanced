@@ -1865,6 +1865,197 @@
                 showToast('✅ TAF copied');
             }
         }
+
+        // ================================================================
+        // SHARE BRIEFING — Web Share API with clipboard fallback
+        // ================================================================
+        async function shareBriefing() {
+            if (!lastMetarObj) { showToast('⚠️ Load an airport first'); return; }
+
+            const icao = document.getElementById('icao').value.trim().toUpperCase();
+            const now  = new Date();
+            const utcStr = `${now.getUTCDate().toString().padStart(2,'0')} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getUTCMonth()]} · ${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
+
+            // ── Station header ──
+            const stName = stationData?.name || icao;
+            const stElev = stationData?.elevation_ft != null ? ` · ${stationData.elevation_ft} ft MSL` : '';
+            const header = `✈️  ${icao} — Flight Briefing\n${stName}${stElev}\nGenerated: ${utcStr}`;
+
+            // ── Flight category ──
+            const catEmoji = { VFR: '🟢', MVFR: '🟡', IFR: '🔴', LIFR: '🟣' };
+            const rules = lastMetarObj.flight_rules || '—';
+            const catLine = `\n${catEmoji[rules] || '⬛'} ${rules}`;
+
+            // ── METAR section ──
+            const raw = lastMetarObj.raw || '—';
+            const m = lastMetarObj;
+
+            // Wind
+            const wDir = m.wind_direction?.repr === 'VRB' ? 'VRB' : (m.wind_direction?.value != null ? String(m.wind_direction.value).padStart(3,'0') + '°' : '—');
+            const wSpd  = m.wind_speed?.value != null ? `${windToKt(m.wind_speed.value, m.units?.wind_speed)} kt` : '—';
+            const wGust = m.wind_gust?.value  ? ` G${windToKt(m.wind_gust.value, m.units?.wind_speed)} kt` : '';
+            const windLine = `${wDir} / ${wSpd}${wGust}`;
+
+            // Visibility
+            const visRaw  = m.visibility?.value;
+            const visUnit = (m.units?.visibility || 'sm').toLowerCase();
+            let visLine = '—';
+            if (visRaw != null) {
+                if (visUnit === 'm')        visLine = visRaw >= 9999 ? '10km+ (CAVOK)' : `${visRaw}m`;
+                else if (visUnit === 'km')  visLine = visRaw >= 10   ? '10km+ (CAVOK)' : `${visRaw}km`;
+                else                        visLine = visRaw >= 10    ? 'P6SM'           : `${visRaw} SM`;
+            }
+
+            // Ceiling / sky
+            const ceilLayer = m.clouds?.find(c => ['BKN','OVC','VV'].includes(c.type));
+            const skyLayer  = m.clouds?.[0];
+            let ceilLine = 'CLR (no ceiling)';
+            if (ceilLayer)      ceilLine = `${ceilLayer.type} ${String(ceilLayer.altitude * 100).padStart(0,'')} ft (ceiling)`;
+            else if (skyLayer)  ceilLine = `${skyLayer.type} ${skyLayer.altitude * 100} ft (not a ceiling)`;
+
+            // Temp / dew
+            const t = m.temperature?.value, d = m.dewpoint?.value;
+            const tempLine = (t != null && d != null) ? `${t}°C / ${d}°C · Spread ${(t - d).toFixed(1)}°C` : '—';
+
+            // QNH
+            const alt = m.altimeter?.value;
+            let qnhLine = '—';
+            if (alt != null) {
+                if (alt < 200) { qnhLine = `A${alt.toFixed(2)} / Q${Math.round(alt * 33.8639)}`; }
+                else           { qnhLine = `Q${alt} / A${(alt * 0.02953).toFixed(2)}`; }
+            }
+
+            // Present wx
+            const wxCodes = (m.wx_codes || []).map(w => w.repr).join(' ');
+
+            const metarSection = [
+                `\n📡 METAR`,
+                raw,
+                `• Wind:       ${windLine}`,
+                `• Visibility: ${visLine}`,
+                wxCodes ? `• Weather:    ${wxCodes}` : null,
+                `• Ceiling:    ${ceilLine}`,
+                `• Temp/Dew:   ${tempLine}`,
+                `• QNH:        ${qnhLine}`,
+            ].filter(Boolean).join('\n');
+
+            // ── TAF section ──
+            let tafSection = '\n📅 TAF\nNo TAF available.';
+            if (tafDataCache && tafDataCache.length > 0) {
+                const rawTaf = document.getElementById('rawTaf')?.innerText?.trim() || '';
+
+                // Find current active period
+                const nowTs = Date.now();
+                const current = tafDataCache.find(f => {
+                    const s = new Date(f.start_time.dt).getTime();
+                    const e = new Date(f.end_time.dt).getTime();
+                    return nowTs >= s && nowTs < e;
+                });
+
+                // Find worst period in next 12h
+                const next12h = nowTs + 12 * 3600000;
+                const catRank = { LIFR: 0, IFR: 1, MVFR: 2, VFR: 3 };
+                let worstPeriod = null, worstRank = 99;
+                tafDataCache.forEach(f => {
+                    const s = new Date(f.start_time.dt).getTime();
+                    if (s < nowTs || s > next12h) return;
+                    const rank = catRank[f.flight_rules] ?? 3;
+                    if (rank < worstRank) { worstRank = rank; worstPeriod = f; }
+                });
+
+                const fmtTafTime = dt => {
+                    const d = new Date(dt);
+                    return `${d.getUTCDate().toString().padStart(2,'0')}/${d.getUTCHours().toString().padStart(2,'0')}Z`;
+                };
+
+                const fmtTafWind = f => {
+                    const wd = f.wind?.direction?.repr === 'VRB' ? 'VRB' : (f.wind?.direction?.value != null ? String(f.wind.direction.value).padStart(3,'0') + '°' : '—');
+                    const ws = f.wind?.speed?.value != null ? `/${f.wind.speed.value}kt` : '';
+                    return `${wd}${ws}`;
+                };
+
+                const fmtTafVis = f => {
+                    const v = f.visibility?.value;
+                    if (v == null) return '—';
+                    const u = (f.visibility?.units || 'sm').toLowerCase();
+                    if (u === 'm') return v >= 9999 ? '10km+' : `${v}m`;
+                    return v >= 10 ? 'P6SM' : `${v}SM`;
+                };
+
+                const lines = ['\n📅 TAF'];
+                if (current) {
+                    const cWind = fmtTafWind(current);
+                    const cVis  = fmtTafVis(current);
+                    lines.push(`• Now (${fmtTafTime(current.start_time.dt)}): ${current.flight_rules} · ${cWind} · ${cVis}`);
+                }
+                if (worstPeriod && worstPeriod !== current) {
+                    const wWind = fmtTafWind(worstPeriod);
+                    const wVis  = fmtTafVis(worstPeriod);
+                    lines.push(`• Worst next 12h (${fmtTafTime(worstPeriod.start_time.dt)}): ${worstPeriod.flight_rules} · ${wWind} · ${wVis}`);
+                } else if (!worstPeriod) {
+                    lines.push('• No significant changes forecast in next 12h');
+                }
+                if (rawTaf && rawTaf.length > 5 && !rawTaf.includes('No TAF')) {
+                    lines.push(rawTaf);
+                }
+                tafSection = lines.join('\n');
+            }
+
+            // ── NOTAMs section ──
+            let notamSection = '';
+            try {
+                const cacheKey = `cache_faa_notam_${icao}`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    const c = JSON.parse(cached);
+                    const notams = Array.isArray(c.data) ? c.data : [];
+                    if (notams.length > 0) {
+                        const critical = notams.filter(n => /(CLSD|CLOSED|U\/S|UNSERVICEABLE|FAIL|OTS|OUT OF SERVICE)/i.test(n.traditional || n.text || ''));
+                        const warn     = notams.filter(n => /(OBST|OBSTACLE|WORK|WIP|SNOW|ICE|DANGER|HAZARD|CRANE)/i.test(n.traditional || n.text || '') && !critical.includes(n));
+                        const summary  = `⚠️ NOTAMs: ${notams.length} active${critical.length ? ` (${critical.length} critical)` : ''}`;
+                        const topLines = [...critical, ...warn].slice(0, 3).map(n => {
+                            const txt = (n.traditional || n.text || '').slice(0, 120);
+                            return `  • ${txt}`;
+                        });
+                        notamSection = '\n' + [summary, ...topLines].join('\n');
+                    }
+                }
+            } catch(e) { /* NOTAM cache read failure is non-fatal */ }
+
+            // ── Footer ──
+            const footer = `\n${'─'.repeat(25)}\nShared via METAR GO · Advisory only — not for operational use`;
+
+            // ── Assemble ──
+            const briefing = [header, catLine, metarSection, tafSection, notamSection, footer]
+                .filter(s => s && s.trim())
+                .join('\n');
+
+            // ── Share or copy ──
+            const title = `${icao} Flight Briefing · ${rules}`;
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title, text: briefing });
+                    return; // share sheet handled it
+                } catch(e) {
+                    if (e.name === 'AbortError') return; // user cancelled — don't fall through to copy
+                }
+            }
+
+            // Fallback: copy to clipboard
+            try {
+                await navigator.clipboard.writeText(briefing);
+                showToast('📋 Briefing copied to clipboard');
+            } catch(e) {
+                const ta = document.createElement('textarea');
+                ta.value = briefing;
+                ta.style.cssText = 'position:fixed;opacity:0;';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('📋 Briefing copied to clipboard');
+            }
+        }
     
         // ================================================================
         // 27. LAUNCH ANIMATION & STARTUP
