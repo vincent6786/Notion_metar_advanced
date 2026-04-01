@@ -6,6 +6,7 @@
     { "source": "/api/api-stats", "destination": "/api/api-stats.js" },
     { "source": "/api/status",    "destination": "/api/status.js"    },
     { "source": "/api/access",    "destination": "/api/access.js"    },
-    { "source": "/api/stream",    "destination": "/api/stream.js"    }
+    { "source": "/api/stream",    "destination": "/api/stream.js"    },
+    { "source": "/api/notam",     "destination": "/api/notam.js"     }
   ]
 }
