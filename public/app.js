@@ -2004,7 +2004,7 @@
             // ── NOTAMs section ──
             let notamSection = '';
             try {
-                const cacheKey = `cache_faa_notam_${icao}`;
+                const cacheKey = `cache_notam_${icao}`;
                 const cached = localStorage.getItem(cacheKey);
                 if (cached) {
                     const c = JSON.parse(cached);

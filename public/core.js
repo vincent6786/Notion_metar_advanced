@@ -3,18 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.5.9',  // ← set once in index.html
-            title: 'METAR GO — v4.5.9',
+            version: window.APP_VERSION || '4.6.5',  // ← set once in index.html
+            title: 'METAR GO — v4.6.5',
             changes: [
-                {
-                    icon: '📤',
-                    title: 'Share Briefing',
-                    desc: 'Tap 📤 Brief next to the raw METAR to generate and share a full flight briefing — METAR decoded, TAF summary (current + worst in next 12h), and top NOTAMs. Uses the native iOS/Android share sheet (LINE, WhatsApp, AirDrop, Messages) or copies to clipboard on desktop.'
-                },
                 {
                     icon: '🌬️',
                     title: 'Interactive Winds Aloft',
-                    desc: 'Tap any hour on the 24h meteogram for a full winds aloft card from Surface to ~18,000 ft — wind arrows, ISA deviation, and freezing level estimate. Table now includes a ~18k ft row and wind direction arrows. Meteogram uses aspect-ratio sizing for better proportions on iPad.'
+                    desc: 'Tap any hour on the 24h meteogram to see a full winds aloft card from Surface to ~18,000 ft — wind arrows, ISA deviation, and freezing level. Use ‹ › buttons or the slider to browse through all 24 hours without closing the panel.'
+                },
+                {
+                    icon: '📤',
+                    title: 'Share Briefing',
+                    desc: 'Tap 📤 Brief next to the raw METAR to generate and share a full flight briefing — decoded METAR, TAF summary (current + worst in 12h), and top NOTAMs — via your native share sheet (LINE, WhatsApp, AirDrop) or clipboard.'
+                },
+                {
+                    icon: '📋',
+                    title: 'NOTAM Fix',
+                    desc: 'NOTAMs for US airports (KMHR etc.) now load from the official FAA database (notams.aim.faa.gov) via a secure server proxy — the same source as the FAA NOTAM search website. International airports continue to use aviationweather.gov.'
                 }
             ]
         };
@@ -1784,9 +1789,6 @@
                 Object.keys(localStorage).forEach(key => {
                     if (key.startsWith('cache_')) localStorage.removeItem(key);
                 });
-                // Also clear FAA NOTAM cache which uses a different key prefix
-                const icaoVal = document.getElementById('icao').value.trim().toUpperCase();
-                if (icaoVal) localStorage.removeItem(`cache_faa_notam_${icaoVal}`);
                 console.log('[Force Refresh] All caches cleared');
             }
 
@@ -2010,35 +2012,20 @@
         function renderNotams(rawData) {
             const container = document.getElementById('notamList');
 
-            // Handle both FAA format (array of objects) and legacy format
-            let notams = [];
-            if (Array.isArray(rawData)) {
-                if (rawData.length === 0) { container.innerHTML = "No NOTAMs Found"; return; }
-
-                // Detect FAA format: objects have a "text" or "traditional" string field
-                if (rawData[0]?.text || rawData[0]?.traditional) {
-                    // FAA aviationweather.gov format
-                    notams = rawData.map(n => ({
-                        raw:        n.traditional || n.text || '',
-                        number:     n.notamNumber || '',
-                        start:      n.startDate   || '',
-                        end:        n.endDate      || '',
-                        location:   n.icaoLocation || ''
-                    }));
-                } else {
-                    // Legacy AVWX format: array of { raw, start_time, ... }
-                    notams = rawData.map(n => ({
-                        raw:   n.raw || '',
-                        number:'',
-                        start: n.start_time?.dt || '',
-                        end:   '',
-                        location: ''
-                    }));
-                }
-            } else {
+            if (!Array.isArray(rawData) || rawData.length === 0) {
                 container.innerHTML = "No NOTAMs Found";
                 return;
             }
+
+            // /api/notam proxy normalises all sources to { traditional, notamNumber, startDate, endDate, icaoLocation }
+            // Legacy AVWX direct calls used { raw, start_time }  — keep fallback for cached data
+            const notams = rawData.map(n => ({
+                raw:      n.traditional || n.text || n.raw || '',
+                number:   n.notamNumber || '',
+                start:    n.startDate   || n.start_time?.dt || '',
+                end:      n.endDate     || '',
+                location: n.icaoLocation || ''
+            })).filter(n => n.raw.length > 0);
 
             // Classify
             const critical = [], warning = [], info = [];
@@ -2090,21 +2077,29 @@
         // 13b. FAA NOTAM FETCH (aviationweather.gov — free, no key)
         // ================================================================
         async function fetchNotamsFAA(icao) {
-            const url = `https://aviationweather.gov/api/data/notam?icaos=${icao}&format=json`;
-            const cacheKey = `cache_faa_notam_${icao}`;
+            // Use our server-side proxy (/api/notam) which:
+            //   K/P prefix → notams.aim.faa.gov (official FAA, most complete)
+            //   International → aviationweather.gov fallback
+            // Direct browser calls to notams.aim.faa.gov are CORS-blocked.
+            const cacheKey = `cache_notam_${icao}`;
 
-            // Check cache first (10 min)
+            // Check cache first (5 min — NOTAMs can change during flight ops)
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
-                const c = JSON.parse(cached);
-                if (Date.now() - c.ts < 600000) return c.data;
+                try {
+                    const c = JSON.parse(cached);
+                    if (Date.now() - c.ts < 300000) return c.data;
+                } catch(e) {}
             }
 
-            const res  = await fetch(url);
-            if (!res.ok) throw new Error(`FAA NOTAM API: ${res.status}`);
+            const res  = await fetch(`/api/notam?station=${icao}`);
+            if (!res.ok) throw new Error(`NOTAM API: ${res.status}`);
             const data = await res.json();
-            localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
-            return data;
+
+            // data is already a normalised array from the proxy
+            const notams = Array.isArray(data) ? data : [];
+            localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: notams }));
+            return notams;
         }
     
         // ================================================================
@@ -2428,55 +2423,59 @@
                     const idx = now.getUTCHours();
                     const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
                     const setColor = (id, col) => { const el = document.getElementById(id); if (el) el.style.color = col; };
-                    const windNote = (t, s) => {
-                        const notes = [];
-                        if (t <= 0 && t > -20) notes.push('❄ Icing possible');
-                        else if (t <= -20) notes.push('Ice crystals');
-                        if (s >= 50) notes.push('⚠ Strong winds');
-                        else if (s >= 30) notes.push('Mod winds');
-                        return notes[0] || 'Normal';
-                    };
-                    const noteColor = (t, s) => {
-                        if (t <= 0 && t > -20) return 'var(--warn)';
-                        if (s >= 50) return 'var(--danger)';
-                        if (s >= 30) return 'var(--mvfr)';
-                        return 'var(--sub-text)';
-                    };
-                    const w3dir = data.hourly.winddirection_925hPa[idx], w3spd = data.hourly.windspeed_925hPa[idx], t3 = data.hourly.temperature_925hPa[idx];
-                    const w5dir = data.hourly.winddirection_850hPa[idx], w5spd = data.hourly.windspeed_850hPa[idx], t5 = data.hourly.temperature_850hPa[idx];
-                    const w10dir = data.hourly.winddirection_700hPa[idx], w10spd = data.hourly.windspeed_700hPa[idx], t10 = data.hourly.temperature_700hPa[idx];
-                    const w18dir = data.hourly.winddirection_500hPa?.[idx], w18spd = data.hourly.windspeed_500hPa?.[idx], t18 = data.hourly.temperature_500hPa?.[idx];
+                    const windNote  = (t, s) => { if (t <= 0 && t > -20) return '❄ Icing possible'; if (t <= -20) return '🧊 Ice crystals'; if (s >= 50) return '⚠ Strong winds'; if (s >= 30) return 'Mod winds'; return 'Normal'; };
+                    const noteColor = (t, s) => { if (t <= 0 && t > -20) return 'var(--warn)'; if (s >= 50) return 'var(--danger)'; if (s >= 30) return 'var(--mvfr)'; return 'var(--sub-text)'; };
 
-                    // ISA standard temps at each pressure level (approx ft AGL)
-                    const isaAt = ft => 15 - (2 * ft / 1000);
-                    const isaDev = (temp, ft) => temp != null ? +(temp - isaAt(ft)).toFixed(1) : null;
+                    // BUG FIX: use same NOW-finding as drawMeteogram — getUTCHours() is wrong
+                    // because Open-Meteo timezone=auto returns local-time indexed arrays.
+                    const now = new Date();
+                    const nowUTCFrac = now.getUTCHours() + now.getUTCMinutes() / 60;
+                    let idx = 0;
+                    if (data.hourly.time) {
+                        let smallest = 999;
+                        data.hourly.time.slice(0, 24).forEach((t, i) => {
+                            const d = new Date(t + 'Z');
+                            const diff = Math.abs(d.getUTCHours() + d.getUTCMinutes() / 60 - nowUTCFrac);
+                            if (diff < smallest) { smallest = diff; idx = i; }
+                        });
+                    }
 
-                    const renderAloftRow = (sfx, level, dir, spd, temp, ft) => {
-                        const isa = isaDev(temp, ft);
-                        const isaStr = isa != null ? `${isa >= 0 ? '+' : ''}${isa}°` : '--';
-                        const isaColor = isa == null ? '#555' : isa > 5 ? 'var(--warn)' : isa < -5 ? '#0a84ff' : '#32d74b';
-                        const tempColor = temp != null && temp <= 0 ? 'var(--warn)' : '#ccc';
-                        const note = windNote(temp, spd);
-                        const noteCol = noteColor(temp, spd);
-                        const arrowHtml = dir != null ? `<svg width="14" height="14" viewBox="0 0 14 14" style="display:inline-block;vertical-align:middle;margin-right:3px;"><g transform="translate(7,7) rotate(${dir})"><line x1="0" y1="5" x2="0" y2="-5" stroke="${spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff'}" stroke-width="1.5" stroke-linecap="round"/><polygon points="0,-6.5 -2,-3 2,-3" fill="${spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff'}"/></g></svg>` : '';
-                        const windStr = dir != null ? `${String(Math.round(dir)).padStart(3,'0')}°/${Math.round(spd)}kt` : '--';
-                        const tempStr = temp != null ? `${Math.round(temp)}°C` : '--';
-                        ['', '2'].forEach(s => {
-                            const wEl = document.getElementById(`wind${level}${s}${sfx}`);
-                            const tEl = document.getElementById(`temp${level}${s}${sfx}`);
-                            const nEl = document.getElementById(`note${level}${s}${sfx}`);
-                            const iEl = document.getElementById(`isa${level}${s}${sfx}`);
-                            if (wEl) { wEl.innerHTML = arrowHtml + windStr; }
-                            if (tEl) { tEl.innerHTML = tempStr; tEl.style.color = tempColor; }
-                            if (nEl) { nEl.innerHTML = note; nEl.style.color = noteCol; }
-                            if (iEl) { iEl.innerHTML = `ISA${isaStr}`; iEl.style.color = isaColor; }
+                    const isaAt    = ft  => 15 - (2 * ft / 1000);
+                    const isaDev   = (temp, ft) => temp != null ? +(temp - isaAt(ft)).toFixed(1) : null;
+                    const isaColor = dev => dev == null ? '#555' : dev > 5 ? 'var(--warn)' : dev < -5 ? '#0a84ff' : '#32d74b';
+
+                    const arrowSvgSm = (dir, spd) => {
+                        if (dir == null) return '';
+                        const col = spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff';
+                        return `<svg width="12" height="12" viewBox="0 0 14 14" style="display:inline-block;vertical-align:middle;margin-right:2px;flex-shrink:0"><g transform="translate(7,7) rotate(${dir})"><line x1="0" y1="5" x2="0" y2="-5" stroke="${col}" stroke-width="1.5" stroke-linecap="round"/><polygon points="0,-6.5 -2,-3 2,-3" fill="${col}"/></g></svg>`;
+                    };
+
+                    const arrowSvgSm = (dir, spd) => {
+                        if (dir == null) return '';
+                        const col = spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff';
+                        return `<svg width="12" height="12" viewBox="0 0 14 14" style="display:inline-block;vertical-align:middle;margin-right:2px;flex-shrink:0"><g transform="translate(7,7) rotate(${dir})"><line x1="0" y1="5" x2="0" y2="-5" stroke="${col}" stroke-width="1.5" stroke-linecap="round"/><polygon points="0,-6.5 -2,-3 2,-3" fill="${col}"/></g></svg>`;
+                    };
+
+                    const renderAloftRow = (level, dir, spd, temp, ft) => {
+                        const isa  = isaDev(temp, ft);
+                        const isaS = isa != null ? `ISA${isa >= 0 ? '+' : ''}${isa}°` : '--';
+                        ['', '2'].forEach(sfx => {
+                            const wEl = document.getElementById(`wind${level}${sfx}`);
+                            const tEl = document.getElementById(`temp${level}${sfx}`);
+                            const nEl = document.getElementById(`note${level}${sfx}`);
+                            const iEl = document.getElementById(`isa${level}${sfx}`);
+                            if (wEl) wEl.innerHTML = arrowSvgSm(dir, spd) + (dir != null ? `${String(Math.round(dir)).padStart(3,'0')}°/${Math.round(spd)}kt` : '--');
+                            if (tEl) { tEl.textContent = temp != null ? `${Math.round(temp)}°C` : '--'; tEl.style.color = (temp != null && temp <= 0) ? 'var(--warn)' : '#ccc'; }
+                            if (nEl) { nEl.textContent = windNote(temp, spd);  nEl.style.color = noteColor(temp, spd); }
+                            if (iEl) { iEl.textContent = isaS; iEl.style.color = isaColor(isa); }
                         });
                     };
 
-                    renderAloftRow('', '3k', w3dir, w3spd, t3, 2500);
-                    renderAloftRow('', '5k', w5dir, w5spd, t5, 5000);
-                    renderAloftRow('', '10k', w10dir, w10spd, t10, 10000);
-                    if (w18dir != null) renderAloftRow('', '18k', w18dir, w18spd, t18, 18000);
+                    const h = data.hourly;
+                    renderAloftRow('3k',  h.winddirection_925hPa[idx], h.windspeed_925hPa[idx], h.temperature_925hPa[idx], 2500);
+                    renderAloftRow('5k',  h.winddirection_850hPa[idx], h.windspeed_850hPa[idx], h.temperature_850hPa[idx], 5000);
+                    renderAloftRow('10k', h.winddirection_700hPa[idx], h.windspeed_700hPa[idx], h.temperature_700hPa[idx], 10000);
+                    if (h.winddirection_500hPa) renderAloftRow('18k', h.winddirection_500hPa[idx], h.windspeed_500hPa[idx], h.temperature_500hPa[idx], 18000);
                 }
             } catch(e) { console.error("Meteo Error:", e); loader.style.display = 'block'; loader.innerText = "⚠️ Model Data Unavailable"; }
         }
@@ -2487,8 +2486,7 @@
             const ctx = cvs.getContext('2d');
             const dpr  = window.devicePixelRatio || 1;
             const rect = cvs.getBoundingClientRect();
-            // W: use CSS rendered width (fallback for hidden pane)
-            // H: read from CSS too — aspect-ratio CSS sets this, no more hardcode
+            // W: use CSS rendered width; H: read from CSS (aspect-ratio driven), fallback 150
             const W = rect.width  || cvs.closest('.meteogram-container')?.clientWidth
                                    || window.innerWidth - 56
                                    || 360;
@@ -2588,136 +2586,135 @@
         // ================================================================
         // METEOGRAM TAP → WINDS ALOFT DETAIL MODAL
         // ================================================================
+        let _windsAloftHour = 0; // currently displayed hour index
 
-        /** Resolve a canvas click/touch X offset to an hour index 0–23 */
         function _meteoXtoHour(canvas, clientX) {
-            const rect = canvas.getBoundingClientRect();
-            const cssW = rect.width || canvas.offsetWidth || 340;
-            const x = clientX - rect.left;
-            const padL = 15, padR = 15;
-            const plotW = cssW - padL - padR;
-            const raw = ((x - padL) / plotW) * 23;
+            const rect  = canvas.getBoundingClientRect();
+            const cssW  = rect.width || 340;
+            const x     = clientX - rect.left;
+            const padL  = 15, padR = 15;
+            const raw   = ((x - padL) / (cssW - padL - padR)) * 23;
             return Math.max(0, Math.min(23, Math.round(raw)));
         }
 
         function meteoTap(event, canvas) {
             if (!meteoDataCache) return;
-            // Use changedTouches for touch events (touches[] is empty on touchend)
             const clientX = (event.changedTouches?.[0] ?? event).clientX;
-            const hour = _meteoXtoHour(canvas, clientX);
+            const hour    = _meteoXtoHour(canvas, clientX);
             showWindsAloftModal(hour);
+        }
+
+        function meteoNavHour(delta) {
+            showWindsAloftModal(Math.max(0, Math.min(23, _windsAloftHour + delta)));
+        }
+
+        function meteoSliderChange(val) {
+            showWindsAloftModal(parseInt(val, 10));
         }
 
         function showWindsAloftModal(hour) {
             const h = meteoDataCache;
             if (!h) return;
 
-            // ISA helpers
-            const LEVELS = [
-                { label: 'Surface (10m)',  ft: 0,      hPa: 'SFC',  dirKey: 'wind_direction_10m',    spdKey: 'wind_speed_10m',    tmpKey: 'temperature_2m'      },
-                { label: '~2,500 ft',      ft: 2500,   hPa: '925',  dirKey: 'winddirection_925hPa',  spdKey: 'windspeed_925hPa',  tmpKey: 'temperature_925hPa'  },
-                { label: '~5,000 ft',      ft: 5000,   hPa: '850',  dirKey: 'winddirection_850hPa',  spdKey: 'windspeed_850hPa',  tmpKey: 'temperature_850hPa'  },
-                { label: '~10,000 ft',     ft: 10000,  hPa: '700',  dirKey: 'winddirection_700hPa',  spdKey: 'windspeed_700hPa',  tmpKey: 'temperature_700hPa'  },
-                { label: '~18,000 ft',     ft: 18000,  hPa: '500',  dirKey: 'winddirection_500hPa',  spdKey: 'windspeed_500hPa',  tmpKey: 'temperature_500hPa'  },
-            ];
+            _windsAloftHour = hour;
 
-            const isaStd = ft => 15 - (2 * ft / 1000);
-            const now = new Date();
-
-            // Find which array index corresponds to NOW — same algorithm as drawMeteogram's NOW line
-            // Open-Meteo timezone=auto → h.time[] entries are local airport time (no Z suffix)
-            // Appending 'Z' lets us compare UTC hours correctly across any timezone
+            // ── NOW index (same algorithm as drawMeteogram NOW line) ──
+            const now        = new Date();
             const nowUTCFrac = now.getUTCHours() + now.getUTCMinutes() / 60;
-            let nowIndex = 0;
+            let nowIndex     = 0;
             if (h.time) {
                 let smallest = 999;
                 h.time.slice(0, 24).forEach((t, i) => {
-                    const d = new Date(t + 'Z');
+                    const d    = new Date(t + 'Z');
                     const diff = Math.abs(d.getUTCHours() + d.getUTCMinutes() / 60 - nowUTCFrac);
                     if (diff < smallest) { smallest = diff; nowIndex = i; }
                 });
             }
-            const isNow = hour === nowIndex;
 
-            // Parse time label from local time string directly (avoid Z-forcing timezone shift)
-            // h.time[hour] looks like "2025-04-01T08:00" — extract HH:MM as local airport time
-            let timeLabel = `${String(hour).padStart(2,'0')}:00`;
+            // ── Time label (local airport time straight from data string) ──
+            let timeLabel = `${String(hour).padStart(2,'0')}:00 LCL`;
             if (h.time?.[hour]) {
                 const tPart = h.time[hour].split('T')[1];
                 if (tPart) timeLabel = tPart.slice(0, 5) + ' LCL';
             }
 
-            // Wind arrow SVG generator
-            const arrow = (dir, spd) => {
+            // ── Update header controls ──
+            const hourLabel = document.getElementById('windsAloftHourLabel');
+            const nowBadge  = document.getElementById('windsAloftNowBadge');
+            const slider    = document.getElementById('windsAloftSlider');
+            if (hourLabel) hourLabel.textContent = timeLabel;
+            if (nowBadge)  nowBadge.textContent  = hour === nowIndex ? '● NOW' : '';
+            if (slider)    slider.value           = hour;
+
+            // ── Altitude levels ──
+            const LEVELS = [
+                { label:'Surface',    ft:0,     hPa:'SFC', dir:'wind_direction_10m',   spd:'wind_speed_10m',   tmp:'temperature_2m'      },
+                { label:'~2,500 ft',  ft:2500,  hPa:'925', dir:'winddirection_925hPa', spd:'windspeed_925hPa', tmp:'temperature_925hPa'  },
+                { label:'~5,000 ft',  ft:5000,  hPa:'850', dir:'winddirection_850hPa', spd:'windspeed_850hPa', tmp:'temperature_850hPa'  },
+                { label:'~10,000 ft', ft:10000, hPa:'700', dir:'winddirection_700hPa', spd:'windspeed_700hPa', tmp:'temperature_700hPa'  },
+                { label:'~18,000 ft', ft:18000, hPa:'500', dir:'winddirection_500hPa', spd:'windspeed_500hPa', tmp:'temperature_500hPa'  },
+            ];
+
+            const isaStd = ft => 15 - (2 * ft / 1000);
+
+            const arrowSvg = (dir, spd) => {
                 if (dir == null) return '';
                 const col = spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff';
-                return `<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0">
-                    <g transform="translate(9,9) rotate(${dir})">
-                        <line x1="0" y1="6" x2="0" y2="-6" stroke="${col}" stroke-width="2" stroke-linecap="round"/>
-                        <polygon points="0,-8 -3,-3 3,-3" fill="${col}"/>
-                    </g>
-                </svg>`;
+                return `<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0"><g transform="translate(9,9) rotate(${dir})"><line x1="0" y1="6" x2="0" y2="-6" stroke="${col}" stroke-width="2" stroke-linecap="round"/><polygon points="0,-8 -3,-3 3,-3" fill="${col}"/></g></svg>`;
             };
 
-            // Build rows
             let rows = '';
             LEVELS.forEach(lv => {
-                const dir  = h[lv.dirKey]?.[hour];
-                const spd  = h[lv.spdKey]?.[hour];
-                const temp = h[lv.tmpKey]?.[hour];
-                if (dir == null && lv.hPa !== 'SFC') return; // 500hPa might be missing
+                const dir  = h[lv.dir]?.[hour];
+                const spd  = h[lv.spd]?.[hour];
+                const temp = h[lv.tmp]?.[hour];
+                if (dir == null && lv.hPa !== 'SFC') return;
 
                 const isa    = lv.ft > 0 ? isaStd(lv.ft) : null;
                 const dev    = (temp != null && isa != null) ? +(temp - isa).toFixed(1) : null;
                 const devStr = dev != null ? `ISA${dev >= 0 ? '+' : ''}${dev}°C` : '';
                 const devCol = dev == null ? '#555' : dev > 5 ? 'var(--warn)' : dev < -5 ? '#64b5f6' : '#32d74b';
+                const tmpCol = (temp != null && temp <= 0) ? 'var(--warn)' : '#ccc';
 
-                const tempCol = (temp != null && temp <= 0) ? 'var(--warn)' : '#ccc';
+                let hazard = '';
+                if (temp != null && temp <= 0 && temp > -20 && spd > 0) hazard = '❄️ Icing possible';
+                else if (temp != null && temp <= -20)  hazard = '🧊 Ice crystals';
+                else if (spd  != null && spd  >= 50)   hazard = '⚠️ Strong winds';
+                else if (spd  != null && spd  >= 30)   hazard = '💨 Mod winds';
+
+                const isSfc  = lv.hPa === 'SFC';
                 const windStr = dir != null ? `${String(Math.round(dir)).padStart(3,'0')}° / ${Math.round(spd)} kt` : '—';
                 const tempStr = temp != null ? `${Math.round(temp)}°C` : '—';
 
-                let hazard = '';
-                if (temp != null && temp <= 0 && temp > -20 && spd > 0) { hazard = '❄️ Icing possible'; }
-                else if (temp != null && temp <= -20) hazard = '🧊 Ice crystals';
-                else if (spd != null && spd >= 50) hazard = '⚠️ Strong winds';
-                else if (spd != null && spd >= 30) hazard = '💨 Mod winds';
-
-                const hPaLabel = lv.hPa === 'SFC' ? 'SFC' : `${lv.hPa} hPa`;
-                const isSfc = lv.hPa === 'SFC';
-
-                rows += `
-                <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:0;border-top:1px solid #1e1e1e;${isSfc ? 'border-top:none;' : ''}background:${isSfc ? '#1a1a1a' : '#141414'};">
-                    <div style="padding:10px 10px;border-right:1px solid #1e1e1e;">
+                rows += `<div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:0;border-top:${isSfc ? 'none' : '1px solid #1e1e1e'};background:${isSfc ? '#1a1a1a' : '#141414'};">
+                    <div style="padding:10px;border-right:1px solid #1e1e1e;">
                         <div style="font-size:11px;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">${lv.label}</div>
-                        <div style="font-size:9px;color:#444;margin-top:2px;">${hPaLabel}</div>
+                        <div style="font-size:9px;color:#444;margin-top:2px;">${lv.hPa === 'SFC' ? 'SFC' : lv.hPa + ' hPa'}</div>
                     </div>
-                    <div style="padding:10px 10px;border-right:1px solid #1e1e1e;">
-                        <div style="display:flex;align-items:center;gap:5px;">
-                            ${arrow(dir, spd)}
-                            <span style="font-size:12px;font-weight:700;color:#fff;font-family:'SF Mono',monospace;">${windStr}</span>
-                        </div>
+                    <div style="padding:10px;border-right:1px solid #1e1e1e;">
+                        <div style="display:flex;align-items:center;gap:5px;">${arrowSvg(dir,spd)}<span style="font-size:12px;font-weight:700;color:#fff;font-family:'SF Mono',monospace;">${windStr}</span></div>
                         ${hazard ? `<div style="font-size:10px;color:var(--warn);margin-top:3px;">${hazard}</div>` : ''}
                     </div>
-                    <div style="padding:10px 10px;">
-                        <div style="font-size:12px;font-weight:700;color:${tempCol};font-family:'SF Mono',monospace;">${tempStr}</div>
+                    <div style="padding:10px;">
+                        <div style="font-size:12px;font-weight:700;color:${tmpCol};font-family:'SF Mono',monospace;">${tempStr}</div>
                         ${devStr ? `<div style="font-size:10px;color:${devCol};margin-top:3px;font-weight:700;">${devStr}</div>` : ''}
                     </div>
                 </div>`;
             });
 
-            // Freezing level estimate
+            // ── Freezing level estimate ──
             let freezeHtml = '';
-            const temps = [
-                { label: 'Surface', t: h.temperature_2m?.[hour], ft: 0 },
-                { label: '~2.5k', t: h.temperature_925hPa?.[hour], ft: 2500 },
-                { label: '~5k', t: h.temperature_850hPa?.[hour], ft: 5000 },
-                { label: '~10k', t: h.temperature_700hPa?.[hour], ft: 10000 },
-                { label: '~18k', t: h.temperature_500hPa?.[hour], ft: 18000 },
+            const tArr = [
+                { t: h.temperature_2m?.[hour],        ft: 0     },
+                { t: h.temperature_925hPa?.[hour],     ft: 2500  },
+                { t: h.temperature_850hPa?.[hour],     ft: 5000  },
+                { t: h.temperature_700hPa?.[hour],     ft: 10000 },
+                { t: h.temperature_500hPa?.[hour],     ft: 18000 },
             ].filter(x => x.t != null);
-            for (let i = 0; i < temps.length - 1; i++) {
-                if (temps[i].t > 0 && temps[i+1].t <= 0) {
-                    const frac = temps[i].t / (temps[i].t - temps[i+1].t);
-                    const ft = Math.round(temps[i].ft + frac * (temps[i+1].ft - temps[i].ft) / 100) * 100;
+            for (let i = 0; i < tArr.length - 1; i++) {
+                if (tArr[i].t > 0 && tArr[i+1].t <= 0) {
+                    const frac = tArr[i].t / (tArr[i].t - tArr[i+1].t);
+                    const ft   = Math.round(tArr[i].ft + frac * (tArr[i+1].ft - tArr[i].ft) / 100) * 100;
                     freezeHtml = `<div style="padding:10px 14px;background:rgba(100,181,246,0.08);border-top:1px solid #1e1e1e;display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:11px;color:#888;">❄️ Freezing Level (est.)</span>
                         <span style="font-size:13px;font-weight:700;color:#64b5f6;font-family:'SF Mono',monospace;">~${ft.toLocaleString()} ft</span>
@@ -2726,36 +2723,27 @@
                 }
             }
 
-            // Build and show modal
+            // ── Column headers ──
+            const colHeaders = `<div style="display:grid;grid-template-columns:80px 1fr 1fr;background:#111;border-bottom:1px solid #222;">
+                <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;">Level</div>
+                <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;">Wind</div>
+                <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;">Temp / ISA</div>
+            </div>`;
+
+            // ── Write body (not the header labels — those are already live) ──
+            const body = document.getElementById('windsAloftModalBody');
+            if (!body) return;
+            body.innerHTML = `<div style="font-size:11px;color:#333;text-align:center;padding:4px 0 2px;">NWP Model · Advisory Only</div>${colHeaders}${rows}${freezeHtml}`;
+
+            // ── Show modal (first time only — already visible when navigating) ──
             const modal = document.getElementById('windsAloftModal');
-            const body  = document.getElementById('windsAloftModalBody');
-            if (!modal || !body) return;
-
-            body.innerHTML = `
-                <div style="padding:14px 16px 10px;border-bottom:1px solid #1e1e1e;display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                        <div style="font-size:15px;font-weight:800;color:#fff;">Winds Aloft</div>
-                        <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">NWP Model · Advisory Only</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:16px;font-weight:900;color:var(--accent);font-family:'SF Mono',monospace;">${timeLabel}</div>
-                        ${isNow ? '<div style="font-size:9px;font-weight:800;color:var(--success);letter-spacing:1px;margin-top:2px;">● NOW</div>' : ''}
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:80px 1fr 1fr;background:#111;border-bottom:1px solid #222;">
-                    <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;">Level</div>
-                    <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;">Wind</div>
-                    <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;">Temp / ISA</div>
-                </div>
-                ${rows}
-                ${freezeHtml}
-                <div style="padding:10px 14px;font-size:10px;color:#333;text-align:center;border-top:1px solid #1a1a1a;">
-                    Tap another column on the meteogram to switch hours
-                </div>`;
-
-            modal.style.display = 'flex';
             const sheet = document.getElementById('windsAloftModalSheet');
-            if (sheet) { sheet.getBoundingClientRect(); sheet.style.transform = 'translateY(0)'; }
+            if (!modal || !sheet) return;
+            if (modal.style.display !== 'flex') {
+                modal.style.display = 'flex';
+                sheet.getBoundingClientRect(); // force reflow before transform
+                sheet.style.transform = 'translateY(0)';
+            }
         }
 
         function closeWindsAloftModal() {

@@ -3,7 +3,7 @@
 // Offline-first for static assets, network-first for API calls
 // ================================================================
 
-const CACHE_VERSION = 'metar-go-v4.5.9';
+const CACHE_VERSION = 'metar-go-v4.6.5';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
@@ -39,6 +39,7 @@ const API_ROUTES = [
     '/api/status',
     '/api/access',     // access-code validation must never be served from static cache
     '/api/api-stats',  // admin stats must never be served from static cache
+    '/api/notam',      // NOTAM proxy — always fetch fresh
 ];
 
 // ── Install: pre-cache all static assets ──────────────────────
