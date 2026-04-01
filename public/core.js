@@ -3,18 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.4.0',  // ← set once in index.html
-            title: 'METAR GO — Training Edition',
+            version: window.APP_VERSION || '4.5.0',  // ← set once in index.html
+            title: 'METAR GO — v4.5.0',
             changes: [
                 {
-                    icon: '📌',
-                    title: 'My Resources',
-                    desc: 'Save custom links, PDF references, and text notes in the Tools tab. Up to 20 items, synced to cloud backup. Tap the 📌 tab in Aviation Tools to get started.'
+                    icon: '🐛',
+                    title: 'Ceiling Card Fixed',
+                    desc: 'The Ceiling value in the METAR card now correctly shows the actual ceiling layer (BKN/OVC/VV) instead of always showing the lowest cloud layer — e.g. FEW010 BKN025 now reads BKN 025, not FEW 010.'
                 },
                 {
-                    icon: '🔍',
-                    title: 'METAR Decoder',
-                    desc: 'New in-app METAR decoder powered by e6bx.com. Paste any raw METAR for field-by-field decoding.'
+                    icon: '🔧',
+                    title: 'Bug Fixes',
+                    desc: 'Fixed several reliability issues: service worker now correctly handles access-code validation offline, storage keep-alive timer no longer stacks up on repeated mode changes, and admin user actions now properly report errors instead of silently succeeding.'
+                },
+                {
+                    icon: '👥',
+                    title: 'Admin Panel Overhaul',
+                    desc: 'The Admin Console now has live search by name or code, status filter chips (All / Active / Revoked with counts), and sort options (Code, Name, Calls, Newest). Active users with high call counts are highlighted.'
                 }
             ]
         };
@@ -285,8 +290,11 @@
             },
 
             _startKeepAlive() {
-                // Re-write critical keys every 23h so iOS never marks them stale
-                setInterval(async () => {
+                // Re-write critical keys every 23h so iOS never marks them stale.
+                // BUG FIX: clear any existing timer first — setMode() can call this
+                // multiple times (e.g. after PIN setup + restore), stacking up intervals.
+                if (this._keepAliveTimer) clearInterval(this._keepAliveTimer);
+                this._keepAliveTimer = setInterval(async () => {
                     if (this.mode) {
                         localStorage.setItem('efb_storage_mode', this.mode);
                         await EFB_DB.set('_efb_storage_mode', this.mode);
@@ -886,21 +894,37 @@
             const users  = window._adminUsers || [];
             const u      = users.find(x => x.code === window._inAppDrawerCode);
             const action = u?.active ? 'revoke' : 'restore';
+            const btn    = document.getElementById('inAppStatusBtn');
+            if (btn) btn.disabled = true;
             try {
-                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
+                const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ action, code: window._inAppDrawerCode, password: window._adminPwd }) });
-                _closeInAppDrawer();
-                setTimeout(() => loadUsersTab(window._adminPwd), 340);
-            } catch(e) { alert('Failed. Check connection.'); }
+                const data = await res.json();
+                if (data.success) {
+                    _closeInAppDrawer();
+                    setTimeout(() => loadUsersTab(window._adminPwd), 340);
+                } else {
+                    alert(`Failed: ${data.error || 'Unknown error'}`);
+                    if (btn) btn.disabled = false;
+                }
+            } catch(e) {
+                alert('Failed. Check connection.');
+                if (btn) btn.disabled = false;
+            }
         }
 
         async function inAppDelete() {
             if (!confirm(`Permanently delete ${window._inAppDrawerCode}?\n\nThis cannot be undone.`)) return;
             try {
-                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
+                const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ action:'delete', code: window._inAppDrawerCode, password: window._adminPwd }) });
-                _closeInAppDrawer();
-                setTimeout(() => loadUsersTab(window._adminPwd), 340);
+                const data = await res.json();
+                if (data.success) {
+                    _closeInAppDrawer();
+                    setTimeout(() => loadUsersTab(window._adminPwd), 340);
+                } else {
+                    alert(`Failed to delete: ${data.error || 'Unknown error'}`);
+                }
             } catch(e) { alert('Failed to delete. Check connection.'); }
         }
 
@@ -1283,7 +1307,7 @@
             const cachedObj = cached ? (() => { try { return JSON.parse(cached); } catch(e) { return null; } })() : null;
 
             // Fresh cache (< 10 min) → return immediately
-            if (cachedObj && Date.now() - cachedObj.ts < 300000) {
+            if (cachedObj && Date.now() - cachedObj.ts < 600000) {
                 return cachedObj.data;
             }
 
@@ -1560,7 +1584,7 @@
                 chip.onclick = () => quickLoad(code);
                 container.appendChild(chip);
             });
-            history.filter(h => !favs.includes(h)).slice(0, 6).forEach(code => {
+            history.filter(h => !favs.includes(h)).slice(0, 5).forEach(code => {
                 const chip = document.createElement('div');
                 chip.className = 'quick-chip';
                 chip.innerText = code;
@@ -1975,7 +1999,7 @@
                         console.error('[loadData] Render error:', renderErr);
                         showToast('⚠️ Data loaded but render failed — check console');
                     }
-                });;
+                });
 
             } catch(e) {
                 console.error('[loadData] Error:', e);
@@ -2718,7 +2742,10 @@
             document.getElementById('mVis').innerHTML = visText + getTrendBadge(visTrend);
             
             // ── CEILING with trend ──
-            const c = d.clouds?.[0];
+            // BUG FIX: use actual ceiling layer (BKN/OVC/VV), not just first cloud entry.
+            // e.g. FEW010 BKN025 → card should show BKN 025, not FEW 010.
+            const ceilLayer2 = d.clouds?.find(c => ['BKN','OVC','VV'].includes(c.type));
+            const c = ceilLayer2 || d.clouds?.[0];
             const ceilText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
             const ceilValue = c ? c.altitude * 100 : 99999; // Convert to feet AGL
             const ceilTrend = analyzeTrend(icao, 'ceil', ceilValue);
