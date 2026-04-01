@@ -48,8 +48,7 @@ async function validateAccessCode(code) {
         const user = await kv.get(`efb:users:${key}`);
         if (!(user && user.active)) return false;
         // Increment per-user daily call counter (fire and forget)
-        const today = new Date();
-        const dateKey = `${today.getUTCFullYear()}-${String(today.getUTCMonth()+1).padStart(2,'0')}-${String(today.getUTCDate()).padStart(2,'0')}`;
+        const dateKey = getTodayKey();
         kv.incr(`efb:users:${key}:calls:${dateKey}`).catch(() => {});
         kv.expire(`efb:users:${key}:calls:${dateKey}`, 172800).catch(() => {});
         return true;
