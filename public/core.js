@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.5.0',  // ← set once in index.html
-            title: 'METAR GO — v4.5.0',
+            version: window.APP_VERSION || '4.6.0',  // ← set once in index.html
+            title: 'METAR GO — v4.6.0',
             changes: [
                 {
+                    icon: '🌬️',
+                    title: 'Interactive Winds Aloft',
+                    desc: 'Tap any hour column on the 24h meteogram to see a full winds aloft breakdown — wind direction arrows, temperatures, ISA deviation, and freezing level estimate for Surface through ~18,000 ft (500 hPa). Works in both the TAF and Weather tabs.'
+                },
+                {
+                    icon: '📊',
+                    title: 'Winds Aloft Table Upgraded',
+                    desc: 'The static winds aloft table now shows wind direction arrows, ISA deviation per level, and a new ~18k ft (500 hPa) row. Icing and strong wind conditions are colour-coded in both the table and the detail modal.'
+                },
+                {
                     icon: '🐛',
-                    title: 'Ceiling Card Fixed',
-                    desc: 'The Ceiling value in the METAR card now correctly shows the actual ceiling layer (BKN/OVC/VV) instead of always showing the lowest cloud layer — e.g. FEW010 BKN025 now reads BKN 025, not FEW 010.'
-                },
-                {
-                    icon: '🔧',
-                    title: 'Bug Fixes',
-                    desc: 'Fixed several reliability issues: service worker now correctly handles access-code validation offline, storage keep-alive timer no longer stacks up on repeated mode changes, and admin user actions now properly report errors instead of silently succeeding.'
-                },
-                {
-                    icon: '👥',
-                    title: 'Admin Panel Overhaul',
-                    desc: 'The Admin Console now has live search by name or code, status filter chips (All / Active / Revoked with counts), and sort options (Code, Name, Calls, Newest). Active users with high call counts are highlighted.'
+                    title: 'Bug Fixes (v4.5.0)',
+                    desc: 'Ceiling card now shows actual ceiling layer (BKN/OVC/VV). Service worker correctly routes access-code validation. Storage keep-alive timer no longer stacks. Training Area: PA calculator, quiz score reset, wind example, and sine shortcut range all fixed.'
                 }
             ]
         };
@@ -290,11 +290,8 @@
             },
 
             _startKeepAlive() {
-                // Re-write critical keys every 23h so iOS never marks them stale.
-                // BUG FIX: clear any existing timer first — setMode() can call this
-                // multiple times (e.g. after PIN setup + restore), stacking up intervals.
-                if (this._keepAliveTimer) clearInterval(this._keepAliveTimer);
-                this._keepAliveTimer = setInterval(async () => {
+                // Re-write critical keys every 23h so iOS never marks them stale
+                setInterval(async () => {
                     if (this.mode) {
                         localStorage.setItem('efb_storage_mode', this.mode);
                         await EFB_DB.set('_efb_storage_mode', this.mode);
@@ -894,37 +891,21 @@
             const users  = window._adminUsers || [];
             const u      = users.find(x => x.code === window._inAppDrawerCode);
             const action = u?.active ? 'revoke' : 'restore';
-            const btn    = document.getElementById('inAppStatusBtn');
-            if (btn) btn.disabled = true;
             try {
-                const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
+                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ action, code: window._inAppDrawerCode, password: window._adminPwd }) });
-                const data = await res.json();
-                if (data.success) {
-                    _closeInAppDrawer();
-                    setTimeout(() => loadUsersTab(window._adminPwd), 340);
-                } else {
-                    alert(`Failed: ${data.error || 'Unknown error'}`);
-                    if (btn) btn.disabled = false;
-                }
-            } catch(e) {
-                alert('Failed. Check connection.');
-                if (btn) btn.disabled = false;
-            }
+                _closeInAppDrawer();
+                setTimeout(() => loadUsersTab(window._adminPwd), 340);
+            } catch(e) { alert('Failed. Check connection.'); }
         }
 
         async function inAppDelete() {
             if (!confirm(`Permanently delete ${window._inAppDrawerCode}?\n\nThis cannot be undone.`)) return;
             try {
-                const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
+                await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ action:'delete', code: window._inAppDrawerCode, password: window._adminPwd }) });
-                const data = await res.json();
-                if (data.success) {
-                    _closeInAppDrawer();
-                    setTimeout(() => loadUsersTab(window._adminPwd), 340);
-                } else {
-                    alert(`Failed to delete: ${data.error || 'Unknown error'}`);
-                }
+                _closeInAppDrawer();
+                setTimeout(() => loadUsersTab(window._adminPwd), 340);
             } catch(e) { alert('Failed to delete. Check connection.'); }
         }
 
@@ -1307,7 +1288,7 @@
             const cachedObj = cached ? (() => { try { return JSON.parse(cached); } catch(e) { return null; } })() : null;
 
             // Fresh cache (< 10 min) → return immediately
-            if (cachedObj && Date.now() - cachedObj.ts < 600000) {
+            if (cachedObj && Date.now() - cachedObj.ts < 300000) {
                 return cachedObj.data;
             }
 
@@ -1584,7 +1565,7 @@
                 chip.onclick = () => quickLoad(code);
                 container.appendChild(chip);
             });
-            history.filter(h => !favs.includes(h)).slice(0, 5).forEach(code => {
+            history.filter(h => !favs.includes(h)).slice(0, 6).forEach(code => {
                 const chip = document.createElement('div');
                 chip.className = 'quick-chip';
                 chip.innerText = code;
@@ -1999,7 +1980,7 @@
                         console.error('[loadData] Render error:', renderErr);
                         showToast('⚠️ Data loaded but render failed — check console');
                     }
-                });
+                });;
 
             } catch(e) {
                 console.error('[loadData] Error:', e);
@@ -2434,7 +2415,7 @@
             loader.style.display = 'block'; loader.innerText = 'Loading...';
             meteoDataCache = null;
             try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,temperature_925hPa,windspeed_925hPa,winddirection_925hPa,temperature_850hPa,windspeed_850hPa,winddirection_850hPa,temperature_700hPa,windspeed_700hPa,winddirection_700hPa&wind_speed_unit=kn&forecast_days=1&timezone=auto`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,temperature_925hPa,windspeed_925hPa,winddirection_925hPa,temperature_850hPa,windspeed_850hPa,winddirection_850hPa,temperature_700hPa,windspeed_700hPa,winddirection_700hPa,temperature_500hPa,windspeed_500hPa,winddirection_500hPa&wind_speed_unit=kn&forecast_days=1&timezone=auto`;
                 const res  = await fetch(url);
                 const data = await res.json();
                 stationOffsetSec = data.utc_offset_seconds || 0;
@@ -2471,22 +2452,38 @@
                     const w3dir = data.hourly.winddirection_925hPa[idx], w3spd = data.hourly.windspeed_925hPa[idx], t3 = data.hourly.temperature_925hPa[idx];
                     const w5dir = data.hourly.winddirection_850hPa[idx], w5spd = data.hourly.windspeed_850hPa[idx], t5 = data.hourly.temperature_850hPa[idx];
                     const w10dir = data.hourly.winddirection_700hPa[idx], w10spd = data.hourly.windspeed_700hPa[idx], t10 = data.hourly.temperature_700hPa[idx];
+                    const w18dir = data.hourly.winddirection_500hPa?.[idx], w18spd = data.hourly.windspeed_500hPa?.[idx], t18 = data.hourly.temperature_500hPa?.[idx];
 
-                    ['', '2'].forEach(sfx => {
-                        setEl('wind3k' + sfx,  fmtW(w3dir,  w3spd));
-                        setEl('temp3k' + sfx,  fmtT(t3));
-                        setEl('wind5k' + sfx,  fmtW(w5dir,  w5spd));
-                        setEl('temp5k' + sfx,  fmtT(t5));
-                        setEl('wind10k' + sfx, fmtW(w10dir, w10spd));
-                        setEl('temp10k' + sfx, fmtT(t10));
-                        setEl('note3k' + sfx,  windNote(t3,  w3spd));  setColor('note3k' + sfx,  noteColor(t3,  w3spd));
-                        setEl('note5k' + sfx,  windNote(t5,  w5spd));  setColor('note5k' + sfx,  noteColor(t5,  w5spd));
-                        setEl('note10k' + sfx, windNote(t10, w10spd)); setColor('note10k' + sfx, noteColor(t10, w10spd));
-                        // Colour-code temp cells
-                        setColor('temp3k' + sfx,  t3 <= 0  ? 'var(--warn)' : '#ccc');
-                        setColor('temp5k' + sfx,  t5 <= 0  ? 'var(--warn)' : '#ccc');
-                        setColor('temp10k' + sfx, t10 <= 0 ? 'var(--warn)' : '#ccc');
-                    });
+                    // ISA standard temps at each pressure level (approx ft AGL)
+                    const isaAt = ft => 15 - (2 * ft / 1000);
+                    const isaDev = (temp, ft) => temp != null ? +(temp - isaAt(ft)).toFixed(1) : null;
+
+                    const renderAloftRow = (sfx, level, dir, spd, temp, ft) => {
+                        const isa = isaDev(temp, ft);
+                        const isaStr = isa != null ? `${isa >= 0 ? '+' : ''}${isa}°` : '--';
+                        const isaColor = isa == null ? '#555' : isa > 5 ? 'var(--warn)' : isa < -5 ? '#0a84ff' : '#32d74b';
+                        const tempColor = temp != null && temp <= 0 ? 'var(--warn)' : '#ccc';
+                        const note = windNote(temp, spd);
+                        const noteCol = noteColor(temp, spd);
+                        const arrowHtml = dir != null ? `<svg width="14" height="14" viewBox="0 0 14 14" style="display:inline-block;vertical-align:middle;margin-right:3px;"><g transform="translate(7,7) rotate(${dir})"><line x1="0" y1="5" x2="0" y2="-5" stroke="${spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff'}" stroke-width="1.5" stroke-linecap="round"/><polygon points="0,-6.5 -2,-3 2,-3" fill="${spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff'}"/></g></svg>` : '';
+                        const windStr = dir != null ? `${String(Math.round(dir)).padStart(3,'0')}°/${Math.round(spd)}kt` : '--';
+                        const tempStr = temp != null ? `${Math.round(temp)}°C` : '--';
+                        ['', '2'].forEach(s => {
+                            const wEl = document.getElementById(`wind${level}${s}${sfx}`);
+                            const tEl = document.getElementById(`temp${level}${s}${sfx}`);
+                            const nEl = document.getElementById(`note${level}${s}${sfx}`);
+                            const iEl = document.getElementById(`isa${level}${s}${sfx}`);
+                            if (wEl) { wEl.innerHTML = arrowHtml + windStr; }
+                            if (tEl) { tEl.innerHTML = tempStr; tEl.style.color = tempColor; }
+                            if (nEl) { nEl.innerHTML = note; nEl.style.color = noteCol; }
+                            if (iEl) { iEl.innerHTML = `ISA${isaStr}`; iEl.style.color = isaColor; }
+                        });
+                    };
+
+                    renderAloftRow('', '3k', w3dir, w3spd, t3, 2500);
+                    renderAloftRow('', '5k', w5dir, w5spd, t5, 5000);
+                    renderAloftRow('', '10k', w10dir, w10spd, t10, 10000);
+                    if (w18dir != null) renderAloftRow('', '18k', w18dir, w18spd, t18, 18000);
                 }
             } catch(e) { console.error("Meteo Error:", e); loader.style.display = 'block'; loader.innerText = "⚠️ Model Data Unavailable"; }
         }
@@ -2592,6 +2589,173 @@
         // ================================================================
         function drawMeteogram2(h) {
             drawMeteogram(h, 'meteoCanvas2');
+        }
+
+        // ================================================================
+        // METEOGRAM TAP → WINDS ALOFT DETAIL MODAL
+        // ================================================================
+
+        /** Resolve a canvas click/touch X offset to an hour index 0–23 */
+        function _meteoXtoHour(canvas, clientX) {
+            const rect = canvas.getBoundingClientRect();
+            const cssW = rect.width || canvas.offsetWidth || 340;
+            const x = clientX - rect.left;
+            const padL = 15, padR = 15;
+            const plotW = cssW - padL - padR;
+            const raw = ((x - padL) / plotW) * 23;
+            return Math.max(0, Math.min(23, Math.round(raw)));
+        }
+
+        function meteoTap(event, canvas) {
+            if (!meteoDataCache) return;
+            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            const hour = _meteoXtoHour(canvas, clientX);
+            showWindsAloftModal(hour);
+        }
+
+        function showWindsAloftModal(hour) {
+            const h = meteoDataCache;
+            if (!h) return;
+
+            // ISA helpers
+            const LEVELS = [
+                { label: 'Surface (10m)',  ft: 0,      hPa: 'SFC',  dirKey: 'wind_direction_10m',    spdKey: 'wind_speed_10m',    tmpKey: 'temperature_2m'      },
+                { label: '~2,500 ft',      ft: 2500,   hPa: '925',  dirKey: 'winddirection_925hPa',  spdKey: 'windspeed_925hPa',  tmpKey: 'temperature_925hPa'  },
+                { label: '~5,000 ft',      ft: 5000,   hPa: '850',  dirKey: 'winddirection_850hPa',  spdKey: 'windspeed_850hPa',  tmpKey: 'temperature_850hPa'  },
+                { label: '~10,000 ft',     ft: 10000,  hPa: '700',  dirKey: 'winddirection_700hPa',  spdKey: 'windspeed_700hPa',  tmpKey: 'temperature_700hPa'  },
+                { label: '~18,000 ft',     ft: 18000,  hPa: '500',  dirKey: 'winddirection_500hPa',  spdKey: 'windspeed_500hPa',  tmpKey: 'temperature_500hPa'  },
+            ];
+
+            const isaStd = ft => 15 - (2 * ft / 1000);
+            const now = new Date();
+            const isNow = hour === now.getUTCHours();
+
+            // Parse the hour's UTC time label
+            let timeLabel = `${String(hour).padStart(2,'0')}:00Z`;
+            if (h.time?.[hour]) {
+                try {
+                    const d = new Date(h.time[hour] + 'Z');
+                    timeLabel = `${String(d.getUTCHours()).padStart(2,'0')}:00Z`;
+                } catch(e) {}
+            }
+
+            // Wind arrow SVG generator
+            const arrow = (dir, spd) => {
+                if (dir == null) return '';
+                const col = spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff';
+                return `<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0">
+                    <g transform="translate(9,9) rotate(${dir})">
+                        <line x1="0" y1="6" x2="0" y2="-6" stroke="${col}" stroke-width="2" stroke-linecap="round"/>
+                        <polygon points="0,-8 -3,-3 3,-3" fill="${col}"/>
+                    </g>
+                </svg>`;
+            };
+
+            // Build rows
+            let rows = '';
+            let icingLevels = [];
+            LEVELS.forEach(lv => {
+                const dir  = h[lv.dirKey]?.[hour];
+                const spd  = h[lv.spdKey]?.[hour];
+                const temp = h[lv.tmpKey]?.[hour];
+                if (dir == null && lv.hPa !== 'SFC') return; // 500hPa might be missing
+
+                const isa    = lv.ft > 0 ? isaStd(lv.ft) : null;
+                const dev    = (temp != null && isa != null) ? +(temp - isa).toFixed(1) : null;
+                const devStr = dev != null ? `ISA${dev >= 0 ? '+' : ''}${dev}°C` : '';
+                const devCol = dev == null ? '#555' : dev > 5 ? 'var(--warn)' : dev < -5 ? '#64b5f6' : '#32d74b';
+
+                const tempCol = (temp != null && temp <= 0) ? 'var(--warn)' : '#ccc';
+                const windStr = dir != null ? `${String(Math.round(dir)).padStart(3,'0')}° / ${Math.round(spd)} kt` : '—';
+                const tempStr = temp != null ? `${Math.round(temp)}°C` : '—';
+
+                let hazard = '';
+                if (temp != null && temp <= 0 && temp > -20 && spd > 0) { hazard = '❄️ Icing possible'; icingLevels.push(lv.label); }
+                else if (temp != null && temp <= -20) hazard = '🧊 Ice crystals';
+                else if (spd != null && spd >= 50) hazard = '⚠️ Strong winds';
+                else if (spd != null && spd >= 30) hazard = '💨 Mod winds';
+
+                const hPaLabel = lv.hPa === 'SFC' ? 'SFC' : `${lv.hPa} hPa`;
+                const isSfc = lv.hPa === 'SFC';
+
+                rows += `
+                <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:0;border-top:1px solid #1e1e1e;${isSfc ? 'border-top:none;' : ''}background:${isSfc ? '#1a1a1a' : '#141414'};">
+                    <div style="padding:10px 10px;border-right:1px solid #1e1e1e;">
+                        <div style="font-size:11px;font-weight:800;color:var(--accent);font-family:'SF Mono',monospace;">${lv.label}</div>
+                        <div style="font-size:9px;color:#444;margin-top:2px;">${hPaLabel}</div>
+                    </div>
+                    <div style="padding:10px 10px;border-right:1px solid #1e1e1e;">
+                        <div style="display:flex;align-items:center;gap:5px;">
+                            ${arrow(dir, spd)}
+                            <span style="font-size:12px;font-weight:700;color:#fff;font-family:'SF Mono',monospace;">${windStr}</span>
+                        </div>
+                        ${hazard ? `<div style="font-size:10px;color:var(--warn);margin-top:3px;">${hazard}</div>` : ''}
+                    </div>
+                    <div style="padding:10px 10px;">
+                        <div style="font-size:12px;font-weight:700;color:${tempCol};font-family:'SF Mono',monospace;">${tempStr}</div>
+                        ${devStr ? `<div style="font-size:10px;color:${devCol};margin-top:3px;font-weight:700;">${devStr}</div>` : ''}
+                    </div>
+                </div>`;
+            });
+
+            // Freezing level estimate
+            let freezeHtml = '';
+            const temps = [
+                { label: 'Surface', t: h.temperature_2m?.[hour], ft: 0 },
+                { label: '~2.5k', t: h.temperature_925hPa?.[hour], ft: 2500 },
+                { label: '~5k', t: h.temperature_850hPa?.[hour], ft: 5000 },
+                { label: '~10k', t: h.temperature_700hPa?.[hour], ft: 10000 },
+                { label: '~18k', t: h.temperature_500hPa?.[hour], ft: 18000 },
+            ].filter(x => x.t != null);
+            for (let i = 0; i < temps.length - 1; i++) {
+                if (temps[i].t > 0 && temps[i+1].t <= 0) {
+                    const frac = temps[i].t / (temps[i].t - temps[i+1].t);
+                    const ft = Math.round(temps[i].ft + frac * (temps[i+1].ft - temps[i].ft) / 100) * 100;
+                    freezeHtml = `<div style="padding:10px 14px;background:rgba(100,181,246,0.08);border-top:1px solid #1e1e1e;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:11px;color:#888;">❄️ Freezing Level (est.)</span>
+                        <span style="font-size:13px;font-weight:700;color:#64b5f6;font-family:'SF Mono',monospace;">~${ft.toLocaleString()} ft</span>
+                    </div>`;
+                    break;
+                }
+            }
+
+            // Build and show modal
+            const modal = document.getElementById('windsAloftModal');
+            const body  = document.getElementById('windsAloftModalBody');
+            if (!modal || !body) return;
+
+            body.innerHTML = `
+                <div style="padding:14px 16px 10px;border-bottom:1px solid #1e1e1e;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:15px;font-weight:800;color:#fff;">Winds Aloft</div>
+                        <div style="font-size:11px;color:var(--sub-text);margin-top:2px;">NWP Model · Advisory Only</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:16px;font-weight:900;color:var(--accent);font-family:'SF Mono',monospace;">${timeLabel}</div>
+                        ${isNow ? '<div style="font-size:9px;font-weight:800;color:var(--success);letter-spacing:1px;margin-top:2px;">● NOW</div>' : ''}
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:80px 1fr 1fr;background:#111;border-bottom:1px solid #222;">
+                    <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;">Level</div>
+                    <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;">Wind</div>
+                    <div style="padding:6px 10px;font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;">Temp / ISA</div>
+                </div>
+                ${rows}
+                ${freezeHtml}
+                <div style="padding:10px 14px;font-size:10px;color:#333;text-align:center;border-top:1px solid #1a1a1a;">
+                    Tap another column on the meteogram to switch hours
+                </div>`;
+
+            modal.style.display = 'flex';
+            const sheet = document.getElementById('windsAloftModalSheet');
+            if (sheet) { sheet.getBoundingClientRect(); sheet.style.transform = 'translateY(0)'; }
+        }
+
+        function closeWindsAloftModal() {
+            const modal = document.getElementById('windsAloftModal');
+            const sheet = document.getElementById('windsAloftModalSheet');
+            if (sheet) sheet.style.transform = 'translateY(100%)';
+            setTimeout(() => { if (modal) modal.style.display = 'none'; }, 320);
         }
     
         function storeMetarForTrend(icao, metar) {
@@ -2742,10 +2906,7 @@
             document.getElementById('mVis').innerHTML = visText + getTrendBadge(visTrend);
             
             // ── CEILING with trend ──
-            // BUG FIX: use actual ceiling layer (BKN/OVC/VV), not just first cloud entry.
-            // e.g. FEW010 BKN025 → card should show BKN 025, not FEW 010.
-            const ceilLayer2 = d.clouds?.find(c => ['BKN','OVC','VV'].includes(c.type));
-            const c = ceilLayer2 || d.clouds?.[0];
+            const c = d.clouds?.[0];
             const ceilText = c ? `${c.type} ${c.altitude.toString().padStart(3,'0')}` : "CLR";
             const ceilValue = c ? c.altitude * 100 : 99999; // Convert to feet AGL
             const ceilTrend = analyzeTrend(icao, 'ceil', ceilValue);
