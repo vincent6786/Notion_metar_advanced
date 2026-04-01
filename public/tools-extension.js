@@ -3625,6 +3625,8 @@ function set160Topic(t) {
 
 function set160Mode(m) {
     _160.mode = m;
+    // Reset quiz question state when entering quiz mode so it always starts fresh
+    if (m === 'quiz') _160.quizQ = null;
     ['ref','calc','example','quiz'].forEach(id => {
         const b = document.getElementById('r60m-' + id);
         if (b) { b.style.background = id === m ? 'var(--accent)' : 'transparent'; b.style.color = id === m ? '#fff' : '#888'; }
@@ -4272,10 +4274,12 @@ function r60NewQ() {
     _160.quizQ = { answer, unit };
     area.innerHTML = _card('Question', q) +
         `<div style="display:flex;gap:8px;align-items:center;">
-            <input id="r60ans" type="number" placeholder="Your answer" style="flex:1;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:12px;color:#fff;font-size:15px;font-weight:700;">
+            <input id="r60ans" type="number" placeholder="Your answer"
+                   onkeypress="if(event.key==='Enter') r60CheckAns()"
+                   style="flex:1;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:12px;color:#fff;font-size:15px;font-weight:700;">
             <span style="color:#888;font-size:13px;font-weight:700;min-width:40px;">${unit}</span>
         </div>
-        <button onclick="r60CheckAns()" style="width:100%;padding:12px;background:#30d158;color:#000;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;margin-top:10px;">Check Answer</button>
+        <button onclick="r60CheckAns()" style="width:100%;padding:12px;background:#30d158;color:#000;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;margin-top:10px;">Check Answer ↵</button>
         <div id="r60feedback" style="margin-top:10px;font-size:13px;font-weight:700;text-align:center;min-height:20px;"></div>`;
     // Focus input
     setTimeout(() => document.getElementById('r60ans')?.focus(), 100);
@@ -4311,6 +4315,8 @@ function r60CheckAns() {
     if (isCorrect) {
         _160.quizScore++;
         fb.innerHTML = `<span style="color:#30d158;">✓ Correct! (${correct.toFixed(1)} ${unit})</span>`;
+        // Auto-advance to the next question after a brief pause so the user can see the result
+        setTimeout(() => r60NewQ(), 1400);
     } else {
         fb.innerHTML = `<span style="color:#ff453a;">✗ Answer: ${correct.toFixed(1)} ${unit}</span>`;
     }
