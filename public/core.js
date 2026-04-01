@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.6.6',  // ← set once in index.html
-            title: 'METAR GO — v4.6.6',
+            version: window.APP_VERSION || '4.6.7',  // ← set once in index.html
+            title: 'METAR GO — v4.6.7',
             changes: [
                 {
                     icon: '🌬️',
@@ -2419,10 +2419,6 @@
                         drawMeteogram(meteoDataCache);
                         drawMeteogram2(meteoDataCache);
                     }, 50);
-                    const now = new Date();
-                    const idx = now.getUTCHours();
-                    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-                    const setColor = (id, col) => { const el = document.getElementById(id); if (el) el.style.color = col; };
                     const windNote  = (t, s) => { if (t <= 0 && t > -20) return '❄ Icing possible'; if (t <= -20) return '🧊 Ice crystals'; if (s >= 50) return '⚠ Strong winds'; if (s >= 30) return 'Mod winds'; return 'Normal'; };
                     const noteColor = (t, s) => { if (t <= 0 && t > -20) return 'var(--warn)'; if (s >= 50) return 'var(--danger)'; if (s >= 30) return 'var(--mvfr)'; return 'var(--sub-text)'; };
 
@@ -2443,12 +2439,6 @@
                     const isaAt    = ft  => 15 - (2 * ft / 1000);
                     const isaDev   = (temp, ft) => temp != null ? +(temp - isaAt(ft)).toFixed(1) : null;
                     const isaColor = dev => dev == null ? '#555' : dev > 5 ? 'var(--warn)' : dev < -5 ? '#0a84ff' : '#32d74b';
-
-                    const arrowSvgSm = (dir, spd) => {
-                        if (dir == null) return '';
-                        const col = spd >= 50 ? '#ff453a' : spd >= 30 ? '#ff9f0a' : '#0a84ff';
-                        return `<svg width="12" height="12" viewBox="0 0 14 14" style="display:inline-block;vertical-align:middle;margin-right:2px;flex-shrink:0"><g transform="translate(7,7) rotate(${dir})"><line x1="0" y1="5" x2="0" y2="-5" stroke="${col}" stroke-width="1.5" stroke-linecap="round"/><polygon points="0,-6.5 -2,-3 2,-3" fill="${col}"/></g></svg>`;
-                    };
 
                     const arrowSvgSm = (dir, spd) => {
                         if (dir == null) return '';
