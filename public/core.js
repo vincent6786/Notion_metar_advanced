@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.1',  // ← set once in index.html
-            title: 'METAR GO — v4.7.1',
+            version: window.APP_VERSION || '4.7.2',  // ← set once in index.html
+            title: 'METAR GO — v4.7.2',
             changes: [
+                {
+                    icon: '⇄',
+                    title: 'Weather Crosscheck Mode',
+                    desc: 'New TAF vs METAR side-by-side panel. Tap ⇄ Crosscheck in the forecast header to compare what the TAF predicted against what the METAR actually shows — wind, visibility, ceiling, and weather phenomena all color-coded green/amber/red by deviation. Includes an accuracy score and educational tip. Perfect for students learning TAF reliability.'
+                },
                 {
                     icon: '📋',
                     title: 'NOTAM Display Fixed',
@@ -15,11 +20,6 @@
                     icon: '🌬️',
                     title: 'Interactive Winds Aloft',
                     desc: 'Tap any hour on the 24h meteogram to see a full winds aloft card from Surface to ~18,000 ft — wind arrows, ISA deviation, and freezing level. Use ‹ › buttons or the slider to browse through all 24 hours without closing the panel.'
-                },
-                {
-                    icon: '📤',
-                    title: 'Share Briefing',
-                    desc: 'Tap 📤 Brief next to the raw METAR to generate and share a full flight briefing — decoded METAR, TAF summary (current + worst in 12h), and top NOTAMs — via your native share sheet (LINE, WhatsApp, AirDrop) or clipboard.'
                 }
             ]
         };
