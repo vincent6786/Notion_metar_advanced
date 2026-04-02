@@ -954,6 +954,66 @@
             border-left: 4px solid var(--sub-text);
             animation: slideUpFade 0.2s ease-out;
         }
+        .crosscheck-panel {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 12px;
+            margin-top: 8px;
+            animation: slideUpFade 0.2s ease-out;
+        }
+        .xcheck-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--sub-text);
+        }
+        .xcheck-cat-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .xcheck-table { width: 100%; border-collapse: collapse; }
+        .xcheck-table td { padding: 5px 4px; vertical-align: middle; }
+        .xcheck-table tr + tr td { border-top: 1px solid #2a2a2c; }
+        .xcheck-param {
+            color: var(--sub-text);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            width: 68px;
+        }
+        .xcheck-val {
+            font-weight: 600;
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            color: var(--text);
+            width: 88px;
+        }
+        .xcheck-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 5px;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .xcheck-score {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--sub-text);
+        }
         #tafNeedle {
             position: absolute;
             top: -4px;

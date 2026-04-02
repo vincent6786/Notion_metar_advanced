@@ -344,6 +344,11 @@
             <div style="display:flex; align-items:center; gap:6px;">
                 <span>Official Forecast Visualization</span>
                 <span onclick="toggleLegend(true)" style="cursor:pointer; opacity:0.6;">ⓘ</span>
+                <button id="crosscheckBtn" onclick="toggleCrosscheck()"
+                        class="copy-btn"
+                        style="font-size:10px;padding:2px 8px;background:rgba(10,132,255,0.08);border-color:#333;color:var(--sub-text);">
+                    ⇄ Crosscheck
+                </button>
             </div>
             <span id="tafIssued">--</span>
         </div>
@@ -367,6 +372,7 @@
                 </div>
             </div>
         </div>
+        <div id="tafCrosscheck" class="crosscheck-panel" style="display:none;"></div>
         <div class="section-header-row">
             <div class="section-title" style="margin:0;">RAW TAF</div>
             <div style="display:flex;gap:6px;align-items:center;">
@@ -610,6 +616,11 @@
                 <div style="display:flex; align-items:center; gap:6px;">
                     <span>Official Forecast Visualization</span>
                     <span onclick="toggleLegend(true)" style="cursor:pointer; opacity:0.6;">ⓘ</span>
+                    <button id="crosscheckBtn2" onclick="toggleCrosscheck()"
+                            class="copy-btn"
+                            style="font-size:10px;padding:2px 8px;background:rgba(10,132,255,0.08);border-color:#333;color:var(--sub-text);">
+                        ⇄ Crosscheck
+                    </button>
                 </div>
                 <span id="tafIssued2">--</span>
             </div>
@@ -633,6 +644,7 @@
                     </div>
                 </div>
             </div>
+            <div id="tafCrosscheck2" class="crosscheck-panel" style="display:none;"></div>
             <div class="section-header-row">
                 <div class="section-title" style="margin:0;">RAW TAF</div>
                 <div style="display:flex;gap:6px;align-items:center;">

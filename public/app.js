@@ -222,6 +222,234 @@
         // ================================================================
         // 18. TAF RENDERING
         // ================================================================
+
+        // --- Weather Crosscheck helpers ---
+
+        function getCeilingFt(clouds) {
+            if (!clouds || clouds.length === 0) return null;
+            const layer = clouds.find(c => ['BKN','OVC','VV'].includes(c.type));
+            return layer ? layer.altitude * 100 : null;
+        }
+
+        function wxSeverity(wxCodes) {
+            if (!wxCodes || wxCodes.length === 0) return 0;
+            const r = wxCodes.map(x => x.repr.toUpperCase()).join(' ');
+            if (r.includes('TS')) return 4;
+            if (/FZ|GR|GS/.test(r)) return 3;
+            if (/SN|SG|PL|IC/.test(r)) return 2;
+            if (/RA|DZ|SH|FG|BR|HZ|FU|VA|SA|DU/.test(r)) return 1;
+            return 0;
+        }
+
+        function renderCrosscheck() {
+            const panel  = document.getElementById('tafCrosscheck');
+            const panel2 = document.getElementById('tafCrosscheck2');
+            if (!panel) return;
+
+            const isOpen = localStorage.getItem('efb_crosscheck_open') === 'true';
+            const display = isOpen ? 'block' : 'none';
+            panel.style.display = display;
+            if (panel2) panel2.style.display = display;
+
+            // Sync button active state
+            ['', '2'].forEach(s => {
+                const btn = document.getElementById('crosscheckBtn' + s);
+                if (!btn) return;
+                btn.style.background   = isOpen ? 'rgba(10,132,255,0.2)' : 'rgba(10,132,255,0.08)';
+                btn.style.borderColor  = isOpen ? 'var(--accent)' : '#333';
+                btn.style.color        = isOpen ? 'var(--accent)' : 'var(--sub-text)';
+            });
+
+            if (!isOpen) return;
+
+            // Guard: need both TAF periods and current METAR
+            if (!tafDataCache || !lastMetarObj) {
+                const msg = `<div style="color:var(--sub-text);font-size:11px;text-align:center;padding:12px;">${!tafDataCache ? 'Load an airport to see the TAF crosscheck.' : 'No METAR data loaded.'}</div>`;
+                panel.innerHTML = msg;
+                if (panel2) panel2.innerHTML = msg;
+                return;
+            }
+
+            // Find active TAF period
+            const now = new Date();
+            const activeIdx = tafDataCache.findIndex(f => {
+                const s = new Date(f.start_time.dt), e = new Date(f.end_time.dt);
+                return now >= s && now < e;
+            });
+            if (activeIdx === -1) {
+                const msg = `<div style="color:var(--sub-text);font-size:11px;text-align:center;padding:12px;">⚠️ No active TAF period — TAF may be expired.</div>`;
+                panel.innerHTML = msg;
+                if (panel2) panel2.innerHTML = msg;
+                return;
+            }
+
+            const taf = tafDataCache[activeIdx];
+            const m   = lastMetarObj;
+
+            // Period label
+            const ps = new Date(taf.start_time.dt), pe = new Date(taf.end_time.dt);
+            const periodStr = `${ps.getUTCHours().toString().padStart(2,'0')}z – ${pe.getUTCHours().toString().padStart(2,'0')}z`;
+
+            // Badge builder
+            function xBadge(color, label) {
+                const bg = color === 'green' ? 'rgba(50,215,75,0.15)'  : color === 'amber' ? 'rgba(255,159,10,0.15)' : 'rgba(255,69,58,0.15)';
+                const fg = color === 'green' ? 'var(--success)' : color === 'amber' ? 'var(--warn)' : 'var(--danger)';
+                return `<span class="xcheck-badge" style="background:${bg};color:${fg};">${label}</span>`;
+            }
+
+            let score = 0, total = 0;
+            const rows = [];
+
+            // Wind Direction
+            const tafDir   = taf.wind_direction?.value;
+            const metarDir = m.wind_direction?.value;
+            if (tafDir != null && metarDir != null) {
+                total++;
+                const diff = Math.min(Math.abs(tafDir - metarDir), 360 - Math.abs(tafDir - metarDir));
+                const col  = diff <= 20 ? 'green' : diff <= 45 ? 'amber' : 'red';
+                if (col === 'green') score++;
+                rows.push(['Wind Dir', `${tafDir}°`, `${metarDir}°`, xBadge(col, `±${diff}°`)]);
+            } else {
+                rows.push(['Wind Dir', tafDir == null ? 'VRB' : `${tafDir}°`, metarDir == null ? 'VRB' : `${metarDir}°`, xBadge('green', 'N/A')]);
+            }
+
+            // Wind Speed
+            const tafSpd   = taf.wind_speed?.value ?? 0;
+            const metarSpd = m.wind_speed?.value ?? 0;
+            total++;
+            const spdDiff = Math.abs(tafSpd - metarSpd);
+            const spdCol  = spdDiff <= 5 ? 'green' : spdDiff <= 10 ? 'amber' : 'red';
+            if (spdCol === 'green') score++;
+            rows.push(['Wind Spd', `${tafSpd} kt`, `${metarSpd} kt`, xBadge(spdCol, `±${spdDiff} kt`)]);
+
+            // Gust
+            const tafGust   = taf.wind_gust?.value ?? null;
+            const metarGust = m.wind_gust?.value ?? null;
+            if (tafGust != null || metarGust != null) {
+                total++;
+                let gustCol, gustLabel;
+                if (tafGust == null && metarGust != null) {
+                    gustCol   = metarGust > 15 ? 'red' : 'amber';
+                    gustLabel = `!G${metarGust}`;
+                } else if (tafGust != null && metarGust == null) {
+                    gustCol   = 'green';
+                    gustLabel = 'No gust';
+                } else {
+                    const gd  = Math.abs(tafGust - metarGust);
+                    gustCol   = gd <= 5 ? 'green' : gd <= 10 ? 'amber' : 'red';
+                    gustLabel = `±${gd} kt`;
+                }
+                if (gustCol === 'green') score++;
+                rows.push(['Gust', tafGust ? `G${tafGust} kt` : 'None', metarGust ? `G${metarGust} kt` : 'None', xBadge(gustCol, gustLabel)]);
+            }
+
+            // Visibility
+            const tafVisSM   = taf.visibility ? visToSM(taf.visibility.value, tafUnitsCache?.visibility) : 10;
+            const metarVisSM = m.visibility   ? visToSM(m.visibility.value, m.units?.visibility)         : null;
+            if (metarVisSM != null) {
+                total++;
+                const tafV   = Math.min(tafVisSM, 10), metarV = Math.min(metarVisSM, 10);
+                const visDiff = Math.abs(tafV - metarV);
+                const visCol  = visDiff <= 1 ? 'green' : visDiff <= 3 ? 'amber' : 'red';
+                if (visCol === 'green') score++;
+                const tafVStr   = tafV   >= 10 ? 'P6SM' : formatVisDisplay(tafVisSM);
+                const metarVStr = metarV >= 10 ? 'P6SM' : formatVisDisplay(metarVisSM);
+                rows.push(['Visibility', tafVStr, metarVStr, xBadge(visCol, `±${visDiff.toFixed(1)} SM`)]);
+            }
+
+            // Ceiling
+            const tafCeil   = getCeilingFt(taf.clouds);
+            const metarCeil = getCeilingFt(m.clouds);
+            total++;
+            if (tafCeil == null && metarCeil == null) {
+                score++;
+                rows.push(['Ceiling', 'SKC', 'SKC', xBadge('green', 'Clear')]);
+            } else if (tafCeil == null || metarCeil == null) {
+                const ceilVal = tafCeil == null ? metarCeil : tafCeil;
+                const ceilCol = ceilVal > 3000 ? 'green' : ceilVal > 1000 ? 'amber' : 'red';
+                if (ceilCol === 'green') score++;
+                const sign = tafCeil == null ? '+' : '-';
+                rows.push(['Ceiling', tafCeil ? `${tafCeil.toLocaleString()}'` : 'SKC', metarCeil ? `${metarCeil.toLocaleString()}'` : 'SKC', xBadge(ceilCol, `${sign}${ceilVal.toLocaleString()}'`)]);
+            } else {
+                const cDiff   = Math.abs(tafCeil - metarCeil);
+                const ceilCol = cDiff <= 500 ? 'green' : cDiff <= 1000 ? 'amber' : 'red';
+                if (ceilCol === 'green') score++;
+                rows.push(['Ceiling', `${tafCeil.toLocaleString()}'`, `${metarCeil.toLocaleString()}'`, xBadge(ceilCol, `±${cDiff.toLocaleString()}'`)]);
+            }
+
+            // Weather phenomena
+            const tafSev    = wxSeverity(taf.wx_codes);
+            const metarSev  = wxSeverity(m.wx_codes);
+            const tafWxStr  = taf.wx_codes?.length  ? taf.wx_codes.map(x => x.repr).join(' ')  : 'NSW';
+            const metarWxStr = m.wx_codes?.length   ? m.wx_codes.map(x => x.repr).join(' ')   : 'None';
+            total++;
+            const sevDiff = Math.abs(tafSev - metarSev);
+            const wxCol   = sevDiff === 0 ? 'green' : sevDiff === 1 ? 'amber' : 'red';
+            if (wxCol === 'green') score++;
+            rows.push(['Weather', tafWxStr, metarWxStr, xBadge(wxCol, sevDiff === 0 ? 'Match' : sevDiff === 1 ? 'Close' : 'Miss')]);
+
+            // Flight category badges
+            const tafRules   = taf.flight_rules || '--';
+            const metarRules = m.flight_rules   || '--';
+            const catBadge = (rules) => {
+                const cls = rules.toLowerCase();
+                return `<span class="badge cat-${cls}" style="padding:2px 8px;border-radius:5px;font-size:11px;font-weight:800;">${rules}</span>`;
+            };
+
+            // Score + educational tip
+            const pct = total > 0 ? score / total : 0;
+            const scoreColor = pct >= 0.83 ? 'var(--success)' : pct >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+            const tip = pct >= 0.83 ? 'TAF highly accurate — weather evolving as forecast.'
+                      : pct >= 0.5  ? 'Minor deviations — common in transitional weather. Check trends.'
+                      :               'Significant deviations — always verify with latest METAR before flight.';
+
+            // Table rows HTML
+            const rowsHTML = rows.map(([param, tafVal, metarVal, badgeHtml]) => `
+                <tr>
+                    <td class="xcheck-param">${param}</td>
+                    <td class="xcheck-val">${tafVal}</td>
+                    <td class="xcheck-val">${metarVal}</td>
+                    <td style="text-align:right;">${badgeHtml}</td>
+                </tr>`).join('');
+
+            const html = `
+                <div class="xcheck-header">
+                    <span>TAF vs METAR Crosscheck</span>
+                    <span style="font-weight:400;color:#555;text-transform:none;letter-spacing:0;">Period: ${periodStr}</span>
+                </div>
+                <div class="xcheck-cat-row">
+                    <span style="font-size:10px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.4px;">Forecast</span>
+                    ${catBadge(tafRules)}
+                    <span style="color:#444;margin:0 2px;">→</span>
+                    <span style="font-size:10px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.4px;">Actual</span>
+                    ${catBadge(metarRules)}
+                </div>
+                <table class="xcheck-table">
+                    <thead>
+                        <tr>
+                            <td class="xcheck-param"></td>
+                            <td style="font-size:10px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.4px;padding:4px 4px 6px;">TAF Forecast</td>
+                            <td style="font-size:10px;font-weight:700;color:var(--sub-text);text-transform:uppercase;letter-spacing:0.4px;padding:4px 4px 6px;">METAR Actual</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHTML}</tbody>
+                </table>
+                <div class="xcheck-score">
+                    <span style="color:${scoreColor};font-weight:800;">${score}/${total} within tolerance</span>
+                    <span style="margin-left:6px;">— ${tip}</span>
+                </div>`;
+
+            panel.innerHTML = html;
+            if (panel2) { panel2.innerHTML = html; }
+        }
+
+        function toggleCrosscheck() {
+            const nowOpen = localStorage.getItem('efb_crosscheck_open') !== 'true';
+            localStorage.setItem('efb_crosscheck_open', String(nowOpen));
+            renderCrosscheck();
+        }
+
         function renderTaf(d) {
             // Raw TAF text
             document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
@@ -329,6 +557,7 @@
                 showTafDetail(activeIdx, activeCol);
             }
             if (stationSunTimes) updateTafSkyGradient(startT, endT);
+            renderCrosscheck();
         }
 
         function toggleTafNeedleTooltip() {
