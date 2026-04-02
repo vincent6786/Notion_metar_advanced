@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.0',  // ← set once in index.html
-            title: 'METAR GO — v4.7.0',
+            version: window.APP_VERSION || '4.7.1',  // ← set once in index.html
+            title: 'METAR GO — v4.7.1',
             changes: [
+                {
+                    icon: '📋',
+                    title: 'NOTAM Display Fixed',
+                    desc: 'NOTAMs now load correctly via the /api/notam proxy — US airports (K/P prefix) pull from the official FAA AIM database, international airports fall back to aviationweather.gov. NOTAMs also now appear on both the main tab and the Weather tab.'
+                },
                 {
                     icon: '🌬️',
                     title: 'Interactive Winds Aloft',
@@ -15,11 +20,6 @@
                     icon: '📤',
                     title: 'Share Briefing',
                     desc: 'Tap 📤 Brief next to the raw METAR to generate and share a full flight briefing — decoded METAR, TAF summary (current + worst in 12h), and top NOTAMs — via your native share sheet (LINE, WhatsApp, AirDrop) or clipboard.'
-                },
-                {
-                    icon: '📋',
-                    title: 'NOTAM Fix',
-                    desc: 'NOTAMs for US airports (KMHR etc.) now load from the official FAA database (notams.aim.faa.gov) via a secure server proxy — the same source as the FAA NOTAM search website. International airports continue to use aviationweather.gov.'
                 }
             ]
         };
@@ -2026,6 +2026,8 @@
                 } else {
                     container.innerHTML = '<div style="color:#555;font-style:italic;padding:8px 0;">No active NOTAMs.</div>';
                 }
+                const c2 = document.getElementById('notamList2');
+                if (c2) c2.innerHTML = container.innerHTML;
                 return;
             }
 
@@ -2083,15 +2085,17 @@
 
             container.innerHTML = html ||
                 '<div style="color:#555;font-style:italic;padding:8px;">No active NOTAMs.</div>';
+            const c2 = document.getElementById('notamList2');
+            if (c2) c2.innerHTML = container.innerHTML;
         }
 
         // ================================================================
-        // 13b. FAA NOTAM FETCH (aviationweather.gov — free, no key)
+        // 13b. FAA NOTAM FETCH (via /api/notam proxy)
         // ================================================================
         async function fetchNotamsFAA(icao) {
-            // aviationweather.gov/api/data/notam — free public API, CORS enabled,
-            // no key needed, browser can call it directly.
-            // Coverage: US airports (K/P prefix) only — returns [] for international.
+            // /api/notam proxy — routes US airports (K/P) to notams.aim.faa.gov
+            // (official FAA AIM database) and falls back to aviationweather.gov
+            // for international airports. No API key required.
             const cacheKey = `cache_notam_${icao}`;
 
             // Check cache first (5 min)
@@ -2103,9 +2107,9 @@
                 } catch(e) {}
             }
 
-            const url  = `https://aviationweather.gov/api/data/notam?icaos=${icao}&format=json`;
+            const url  = `/api/notam?station=${icao}`;
             const res  = await fetch(url);
-            if (!res.ok) throw new Error(`AWC NOTAM ${res.status}`);
+            if (!res.ok) throw new Error(`NOTAM proxy ${res.status}`);
             const data = await res.json();
 
             const notams = Array.isArray(data) ? data : [];
