@@ -164,7 +164,7 @@ export default async function handler(req, res) {
         await kv.srem('efb:users:_registry', key);
         // Also clean up usage keys (best effort)
         const today = getTodayKey();
-        kv.del(`efb:users:${key}:calls:${today}`).catch(() => {});
+        kv.del(`efb:users:${key}:calls:${today}`).catch(e => console.error('[Access] Cleanup failed:', e.message));
         return res.json({ success: true });
     }
 

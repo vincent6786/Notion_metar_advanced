@@ -132,7 +132,7 @@ export default async function handler(req, res) {
             case 'POST': {
                 const { pin, key, value } = req.body;
                 if (!isValidPin(pin))                        return res.status(400).json({ error: 'Invalid PIN' });
-                if (key === undefined || value === undefined) return res.status(400).json({ error: 'Missing key or value' });
+                if (key == null || value == null) return res.status(400).json({ error: 'Missing key or value' });
                 if (key.startsWith('_'))                     return res.status(400).json({ error: 'Reserved key' });
 
                 // Store value + rolling TTL + update registry
