@@ -1859,6 +1859,14 @@
                 margin-top: 10px;
             }
 
+            /* ── Col 1: section-header-row — stack label above buttons so Copy isn't clipped ── */
+            #tab-metar > .section-header-row,
+            #weather-metar-pane > .section-header-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+
 
             /* ─── Other tabs: standard 3-col grids ─── */
             .info-grid  { grid-template-columns: 1fr 1fr 1fr; }
@@ -1918,6 +1926,9 @@
                 align-self: end;
                 margin-top: 8px;
                 margin-bottom: 4px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
             }
         
             /* Col 1 Row 4 – raw METAR text */
