@@ -2437,16 +2437,16 @@
                     const windNote  = (t, s) => { if (t <= 0 && t > -20) return '❄ Icing possible'; if (t <= -20) return '🧊 Ice crystals'; if (s >= 50) return '⚠ Strong winds'; if (s >= 30) return 'Mod winds'; return 'Normal'; };
                     const noteColor = (t, s) => { if (t <= 0 && t > -20) return 'var(--warn)'; if (s >= 50) return 'var(--danger)'; if (s >= 30) return 'var(--mvfr)'; return 'var(--sub-text)'; };
 
-                    // BUG FIX: use same NOW-finding as drawMeteogram — getUTCHours() is wrong
-                    // because Open-Meteo timezone=auto returns local-time indexed arrays.
+                    // Open-Meteo timezone=auto returns local-time strings; compare against local airport time.
                     const now = new Date();
-                    const nowUTCFrac = now.getUTCHours() + now.getUTCMinutes() / 60;
+                    const nowLocalFrac = (((now.getTime() / 1000) + stationOffsetSec) % 86400 + 86400) % 86400 / 3600;
                     let idx = 0;
                     if (data.hourly.time) {
                         let smallest = 999;
                         data.hourly.time.slice(0, 24).forEach((t, i) => {
-                            const d = new Date(t + 'Z');
-                            const diff = Math.abs(d.getUTCHours() + d.getUTCMinutes() / 60 - nowUTCFrac);
+                            const parts = t.split('T')[1].split(':');
+                            const tFrac = parseInt(parts[0], 10) + parseInt(parts[1] || '0', 10) / 60;
+                            const diff = Math.abs(tFrac - nowLocalFrac);
                             if (diff < smallest) { smallest = diff; idx = i; }
                         });
                     }
@@ -2525,14 +2525,15 @@
                 ctx.lineTo(x + stepX, getY(h.dewpoint_2m[i+1])); ctx.lineTo(x, getY(h.dewpoint_2m[i]));
                 ctx.closePath(); ctx.fillStyle = spread < 2.0 ? 'rgba(255,69,58,0.25)' : 'rgba(255,204,0,0.05)'; ctx.fill();
             }
-            // NOW line
-            const nowUTCHour = now.getUTCHours() + (now.getUTCMinutes() / 60);
+            // NOW line — compare against local airport time (Open-Meteo timezone=auto returns local timestamps)
+            const nowLocalHour = (((now.getTime() / 1000) + stationOffsetSec) % 86400 + 86400) % 86400 / 3600;
             let nowIndex = 0;
             if (h.time) {
                 let smallest = 999;
                 h.time.slice(0, len).forEach((t, i) => {
-                    const d = new Date(t + 'Z');
-                    const diff = Math.abs(d.getUTCHours() + (d.getUTCMinutes() / 60) - nowUTCHour);
+                    const parts = t.split('T')[1].split(':');
+                    const tFrac = parseInt(parts[0], 10) + parseInt(parts[1] || '0', 10) / 60;
+                    const diff = Math.abs(tFrac - nowLocalHour);
                     if (diff < smallest) { smallest = diff; nowIndex = i; }
                 });
             }
@@ -2623,15 +2624,16 @@
 
             _windsAloftHour = hour;
 
-            // ── NOW index (same algorithm as drawMeteogram NOW line) ──
-            const now        = new Date();
-            const nowUTCFrac = now.getUTCHours() + now.getUTCMinutes() / 60;
-            let nowIndex     = 0;
+            // ── NOW index — compare against local airport time (Open-Meteo timezone=auto returns local timestamps) ──
+            const now          = new Date();
+            const nowLocalFrac = (((now.getTime() / 1000) + stationOffsetSec) % 86400 + 86400) % 86400 / 3600;
+            let nowIndex       = 0;
             if (h.time) {
                 let smallest = 999;
                 h.time.slice(0, 24).forEach((t, i) => {
-                    const d    = new Date(t + 'Z');
-                    const diff = Math.abs(d.getUTCHours() + d.getUTCMinutes() / 60 - nowUTCFrac);
+                    const parts = t.split('T')[1].split(':');
+                    const tFrac = parseInt(parts[0], 10) + parseInt(parts[1] || '0', 10) / 60;
+                    const diff  = Math.abs(tFrac - nowLocalFrac);
                     if (diff < smallest) { smallest = diff; nowIndex = i; }
                 });
             }
@@ -2719,7 +2721,7 @@
             for (let i = 0; i < tArr.length - 1; i++) {
                 if (tArr[i].t > 0 && tArr[i+1].t <= 0) {
                     const frac = tArr[i].t / (tArr[i].t - tArr[i+1].t);
-                    const ft   = Math.round(tArr[i].ft + frac * (tArr[i+1].ft - tArr[i].ft) / 100) * 100;
+                    const ft   = Math.round((tArr[i].ft + frac * (tArr[i+1].ft - tArr[i].ft)) / 100) * 100;
                     freezeHtml = `<div style="padding:10px 14px;background:rgba(100,181,246,0.08);border-top:1px solid #1e1e1e;display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:11px;color:#888;">❄️ Freezing Level (est.)</span>
                         <span style="font-size:13px;font-weight:700;color:#64b5f6;font-family:'SF Mono',monospace;">~${ft.toLocaleString()} ft</span>
