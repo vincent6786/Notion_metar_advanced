@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.4',  // ← set once in index.html
-            title: 'METAR GO — v4.7.4',
+            version: window.APP_VERSION || '4.7.5',  // ← set once in index.html
+            title: 'METAR GO — v4.7.5',
             changes: [
                 {
                     icon: '❄️',
-                    title: 'Freezing Level Fixed',
-                    desc: 'Fixed a formula error that caused the freezing level to display wildly incorrect values (e.g. 500,000+ ft) whenever the freezing level was above the surface layer. The interpolation now correctly rounds to the nearest 100 ft.'
+                    title: 'Freezing Level & Meteogram Fixed',
+                    desc: 'Fixed a formula error that caused the freezing level to display wildly large values (e.g. 500,000+ ft). Also fixed the NOW marker on the meteogram — for non-UTC airports it was displaced by the full UTC offset (up to ±12 h).'
                 },
                 {
-                    icon: '🕐',
-                    title: 'Meteogram NOW Marker Fixed',
-                    desc: 'Fixed the NOW indicator on the 24h meteogram and winds aloft panel. For airports outside UTC, the marker was displaced by the full UTC offset (up to ±12 h). It now correctly tracks local airport time.'
+                    icon: '📡',
+                    title: 'Offline Mode Improved',
+                    desc: 'Added the Great Circle tool, settings panel, and PWA manifest to the offline precache. These now load correctly with no network connection.'
                 },
                 {
                     icon: '🛡️',
-                    title: 'API Stability Improvements',
-                    desc: 'Added defensive null/type checks across the weather, settings, and stream API handlers to prevent rare 500 errors from malformed requests. Multi-airport dashboard fetch also guards against null responses on network failure.'
+                    title: 'Stability Improvements',
+                    desc: 'Defensive null/type guards added across API handlers and the multi-airport dashboard. TAF timeline needle no longer appears on an expired forecast. Cloud base calculator guarded against invalid dew point data.'
                 }
             ]
         };

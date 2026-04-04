@@ -1629,7 +1629,7 @@ function calcE6B() {
     const da      = pa + 120 * (tempC - isaTemp);
     const tas     = ias * (1 + ((alt / 1000) * 0.02));
     let cloudBase = "--", freezingLvl = "--";
-    if (dewC !== null) { cloudBase = `${Math.round(((tempC - dewC) / 2.5) * 1000)} ft`; }
+    if (dewC !== null) { cloudBase = `${Math.max(0, Math.round(((tempC - dewC) / 2.5) * 1000))} ft`; }
     if (tempC > 0) { freezingLvl = `${Math.round(alt + (tempC / 2) * 1000)} ft`; } else { freezingLvl = "Surface"; }
 
     const paEl = document.getElementById('resPA');
