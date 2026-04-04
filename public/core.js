@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.3',  // ← set once in index.html
-            title: 'METAR GO — v4.7.3',
+            version: window.APP_VERSION || '4.7.4',  // ← set once in index.html
+            title: 'METAR GO — v4.7.4',
             changes: [
                 {
-                    icon: '⇄',
-                    title: 'Weather Crosscheck Mode',
-                    desc: 'New TAF vs METAR side-by-side panel. Tap ⇄ Crosscheck in the forecast header to compare what the TAF predicted against what the METAR actually shows — wind, visibility, ceiling, and weather phenomena all color-coded green/amber/red by deviation. Includes an accuracy score and educational tip. Perfect for students learning TAF reliability.'
+                    icon: '❄️',
+                    title: 'Freezing Level Fixed',
+                    desc: 'Fixed a formula error that caused the freezing level to display wildly incorrect values (e.g. 500,000+ ft) whenever the freezing level was above the surface layer. The interpolation now correctly rounds to the nearest 100 ft.'
                 },
                 {
-                    icon: '📋',
-                    title: 'NOTAM Display Fixed',
-                    desc: 'NOTAMs now load correctly via the /api/notam proxy — US airports (K/P prefix) pull from the official FAA AIM database, international airports fall back to aviationweather.gov. NOTAMs also now appear on both the main tab and the Weather tab.'
+                    icon: '🕐',
+                    title: 'Meteogram NOW Marker Fixed',
+                    desc: 'Fixed the NOW indicator on the 24h meteogram and winds aloft panel. For airports outside UTC, the marker was displaced by the full UTC offset (up to ±12 h). It now correctly tracks local airport time.'
                 },
                 {
-                    icon: '🌬️',
-                    title: 'Interactive Winds Aloft',
-                    desc: 'Tap any hour on the 24h meteogram to see a full winds aloft card from Surface to ~18,000 ft — wind arrows, ISA deviation, and freezing level. Use ‹ › buttons or the slider to browse through all 24 hours without closing the panel.'
+                    icon: '🛡️',
+                    title: 'API Stability Improvements',
+                    desc: 'Added defensive null/type checks across the weather, settings, and stream API handlers to prevent rare 500 errors from malformed requests. Multi-airport dashboard fetch also guards against null responses on network failure.'
                 }
             ]
         };
