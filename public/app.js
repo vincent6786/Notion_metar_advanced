@@ -2745,7 +2745,7 @@
                     hasTaf = !!(taf?.raw && !taf?.error);
                 }
 
-                if (metarRes.status === 'fulfilled' && !metarRes.value.error) {
+                if (metarRes.status === 'fulfilled' && metarRes.value && !metarRes.value.error) {
                     const station = stationRes.status === 'fulfilled' ? stationRes.value : null;
                     multiDataCache[icao] = {
                         metar:       metarRes.value,

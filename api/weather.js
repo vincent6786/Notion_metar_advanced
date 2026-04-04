@@ -117,6 +117,7 @@ async function selectBestKey() {
 
 async function fetchWithKey(keyIndex, url) {
     const key = API_KEYS[keyIndex];
+    if (!key) throw new Error(`[AVWX] Invalid API key index: ${keyIndex}`);
     console.log(`[AVWX] Using Key #${keyIndex + 1} for ${url}`);
     const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${key}` }
