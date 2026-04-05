@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.7',  // ← set once in index.html
-            title: 'METAR GO — v4.7.7',
+            version: window.APP_VERSION || '4.7.8',  // ← set once in index.html
+            title: 'METAR GO — v4.7.8',
             changes: [
                 {
+                    icon: '🛰',
+                    title: 'Provider Down Detection',
+                    desc: 'When the weather data provider is unreachable, the app now shows a clear "Weather Service Unavailable" message with a Retry button instead of silently displaying outdated data.'
+                },
+                {
+                    icon: '⬆️',
+                    title: 'Scroll to Top on Tab Switch',
+                    desc: 'Switching tabs now always brings the page back to the top — no more landing mid-scroll on a new tab.'
+                },
+                {
                     icon: '⏱',
-                    title: 'AVWX API Timeout & Monitoring',
-                    desc: 'AVWX requests now time out after 9 seconds instead of hanging. Anomalous events (timeouts, errors, key rotations) are logged for admin review.'
-                },
-                {
-                    icon: '〜',
-                    title: 'Wind Shear in Winds Aloft',
-                    desc: 'The winds aloft modal now shows wind shear (kt/1000 ft) between every altitude level — color-coded light/amber/red so turbulence potential is visible at a glance.'
-                },
-                {
-                    icon: '📊',
-                    title: 'Dashboard: wx, Fog Risk & Density Altitude',
-                    desc: 'Dashboard cards now show present weather codes, fog risk when T–Td spread ≤ 3 °C, and a density altitude readout below the QNH.'
+                    title: 'AVWX Timeout & Admin Event Log',
+                    desc: 'API requests now hard-timeout after 9 seconds. Timeouts, errors, and key rotations are logged in the admin panel Events tab.'
                 }
             ]
         };
@@ -1372,8 +1372,12 @@
                 return data;
             } catch (err) {
                 if (err.message === 'Access revoked') throw err;
-                // Network failure — fall back to stale cache if available
-                if (cachedObj) {
+                // Server-side errors (4xx/5xx) mean the provider is reachable but
+                // returning an error — propagate so loadData can show the
+                // provider-down card. Only serve stale cache for genuine network
+                // failures (device offline / can't reach the server at all).
+                const isServerError = /^API Error: [45]\d\d$/.test(err.message || '');
+                if (!isServerError && cachedObj) {
                     const ageMin = Math.round((Date.now() - cachedObj.ts) / 60000);
                     console.warn(`[Offline] Serving stale cache for ${endpoint} (${ageMin}m old)`);
                     showOfflineBanner(cachedObj.ts);
