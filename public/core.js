@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.10',  // ← set once in index.html
-            title: 'METAR GO — v4.7.10',
+            version: window.APP_VERSION || '4.7.11',  // ← set once in index.html
+            title: 'METAR GO — v4.7.11',
             changes: [
                 {
                     icon: '🔄',
-                    title: 'Always-Fresh Weather Data',
-                    desc: 'Fixed a CDN caching issue that could cause all stations to show stale data indefinitely. Weather data is now fetched fresh every time, bypassing CDN and browser caches.'
-                },
-                {
-                    icon: '🛡️',
-                    title: 'Bug Fixes & Stability',
-                    desc: 'Fixed division-by-zero in wind shear and freezing level calculations. Fixed concurrent dashboard fetch race condition. Corrected density altitude intermediate rounding.'
+                    title: 'Fixed Stale Data Shown as Fresh',
+                    desc: 'The service worker\'s 8-second timeout was shorter than the AVWX server timeout (9s), causing it to silently serve old cached data with status 200 — bypassing all error detection. SW timeout raised to 18s; stale flags now detected and surfaced as proper offline/provider-down indicators.'
                 },
                 {
                     icon: '🛰',
-                    title: 'Provider Down Detection',
-                    desc: 'When the weather provider is unreachable, the app now shows a clear "Weather Service Unavailable" message with a Retry button instead of silently showing outdated data.'
+                    title: 'Always-Fresh Weather Requests',
+                    desc: 'Removed server-side CDN cache (stale-while-revalidate was allowing indefinitely old responses). Weather requests now bypass all intermediate caches.'
+                },
+                {
+                    icon: '🛡️',
+                    title: 'Improved Error Detection',
+                    desc: 'Gateway timeouts (504) and "unavailable" errors now correctly trigger the Weather Service Unavailable card instead of silently showing old data.'
                 }
             ]
         };
@@ -1367,6 +1367,20 @@
 
                 if (!res.ok) throw new Error(`API Error: ${res.status}`);
                 const data = await res.json();
+
+                // Service worker may return status 200 with stale offline data when
+                // its own fetch timeout fires — detect via the _stale/_offline flags
+                // it injects and treat it the same as a genuine network failure.
+                if (data._stale || data._offline) {
+                    console.warn(`[SW] Stale offline cache served for ${endpoint}`);
+                    if (cachedObj) {
+                        showOfflineBanner(cachedObj.ts);
+                        if (typeof showSourceFooters === 'function') showSourceFooters();
+                        return cachedObj.data;
+                    }
+                    throw new Error('Network unavailable');
+                }
+
                 localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
                 hideOfflineBanner();
                 return data;
@@ -2050,7 +2064,7 @@
                 const ic = document.getElementById('icao').value.toUpperCase();
                 const msg = e?.message?.toLowerCase() || '';
                 const isOffline    = !navigator.onLine || msg.includes('fetch') || msg.includes('network');
-                const isApiDown    = !isOffline && (msg.includes('500') || msg.includes('timed out') || msg.includes('exhausted') || msg.includes('failed to fetch weather'));
+                const isApiDown    = !isOffline && (msg.includes('500') || msg.includes('504') || msg.includes('timed out') || msg.includes('exhausted') || msg.includes('failed to fetch weather') || msg.includes('unavailable'));
 
                 document.getElementById('rawMetar').innerHTML = isOffline ? `
                     <div style="text-align:center;padding:24px 16px;">

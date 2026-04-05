@@ -3,7 +3,7 @@
 // Offline-first for static assets, network-first for API calls
 // ================================================================
 
-const CACHE_VERSION = 'metar-go-v4.7.10';
+const CACHE_VERSION = 'metar-go-v4.7.11';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
@@ -98,7 +98,7 @@ self.addEventListener('fetch', event => {
 async function networkFirstApi(request) {
     const cache = await caches.open(API_CACHE);
     try {
-        const response = await fetchWithTimeout(request.clone(), 8000);
+        const response = await fetchWithTimeout(request.clone(), 18000);
         if (response.ok) {
             // Store a timestamped copy for offline use
             const toCache = response.clone();
