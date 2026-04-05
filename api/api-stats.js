@@ -25,8 +25,22 @@ export default async function handler(req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const { password } = req.body || {};
+    const { password, action } = req.body || {};
     if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
+
+    // ── Events: return recent API anomaly log from Redis ──────────────────
+    if (action === 'events') {
+        try {
+            const raw    = await kv.lrange('efb:api_events', 0, 99);
+            const events = raw
+                .map(r => { try { return JSON.parse(r); } catch { return null; } })
+                .filter(Boolean);
+            return res.json({ events });
+        } catch (error) {
+            console.error('[API Stats] Events fetch error:', error);
+            return res.status(500).json({ error: 'Failed to fetch events' });
+        }
+    }
 
     try {
         const today    = getTodayKey();
