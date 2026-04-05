@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.6',  // ← set once in index.html
-            title: 'METAR GO — v4.7.6',
+            version: window.APP_VERSION || '4.7.7',  // ← set once in index.html
+            title: 'METAR GO — v4.7.7',
             changes: [
+                {
+                    icon: '⏱',
+                    title: 'AVWX API Timeout & Monitoring',
+                    desc: 'AVWX requests now time out after 9 seconds instead of hanging. Anomalous events (timeouts, errors, key rotations) are logged for admin review.'
+                },
                 {
                     icon: '〜',
                     title: 'Wind Shear in Winds Aloft',
                     desc: 'The winds aloft modal now shows wind shear (kt/1000 ft) between every altitude level — color-coded light/amber/red so turbulence potential is visible at a glance.'
                 },
                 {
-                    icon: '🌫',
-                    title: 'Fog Risk Indicator',
-                    desc: 'When the T–Td spread is ≤ 3 °C, an amber fog risk warning is shown on both the main card and the multi-airport dashboard cards.'
-                },
-                {
                     icon: '📊',
-                    title: 'Dashboard: wx & Density Altitude',
-                    desc: 'Multi-airport dashboard cards now display present weather codes (RA, TSRA, SN, FG…) with colour-coding, and a density altitude readout below the QNH — highlighted in amber when DA exceeds field elevation by 2,000 ft.'
+                    title: 'Dashboard: wx, Fog Risk & Density Altitude',
+                    desc: 'Dashboard cards now show present weather codes, fog risk when T–Td spread ≤ 3 °C, and a density altitude readout below the QNH.'
                 }
             ]
         };
