@@ -2615,6 +2615,7 @@
         let multiAirports = [];
         let multiDataCache = {};
         let multiRefreshInterval = null;
+        const _fetchingIcaos = new Set(); // guard against concurrent fetches for same airport
 
         async function loadMultiAirports() {
             // Try cloud first, then local
@@ -2724,6 +2725,8 @@
         }
 
         async function fetchMultiAirportData(icao) {
+            if (_fetchingIcaos.has(icao)) return;   // already in-flight for this airport
+            _fetchingIcaos.add(icao);
             try {
                 // Check TAF cache first to avoid unnecessary fetch
                 const tafCacheKey = `cache_/api/weather?type=taf&station=${icao}`;
@@ -2763,6 +2766,8 @@
                 }
             } catch(e) {
                 console.error(`[Multi] Error fetching ${icao}:`, e);
+            } finally {
+                _fetchingIcaos.delete(icao);            // always release the lock
             }
         }
 
@@ -3020,9 +3025,9 @@
             if (elev != null && temp != null && m.altimeter?.value != null) {
                 let qnhHpa = m.altimeter.value;
                 if (m.units?.altimeter === 'inHg') qnhHpa *= 33.8639;
-                const pa     = Math.round(elev + (1013.25 - qnhHpa) * 30);
+                const pa     = elev + (1013.25 - qnhHpa) * 30;    // keep exact for ISA calc
                 const isaT   = 15 - (2 * pa / 1000);
-                const da     = Math.round(pa + 120 * (temp - isaT));
+                const da     = Math.round(pa + 120 * (temp - isaT)); // round only final result
                 daStr  = `DA ${da.toLocaleString()} ft`;
                 daWarn = da > elev + 2000;
             }

@@ -91,7 +91,7 @@ async function logApiEvent(type, keyIndex, station, ms, detail) {
         await kv.lpush('efb:api_events', event);
         await kv.ltrim('efb:api_events', 0, 199);             // keep last 200
         await kv.expire('efb:api_events', 172800);            // 48 h TTL
-    } catch (_) {}                                            // never block the request path
+    } catch (e) { console.warn('[logApiEvent] Redis write failed:', e.message); }
 }
 
 // ── AVWX Key Management ───────────────────────────────────────────────────

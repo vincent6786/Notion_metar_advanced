@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.8',  // ← set once in index.html
-            title: 'METAR GO — v4.7.8',
+            version: window.APP_VERSION || '4.7.9',  // ← set once in index.html
+            title: 'METAR GO — v4.7.9',
             changes: [
+                {
+                    icon: '🛡️',
+                    title: 'Bug Fixes & Stability',
+                    desc: 'Fixed division-by-zero in wind shear and freezing level calculations. Fixed concurrent dashboard fetch race condition. Corrected density altitude intermediate rounding. Improved Redis null safety.'
+                },
                 {
                     icon: '🛰',
                     title: 'Provider Down Detection',
-                    desc: 'When the weather data provider is unreachable, the app now shows a clear "Weather Service Unavailable" message with a Retry button instead of silently displaying outdated data.'
+                    desc: 'When the weather provider is unreachable, the app now shows a clear "Weather Service Unavailable" message with a Retry button instead of silently showing outdated data.'
                 },
                 {
                     icon: '⬆️',
                     title: 'Scroll to Top on Tab Switch',
-                    desc: 'Switching tabs now always brings the page back to the top — no more landing mid-scroll on a new tab.'
-                },
-                {
-                    icon: '⏱',
-                    title: 'AVWX Timeout & Admin Event Log',
-                    desc: 'API requests now hard-timeout after 9 seconds. Timeouts, errors, and key rotations are logged in the admin panel Events tab.'
+                    desc: 'Switching tabs now always brings the page back to the top.'
                 }
             ]
         };
@@ -2802,6 +2802,7 @@
                     const next = levelData[idx + 1];
                     if (spd != null && next.spd != null) {
                         const altDiff = (next.lv.ft - lv.ft) / 1000;
+                        if (altDiff <= 0) return;                         // guard: skip if levels share altitude
                         const shear   = Math.abs(next.spd - spd) / altDiff;
                         const shearCol   = shear >= 10 ? '#ff453a' : shear >= 6 ? '#ff9f0a' : '#444';
                         const shearLabel = shear >= 10 ? '⚡ Sev shear' : shear >= 6 ? '〜 Mod shear' : '〜 Light shear';
@@ -2825,7 +2826,9 @@
             ].filter(x => x.t != null);
             for (let i = 0; i < tArr.length - 1; i++) {
                 if (tArr[i].t > 0 && tArr[i+1].t <= 0) {
-                    const frac = tArr[i].t / (tArr[i].t - tArr[i+1].t);
+                    const denom = tArr[i].t - tArr[i+1].t;
+                    if (denom === 0) break;                               // guard: both 0 °C, surface is freezing level
+                    const frac = tArr[i].t / denom;
                     const ft   = Math.round((tArr[i].ft + frac * (tArr[i+1].ft - tArr[i].ft)) / 100) * 100;
                     freezeHtml = `<div style="padding:10px 14px;background:rgba(100,181,246,0.08);border-top:1px solid #1e1e1e;display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:11px;color:#888;">❄️ Freezing Level (est.)</span>

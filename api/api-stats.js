@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     if (action === 'events') {
         try {
             const raw    = await kv.lrange('efb:api_events', 0, 99);
-            const events = raw
+            const events = (Array.isArray(raw) ? raw : [])
                 .map(r => { try { return JSON.parse(r); } catch { return null; } })
                 .filter(Boolean);
             return res.json({ events });
