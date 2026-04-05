@@ -1454,6 +1454,10 @@
         }
 
         function setTab(name) {
+                    // Scroll content area back to top on every tab switch
+                    const scroller = document.getElementById('content-scroll');
+                    if (scroller) scroller.scrollTop = 0;
+
                     document.querySelectorAll('.view-section').forEach(el => {
                         el.classList.remove('active');
                         el.style.display = '';

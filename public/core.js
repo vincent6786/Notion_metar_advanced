@@ -1987,8 +1987,11 @@
                     } else {
                         updateHeaderCat('N/A', 'cat-ifr');
                         document.getElementById('rawMetar').innerHTML = `
-                            <div style="text-align:center;padding:20px 10px;">
-                                <div style="color:var(--danger);font-weight:800;margin-bottom:15px;">METAR UNAVAILABLE</div>
+                            <div style="text-align:center;padding:24px 16px;">
+                                <div style="font-size:28px;margin-bottom:10px;">🛰</div>
+                                <div style="color:var(--warn);font-weight:800;font-size:14px;margin-bottom:6px;">Weather Service Unavailable</div>
+                                <div style="color:#888;font-size:11px;line-height:1.7;">Our data provider is temporarily unreachable.<br>Station data will be restored once the provider is back online.</div>
+                                <button onclick="loadData(true)" style="margin-top:14px;background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;">↺ Retry</button>
                             </div>`;
                     }
                     
@@ -2041,7 +2044,9 @@
                 console.error('[loadData] Error:', e);
                 updateHeaderCat('N/A', 'cat-ifr');
                 const ic = document.getElementById('icao').value.toUpperCase();
-                const isOffline = !navigator.onLine || (e?.message?.toLowerCase().includes('fetch') || e?.message?.toLowerCase().includes('network'));
+                const msg = e?.message?.toLowerCase() || '';
+                const isOffline    = !navigator.onLine || msg.includes('fetch') || msg.includes('network');
+                const isApiDown    = !isOffline && (msg.includes('500') || msg.includes('timed out') || msg.includes('exhausted') || msg.includes('failed to fetch weather'));
 
                 document.getElementById('rawMetar').innerHTML = isOffline ? `
                     <div style="text-align:center;padding:24px 16px;">
@@ -2050,6 +2055,21 @@
                         <div style="color:#aaa;font-size:12px;line-height:1.7;margin-bottom:16px;">
                             Weather data requires an internet connection.<br>
                             Open the <b style="color:#fff;">Aviation Tools</b> tab — all calculators work offline.
+                        </div>
+                    </div>` : isApiDown ? `
+                    <div style="text-align:center;padding:24px 16px;">
+                        <div style="font-size:32px;margin-bottom:12px;">🛰</div>
+                        <div style="color:var(--warn);font-weight:800;font-size:15px;margin-bottom:8px;">Weather Service Unavailable</div>
+                        <div style="color:#aaa;font-size:12px;line-height:1.8;margin-bottom:16px;">
+                            Our weather data provider is temporarily unreachable.<br>
+                            We're aware of the issue — <b style="color:#fff;">station data will be restored</b> once the provider is back online.
+                        </div>
+                        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                            <button onclick="loadData(true)" style="background:var(--accent);border:none;color:#fff;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">↺ Retry</button>
+                            <a href="https://metar-taf.com/${ic}" target="_blank" class="atc-btn"
+                               style="justify-content:center;background:#333;border:1px solid #555;color:#fff;text-decoration:none;padding:9px 18px;border-radius:8px;font-weight:700;font-size:13px;">
+                                View on Metar-Taf.com ↗
+                            </a>
                         </div>
                     </div>` : `
                     <div style="text-align:center;padding:20px 10px;">
