@@ -629,26 +629,33 @@
                             style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
                             background:${activeTab==='tools'?'var(--accent)':'transparent'};
                             color:${activeTab==='tools'?'#fff':'#8e8e93'};">🔧 Tools</button>
+                    <button id="adminTab-events" onclick="switchAdminTab('events','${password}')"
+                            style="flex:1;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+                            background:${activeTab==='events'?'#ff453a':'transparent'};
+                            color:${activeTab==='events'?'#fff':'#8e8e93'};">⚡ Events</button>
                 </div>
                 <div id="adminTabContent"></div>`;
 
             // Always fetch fresh on open — accurate across devices
-            if (activeTab === 'users') loadUsersTab(password);
-            else if (activeTab === 'tools') loadToolsTab();
-            else                       loadStatsAndRender(password);
+            if      (activeTab === 'users')  loadUsersTab(password);
+            else if (activeTab === 'tools')  loadToolsTab();
+            else if (activeTab === 'events') loadEventsTab(password);
+            else                             loadStatsAndRender(password);
         }
 
         async function switchAdminTab(tab, password) {
-            ['stats','users','tools'].forEach(t => {
+            ['stats','users','tools','events'].forEach(t => {
                 const btn = document.getElementById(`adminTab-${t}`);
                 if (!btn) return;
-                btn.style.background = t === tab ? 'var(--accent)' : 'transparent';
-                btn.style.color      = t === tab ? '#fff'           : '#8e8e93';
+                const isActive = t === tab;
+                btn.style.background = isActive ? (t === 'events' ? '#ff453a' : 'var(--accent)') : 'transparent';
+                btn.style.color      = isActive ? '#fff' : '#8e8e93';
             });
             // Always fetch fresh — ensures stats are current across all devices
-            if (tab === 'stats') await loadStatsAndRender(password);
-            else if (tab === 'tools') loadToolsTab();
-            else                 await loadUsersTab(password);
+            if      (tab === 'stats')  await loadStatsAndRender(password);
+            else if (tab === 'tools')  loadToolsTab();
+            else if (tab === 'events') await loadEventsTab(password);
+            else                       await loadUsersTab(password);
         }
 
         async function loadToolsTab() {
@@ -660,6 +667,57 @@
                 <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tool Visibility — toggle to show/hide for all users</div>
                 <div style="font-size:11px;color:#888;margin-bottom:14px;">Hidden tools are invisible to normal users. Admin always sees all tools with a <span style="color:#ff9f0a;">👁 HIDDEN</span> badge.</div>
                 ${typeof renderAdminToolsPanel === 'function' ? renderAdminToolsPanel() : '<div style="color:#ff453a;">renderAdminToolsPanel not loaded</div>'}`;
+        }
+
+        async function loadEventsTab(password) {
+            const tabContent = document.getElementById('adminTabContent');
+            if (!tabContent) return;
+            tabContent.innerHTML = `<div style="text-align:center;padding:30px;color:#8e8e93;">⏳ Loading events...</div>`;
+            try {
+                const res    = await fetch('/api/api-stats', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ password, action: 'events' })
+                });
+                const data = await res.json();
+                tabContent.innerHTML = renderApiEvents(data.events || []);
+            } catch(e) {
+                tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load events: ${e.message}</div>`;
+            }
+        }
+
+        function renderApiEvents(events) {
+            const colorMap = { timeout:'#ff453a', error:'#ff453a', exhausted:'#ff453a', slow:'#ff9f0a', rotation:'#64b5f6' };
+            const iconMap  = { timeout:'⏱', error:'❌', exhausted:'🔴', slow:'🐢', rotation:'🔄' };
+
+            const header = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                    <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;">API Anomaly Log · last 100 events · 48h window</div>
+                    <div style="font-size:10px;color:#444;">${events.length} event${events.length !== 1 ? 's' : ''}</div>
+                </div>`;
+
+            if (!events.length) {
+                return header + `<div style="text-align:center;padding:30px;color:#444;font-size:13px;">✅ No anomalies recorded</div>`;
+            }
+
+            const rows = events.map(e => {
+                const col     = colorMap[e.type] || '#ccc';
+                const icon    = iconMap[e.type]  || '•';
+                const ageMin  = Math.round((Date.now() - e.ts) / 60000);
+                const ageStr  = ageMin < 60 ? `${ageMin}m ago` : `${Math.round(ageMin/60)}h ago`;
+                const msStr   = e.ms != null ? ` · ${e.ms}ms` : '';
+                const keyStr  = e.key ? ` · Key ${e.key}` : '';
+                return `<div style="border-left:3px solid ${col};padding:7px 10px;margin-bottom:5px;background:#141414;border-radius:0 6px 6px 0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:${col};font-weight:700;font-size:11px;">${icon} ${e.type.toUpperCase()}${keyStr}</span>
+                        <span style="color:#444;font-size:10px;">${ageStr}</span>
+                    </div>
+                    ${e.station ? `<div style="font-size:10px;color:#777;margin-top:2px;">${e.station}${msStr}</div>` : (msStr ? `<div style="font-size:10px;color:#777;margin-top:2px;">${msStr.replace(' · ','')}</div>` : '')}
+                    ${e.detail  ? `<div style="font-size:10px;color:#555;margin-top:1px;">${e.detail}</div>` : ''}
+                </div>`;
+            }).join('');
+
+            return header + rows;
         }
 
         async function loadStatsAndRender(password) {

@@ -77,6 +77,23 @@ function getClientIp(req) {
     return req.socket?.remoteAddress || 'unknown';
 }
 
+// ── Admin Anomaly Event Logger ────────────────────────────────────────────
+async function logApiEvent(type, keyIndex, station, ms, detail) {
+    try {
+        const event = JSON.stringify({
+            ts:      Date.now(),
+            type,                                              // timeout|error|slow|rotation|exhausted
+            key:     keyIndex != null ? `#${keyIndex + 1}` : null,
+            station: station || null,
+            ms:      ms != null ? Math.round(ms) : null,
+            detail:  detail || null
+        });
+        await kv.lpush('efb:api_events', event);
+        await kv.ltrim('efb:api_events', 0, 199);             // keep last 200
+        await kv.expire('efb:api_events', 172800);            // 48 h TTL
+    } catch (_) {}                                            // never block the request path
+}
+
 // ── AVWX Key Management ───────────────────────────────────────────────────
 async function getKeyUsage(keyIndex) {
     const today = getTodayKey();
@@ -115,30 +132,57 @@ async function selectBestKey() {
     return -1; // all keys exhausted
 }
 
-async function fetchWithKey(keyIndex, url) {
+async function fetchWithKey(keyIndex, url, station) {
     const key = API_KEYS[keyIndex];
     if (!key) throw new Error(`[AVWX] Invalid API key index: ${keyIndex}`);
     console.log(`[AVWX] Using Key #${keyIndex + 1} for ${url}`);
-    const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${key}` }
-    });
-    if (!response.ok) {
-        const status = response.status;
-        console.error(`[AVWX] Key #${keyIndex + 1} failed with status ${status}`);
-        if (status === 429) {
-            const today = getTodayKey();
-            await kv.set(`avwx:usage:${today}:key${keyIndex + 1}`, DAILY_LIMIT);
+
+    const controller = new AbortController();
+    const tId = setTimeout(() => controller.abort(), 9000);
+    const t0  = Date.now();
+
+    try {
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${key}` },
+            signal:  controller.signal
+        });
+        clearTimeout(tId);
+        const elapsed = Date.now() - t0;
+
+        if (!response.ok) {
+            const status = response.status;
+            console.error(`[AVWX] Key #${keyIndex + 1} failed with status ${status}`);
+            if (status === 429) {
+                const today = getTodayKey();
+                await kv.set(`avwx:usage:${today}:key${keyIndex + 1}`, DAILY_LIMIT);
+            }
+            await logApiEvent('error', keyIndex, station, elapsed, `HTTP ${status}`);
+            throw new Error(`HTTP ${status}`);
         }
-        throw new Error(`HTTP ${status}`);
+
+        if (elapsed > 4000) {
+            await logApiEvent('slow', keyIndex, station, elapsed, null);
+        }
+
+        return response.json();
+    } catch (err) {
+        clearTimeout(tId);
+        if (err.name === 'AbortError') {
+            await logApiEvent('timeout', keyIndex, station, 9000, 'request aborted after 9s');
+            throw new Error('AVWX request timed out');
+        }
+        throw err;
     }
-    return response.json();
 }
 
-async function fetchWithRotation(url) {
+async function fetchWithRotation(url, station) {
     let keyIndex = await selectBestKey();
-    if (keyIndex === -1) throw new Error("All API keys exhausted for today");
+    if (keyIndex === -1) {
+        await logApiEvent('exhausted', null, station, null, 'all keys at daily limit');
+        throw new Error("All API keys exhausted for today");
+    }
     try {
-        const data  = await fetchWithKey(keyIndex, url);
+        const data  = await fetchWithKey(keyIndex, url, station);
         await incrementKeyUsage(keyIndex);
         const usage = await getKeyUsage(keyIndex);
         return { ...data, _meta: { key_used: keyIndex+1, key_usage: usage, key_limit: DAILY_LIMIT, key_remaining: DAILY_LIMIT - usage } };
@@ -149,7 +193,8 @@ async function fetchWithRotation(url) {
             const usage = await getKeyUsage(i);
             if (usage >= DAILY_LIMIT) continue;
             try {
-                const data     = await fetchWithKey(i, url);
+                await logApiEvent('rotation', keyIndex, station, null, `fell back to key #${i + 1}`);
+                const data     = await fetchWithKey(i, url, station);
                 await incrementKeyUsage(i);
                 const newUsage = await getKeyUsage(i);
                 return { ...data, _meta: { key_used: i+1, key_usage: newUsage, key_limit: DAILY_LIMIT, key_remaining: DAILY_LIMIT - newUsage } };
@@ -158,6 +203,7 @@ async function fetchWithRotation(url) {
                 continue;
             }
         }
+        await logApiEvent('exhausted', null, station, null, 'all keys tried and failed');
         throw new Error("All API keys exhausted or failed");
     }
 }
@@ -200,7 +246,7 @@ export default async function handler(req, res) {
         else if (type === 'search')  endpoint = `https://avwx.rest/api/search/station?text=${station}`;
         else return res.status(400).json({ error: 'Invalid type parameter' });
 
-        const data = await fetchWithRotation(endpoint);
+        const data = await fetchWithRotation(endpoint, station);
         res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate');
         return res.status(200).json(data);
     } catch (error) {
