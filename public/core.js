@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.9',  // ← set once in index.html
-            title: 'METAR GO — v4.7.9',
+            version: window.APP_VERSION || '4.7.10',  // ← set once in index.html
+            title: 'METAR GO — v4.7.10',
             changes: [
+                {
+                    icon: '🔄',
+                    title: 'Always-Fresh Weather Data',
+                    desc: 'Fixed a CDN caching issue that could cause all stations to show stale data indefinitely. Weather data is now fetched fresh every time, bypassing CDN and browser caches.'
+                },
                 {
                     icon: '🛡️',
                     title: 'Bug Fixes & Stability',
-                    desc: 'Fixed division-by-zero in wind shear and freezing level calculations. Fixed concurrent dashboard fetch race condition. Corrected density altitude intermediate rounding. Improved Redis null safety.'
+                    desc: 'Fixed division-by-zero in wind shear and freezing level calculations. Fixed concurrent dashboard fetch race condition. Corrected density altitude intermediate rounding.'
                 },
                 {
                     icon: '🛰',
                     title: 'Provider Down Detection',
                     desc: 'When the weather provider is unreachable, the app now shows a clear "Weather Service Unavailable" message with a Retry button instead of silently showing outdated data.'
-                },
-                {
-                    icon: '⬆️',
-                    title: 'Scroll to Top on Tab Switch',
-                    desc: 'Switching tabs now always brings the page back to the top.'
                 }
             ]
         };
@@ -1356,7 +1356,7 @@
             if (accessCode) headers['x-access-code'] = accessCode;
 
             try {
-                const res = await fetch(endpoint, { headers });
+                const res = await fetch(endpoint, { headers, cache: 'no-store' });
 
                 // Access revoked — clear code and show gate
                 if (res.status === 403) {

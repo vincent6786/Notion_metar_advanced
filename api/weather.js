@@ -247,7 +247,7 @@ export default async function handler(req, res) {
         else return res.status(400).json({ error: 'Invalid type parameter' });
 
         const data = await fetchWithRotation(endpoint, station);
-        res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate');
+        res.setHeader('Cache-Control', 'no-store');
         return res.status(200).json(data);
     } catch (error) {
         console.error('[AVWX] Error:', error);
