@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.5',  // ← set once in index.html
-            title: 'METAR GO — v4.7.5',
+            version: window.APP_VERSION || '4.7.6',  // ← set once in index.html
+            title: 'METAR GO — v4.7.6',
             changes: [
                 {
-                    icon: '❄️',
-                    title: 'Freezing Level & Meteogram Fixed',
-                    desc: 'Fixed a formula error that caused the freezing level to display wildly large values (e.g. 500,000+ ft). Also fixed the NOW marker on the meteogram — for non-UTC airports it was displaced by the full UTC offset (up to ±12 h).'
+                    icon: '〜',
+                    title: 'Wind Shear in Winds Aloft',
+                    desc: 'The winds aloft modal now shows wind shear (kt/1000 ft) between every altitude level — color-coded light/amber/red so turbulence potential is visible at a glance.'
                 },
                 {
-                    icon: '📡',
-                    title: 'Offline Mode Improved',
-                    desc: 'Added the Great Circle tool, settings panel, and PWA manifest to the offline precache. These now load correctly with no network connection.'
+                    icon: '🌫',
+                    title: 'Fog Risk Indicator',
+                    desc: 'When the T–Td spread is ≤ 3 °C, an amber fog risk warning is shown on both the main card and the multi-airport dashboard cards.'
                 },
                 {
-                    icon: '🛡️',
-                    title: 'Stability Improvements',
-                    desc: 'Defensive null/type guards added across API handlers and the multi-airport dashboard. TAF timeline needle no longer appears on an expired forecast. Cloud base calculator guarded against invalid dew point data.'
+                    icon: '📊',
+                    title: 'Dashboard: wx & Density Altitude',
+                    desc: 'Multi-airport dashboard cards now display present weather codes (RA, TSRA, SN, FG…) with colour-coding, and a density altitude readout below the QNH — highlighted in amber when DA exceeds field elevation by 2,000 ft.'
                 }
             ]
         };
@@ -2670,12 +2670,19 @@
                 return `<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0"><g transform="translate(9,9) rotate(${dir})"><line x1="0" y1="6" x2="0" y2="-6" stroke="${col}" stroke-width="2" stroke-linecap="round"/><polygon points="0,-8 -3,-3 3,-3" fill="${col}"/></g></svg>`;
             };
 
-            let rows = '';
+            // Collect rendered level data first so we can compute inter-level wind shear
+            const levelData = [];
             LEVELS.forEach(lv => {
                 const dir  = h[lv.dir]?.[hour];
                 const spd  = h[lv.spd]?.[hour];
                 const temp = h[lv.tmp]?.[hour];
                 if (dir == null && lv.hPa !== 'SFC') return;
+                levelData.push({ lv, dir, spd, temp });
+            });
+
+            let rows = '';
+            levelData.forEach((entry, idx) => {
+                const { lv, dir, spd, temp } = entry;
 
                 const isa    = lv.ft > 0 ? isaStd(lv.ft) : null;
                 const dev    = (temp != null && isa != null) ? +(temp - isa).toFixed(1) : null;
@@ -2707,6 +2714,22 @@
                         ${devStr ? `<div style="font-size:10px;color:${devCol};margin-top:3px;font-weight:700;">${devStr}</div>` : ''}
                     </div>
                 </div>`;
+
+                // ── Wind shear separator between this level and the next ──
+                if (idx < levelData.length - 1) {
+                    const next = levelData[idx + 1];
+                    if (spd != null && next.spd != null) {
+                        const altDiff = (next.lv.ft - lv.ft) / 1000;
+                        const shear   = Math.abs(next.spd - spd) / altDiff;
+                        const shearCol   = shear >= 10 ? '#ff453a' : shear >= 6 ? '#ff9f0a' : '#444';
+                        const shearLabel = shear >= 10 ? '⚡ Sev shear' : shear >= 6 ? '〜 Mod shear' : '〜 Light shear';
+                        rows += `<div style="display:flex;align-items:center;gap:6px;padding:3px 10px;background:#0d0d0d;">
+                            <div style="height:1px;flex:1;background:${shearCol};opacity:0.4;"></div>
+                            <span style="font-size:9px;font-weight:700;color:${shearCol};letter-spacing:0.3px;white-space:nowrap;">${shearLabel} ${shear.toFixed(1)} kt/1000ft</span>
+                            <div style="height:1px;flex:1;background:${shearCol};opacity:0.4;"></div>
+                        </div>`;
+                    }
+                }
             });
 
             // ── Freezing level estimate ──
@@ -2926,13 +2949,12 @@
             if (t != null) {
                 document.getElementById('mTempC').innerText = `${t}°C / ${dew != null ? dew : '--'}°C`;
                 document.getElementById('mTempF').innerText = `(${Math.round(t * 1.8 + 32)}°F)`;
-                document.getElementById('mSpread').innerText = `Spread: ${(t - dew).toFixed(1)}°C`;
-                
+
                 // Calculate Relative Humidity using Magnus formula
                 if (dew != null) {
                     const rh = Math.round(100 * Math.exp((17.625 * dew) / (243.04 + dew)) / Math.exp((17.625 * t) / (243.04 + t)));
                     document.getElementById('mHumidity').innerText = `RH: ${rh}%`;
-                    
+
                     // Color code based on humidity level
                     const humidityEl = document.getElementById('mHumidity');
                     if (rh < 30) {
@@ -2942,8 +2964,19 @@
                     } else {
                         humidityEl.style.color = 'var(--sub-text)'; // Normal
                     }
+
+                    // Spread + fog risk indicator (T–Td spread ≤ 3 °C)
+                    const sp = t - dew;
+                    const spreadEl = document.getElementById('mSpread');
+                    if (spreadEl) {
+                        spreadEl.innerText = `Spread: ${sp.toFixed(1)}°C`;
+                        if (sp <= 3) {
+                            spreadEl.innerHTML += ' <span style="color:var(--warn);font-weight:700;">🌫 Fog risk</span>';
+                        }
+                    }
                 } else {
                     document.getElementById('mHumidity').innerText = 'RH: --%';
+                    document.getElementById('mSpread').innerText = 'Spread: --';
                 }
             }
             const ageEl = document.getElementById('mAge');

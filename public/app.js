@@ -2748,11 +2748,12 @@
                 if (metarRes.status === 'fulfilled' && metarRes.value && !metarRes.value.error) {
                     const station = stationRes.status === 'fulfilled' ? stationRes.value : null;
                     multiDataCache[icao] = {
-                        metar:       metarRes.value,
+                        metar:            metarRes.value,
                         hasTaf,
-                        stationName: station?.name || icao,
-                        stationIata: station?.iata || '',
-                        fetchTime:   Date.now()
+                        stationName:      station?.name || icao,
+                        stationIata:      station?.iata || '',
+                        stationElevation: station?.elevation_ft ?? null,
+                        fetchTime:        Date.now()
                     };
                     renderMultiCard(icao);
                 }
@@ -2975,7 +2976,19 @@
         
             // ── Clouds ──
             const cloudStr = decodeCloudLayer(m.clouds);
-        
+
+            // ── Present weather (wx_codes) ──
+            const wxCodes = m.wx_codes || [];
+            const wxColor = repr => {
+                if (/TS/.test(repr))                              return 'var(--danger)';
+                if (/FG|FZFG|FZRA|FZDZ|IC|PL|SQ|FC/.test(repr)) return 'var(--warn)';
+                if (/SN|SG|GS|GR|BLSN|DRSN/.test(repr))         return '#85B7EB';
+                return '#ccc';
+            };
+            const wxHtml = wxCodes.length > 0
+                ? wxCodes.map(wx => `<span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${wxColor(wx.repr)};font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;">${wx.repr}</span>`).join(' ')
+                : '';
+
             // ── Temp / Dew / RH ──
             const temp    = m.temperature?.value;
             const dew     = m.dewpoint?.value;
@@ -2988,10 +3001,28 @@
                         / Math.exp((17.625 * temp) / (243.04 + temp))
                 );
             }
-        
+
+            // ── Fog risk (T–Td spread ≤ 3 °C) ──
+            const spread  = (temp != null && dew != null) ? temp - dew : null;
+            const fogRisk = spread != null && spread <= 3;
+
             // ── Pressure ──
             const pressStr = formatPressDisplay(m.altimeter?.value);
-        
+
+            // ── Density Altitude ──
+            let daStr = '';
+            let daWarn = false;
+            const elev = cached.stationElevation;
+            if (elev != null && temp != null && m.altimeter?.value != null) {
+                let qnhHpa = m.altimeter.value;
+                if (m.units?.altimeter === 'inHg') qnhHpa *= 33.8639;
+                const pa     = Math.round(elev + (1013.25 - qnhHpa) * 30);
+                const isaT   = 15 - (2 * pa / 1000);
+                const da     = Math.round(pa + 120 * (temp - isaT));
+                daStr  = `DA ${da.toLocaleString()} ft`;
+                daWarn = da > elev + 2000;
+            }
+
             // ── Badges & metadata ──
             const isAuto = !!(m.raw?.includes(' AUTO ') || m.raw?.startsWith('AUTO'));
             const hasTaf = cached.hasTaf;
@@ -3059,7 +3090,9 @@
         
                             <div style="font-size:12px;color:#bbb;margin-top:2px;">${vis}</div>
                             <div style="font-size:12px;color:#bbb;">${cloudStr}</div>
-        
+                            ${wxHtml ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;">${wxHtml}</div>` : ''}
+                            ${fogRisk ? `<div style="font-size:10px;font-weight:700;color:var(--warn);margin-top:2px;">🌫 Fog risk</div>` : ''}
+
                         </div>
         
                         <!-- RIGHT: two sub-columns -->
@@ -3070,6 +3103,7 @@
                                 <div style="font-size:19px;font-weight:700;color:#fff;line-height:1;">${tempStr}</div>
                                 <div style="font-size:11px;color:var(--sub-text);">${dewStr} ${rh !== '--' ? rh+'%' : ''}</div>
                                 <div style="font-size:11px;color:var(--sub-text);font-family:'SF Mono',monospace;">${pressStr}</div>
+                                ${daStr ? `<div style="font-size:10px;font-weight:700;color:${daWarn ? 'var(--warn)' : 'var(--sub-text)'};font-family:'SF Mono',monospace;">${daStr}</div>` : ''}
                                 <div style="font-size:13px;font-weight:800;color:${ageColor};margin-top:2px;">${ageLabel}</div>
                             </div>
         
