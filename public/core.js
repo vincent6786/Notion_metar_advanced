@@ -3,23 +3,18 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.11',  // ← set once in index.html
-            title: 'METAR GO — v4.7.11',
+            version: window.APP_VERSION || '4.7.12',  // ← set once in index.html
+            title: 'METAR GO — v4.7.12',
             changes: [
                 {
-                    icon: '🔄',
-                    title: 'Fixed Stale Data Shown as Fresh',
-                    desc: 'The service worker\'s 8-second timeout was shorter than the AVWX server timeout (9s), causing it to silently serve old cached data with status 200 — bypassing all error detection. SW timeout raised to 18s; stale flags now detected and surfaced as proper offline/provider-down indicators.'
+                    icon: '✅',
+                    title: 'Runway Auto-Selection Fixed',
+                    desc: 'Auto-selection now evaluates both ends of every runway pair. Previously only one end was checked, which could result in selecting a tailwind runway. The best headwind runway is now always picked correctly.'
                 },
                 {
-                    icon: '🛰',
-                    title: 'Always-Fresh Weather Requests',
-                    desc: 'Removed server-side CDN cache (stale-while-revalidate was allowing indefinitely old responses). Weather requests now bypass all intermediate caches.'
-                },
-                {
-                    icon: '🛡️',
-                    title: 'Improved Error Detection',
-                    desc: 'Gateway timeouts (504) and "unavailable" errors now correctly trigger the Weather Service Unavailable card instead of silently showing old data.'
+                    icon: '🌐',
+                    title: 'Open-Meteo Location Detail Panel',
+                    desc: 'Tap "+ MORE" next to the Advisory badge on the 24H Trend to see expanded model data: estimated visibility, cloud cover, humidity, CAPE (convective risk), precipitation rate, and FL340 jet-stream winds.'
                 }
             ]
         };
