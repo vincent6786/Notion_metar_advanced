@@ -15,6 +15,9 @@
                 const h1  = parseInt(r.ident1.replace(/\D/g, '')) * 10;
                 const hw1 = Math.cos((windMag - h1) * (Math.PI / 180)) * currentWind.spd;
                 if (hw1 > maxHW) { maxHW = hw1; bestRwy = r.ident1; }
+                const h2  = parseInt(r.ident2.replace(/\D/g, '')) * 10;
+                const hw2 = Math.cos((windMag - h2) * (Math.PI / 180)) * currentWind.spd;
+                if (hw2 > maxHW) { maxHW = hw2; bestRwy = r.ident2; }
             });
         
             // Check for saved preferred runway for this airport
