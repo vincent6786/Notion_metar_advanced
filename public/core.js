@@ -1099,6 +1099,7 @@
         let tafUnitsCache   = {};
         let lastMetarObj    = null;
         let meteoDataCache  = null;
+        let omDetailsIdx    = 0;
         let cityList        = [];
         let stationOffsetSec = 0;
         let showLocalSun     = false;
@@ -2519,7 +2520,7 @@
             loader.style.display = 'block'; loader.innerText = 'Loading...';
             meteoDataCache = null;
             try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,temperature_925hPa,windspeed_925hPa,winddirection_925hPa,temperature_850hPa,windspeed_850hPa,winddirection_850hPa,temperature_700hPa,windspeed_700hPa,winddirection_700hPa,temperature_500hPa,windspeed_500hPa,winddirection_500hPa&wind_speed_unit=kn&forecast_days=1&timezone=auto`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dewpoint_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,temperature_925hPa,windspeed_925hPa,winddirection_925hPa,temperature_850hPa,windspeed_850hPa,winddirection_850hPa,temperature_700hPa,windspeed_700hPa,winddirection_700hPa,temperature_500hPa,windspeed_500hPa,winddirection_500hPa,relative_humidity_2m,cloud_cover,cape,precipitation,visibility,windspeed_250hPa,winddirection_250hPa,temperature_250hPa&wind_speed_unit=kn&forecast_days=1&timezone=auto`;
                 const res  = await fetch(url);
                 const data = await res.json();
                 stationOffsetSec = data.utc_offset_seconds || 0;
@@ -2575,6 +2576,7 @@
                         });
                     };
 
+                    omDetailsIdx = idx;
                     const h = data.hourly;
                     renderAloftRow('3k',  h.winddirection_925hPa[idx], h.windspeed_925hPa[idx], h.temperature_925hPa[idx], 2500);
                     renderAloftRow('5k',  h.winddirection_850hPa[idx], h.windspeed_850hPa[idx], h.temperature_850hPa[idx], 5000);
@@ -2582,6 +2584,50 @@
                     if (h.winddirection_500hPa) renderAloftRow('18k', h.winddirection_500hPa[idx], h.windspeed_500hPa[idx], h.temperature_500hPa[idx], 18000);
                 }
             } catch(e) { console.error("Meteo Error:", e); loader.style.display = 'block'; loader.innerText = "⚠️ Model Data Unavailable"; }
+        }
+
+        function showOMDetails() {
+            const modal   = document.getElementById('omDetailsModal');
+            const content = document.getElementById('omDetailsContent');
+            if (!modal || !meteoDataCache) return;
+            const d   = meteoDataCache;
+            const idx = omDetailsIdx;
+
+            const rh      = d.relative_humidity_2m?.[idx] ?? null;
+            const cc      = d.cloud_cover?.[idx] ?? null;
+            const cape    = d.cape?.[idx] ?? null;
+            const prec    = d.precipitation?.[idx] ?? null;
+            const vis     = d.visibility?.[idx] ?? null;
+            const w250spd = d.windspeed_250hPa?.[idx] ?? null;
+            const w250dir = d.winddirection_250hPa?.[idx] ?? null;
+            const t250    = d.temperature_250hPa?.[idx] ?? null;
+
+            const fmt = v => v != null ? v : '—';
+            const visSm  = vis  != null ? (vis  / 1609.34).toFixed(1) + ' SM' : '—';
+            const capeStr = cape != null ? Math.round(cape) : '—';
+            const capeColor = cape == null ? 'inherit' : cape > 1000 ? 'var(--danger)' : cape > 500 ? 'var(--warn)' : 'var(--success,#32d74b)';
+            const w250str = (w250dir != null && w250spd != null)
+                ? `${String(Math.round(w250dir)).padStart(3,'0')}° / ${Math.round(w250spd)} kt`
+                : '—';
+
+            const row = (label, val, extra='') =>
+                `<tr><td style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06);color:#888;font-size:12px;">${label}</td><td style="text-align:right;font-weight:700;font-size:13px;${extra}">${val}</td></tr>`;
+
+            content.innerHTML = `<table style="width:100%;border-collapse:collapse;">
+                ${row('Visibility (est.)', visSm)}
+                ${row('Cloud Cover', cc != null ? cc + '%' : '—')}
+                ${row('Rel. Humidity', rh != null ? rh + '%' : '—')}
+                ${row('CAPE', capeStr + (cape != null ? ' J/kg' : ''), `color:${capeColor};`)}
+                ${row('Precipitation', prec != null ? prec.toFixed(1) + ' mm/h' : '—')}
+                ${row('FL340 Wind', w250str)}
+                <tr><td style="padding:7px 0;color:#888;font-size:12px;">FL340 Temp</td><td style="text-align:right;font-weight:700;font-size:13px;">${t250 != null ? Math.round(t250) + '°C' : '—'}</td></tr>
+            </table>`;
+            modal.style.display = 'block';
+        }
+
+        function closeOMDetails() {
+            const modal = document.getElementById('omDetailsModal');
+            if (modal) modal.style.display = 'none';
         }
 
         function drawMeteogram(h, canvasId = 'meteoCanvas') {
