@@ -3,7 +3,7 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png" alt="METAR GO Logo" width="120"/>
   
-  ### Training Edition · v4.5.0
+  ### Training Edition · v4.7.12
   
   **Aviation Weather Viewer & Electronic Flight Bag**
   
@@ -25,7 +25,8 @@ Primary coverage airports: **RCTP, RCSS** (Taiwan), plus airports in Japan, Kore
 ### 🌤️ Weather Data
 - **METAR & TAF** from AVWX with 9-key round-robin rotation and 10-minute client-side caching
 - **24-hour meteogram** from Open-Meteo — temperature, dewpoint, wind arrows, weather icons
-- **Winds Aloft** table — 925 / 850 / 700 hPa pressure-level data from Open-Meteo
+- **Open-Meteo Location Detail panel** — tap **+ MORE** next to the Advisory badge for visibility, cloud cover, humidity, CAPE (convective risk), precipitation, and FL340 jet-stream winds
+- **Winds Aloft** table — 925 / 850 / 700 / 500 hPa pressure-level data from Open-Meteo with ISA deviation
 - **NOTAMs** — colour-coded Critical / Caution / Info from aviationweather.gov
 - **SIGMET / AIRMET** — US data from AWC; non-US airports link to the relevant national authority with checked-at timestamps and manual refresh
 - **Flight category badges** — VFR / MVFR / IFR / LIFR with tap-to-open legend
@@ -35,7 +36,7 @@ Primary coverage airports: **RCTP, RCSS** (Taiwan), plus airports in Japan, Kore
 - **SPECI / COR badge** — animated badge on special or corrected observations
 
 ### 🛫 Runway & Wind Analysis
-- **Interactive wind rose** — headwind (green) / tailwind (red) relative to selected runway; auto-picks optimal headwind runway
+- **Interactive wind rose** — headwind (green) / tailwind (red) relative to selected runway; auto-picks optimal headwind runway by evaluating both ends of every runway pair
 - **Runway wind components** — headwind/tailwind and crosswind for every runway; ⚠ LIMIT badge when personal crosswind limit is exceeded
 - **Magnetic variation** — from AVWX station record
 - **Sky cover visualisation** — animated cloud icons scaled to coverage (FEW → OVC), sorted by altitude
@@ -275,6 +276,11 @@ The GitHub Action (`bump-version.yml`) updates the version strings in `index.htm
 ---
 
 ## 📝 Changelog
+
+### v4.7.12 — Runway Fix & Open-Meteo Detail Panel
+- **Fix:** Runway auto-selection now evaluates **both ends** of every runway pair. Previously only `ident1` was scored, which could result in selecting a tailwind runway when the opposite end had a clear headwind advantage. The cosine headwind calculation now runs for both `ident1` and `ident2`, and the higher-scoring end is selected.
+- **Feature:** **Open-Meteo Location Detail panel** — a `+ MORE` button appears next to the `⚠️ ADVISORY only` badge on the 24H Trend. Tapping opens a bottom-sheet showing the current-hour model snapshot: estimated visibility (SM), cloud cover (%), relative humidity (%), CAPE with colour-coded convective risk (amber >500 J/kg, red >1,000 J/kg), precipitation rate (mm/h), and FL340 jet-stream wind & temperature.
+- Expanded Open-Meteo API request to fetch `relative_humidity_2m`, `cloud_cover`, `cape`, `precipitation`, `visibility`, `windspeed_250hPa`, `winddirection_250hPa`, `temperature_250hPa` alongside existing data — single API call, no additional network requests.
 
 ### v4.5.0 — Bug Fix & Admin Overhaul
 - **Fix:** Ceiling card (`mCeil`) now correctly shows the actual ceiling layer (BKN/OVC/VV) instead of always defaulting to the lowest cloud entry
