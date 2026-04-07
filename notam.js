@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
 
     const raw  = (req.query.station || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-    if (!raw || raw.length < 3)  return res.status(400).json({ error: 'station required (3-4 chars)' });
+    if (!raw || raw.length < 3 || raw.length > 4)  return res.status(400).json({ error: 'station required (3-4 chars)' });
 
     try {
         let notams;

@@ -18,6 +18,10 @@ const API_KEYS = [
     process.env.AVWX_KEY_9,
 ].filter(Boolean);
 
+if (API_KEYS.length === 0) {
+    throw new Error('No AVWX API keys configured. Set at least AVWX_KEY_1 in environment variables.');
+}
+
 const DAILY_LIMIT    = parseInt(process.env.AVWX_DAILY_LIMIT    || '4000', 10);
 const IP_HOURLY_LIMIT = parseInt(process.env.IP_HOURLY_LIMIT    || '200',  10);
 

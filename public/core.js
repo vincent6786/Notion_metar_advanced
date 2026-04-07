@@ -541,6 +541,13 @@
         // Shared admin password cache within session
         let _adminPasswordCache = null;
 
+        // HTML escape helper to prevent XSS in dynamic content
+        function escHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
         async function openApiStatsModal() {
             const modal = document.getElementById('apiStatsModal');
             modal.classList.add('active');
@@ -595,11 +602,10 @@
                 const data = await res.json();
                 apiStatsCache = data;
                 _adminPasswordCache = password;
-                window._adminPwd = password;
                 showAdminConsoleLink(); // reveal shortcut in Settings
                 showAdminPanel(password, 'stats');
             } catch (err) {
-                content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div>Error: ${err.message}</div></div>`;
+                content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><div>Error: ${escHtml(err.message)}</div></div>`;
             }
         }
 
@@ -607,7 +613,6 @@
             const activeTab = tab || 'stats';
             const content = document.getElementById('apiStatsContent');
             window._isAdminSession = true;
-            window._adminPwd = password;
             if (typeof applyToolVisibility === 'function') applyToolVisibility();
             content.innerHTML = `
                 <!-- Tab switcher -->
@@ -677,7 +682,7 @@
                 const data = await res.json();
                 tabContent.innerHTML = renderApiEvents(data.events || []);
             } catch(e) {
-                tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load events: ${e.message}</div>`;
+                tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load events: ${escHtml(e.message)}</div>`;
             }
         }
 
@@ -724,7 +729,7 @@
                 apiStatsCache = data;
                 renderApiStats(data);
             } catch(e) {
-                if (tabContent) tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load stats: ${e.message}</div>`;
+                if (tabContent) tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load stats: ${escHtml(e.message)}</div>`;
             }
         }
 
@@ -737,7 +742,7 @@
                 const data = await res.json();
                 renderUsersTab(data.users || [], password);
             } catch(e) {
-                tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load users: ${e.message}</div>`;
+                tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load users: ${escHtml(e.message)}</div>`;
             }
         }
 
@@ -746,7 +751,6 @@
             if (!tabContent) return;
 
             window._adminUsers   = users;
-            window._adminPwd     = password;
 
             const activeCount  = users.filter(u => u.active).length;
             const revokedCount = users.filter(u => !u.active).length;
@@ -798,14 +802,16 @@
                     const statusBg    = u.active ? 'rgba(50,215,75,0.1)' : 'rgba(255,69,58,0.1)';
                     const statusText  = u.active ? 'ACTIVE' : 'REVOKED';
                     const created     = u.created ? new Date(u.created).toLocaleDateString() : '—';
+                    const safeCode    = escHtml(u.code);
+                    const safeName    = escHtml(u.name);
                     html += `
-                        <div onclick="openInAppUserDrawer('${u.code}')"
+                        <div onclick="openInAppUserDrawer('${safeCode}')"
                              style="background:#1c1c1e;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;"
                              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='#2a2a2a'">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                                 <div>
-                                    <span style="font-weight:700;color:#fff;font-family:'SF Mono',monospace;font-size:13px;">${u.code}</span>
-                                    <span style="color:#8e8e93;font-size:12px;margin-left:8px;">${u.name}</span>
+                                    <span style="font-weight:700;color:#fff;font-family:'SF Mono',monospace;font-size:13px;">${safeCode}</span>
+                                    <span style="color:#8e8e93;font-size:12px;margin-left:8px;">${safeName}</span>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:6px;">
                                     <span style="font-size:10px;font-weight:800;color:${statusColor};background:${statusBg};padding:2px 8px;border-radius:6px;">${statusText}</span>
@@ -909,11 +915,11 @@
             btn.disabled = true; btn.textContent = 'Saving…'; msg.textContent = '';
             try {
                 const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ action:'update', code: window._inAppDrawerCode, name, password: window._adminPwd }) });
+                    body: JSON.stringify({ action:'update', code: window._inAppDrawerCode, name, password: _adminPasswordCache }) });
                 const data = await res.json();
                 if (data.success) {
                     msg.style.color = 'var(--success)'; msg.textContent = '✅ Saved';
-                    loadUsersTab(window._adminPwd);
+                    loadUsersTab(_adminPasswordCache);
                 } else {
                     msg.style.color = 'var(--danger)'; msg.textContent = `❌ ${data.error || 'Failed'}`;
                 }
@@ -946,9 +952,9 @@
             const action = u?.active ? 'revoke' : 'restore';
             try {
                 await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ action, code: window._inAppDrawerCode, password: window._adminPwd }) });
+                    body: JSON.stringify({ action, code: window._inAppDrawerCode, password: _adminPasswordCache }) });
                 _closeInAppDrawer();
-                setTimeout(() => loadUsersTab(window._adminPwd), 340);
+                setTimeout(() => loadUsersTab(_adminPasswordCache), 340);
             } catch(e) { alert('Failed. Check connection.'); }
         }
 
@@ -956,9 +962,9 @@
             if (!confirm(`Permanently delete ${window._inAppDrawerCode}?\n\nThis cannot be undone.`)) return;
             try {
                 await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ action:'delete', code: window._inAppDrawerCode, password: window._adminPwd }) });
+                    body: JSON.stringify({ action:'delete', code: window._inAppDrawerCode, password: _adminPasswordCache }) });
                 _closeInAppDrawer();
-                setTimeout(() => loadUsersTab(window._adminPwd), 340);
+                setTimeout(() => loadUsersTab(_adminPasswordCache), 340);
             } catch(e) { alert('Failed to delete. Check connection.'); }
         }
 
@@ -1920,7 +1926,9 @@
                         fc.innerHTML = '';
                         dbFreqs.forEach(f => {
                             const card = document.createElement('div'); card.className = 'freq-card';
-                            card.innerHTML = `<div class="freq-type">${f.t}</div><div class="freq-val">${f.f}</div>`;
+                            const ftDiv = document.createElement('div'); ftDiv.className = 'freq-type'; ftDiv.textContent = f.t;
+                            const ffDiv = document.createElement('div'); ffDiv.className = 'freq-val';  ffDiv.textContent = f.f;
+                            card.appendChild(ftDiv); card.appendChild(ffDiv);
                             fc.appendChild(card);
                         });
                     }

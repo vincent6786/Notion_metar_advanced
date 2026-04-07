@@ -38,7 +38,7 @@ async function checkPinRateLimit(ip) {
     const key = `efb:pinlimit:${ip}:${getHourKey()}`;
     try {
         const count = await kv.incr(key);
-        if (count === 1) await kv.expire(key, 7200); // 2h TTL
+        if (count === 1) await kv.expire(key, 3600); // 1h TTL — matches the hourly bucket window
         return count <= PIN_HOURLY_LIMIT;
     } catch(e) {
         return true; // fail open on Redis errors
