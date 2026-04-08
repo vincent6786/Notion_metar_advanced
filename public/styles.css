@@ -117,6 +117,9 @@
         }
         .modal-overlay.active { display: flex; }
 
+        /* In-app browser must sit above the tools extension overlay (z-index: 3000) */
+        #usLinkModal { z-index: 4000; }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
