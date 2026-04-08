@@ -3,18 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.13',  // ← set once in index.html
-            title: 'METAR GO — v4.7.13',
+            version: window.APP_VERSION || '4.7.14',  // ← set once in index.html
+            title: 'METAR GO — v4.7.14',
             changes: [
                 {
-                    icon: '✅',
-                    title: 'Runway Auto-Selection Fixed',
-                    desc: 'Auto-selection now evaluates both ends of every runway pair. Previously only one end was checked, which could result in selecting a tailwind runway. The best headwind runway is now always picked correctly.'
+                    icon: '🔒',
+                    title: 'Security Hardening',
+                    desc: 'Fixed XSS vulnerabilities in the admin panel and frequency display. Admin password is no longer exposed in the browser\'s global window object.'
                 },
                 {
-                    icon: '🌐',
-                    title: 'Open-Meteo Location Detail Panel',
-                    desc: 'Tap "+ MORE" next to the Advisory badge on the 24H Trend to see expanded model data: estimated visibility, cloud cover, humidity, CAPE (convective risk), precipitation rate, and FL340 jet-stream winds.'
+                    icon: '🛡️',
+                    title: 'Smart In-App Browser',
+                    desc: 'Resources now detect whether a site blocks embedded viewing before loading. If blocked, a clear message is shown with an "Open in Browser" button instead of a blank iframe.'
+                },
+                {
+                    icon: '🪟',
+                    title: 'In-App Browser Layer Fix',
+                    desc: 'The in-app browser no longer opens behind the tools overlay. It now correctly renders on top of all other panels.'
                 }
             ]
         };
