@@ -7,6 +7,7 @@
     { "source": "/api/status",    "destination": "/api/status.js"    },
     { "source": "/api/access",    "destination": "/api/access.js"    },
     { "source": "/api/stream",    "destination": "/api/stream.js"    },
-    { "source": "/api/notam",     "destination": "/api/notam.js"     }
+    { "source": "/api/notam",        "destination": "/api/notam.js"        },
+    { "source": "/api/check-frame",  "destination": "/api/check-frame.js"  }
   ]
 }

@@ -1766,26 +1766,59 @@
         let _usLinkType = null;
         let _ifpActiveTab = 'airport';
 
-        function openInAppBrowser(url, title) {
+        async function openInAppBrowser(url, title) {
             const modal   = document.getElementById('usLinkModal');
             const frame   = document.getElementById('usLinkFrame');
             const loader  = document.getElementById('usLinkLoader');
             const tabs    = document.getElementById('iflightplannerTabs');
             const titleEl = document.getElementById('usLinkModalTitle');
             const openBtn = document.getElementById('usLinkOpenExternal');
-        
+
             _usLinkType = 'generic';
             tabs.style.display   = 'none';
             titleEl.innerText    = title;
             loader.style.display = 'flex';
             frame.src            = 'about:blank';
-        
+
             openBtn.onclick = () => window.open(url, '_blank');
-        
+            modal.classList.add('active');
+
+            // Check if the URL allows iframe embedding before loading
+            try {
+                const resp = await fetch(`/api/check-frame?url=${encodeURIComponent(url)}`);
+                const data = await resp.json();
+                if (!data.embeddable) {
+                    loader.style.display = 'none';
+                    const safeUrl  = url.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                    const safeText = url.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    frame.srcdoc = `<html><body style="margin:0;background:#000;display:flex;flex-direction:column;
+                        align-items:center;justify-content:center;height:100vh;
+                        font-family:-apple-system,sans-serif;text-align:center;padding:30px;
+                        box-sizing:border-box;">
+                        <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+                        <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:10px;">
+                            Cannot display in-app
+                        </div>
+                        <div style="font-size:13px;color:#8e8e93;line-height:1.7;max-width:280px;margin-bottom:28px;">
+                            This site blocks embedded viewing for security reasons.
+                            Tap the button below to open it in your browser.
+                        </div>
+                        <a href="${safeUrl}" target="_blank"
+                           style="background:#0a84ff;color:#fff;padding:13px 28px;
+                                  border-radius:12px;text-decoration:none;
+                                  font-size:15px;font-weight:800;display:inline-block;">
+                            Open in Browser ↗
+                        </a>
+                        <div style="margin-top:16px;font-size:11px;color:#444;">${safeText}</div>
+                    </body></html>`;
+                    return;
+                }
+            } catch (e) {
+                // Check failed — proceed with loading anyway; the iframe will show its own error
+            }
+
             // Small delay so 'about:blank' clears the previous page visually
             setTimeout(() => { frame.src = url; }, 80);
-        
-            modal.classList.add('active');
         }
     
         function openUsLink(type) {
