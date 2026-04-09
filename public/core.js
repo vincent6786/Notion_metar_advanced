@@ -2414,6 +2414,8 @@
         }
 
 
+        let _audioSectionIcao = null;
+
         function updateAudioSection(icao) {
             const container   = document.getElementById('audioPlayerTarget');
             const label       = document.getElementById('audioLabel');
@@ -2459,6 +2461,10 @@
                 ]}
                 
             };
+
+            // Skip rebuilding DOM if same airport — keeps audio playing during auto-refresh
+            if (icao === _audioSectionIcao) return;
+            _audioSectionIcao = icao;
 
             const cfg = streamConfigs[icao];
             if (cfg) {
