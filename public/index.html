@@ -90,7 +90,7 @@
                 <span style="padding-left:4px">🔍</span>
                 <input type="text" id="icao"
                        placeholder="Search (e.g. KJFK)"
-                       onkeydown="if(event.key==='Enter') loadData()"
+                       onkeydown="if(event.key==='Enter'){ loadData(); const _en=document.getElementById('toggleMultiDashboard')?.checked; setTab(_en?'weather':'metar'); }"
                        oninput="toggleClearBtn()"
                        autocapitalize="characters"
                        autocomplete="off"
@@ -1552,7 +1552,7 @@
                     </div>
                     <!-- Gust -->
                     <div style="background:#1c1c1e; padding:12px; border-radius:8px;">
-                        <div style="font-size:11px; color:var(--sub-text); margin-bottom:6px;">MAX GUST (kt)</div>
+                        <div style="font-size:11px; color:var(--sub-text); margin-bottom:6px;">GUST FACTOR (kt)</div>
                         <div id="displayMaxGust" style="font-size:24px; font-weight:800; color:#fff;">--</div>
                     </div>
                     <!-- Crosswind -->
@@ -1569,7 +1569,7 @@
                         <div>
                             <input type="number" id="customMinCeil" class="conv-inp" placeholder="Ceiling (ft)" style="margin-bottom:8px;">
                             <input type="number" id="customMaxSteady" class="conv-inp" placeholder="Steady (kt)" style="margin-bottom:8px;">
-                            <input type="number" id="customMaxGust" class="conv-inp" placeholder="Gust (kt)">
+                            <input type="number" id="customMaxGust" class="conv-inp" placeholder="Gust Factor (kt)">
                         </div>
                         <div>
                             <input type="number" id="customMinVis" class="conv-inp" placeholder="Visibility (SM)" style="margin-bottom:8px;">

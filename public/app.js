@@ -1096,7 +1096,8 @@
                 const mv = stationData.magnetic_variation || 0;
                 const rwyHdg = parseInt(rwyIdent.replace(/\D/g, '')) * 10;
                 const diff = (currentWind.dir - mv - rwyHdg) * (Math.PI / 180);
-                actualXW = Math.abs(Math.sin(diff) * currentWind.spd);
+                const speedForXW = currentWind.gust > 0 ? currentWind.gust : currentWind.spd;
+                actualXW = Math.abs(Math.sin(diff) * speedForXW);
             }
 
             let actualCeil = 9999;

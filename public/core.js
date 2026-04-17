@@ -1513,7 +1513,12 @@
         // ================================================================
         // 9. CORE DATA LOGIC
         // ================================================================
-        function quickLoad(code) { document.getElementById('icao').value = code; loadData(); }
+        function quickLoad(code) {
+            document.getElementById('icao').value = code;
+            loadData();
+            const _en = document.getElementById('toggleMultiDashboard')?.checked;
+            setTab(_en ? 'weather' : 'metar');
+        }
 
         async function saveDefaultStation() {
             const input = document.getElementById('defaultIcaoInput');
