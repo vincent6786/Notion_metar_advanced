@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.14',  // ← set once in index.html
-            title: 'METAR GO — v4.7.14',
+            version: window.APP_VERSION || '4.7.15',  // ← set once in index.html
+            title: 'METAR GO — v4.7.15',
             changes: [
                 {
-                    icon: '🔒',
-                    title: 'Security Hardening',
-                    desc: 'Fixed XSS vulnerabilities in the admin panel and frequency display. Admin password is no longer exposed in the browser\'s global window object.'
+                    icon: '🔍',
+                    title: 'Search Auto-Navigates to Weather',
+                    desc: 'Searching for an airport (Enter key or history chip) now automatically switches to the METAR or WEATHER tab, so you land directly on the weather data.'
                 },
                 {
-                    icon: '🛡️',
-                    title: 'Smart In-App Browser',
-                    desc: 'Resources now detect whether a site blocks embedded viewing before loading. If blocked, a clear message is shown with an "Open in Browser" button instead of a blank iframe.'
+                    icon: '💨',
+                    title: 'Gust Factor Label',
+                    desc: 'The Go/No-Go profile card now correctly labels the gust limit as "GUST FACTOR (kt)" — the differential between gust and steady wind (e.g. 33020G26 → factor 6).'
                 },
                 {
-                    icon: '🪟',
-                    title: 'In-App Browser Layer Fix',
-                    desc: 'The in-app browser no longer opens behind the tools overlay. It now correctly renders on top of all other panels.'
+                    icon: '✈️',
+                    title: 'Crosswind Uses Gust Speed',
+                    desc: 'When a gust is reported, the Go/No-Go crosswind check now uses the gust speed instead of the steady wind (e.g. 31015G22KT → crosswind based on 22 kt).'
                 }
             ]
         };
