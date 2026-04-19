@@ -3,23 +3,23 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.7.15',  // ← set once in index.html
-            title: 'METAR GO — v4.7.15',
+            version: window.APP_VERSION || '4.8.0',  // ← set once in index.html
+            title: 'METAR GO — v4.8.0',
             changes: [
                 {
-                    icon: '🔍',
-                    title: 'Search Auto-Navigates to Weather',
-                    desc: 'Searching for an airport (Enter key or history chip) now automatically switches to the METAR or WEATHER tab, so you land directly on the weather data.'
+                    icon: '🗺️',
+                    title: 'Weather Map Tab',
+                    desc: 'New MAP tab powered by Windy — interactive weather map centered on your airport with 9 overlay layers (Wind, Rain, Gusts, Temp, Clouds, Pressure, Turbulence, Fog, Lightning).'
                 },
                 {
-                    icon: '💨',
-                    title: 'Gust Factor Label',
-                    desc: 'The Go/No-Go profile card now correctly labels the gust limit as "GUST FACTOR (kt)" — the differential between gust and steady wind (e.g. 33020G26 → factor 6).'
+                    icon: '🛫',
+                    title: 'Flight Level Selector',
+                    desc: 'Switch between SFC, FL050, FL100, FL180, FL300, and FL390 on the weather map to visualise winds and conditions at cruise altitude.'
                 },
                 {
-                    icon: '✈️',
-                    title: 'Crosswind Uses Gust Speed',
-                    desc: 'When a gust is reported, the Go/No-Go crosswind check now uses the gust speed instead of the steady wind (e.g. 31015G22KT → crosswind based on 22 kt).'
+                    icon: '✈︎',
+                    title: 'Live Traffic View',
+                    desc: 'Toggle to LIVE TRAFFIC mode in the MAP tab to see real-time ADS-B aircraft positions via ADS-B Exchange, centered on your current airport.'
                 }
             ]
         };
