@@ -1457,10 +1457,94 @@
             setTheme(saved || 'default');
         }
 
+        // ================================================================
+        // WEATHER MAP — Windy iframe embed + ADS-B traffic toggle
+        // ================================================================
+        let _windyMode        = 'weather';
+        let _windyActiveLayer = 'wind';
+        let _windyLevel       = 'surface';
+
+        function _setWindyHeight() {
+            const iframe   = document.getElementById('windyMap');
+            const ctrlsEl  = document.getElementById('mapWeatherCtrls');
+            const modeBar  = document.querySelector('.map-mode-bar');
+            if (!iframe) return;
+            const ctrlsH  = ctrlsEl ? ctrlsEl.offsetHeight : 100;
+            const modeH   = modeBar ? modeBar.offsetHeight : 36;
+            const top     = iframe.getBoundingClientRect().top;
+            const avail   = window.innerHeight - top - ctrlsH;
+            iframe.style.height = Math.max(200, avail) + 'px';
+        }
+
+        function _buildWindyUrl(layer, level, lat, lon) {
+            return `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=7&level=${level}&overlay=${layer}&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C&radarRange=-1`;
+        }
+
+        function _buildTrafficUrl(lat, lon) {
+            return `https://globe.adsbexchange.com/?lat=${lat}&lon=${lon}&zoom=9`;
+        }
+
+        function initWindyMap() {
+            const iframe = document.getElementById('windyMap');
+            if (!iframe) return;
+            _setWindyHeight();
+            const lat = stationData?.latitude  ?? 20;
+            const lon = stationData?.longitude ?? 0;
+            iframe.src = _windyMode === 'traffic'
+                ? _buildTrafficUrl(lat, lon)
+                : _buildWindyUrl(_windyActiveLayer, _windyLevel, lat, lon);
+        }
+
+        function recenterWindyMap() { initWindyMap(); }
+
+        function setMapMode(mode) {
+            _windyMode = mode;
+            document.querySelectorAll('.map-mode-btn').forEach(b =>
+                b.classList.toggle('active', b.id === 'modeBtn-' + mode));
+            const ctrls = document.getElementById('mapWeatherCtrls');
+            if (ctrls) ctrls.style.display = (mode === 'weather') ? '' : 'none';
+            initWindyMap();
+        }
+
+        function setWindyLayer(layer) {
+            _windyActiveLayer = layer;
+            document.querySelectorAll('.map-layer-btn').forEach(b =>
+                b.classList.toggle('active', b.id === 'layerBtn-' + layer));
+            const iframe = document.getElementById('windyMap');
+            if (!iframe) return;
+            try {
+                const url = new URL(iframe.src);
+                url.searchParams.set('overlay', layer);
+                iframe.src = url.toString();
+            } catch (_) {}
+        }
+
+        function setWindyLevel(level) {
+            _windyLevel = level;
+            document.querySelectorAll('.map-level-btn').forEach(b =>
+                b.classList.toggle('active', b.id === 'levelBtn-' + level));
+            const iframe = document.getElementById('windyMap');
+            if (!iframe) return;
+            try {
+                const url = new URL(iframe.src);
+                url.searchParams.set('level', level);
+                iframe.src = url.toString();
+            } catch (_) {}
+        }
+
+        function _updateLayerBtns(active) {
+            document.querySelectorAll('.map-layer-btn').forEach(btn =>
+                btn.classList.toggle('active', btn.id === 'layerBtn-' + active));
+        }
+
+        window.addEventListener('resize', _setWindyHeight);
+
         function setTab(name) {
                     // Scroll content area back to top on every tab switch
                     const scroller = document.getElementById('content-scroll');
                     if (scroller) scroller.scrollTop = 0;
+                    // Map tab needs scroll locked so touch events reach Windy
+                    if (scroller) scroller.style.overflow = (name === 'map') ? 'hidden' : '';
 
                     document.querySelectorAll('.view-section').forEach(el => {
                         el.classList.remove('active');
@@ -1481,6 +1565,7 @@
 
                     });
                     if (name === 'world') updateClock();
+                    if (name === 'map')   setTimeout(() => initWindyMap(), 50);
                     if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
                     // Redraw wind rose after tab is visible — iOS Safari discards canvas draws on hidden elements
                     if (name === 'metar') setTimeout(() => { if (document.getElementById('rwySelect').value) drawWindRose(); }, 50);
@@ -2342,7 +2427,11 @@
             // Fetch status immediately in parallel with everything else
             try {
                 const res = await fetch('/api/status');
-                return await res.json();
+                const data = await res.json();
+                if (data.env === 'preview' || data.env === 'development') {
+                    window.__EFB_STAGING = true;
+                }
+                return data;
             } catch {
                 return { maintenance: false };
             }
@@ -2372,6 +2461,17 @@
                 document.body.style.opacity = '0';
                 setTimeout(() => window.location.replace('/maintenance.html'), 400);
                 return;
+            }
+
+            // ── Staging environment setup ──────────────────────────────────
+            if (window.__EFB_STAGING) {
+                const stagingBanner = document.getElementById('staging-banner');
+                if (stagingBanner) {
+                    stagingBanner.classList.add('visible');
+                    document.body.classList.add('has-staging-banner');
+                }
+                localStorage.removeItem('efb_seen_version');
+                console.log('[Staging] Preview build — SW bypassed, What\'s New always shown');
             }
 
             // ── Access gate check ──────────────────────────────────────────
