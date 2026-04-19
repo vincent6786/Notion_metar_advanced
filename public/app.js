@@ -2342,7 +2342,11 @@
             // Fetch status immediately in parallel with everything else
             try {
                 const res = await fetch('/api/status');
-                return await res.json();
+                const data = await res.json();
+                if (data.env === 'preview' || data.env === 'development') {
+                    window.__EFB_STAGING = true;
+                }
+                return data;
             } catch {
                 return { maintenance: false };
             }
@@ -2372,6 +2376,17 @@
                 document.body.style.opacity = '0';
                 setTimeout(() => window.location.replace('/maintenance.html'), 400);
                 return;
+            }
+
+            // ── Staging environment setup ──────────────────────────────────
+            if (window.__EFB_STAGING) {
+                const stagingBanner = document.getElementById('staging-banner');
+                if (stagingBanner) {
+                    stagingBanner.classList.add('visible');
+                    document.body.classList.add('has-staging-banner');
+                }
+                localStorage.removeItem('efb_seen_version');
+                console.log('[Staging] Preview build — SW bypassed, What\'s New always shown');
             }
 
             // ── Access gate check ──────────────────────────────────────────

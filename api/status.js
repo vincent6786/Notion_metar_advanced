@@ -10,6 +10,7 @@ export default function handler(req, res) {
 
   res.status(200).json({
     maintenance: process.env.MAINTENANCE_MODE === 'true' && !hasBypass,
-    adminCode:   process.env.MAINTENANCE_MODE === 'true' ? ADMIN_CODE : null
+    adminCode:   process.env.MAINTENANCE_MODE === 'true' ? ADMIN_CODE : null,
+    env:         process.env.VERCEL_ENV || 'development'
   });
 }
