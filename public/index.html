@@ -1958,17 +1958,44 @@
          TAB: WEATHER MAP (Windy)
     ================================================================ -->
     <div id="tab-map" class="view-section map-fullscreen">
+
+        <!-- Mode toggle -->
+        <div class="map-mode-bar">
+            <button class="map-mode-btn active" id="modeBtn-weather" onclick="setMapMode('weather')">⛅ WEATHER</button>
+            <button class="map-mode-btn"         id="modeBtn-traffic" onclick="setMapMode('traffic')">✈︎ LIVE TRAFFIC</button>
+        </div>
+
+        <!-- Map iframe -->
         <iframe id="windyMap" src="" frameborder="0" allowfullscreen
                 style="width:100%;border:none;display:block;"></iframe>
-        <div class="map-layer-bar">
-            <button class="map-layer-btn active" id="layerBtn-wind"     onclick="setWindyLayer('wind')">WIND</button>
-            <button class="map-layer-btn"         id="layerBtn-rain"     onclick="setWindyLayer('rain')">RAIN</button>
-            <button class="map-layer-btn"         id="layerBtn-temp"     onclick="setWindyLayer('temp')">TEMP</button>
-            <button class="map-layer-btn"         id="layerBtn-clouds"   onclick="setWindyLayer('clouds')">CLOUDS</button>
-            <button class="map-layer-btn"         id="layerBtn-pressure" onclick="setWindyLayer('pressure')">PRESSURE</button>
-            <button class="map-layer-btn"         id="layerBtn-waves"    onclick="setWindyLayer('waves')">WAVES</button>
-            <button class="map-layer-btn map-layer-btn--center" onclick="recenterWindyMap()" title="Re-center on airport">⊕</button>
+
+        <!-- Weather controls (hidden in traffic mode) -->
+        <div id="mapWeatherCtrls">
+            <!-- Altitude / flight level -->
+            <div class="map-level-bar">
+                <span class="map-ctrl-label">ALT</span>
+                <button class="map-level-btn active" id="levelBtn-surface" onclick="setWindyLevel('surface')">SFC</button>
+                <button class="map-level-btn"         id="levelBtn-850h"   onclick="setWindyLevel('850h')">FL050</button>
+                <button class="map-level-btn"         id="levelBtn-700h"   onclick="setWindyLevel('700h')">FL100</button>
+                <button class="map-level-btn"         id="levelBtn-500h"   onclick="setWindyLevel('500h')">FL180</button>
+                <button class="map-level-btn"         id="levelBtn-300h"   onclick="setWindyLevel('300h')">FL300</button>
+                <button class="map-level-btn"         id="levelBtn-200h"   onclick="setWindyLevel('200h')">FL390</button>
+            </div>
+            <!-- Overlay layer -->
+            <div class="map-layer-bar">
+                <button class="map-layer-btn active" id="layerBtn-wind"     onclick="setWindyLayer('wind')">WIND</button>
+                <button class="map-layer-btn"         id="layerBtn-rain"     onclick="setWindyLayer('rain')">RAIN</button>
+                <button class="map-layer-btn"         id="layerBtn-gust"     onclick="setWindyLayer('gust')">GUSTS</button>
+                <button class="map-layer-btn"         id="layerBtn-temp"     onclick="setWindyLayer('temp')">TEMP</button>
+                <button class="map-layer-btn"         id="layerBtn-clouds"   onclick="setWindyLayer('clouds')">CLOUDS</button>
+                <button class="map-layer-btn"         id="layerBtn-pressure" onclick="setWindyLayer('pressure')">PRESSURE</button>
+                <button class="map-layer-btn"         id="layerBtn-cape"     onclick="setWindyLayer('cape')">TURB</button>
+                <button class="map-layer-btn"         id="layerBtn-fog"      onclick="setWindyLayer('fog')">FOG</button>
+                <button class="map-layer-btn"         id="layerBtn-thunder"  onclick="setWindyLayer('thunder')">LIGHTNING</button>
+                <button class="map-layer-btn map-layer-btn--center" onclick="recenterWindyMap()" title="Re-center on airport">⊕</button>
+            </div>
         </div>
+
     </div>
 
     <!-- ================================================================

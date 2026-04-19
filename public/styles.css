@@ -2609,27 +2609,94 @@
             box-shadow: none;
         }
 
-        /* ── Weather Map (Windy) tab ─────────────────────────────────────── */
+        /* ── Weather Map tab ─────────────────────────────────────────────── */
         .map-fullscreen {
             padding: 0 !important;
             overflow: hidden;
         }
         #windyMap {
             width: 100%;
-            /* height is set by _setWindyHeight() in JS */
             display: block;
         }
+
+        /* Mode toggle (WEATHER / LIVE TRAFFIC) */
+        .map-mode-bar {
+            display: flex;
+            gap: 6px;
+            padding: 7px 12px;
+            background: rgba(12, 12, 14, 0.97);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        .map-mode-btn {
+            flex: 1;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 7px 0;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .map-mode-btn.active {
+            background: var(--accent, #0a84ff);
+            border-color: var(--accent, #0a84ff);
+            color: #fff;
+        }
+
+        /* Altitude level bar */
+        .map-level-bar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            background: rgba(18, 18, 20, 0.98);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .map-level-bar::-webkit-scrollbar { display: none; }
+        .map-ctrl-label {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            color: rgba(255,255,255,0.3);
+            flex-shrink: 0;
+            margin-right: 2px;
+        }
+        .map-level-btn {
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 4px 9px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .map-level-btn.active {
+            background: rgba(255,180,0,0.25);
+            border-color: rgba(255,180,0,0.6);
+            color: #ffb400;
+        }
+
+        /* Overlay layer bar */
         .map-layer-bar {
             display: flex;
             gap: 6px;
-            padding: 8px 12px;
+            padding: 6px 12px;
             padding-bottom: max(8px, env(safe-area-inset-bottom));
             background: rgba(18, 18, 20, 0.96);
             border-top: 1px solid rgba(255,255,255,0.07);
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
-            flex-shrink: 0;
         }
         .map-layer-bar::-webkit-scrollbar { display: none; }
         .map-layer-btn {
@@ -2645,8 +2712,7 @@
             cursor: pointer;
             transition: background 0.15s, color 0.15s;
         }
-        .map-layer-btn.active,
-        .map-layer-btn:active {
+        .map-layer-btn.active {
             background: var(--accent, #0a84ff);
             border-color: var(--accent, #0a84ff);
             color: #fff;

@@ -1458,23 +1458,30 @@
         }
 
         // ================================================================
-        // WEATHER MAP — Windy iframe embed (free, no API key, no Leaflet conflict)
+        // WEATHER MAP — Windy iframe embed + ADS-B traffic toggle
         // ================================================================
+        let _windyMode        = 'weather';
         let _windyActiveLayer = 'wind';
+        let _windyLevel       = 'surface';
 
         function _setWindyHeight() {
-            const iframe = document.getElementById('windyMap');
-            const barEl  = document.querySelector('.map-layer-bar');
+            const iframe   = document.getElementById('windyMap');
+            const ctrlsEl  = document.getElementById('mapWeatherCtrls');
+            const modeBar  = document.querySelector('.map-mode-bar');
             if (!iframe) return;
-            const barH  = barEl ? barEl.offsetHeight : 52;
-            const top   = iframe.getBoundingClientRect().top;
-            const avail = window.innerHeight - top - barH;
+            const ctrlsH  = ctrlsEl ? ctrlsEl.offsetHeight : 100;
+            const modeH   = modeBar ? modeBar.offsetHeight : 36;
+            const top     = iframe.getBoundingClientRect().top;
+            const avail   = window.innerHeight - top - ctrlsH;
             iframe.style.height = Math.max(200, avail) + 'px';
         }
 
-        function _buildWindyUrl(layer, lat, lon) {
-            const z = 7;
-            return `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=${z}&level=surface&overlay=${layer}&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C&radarRange=-1`;
+        function _buildWindyUrl(layer, level, lat, lon) {
+            return `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=7&level=${level}&overlay=${layer}&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C&radarRange=-1`;
+        }
+
+        function _buildTrafficUrl(lat, lon) {
+            return `https://globe.adsbexchange.com/?lat=${lat}&lon=${lon}&zoom=9`;
         }
 
         function initWindyMap() {
@@ -1483,29 +1490,51 @@
             _setWindyHeight();
             const lat = stationData?.latitude  ?? 20;
             const lon = stationData?.longitude ?? 0;
-            iframe.src = _buildWindyUrl(_windyActiveLayer, lat, lon);
+            iframe.src = _windyMode === 'traffic'
+                ? _buildTrafficUrl(lat, lon)
+                : _buildWindyUrl(_windyActiveLayer, _windyLevel, lat, lon);
         }
 
-        function recenterWindyMap() {
+        function recenterWindyMap() { initWindyMap(); }
+
+        function setMapMode(mode) {
+            _windyMode = mode;
+            document.querySelectorAll('.map-mode-btn').forEach(b =>
+                b.classList.toggle('active', b.id === 'modeBtn-' + mode));
+            const ctrls = document.getElementById('mapWeatherCtrls');
+            if (ctrls) ctrls.style.display = (mode === 'weather') ? '' : 'none';
             initWindyMap();
         }
 
         function setWindyLayer(layer) {
             _windyActiveLayer = layer;
-            _updateLayerBtns(layer);
+            document.querySelectorAll('.map-layer-btn').forEach(b =>
+                b.classList.toggle('active', b.id === 'layerBtn-' + layer));
             const iframe = document.getElementById('windyMap');
-            if (!iframe || !iframe.src) return;
+            if (!iframe) return;
             try {
                 const url = new URL(iframe.src);
                 url.searchParams.set('overlay', layer);
                 iframe.src = url.toString();
-            } catch (_) { /* ignore */ }
+            } catch (_) {}
+        }
+
+        function setWindyLevel(level) {
+            _windyLevel = level;
+            document.querySelectorAll('.map-level-btn').forEach(b =>
+                b.classList.toggle('active', b.id === 'levelBtn-' + level));
+            const iframe = document.getElementById('windyMap');
+            if (!iframe) return;
+            try {
+                const url = new URL(iframe.src);
+                url.searchParams.set('level', level);
+                iframe.src = url.toString();
+            } catch (_) {}
         }
 
         function _updateLayerBtns(active) {
-            document.querySelectorAll('.map-layer-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.id === 'layerBtn-' + active);
-            });
+            document.querySelectorAll('.map-layer-btn').forEach(btn =>
+                btn.classList.toggle('active', btn.id === 'layerBtn-' + active));
         }
 
         window.addEventListener('resize', _setWindyHeight);
