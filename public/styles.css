@@ -2611,22 +2611,13 @@
 
         /* ── Weather Map (Windy) tab ─────────────────────────────────────── */
         .map-fullscreen {
-            position: relative;
-            display: flex;
-            flex-direction: column;
             padding: 0 !important;
-            /* fill the scrollable area height on mobile */
-            height: calc(100dvh - 90px);
             overflow: hidden;
         }
         #windy {
-            flex: 1;
             width: 100%;
-            min-height: 0;
-        }
-        /* Windy injects a "powered by" link that overlaps our layer bar — push it up */
-        #windy .leaflet-bottom.leaflet-right {
-            bottom: 0;
+            /* height is set by _setWindyHeight() in JS */
+            display: block;
         }
         .map-layer-bar {
             display: flex;
@@ -2665,10 +2656,5 @@
             font-size: 16px;
             padding: 4px 10px;
             color: rgba(255,255,255,0.5);
-        }
-        @media (min-width: 820px) {
-            .map-fullscreen {
-                height: calc(100vh - 80px);
-            }
         }
 

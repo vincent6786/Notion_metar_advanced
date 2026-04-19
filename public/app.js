@@ -1465,33 +1465,43 @@
         let _windyScriptDone = false;
         let _windyActiveLayer = 'wind';
 
+        function _setWindyHeight() {
+            const windyEl = document.getElementById('windy');
+            const barEl   = document.querySelector('.map-layer-bar');
+            if (!windyEl) return;
+            const barH  = barEl ? barEl.offsetHeight : 52;
+            const top   = windyEl.getBoundingClientRect().top;
+            const avail = window.innerHeight - top - barH;
+            windyEl.style.height = Math.max(200, avail) + 'px';
+        }
+
         function initWindyMap() {
             const container = document.getElementById('windy');
             if (!container) return;
 
+            _setWindyHeight();
+
             if (_windyAPI) {
-                // Already initialised — just re-center on current airport
+                // Already initialised — re-center and invalidate map size
                 recenterWindyMap();
+                _windyAPI.map.invalidateSize();
                 return;
             }
 
-            if (_windyScriptDone) return;   // script loaded but windyInit not yet called
+            if (_windyScriptDone) return;   // script injected, waiting for onload
 
-            if (!document.querySelector('script[src*="libBoot"]')) {
-                const s = document.createElement('script');
-                s.src = 'https://api.windy.com/assets/map-forecast/libBoot.js';
-                s.onload  = _startWindy;
-                s.onerror = () => {
-                    container.innerHTML = '<div style="padding:24px;color:#888;text-align:center;">Unable to load Windy map. Check your connection.</div>';
-                };
-                document.head.appendChild(s);
-            } else {
-                _startWindy();
-            }
+            const s = document.createElement('script');
+            s.src = 'https://api.windy.com/assets/map-forecast/libBoot.js';
+            s.onload  = _startWindy;
+            s.onerror = () => {
+                container.innerHTML = '<div style="padding:24px;color:#888;text-align:center;">Unable to load Windy map. Check your connection.</div>';
+            };
+            _windyScriptDone = true;   // mark before append to prevent double-inject
+            document.head.appendChild(s);
         }
 
         function _startWindy() {
-            _windyScriptDone = true;
+            _setWindyHeight();
             const lat = stationData?.latitude  ?? 20;
             const lon = stationData?.longitude ?? 0;
             /* global windyInit */
@@ -1502,10 +1512,14 @@
                 zoom: 7,
             }, api => {
                 _windyAPI = api;
-                // Sync button highlight to default overlay
                 _updateLayerBtns(_windyActiveLayer);
             });
         }
+
+        window.addEventListener('resize', () => {
+            _setWindyHeight();
+            if (_windyAPI) _windyAPI.map.invalidateSize();
+        });
 
         function recenterWindyMap() {
             if (!_windyAPI) return;
