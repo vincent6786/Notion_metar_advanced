@@ -1458,84 +1458,48 @@
         }
 
         // ================================================================
-        // WEATHER MAP — Windy Forecast API (Leaflet plugin)
+        // WEATHER MAP — Windy iframe embed (free, no API key, no Leaflet conflict)
         // ================================================================
-        const WINDY_KEY = 'Q9iMnpM4i3mAR2NIeeJcqV0kHWYU7OEa';
-        let _windyAPI        = null;
-        let _windyScriptDone = false;
         let _windyActiveLayer = 'wind';
 
         function _setWindyHeight() {
-            const windyEl = document.getElementById('windy');
-            const barEl   = document.querySelector('.map-layer-bar');
-            if (!windyEl) return;
+            const iframe = document.getElementById('windyMap');
+            const barEl  = document.querySelector('.map-layer-bar');
+            if (!iframe) return;
             const barH  = barEl ? barEl.offsetHeight : 52;
-            const top   = windyEl.getBoundingClientRect().top;
+            const top   = iframe.getBoundingClientRect().top;
             const avail = window.innerHeight - top - barH;
-            windyEl.style.height = Math.max(200, avail) + 'px';
+            iframe.style.height = Math.max(200, avail) + 'px';
+        }
+
+        function _buildWindyUrl(layer, lat, lon) {
+            const z = 7;
+            return `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=${z}&level=surface&overlay=${layer}&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C&radarRange=-1`;
         }
 
         function initWindyMap() {
-            const container = document.getElementById('windy');
-            if (!container) return;
-
-            _setWindyHeight();
-
-            if (_windyAPI) {
-                // Already initialised — re-center and invalidate map size
-                recenterWindyMap();
-                _windyAPI.map.invalidateSize();
-                return;
-            }
-
-            if (_windyScriptDone) return;   // script injected, waiting for onload
-
-            const s = document.createElement('script');
-            s.src = 'https://api.windy.com/assets/map-forecast/libBoot.js';
-            s.onload  = _startWindy;
-            s.onerror = () => {
-                container.innerHTML = '<div style="padding:24px;color:#888;text-align:center;">Unable to load Windy map. Check your connection.</div>';
-            };
-            _windyScriptDone = true;   // mark before append to prevent double-inject
-            document.head.appendChild(s);
-        }
-
-        function _startWindy() {
+            const iframe = document.getElementById('windyMap');
+            if (!iframe) return;
             _setWindyHeight();
             const lat = stationData?.latitude  ?? 20;
             const lon = stationData?.longitude ?? 0;
-            /* global windyInit */
-            windyInit({
-                key:     WINDY_KEY,
-                verbose: false,
-                lat, lon,
-                zoom: 7,
-            }, api => {
-                _windyAPI = api;
-                _updateLayerBtns(_windyActiveLayer);
-            });
+            iframe.src = _buildWindyUrl(_windyActiveLayer, lat, lon);
         }
 
-        window.addEventListener('resize', () => {
-            _setWindyHeight();
-            if (_windyAPI) _windyAPI.map.invalidateSize();
-        });
-
         function recenterWindyMap() {
-            if (!_windyAPI) return;
-            const lat = stationData?.latitude;
-            const lon = stationData?.longitude;
-            if (lat != null && lon != null) {
-                _windyAPI.map.setView([lat, lon], 7);
-            }
+            initWindyMap();
         }
 
         function setWindyLayer(layer) {
             _windyActiveLayer = layer;
-            if (_windyAPI) {
-                _windyAPI.store.set('overlay', layer);
-            }
             _updateLayerBtns(layer);
+            const iframe = document.getElementById('windyMap');
+            if (!iframe || !iframe.src) return;
+            try {
+                const url = new URL(iframe.src);
+                url.searchParams.set('overlay', layer);
+                iframe.src = url.toString();
+            } catch (_) { /* ignore */ }
         }
 
         function _updateLayerBtns(active) {
@@ -1543,6 +1507,8 @@
                 btn.classList.toggle('active', btn.id === 'layerBtn-' + active);
             });
         }
+
+        window.addEventListener('resize', _setWindyHeight);
 
         function setTab(name) {
                     // Scroll content area back to top on every tab switch

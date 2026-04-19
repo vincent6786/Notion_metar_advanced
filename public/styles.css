@@ -2614,7 +2614,7 @@
             padding: 0 !important;
             overflow: hidden;
         }
-        #windy {
+        #windyMap {
             width: 100%;
             /* height is set by _setWindyHeight() in JS */
             display: block;
