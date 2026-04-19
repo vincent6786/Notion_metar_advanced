@@ -1457,10 +1457,85 @@
             setTheme(saved || 'default');
         }
 
+        // ================================================================
+        // WEATHER MAP — Windy Forecast API (Leaflet plugin)
+        // ================================================================
+        const WINDY_KEY = 'Q9iMnpM4i3mAR2NIeeJcqV0kHWYU7OEa';
+        let _windyAPI        = null;
+        let _windyScriptDone = false;
+        let _windyActiveLayer = 'wind';
+
+        function initWindyMap() {
+            const container = document.getElementById('windy');
+            if (!container) return;
+
+            if (_windyAPI) {
+                // Already initialised — just re-center on current airport
+                recenterWindyMap();
+                return;
+            }
+
+            if (_windyScriptDone) return;   // script loaded but windyInit not yet called
+
+            if (!document.querySelector('script[src*="libBoot"]')) {
+                const s = document.createElement('script');
+                s.src = 'https://api.windy.com/assets/map-forecast/libBoot.js';
+                s.onload  = _startWindy;
+                s.onerror = () => {
+                    container.innerHTML = '<div style="padding:24px;color:#888;text-align:center;">Unable to load Windy map. Check your connection.</div>';
+                };
+                document.head.appendChild(s);
+            } else {
+                _startWindy();
+            }
+        }
+
+        function _startWindy() {
+            _windyScriptDone = true;
+            const lat = stationData?.latitude  ?? 20;
+            const lon = stationData?.longitude ?? 0;
+            /* global windyInit */
+            windyInit({
+                key:     WINDY_KEY,
+                verbose: false,
+                lat, lon,
+                zoom: 7,
+            }, api => {
+                _windyAPI = api;
+                // Sync button highlight to default overlay
+                _updateLayerBtns(_windyActiveLayer);
+            });
+        }
+
+        function recenterWindyMap() {
+            if (!_windyAPI) return;
+            const lat = stationData?.latitude;
+            const lon = stationData?.longitude;
+            if (lat != null && lon != null) {
+                _windyAPI.map.setView([lat, lon], 7);
+            }
+        }
+
+        function setWindyLayer(layer) {
+            _windyActiveLayer = layer;
+            if (_windyAPI) {
+                _windyAPI.store.set('overlay', layer);
+            }
+            _updateLayerBtns(layer);
+        }
+
+        function _updateLayerBtns(active) {
+            document.querySelectorAll('.map-layer-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.id === 'layerBtn-' + active);
+            });
+        }
+
         function setTab(name) {
                     // Scroll content area back to top on every tab switch
                     const scroller = document.getElementById('content-scroll');
                     if (scroller) scroller.scrollTop = 0;
+                    // Map tab needs scroll locked so touch events reach Windy
+                    if (scroller) scroller.style.overflow = (name === 'map') ? 'hidden' : '';
 
                     document.querySelectorAll('.view-section').forEach(el => {
                         el.classList.remove('active');
@@ -1481,6 +1556,7 @@
 
                     });
                     if (name === 'world') updateClock();
+                    if (name === 'map')   setTimeout(() => initWindyMap(), 50);
                     if (name === 'taf' && meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache), 50);
                     // Redraw wind rose after tab is visible — iOS Safari discards canvas draws on hidden elements
                     if (name === 'metar') setTimeout(() => { if (document.getElementById('rwySelect').value) drawWindRose(); }, 50);

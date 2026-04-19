@@ -2608,4 +2608,67 @@
             background: #ff0000;
             box-shadow: none;
         }
-        
+
+        /* ── Weather Map (Windy) tab ─────────────────────────────────────── */
+        .map-fullscreen {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 0 !important;
+            /* fill the scrollable area height on mobile */
+            height: calc(100dvh - 90px);
+            overflow: hidden;
+        }
+        #windy {
+            flex: 1;
+            width: 100%;
+            min-height: 0;
+        }
+        /* Windy injects a "powered by" link that overlaps our layer bar — push it up */
+        #windy .leaflet-bottom.leaflet-right {
+            bottom: 0;
+        }
+        .map-layer-bar {
+            display: flex;
+            gap: 6px;
+            padding: 8px 12px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            background: rgba(18, 18, 20, 0.96);
+            border-top: 1px solid rgba(255,255,255,0.07);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            flex-shrink: 0;
+        }
+        .map-layer-bar::-webkit-scrollbar { display: none; }
+        .map-layer-btn {
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.6);
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            padding: 6px 11px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .map-layer-btn.active,
+        .map-layer-btn:active {
+            background: var(--accent, #0a84ff);
+            border-color: var(--accent, #0a84ff);
+            color: #fff;
+        }
+        .map-layer-btn--center {
+            margin-left: auto;
+            font-size: 16px;
+            padding: 4px 10px;
+            color: rgba(255,255,255,0.5);
+        }
+        @media (min-width: 820px) {
+            .map-fullscreen {
+                height: calc(100vh - 80px);
+            }
+        }
+

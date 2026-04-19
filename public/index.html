@@ -168,6 +168,7 @@
         <div class="tab" onclick="setTab('info')">INFO</div>
         <div class="tab" onclick="setTab('atc')">ATC</div>
         <div class="tab" onclick="setTab('world')">WORLD</div>
+        <div class="tab" onclick="setTab('map')">MAP</div>
         <div class="tab" onclick="setTab('tools')">TOOLS</div>
         <div class="tab" onclick="setTab('settings')">SETTINGS</div>
         <div class="tab" onclick="setTab('help')">HELP</div>
@@ -1950,6 +1951,22 @@
             <button class="tool-btn"
                     style="background:var(--card-bg); border:1px solid var(--danger); color:var(--danger);"
                     onclick="resetApp()">Factory Reset App</button>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         TAB: WEATHER MAP (Windy)
+    ================================================================ -->
+    <div id="tab-map" class="view-section map-fullscreen">
+        <div id="windy"></div>
+        <div class="map-layer-bar">
+            <button class="map-layer-btn active" id="layerBtn-wind"     onclick="setWindyLayer('wind')">WIND</button>
+            <button class="map-layer-btn"         id="layerBtn-rain"     onclick="setWindyLayer('rain')">RAIN</button>
+            <button class="map-layer-btn"         id="layerBtn-temp"     onclick="setWindyLayer('temp')">TEMP</button>
+            <button class="map-layer-btn"         id="layerBtn-clouds"   onclick="setWindyLayer('clouds')">CLOUDS</button>
+            <button class="map-layer-btn"         id="layerBtn-pressure" onclick="setWindyLayer('pressure')">PRESSURE</button>
+            <button class="map-layer-btn"         id="layerBtn-waves"    onclick="setWindyLayer('waves')">WAVES</button>
+            <button class="map-layer-btn map-layer-btn--center" onclick="recenterWindyMap()" title="Re-center on airport">⊕</button>
         </div>
     </div>
 
