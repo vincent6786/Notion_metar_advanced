@@ -2657,6 +2657,7 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+            touch-action: pan-x;
         }
         .map-level-bar::-webkit-scrollbar { display: none; }
         .map-ctrl-label {
@@ -2697,6 +2698,7 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+            touch-action: pan-x;
         }
         .map-layer-bar::-webkit-scrollbar { display: none; }
         .map-layer-btn {

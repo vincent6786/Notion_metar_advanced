@@ -2508,8 +2508,8 @@
 
         function getTabOrder() {
             const enabled = document.getElementById('toggleMultiDashboard')?.checked;
-            if (enabled) return ['dashboard', 'weather', 'info', 'atc', 'world', 'tools', 'settings', 'help'];
-            return ['metar', 'taf', 'info', 'atc', 'world', 'tools', 'settings', 'help'];
+            if (enabled) return ['dashboard', 'weather', 'info', 'atc', 'world', 'map', 'tools', 'settings', 'help'];
+            return ['metar', 'taf', 'info', 'atc', 'world', 'map', 'tools', 'settings', 'help'];
         }
         function handleSwipe() {
             const swipeThreshold = 80;  // Minimum swipe distance
@@ -2567,6 +2567,8 @@
                        t.closest('.tabs') ||
                        t.closest('#tools-extension-panel') ||
                        t.closest('#windsAloftModal') ||        // modal content — don't swipe
+                       t.closest('.map-layer-bar') ||          // horizontally scrollable map controls
+                       t.closest('.map-level-bar') ||
                        (t.tagName === 'INPUT' && t.type === 'range') || // sliders are horizontal too
                        document.getElementById('windsAloftModal')?.style.display === 'flex' || // backdrop tap
                        document.getElementById('formula-modal')?.style.display === 'flex' ||   // other modals
