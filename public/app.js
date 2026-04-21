@@ -2413,6 +2413,228 @@
         }
     
         // ================================================================
+        // PRINT PREVIEW
+        // ================================================================
+        function showPrintPreview() {
+            if (!lastMetarObj) { showToast('⚠️ Load an airport first'); return; }
+
+            const icao   = document.getElementById('icao').value.trim().toUpperCase();
+            const now    = new Date();
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const utcStr = `${now.getUTCDate().toString().padStart(2,'0')} ${months[now.getUTCMonth()]} ${now.getUTCFullYear()} · ${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
+
+            const stName   = stationData?.name || icao;
+            const stElev   = stationData?.elevation_ft != null ? `${stationData.elevation_ft} ft MSL` : '';
+            const lat      = stationData?.latitude;
+            const lon      = stationData?.longitude;
+            const stCoords = (lat != null && lon != null)
+                ? `${Math.abs(lat).toFixed(4)}°${lat >= 0 ? 'N' : 'S'} / ${Math.abs(lon).toFixed(4)}°${lon >= 0 ? 'E' : 'W'}`
+                : '';
+
+            // Flight category
+            const catColor = { VFR: '#1a7a1a', MVFR: '#7a6000', IFR: '#9a1a1a', LIFR: '#5a1a7a' };
+            const catBg    = { VFR: '#e8f5e8', MVFR: '#fffce6', IFR: '#fdeaea', LIFR: '#f5e8fd' };
+            const rules    = lastMetarObj.flight_rules || '—';
+            const m        = lastMetarObj;
+
+            // Wind
+            const wDir  = m.wind_direction?.repr === 'VRB' ? 'VRB' : (m.wind_direction?.value != null ? String(m.wind_direction.value).padStart(3,'0') + '°' : '—');
+            const wSpd  = m.wind_speed?.value  != null ? `${windToKt(m.wind_speed.value,  m.units?.wind_speed)} kt` : '—';
+            const wGust = m.wind_gust?.value   != null ? ` G${windToKt(m.wind_gust.value, m.units?.wind_speed)} kt` : '';
+            const windStr = `${wDir} / ${wSpd}${wGust}`;
+
+            // Visibility
+            const visRaw  = m.visibility?.value;
+            const visUnit = (m.units?.visibility || 'sm').toLowerCase();
+            let visStr = '—';
+            if (visRaw != null) {
+                if      (visUnit === 'm')  visStr = visRaw >= 9999 ? '10 km+ (CAVOK)' : `${visRaw} m`;
+                else if (visUnit === 'km') visStr = visRaw >= 10   ? '10 km+ (CAVOK)' : `${visRaw} km`;
+                else                       visStr = visRaw >= 10   ? 'P6SM'            : `${visRaw} SM`;
+            }
+
+            // Sky / Ceiling
+            const clouds   = m.clouds || [];
+            const ceilLayer = clouds.find(c => ['BKN','OVC','VV'].includes(c.type));
+            const allSkyStr = clouds.map(c => `${c.type} ${c.altitude * 100} ft`).join('  ·  ');
+            let ceilStr = clouds.length ? allSkyStr : 'CLR / SKC';
+            if (ceilLayer) ceilStr = `${ceilLayer.type} ${ceilLayer.altitude * 100} ft (ceiling)${clouds.length > 1 ? '  ·  ' + allSkyStr : ''}`;
+
+            // Temp / Dew / QNH
+            const t = m.temperature?.value, d = m.dewpoint?.value;
+            const tempStr = (t != null && d != null) ? `${t}°C / ${d}°C  (Spread ${(t - d).toFixed(1)}°C)` : '—';
+
+            const alt = m.altimeter?.value;
+            let qnhStr = '—';
+            if (alt != null) {
+                if (alt < 200) qnhStr = `${alt.toFixed(2)} inHg  /  Q${Math.round(alt * 33.8639)} hPa`;
+                else           qnhStr = `Q${alt} hPa  /  A${(alt * 0.02953).toFixed(2)} inHg`;
+            }
+
+            const wxCodes = [...(m.wx_codes || []), ...(m.weather || [])].map(w => w.repr || '').filter(Boolean).join(' ');
+
+            // ── TAF section ──
+            let tafHTML = '<p style="color:#888;font-style:italic;font-size:12px;">No TAF available.</p>';
+            if (tafDataCache && tafDataCache.length > 0) {
+                const rawTaf  = document.getElementById('rawTaf')?.innerText?.trim() || '';
+                const nowTs   = Date.now();
+                const fmtT    = dt => { const d = new Date(dt); return `${d.getUTCDate().toString().padStart(2,'0')}/${d.getUTCHours().toString().padStart(2,'0')}Z`; };
+                const fmtW    = f  => {
+                    const wd = f.wind?.direction?.repr === 'VRB' ? 'VRB' : (f.wind?.direction?.value != null ? String(f.wind.direction.value).padStart(3,'0') + '°' : '—');
+                    const ws = f.wind?.speed?.value != null ? `/${f.wind.speed.value} kt` : '';
+                    return `${wd}${ws}`;
+                };
+                const fmtV    = f  => {
+                    const v = f.visibility?.value;
+                    if (v == null) return '—';
+                    const u = (f.visibility?.units || 'sm').toLowerCase();
+                    if (u === 'm') return v >= 9999 ? '10km+' : `${v}m`;
+                    return v >= 10 ? 'P6SM' : `${v}SM`;
+                };
+                const fmtCeil = f  => {
+                    const cl = (f.clouds || []).find(c => ['BKN','OVC','VV'].includes(c.type));
+                    return cl ? `${cl.type} ${cl.altitude * 100}ft` : '';
+                };
+                const cc  = { VFR: '#1a7a1a', MVFR: '#7a6000', IFR: '#9a1a1a', LIFR: '#5a1a7a' };
+                const rows = tafDataCache.map(f => {
+                    const isNow  = nowTs >= new Date(f.start_time.dt).getTime() && nowTs < new Date(f.end_time.dt).getTime();
+                    const wxP    = (f.weather || []).map(w => w.repr || '').filter(Boolean).join(' ');
+                    const ceil   = fmtCeil(f);
+                    const type   = f.type || '';
+                    const color  = cc[f.flight_rules] || '#333';
+                    return `<div class="pp-taf-period" style="${isNow ? 'background:#e8f5e8;border-left:3px solid #1a7a1a;padding-left:9px;' : ''}">` +
+                        `<span style="font-weight:700;color:#222;">${fmtT(f.start_time.dt)}–${fmtT(f.end_time.dt)}</span>` +
+                        (type ? `<span style="background:#ddd;color:#555;padding:1px 5px;border-radius:3px;font-size:10px;margin-left:6px;">${type}</span>` : '') +
+                        `<span style="float:right;font-weight:900;color:${color};">${f.flight_rules || '—'}</span>` +
+                        `<div style="margin-top:3px;color:#444;font-size:10.5px;">Wind ${fmtW(f)} · Vis ${fmtV(f)}${ceil ? ' · ' + ceil : ''}${wxP ? ' · ' + wxP : ''}</div>` +
+                        `</div>`;
+                }).join('');
+                tafHTML = '';
+                if (rawTaf && rawTaf.length > 5 && !rawTaf.includes('No TAF')) {
+                    tafHTML += `<div class="pp-raw">${rawTaf}</div>`;
+                }
+                tafHTML += rows;
+            }
+
+            // ── Winds Aloft ──
+            const windsAloftHTML = _buildWindsAloftPrint();
+
+            // ── SIGMET / AIRMET ──
+            let sigHTML = '';
+            const sigEl = document.getElementById('sigairmetList') || document.getElementById('sigairmetList2');
+            if (sigEl) {
+                const txt = sigEl.textContent.trim();
+                if (txt && !txt.toLowerCase().includes('none') && txt.length > 4) {
+                    sigHTML = `<h2>SIGMET / AIRMET</h2><div style="font-size:11px;color:#333;line-height:1.5;">${sigEl.innerHTML}</div>`;
+                }
+            }
+
+            // ── NOTAMs ──
+            let notamHTML = '<p style="color:#888;font-style:italic;font-size:12px;">No NOTAMs cached.</p>';
+            try {
+                const cached = localStorage.getItem(`cache_notam_${icao}`);
+                if (cached) {
+                    const c      = JSON.parse(cached);
+                    const notams = Array.isArray(c.data) ? c.data : [];
+                    if (notams.length > 0) {
+                        const isCrit = n => /(CLSD|CLOSED|U\/S|UNSERVICEABLE|FAIL|OTS|OUT OF SERVICE)/i.test(n.traditional || n.text || '');
+                        const isWarn = n => /(OBST|OBSTACLE|WORK|WIP|SNOW|ICE|DANGER|HAZARD|CRANE|LASER|RESTRICTED|TRIGGER)/i.test(n.traditional || n.text || '') && !isCrit(n);
+                        const crit   = notams.filter(isCrit);
+                        const warn   = notams.filter(isWarn);
+                        const info   = notams.filter(n => !isCrit(n) && !isWarn(n));
+                        const grp = (arr, cls, label) => {
+                            if (!arr.length) return '';
+                            const col = cls === 'pp-notam-critical' ? '#b00000' : cls === 'pp-notam-warn' ? '#8a4500' : '#555';
+                            return `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 4px;color:${col};">${label} (${arr.length})</div>` +
+                                arr.map(n => `<div class="${cls}">• ${(n.traditional || n.text || '').replace(/\n/g,' ').trim()}</div>`).join('');
+                        };
+                        notamHTML = `<div style="font-size:11px;color:#666;margin-bottom:8px;">${notams.length} active NOTAM${notams.length !== 1 ? 's' : ''}</div>` +
+                            grp(crit, 'pp-notam-critical', '🔴 Critical') +
+                            grp(warn, 'pp-notam-warn',     '⚠️ Caution') +
+                            grp(info, 'pp-notam-info',     'ℹ️ Info');
+                    }
+                }
+            } catch(e) {}
+
+            // ── Assemble HTML ──
+            const html = `
+                <div style="margin-bottom:18px;padding-bottom:16px;border-bottom:2px solid #eee;">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                        <div>
+                            <div style="font-size:26px;font-weight:900;letter-spacing:2px;font-family:'SF Mono','Courier New',monospace;color:#111;">${icao}</div>
+                            <div style="font-size:14px;color:#333;margin-top:2px;font-weight:600;">${stName}</div>
+                            <div style="font-size:11px;color:#777;margin-top:2px;">${[stElev, stCoords].filter(Boolean).join('  ·  ')}</div>
+                        </div>
+                        <span class="pp-cat" style="background:${catBg[rules]||'#f4f4f6'};color:${catColor[rules]||'#333'};flex-shrink:0;">${rules}</span>
+                    </div>
+                    <div style="font-size:10px;color:#999;margin-top:8px;">Generated ${utcStr}</div>
+                </div>
+
+                <h2>METAR</h2>
+                <div class="pp-raw">${m.raw || '—'}</div>
+                <div class="pp-grid">
+                    <span class="pp-label">Wind</span><span>${windStr}</span>
+                    <span class="pp-label">Visibility</span><span>${visStr}</span>
+                    ${wxCodes ? `<span class="pp-label">Weather</span><span>${wxCodes}</span>` : ''}
+                    <span class="pp-label">Sky / Ceiling</span><span>${ceilStr}</span>
+                    <span class="pp-label">Temp / Dew</span><span>${tempStr}</span>
+                    <span class="pp-label">QNH</span><span>${qnhStr}</span>
+                </div>
+
+                <h2>TAF</h2>
+                ${tafHTML}
+
+                <h2>Winds Aloft</h2>
+                ${windsAloftHTML}
+
+                ${sigHTML}
+
+                <h2>NOTAMs</h2>
+                ${notamHTML}
+
+                <div class="pp-footer">
+                    METAR GO · ${utcStr} · Advisory only — not for operational use · Always verify with official sources before flight
+                </div>`;
+
+            document.getElementById('printPreviewContent').innerHTML = html;
+            document.getElementById('printPreviewModal').classList.add('active');
+        }
+
+        function _buildWindsAloftPrint() {
+            const levels = [
+                { label: '~3k ft',  wId: 'wind3k2',  tId: 'temp3k2',  iId: 'isa3k2'  },
+                { label: '~5k ft',  wId: 'wind5k2',  tId: 'temp5k2',  iId: 'isa5k2'  },
+                { label: '~10k ft', wId: 'wind10k2', tId: 'temp10k2', iId: 'isa10k2' },
+                { label: '~18k ft', wId: 'wind18k2', tId: 'temp18k2', iId: 'isa18k2' },
+            ];
+            const rows = levels.map(l => {
+                const wind = document.getElementById(l.wId)?.textContent?.trim() || '--';
+                const temp = document.getElementById(l.tId)?.textContent?.trim() || '--';
+                const isa  = document.getElementById(l.iId)?.textContent?.trim() || '--';
+                return `<tr>
+                    <td style="font-weight:700;color:#0a6abf;font-family:'SF Mono','Courier New',monospace;padding:4px 10px;border-bottom:1px solid #eee;">${l.label}</td>
+                    <td style="font-family:'SF Mono','Courier New',monospace;padding:4px 10px;border-bottom:1px solid #eee;">${wind}</td>
+                    <td style="font-family:'SF Mono','Courier New',monospace;padding:4px 10px;border-bottom:1px solid #eee;">${temp}</td>
+                    <td style="font-size:10px;font-weight:700;padding:4px 10px;border-bottom:1px solid #eee;">${isa}</td>
+                </tr>`;
+            }).join('');
+            return `<table style="border-collapse:collapse;font-size:12px;width:100%;margin-bottom:4px;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
+                <thead><tr style="background:#f4f4f6;">
+                    <th style="text-align:left;padding:5px 10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#666;font-weight:700;">Level</th>
+                    <th style="text-align:left;padding:5px 10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#666;font-weight:700;">Wind</th>
+                    <th style="text-align:left;padding:5px 10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#666;font-weight:700;">Temp</th>
+                    <th style="text-align:left;padding:5px 10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#666;font-weight:700;">ISA Δ</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div style="font-size:9px;color:#aaa;margin-top:2px;">NWP model data · advisory only</div>`;
+        }
+
+        function closePrintPreview() {
+            document.getElementById('printPreviewModal').classList.remove('active');
+        }
+
+        // ================================================================
         // 27. LAUNCH ANIMATION & STARTUP
         // ================================================================
         // ── Returns status only — does NOT touch the splash screen ──────────
