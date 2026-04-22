@@ -3,11 +3,11 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png" alt="METAR GO Logo" width="120"/>
   
-  ### Training Edition · v4.7.13
+  ### Training Edition · v4.8.0
   
   **Aviation Weather Viewer & Electronic Flight Bag**
   
-  A Progressive Web App for pilots — real-time METAR/TAF, runway wind analysis, SIGMET/AIRMET, live ATC audio, and a full suite of 12 aviation tools. Built for student pilots and flight training.
+  A Progressive Web App for pilots — real-time METAR/TAF, runway wind analysis, SIGMET/AIRMET, live ATC audio, interactive weather map, and a full suite of 12 aviation tools. Built for student pilots and flight training.
 </div>
 
 ---
@@ -99,6 +99,12 @@ Six app-wide themes — selection persists and syncs to cloud backup:
 - IATA-to-ICAO auto-resolution (e.g. JFK → KJFK)
 - Tap any card to load full data; drag handles to reorder
 - Cloud-synced airport list
+
+### 🗺️ Weather Map
+- **Interactive Windy map** centered on the loaded airport — no API key required
+- **9 overlay layers**: Wind, Rain, Gusts, Temperature, Clouds, Pressure, Turbulence (CAPE), Fog, Lightning
+- **Flight level selector**: SFC / FL050 / FL100 / FL180 / FL300 / FL390 — visualise winds aloft at any cruise altitude
+- **Live Traffic mode**: one-tap toggle to ADS-B Exchange real-time aircraft positions centered on the airport
 
 ### 🌍 World Clock
 - Live local times with UTC offset for any ICAO code
@@ -277,6 +283,13 @@ The GitHub Action (`bump-version.yml`) updates the version strings in `index.htm
 
 ## 📝 Changelog
 
+### v4.8.0 — Weather Map Tab
+- **Feature:** New **MAP tab** — interactive Windy weather map (iframe embed, no API key required) auto-centered on the loaded airport
+- **Feature:** **9 overlay layers** — Wind, Rain, Gusts, Temperature, Clouds, Pressure, Turbulence (CAPE), Fog, Lightning; replaced WAVES with aviation-relevant overlays
+- **Feature:** **Flight level selector** — SFC / FL050 (~850 hPa) / FL100 (~700 hPa) / FL180 (~500 hPa) / FL300 (~300 hPa) / FL390 (~200 hPa); select pressure level to inspect winds and temperature at cruise altitude
+- **Feature:** **Live Traffic toggle** — switches the map iframe to ADS-B Exchange, showing real-time aircraft positions centered on the airport; weather controls hide automatically in traffic mode
+- **Feature:** **⊕ re-center button** — snaps the map back to the current airport's coordinates at any time
+
 ### v4.7.13 — Runway Fix & Open-Meteo Detail Panel
 - **Fix:** Runway auto-selection now evaluates **both ends** of every runway pair. Previously only `ident1` was scored, which could result in selecting a tailwind runway when the opposite end had a clear headwind advantage. The cosine headwind calculation now runs for both `ident1` and `ident2`, and the higher-scoring end is selected.
 - **Feature:** **Open-Meteo Location Detail panel** — a `+ MORE` button appears next to the `⚠️ ADVISORY only` badge on the 24H Trend. Tapping opens a bottom-sheet showing the current-hour model snapshot: estimated visibility (SM), cloud cover (%), relative humidity (%), CAPE with colour-coded convective risk (amber >500 J/kg, red >1,000 J/kg), precipitation rate (mm/h), and FL340 jet-stream wind & temperature.
@@ -337,6 +350,8 @@ This project is private and proprietary. All rights reserved.
 - **[OurAirports](https://ourairports.com)** — Airport frequency CSV data
 - **[Upstash](https://upstash.com)** — Serverless Redis
 - **[Vercel](https://vercel.com)** — Hosting and serverless functions
+- **[Windy](https://windy.com)** — Interactive weather map embed
+- **[ADS-B Exchange](https://adsbexchange.com)** — Real-time aircraft traffic data
 - **[Leaflet](https://leafletjs.com)** — Interactive maps
 - **[UND](https://www.und.edu)** — E6B Trainer simulator
 - **[e6bx.com](https://e6bx.com)** — METAR Decoder

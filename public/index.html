@@ -12,7 +12,16 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.7.15';</script>
+    <script>window.APP_VERSION = '4.9.0';</script>
+    <script>
+    (function () {
+        var PROD_HOST = 'metar-advanced.vercel.app';
+        var isStaging = window.location.hostname !== PROD_HOST
+                        && window.location.hostname !== '';
+        window.__EFB_STAGING = isStaging;
+        if (isStaging) window.__EFB_SKIP_SW = true;
+    })();
+    </script>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <!-- Offline indicator banner -->
@@ -44,10 +53,31 @@
         from { transform: translateY(-100%); }
         to   { transform: translateY(0); }
     }
+    /* ── Staging / Preview indicator ── */
+    #staging-banner {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 10000;
+        background: linear-gradient(90deg, #1a0038, #0d001f);
+        border-bottom: 2px solid #bf5fff;
+        padding: 6px 16px;
+        padding-top: max(6px, env(safe-area-inset-top));
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #bf5fff;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+    }
+    #staging-banner.visible { display: block; }
+    body.has-staging-banner { padding-top: 28px; }
     </style>
 </head>
 
 <body>
+
+<div id="staging-banner">STAGING · Preview Build · Not for operational use</div>
 
 <script src="init.js"></script>
 
@@ -77,7 +107,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v4.7.15</div>
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v4.8.1</div>
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -138,6 +168,7 @@
         <div class="tab" onclick="setTab('info')">INFO</div>
         <div class="tab" onclick="setTab('atc')">ATC</div>
         <div class="tab" onclick="setTab('world')">WORLD</div>
+        <div class="tab" onclick="setTab('map')">MAP</div>
         <div class="tab" onclick="setTab('tools')">TOOLS</div>
         <div class="tab" onclick="setTab('settings')">SETTINGS</div>
         <div class="tab" onclick="setTab('help')">HELP</div>
@@ -254,6 +285,10 @@
                 <button class="copy-btn" onclick="shareBriefing()"
                         style="background:rgba(10,132,255,0.1);border-color:var(--accent);color:var(--accent);">
                     📤 Brief
+                </button>
+                <button class="copy-btn" onclick="showPrintPreview()"
+                        style="background:rgba(255,159,10,0.1);border-color:#ff9f0a;color:#ff9f0a;">
+                    🖨 Print
                 </button>
                 <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
             </div>
@@ -532,6 +567,10 @@
                             style="background:rgba(10,132,255,0.1);border-color:var(--accent);color:var(--accent);">
                         📤 Brief
                     </button>
+                    <button class="copy-btn" onclick="showPrintPreview()"
+                            style="background:rgba(255,159,10,0.1);border-color:#ff9f0a;color:#ff9f0a;">
+                        🖨 Print
+                    </button>
                     <button class="copy-btn" onclick="copyMetar()">📋 Copy</button>
                 </div>
             </div>
@@ -715,7 +754,7 @@
             <div id="tab-help" class="view-section">
 
                 <div style="font-size:20px; font-weight:800; margin-bottom:4px;">📖 METAR GO — User Guide</div>
-                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.7.15 · Training Edition · Quick reference for all features</div>
+                <div id="helpVersionLabel" style="font-size:12px; color:var(--sub-text); margin-bottom:16px;">v4.8.1 · Training Edition · Quick reference for all features</div>
                 
                 <!-- WHAT'S NEW SECTION — auto-populated from WHATS_NEW object -->
                 <div class="help-section" id="helpWhatsNewSection">
@@ -886,6 +925,26 @@
                     </div>
                 </div>
                 
+                <div class="help-section">
+                    <div class="help-section-title">🗺️ MAP Tab</div>
+                    <div class="help-item">
+                        <div class="help-q">Weather Map</div>
+                        <div class="help-a">An interactive Windy weather map automatically centered on your currently loaded airport. Switch overlays using the bottom layer bar: <b>WIND · RAIN · GUSTS · TEMP · CLOUDS · PRESSURE · TURB · FOG · LIGHTNING</b>. The <b>⊕</b> button re-centers the map on your airport at any time.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Flight Level Selector (ALT bar)</div>
+                        <div class="help-a">The amber <b>ALT</b> row selects the pressure level: <b>SFC</b> (surface) · <b>FL050</b> (~850 hPa) · <b>FL100</b> (~700 hPa) · <b>FL180</b> (~500 hPa) · <b>FL300</b> (~300 hPa) · <b>FL390</b> (~200 hPa). Use this to check winds and temperatures at cruise altitude before departure.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Live Traffic Mode</div>
+                        <div class="help-a">Tap <b>✈︎ LIVE TRAFFIC</b> at the top to switch the map to ADS-B Exchange — real-time aircraft positions centered on your airport. Weather controls are hidden in this mode. Tap <b>⛅ WEATHER</b> to return to the Windy map.</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-q">Aviation-Specific Layers</div>
+                        <div class="help-a"><b>TURB</b> shows CAPE (Convective Available Potential Energy) — a proxy for convective turbulence risk. <b>FOG</b> shows low-level visibility and fog probability. <b>LIGHTNING</b> shows thunderstorm activity. <b>GUSTS</b> shows maximum expected surface wind gusts.</div>
+                    </div>
+                </div>
+
                 <div class="help-section">
                     <div class="help-section-title">🛠 TOOLS Tab</div>
                     <div class="help-item">
@@ -1921,6 +1980,50 @@
                     style="background:var(--card-bg); border:1px solid var(--danger); color:var(--danger);"
                     onclick="resetApp()">Factory Reset App</button>
         </div>
+    </div>
+
+    <!-- ================================================================
+         TAB: WEATHER MAP (Windy)
+    ================================================================ -->
+    <div id="tab-map" class="view-section map-fullscreen">
+
+        <!-- Mode toggle -->
+        <div class="map-mode-bar">
+            <button class="map-mode-btn active" id="modeBtn-weather" onclick="setMapMode('weather')">⛅ WEATHER</button>
+            <button class="map-mode-btn"         id="modeBtn-traffic" onclick="setMapMode('traffic')">✈︎ LIVE TRAFFIC</button>
+        </div>
+
+        <!-- Map iframe -->
+        <iframe id="windyMap" src="" frameborder="0" allowfullscreen
+                style="width:100%;border:none;display:block;"></iframe>
+
+        <!-- Weather controls (hidden in traffic mode) -->
+        <div id="mapWeatherCtrls">
+            <!-- Altitude / flight level -->
+            <div class="map-level-bar">
+                <span class="map-ctrl-label">ALT</span>
+                <button class="map-level-btn active" id="levelBtn-surface" onclick="setWindyLevel('surface')">SFC</button>
+                <button class="map-level-btn"         id="levelBtn-850h"   onclick="setWindyLevel('850h')">FL050</button>
+                <button class="map-level-btn"         id="levelBtn-700h"   onclick="setWindyLevel('700h')">FL100</button>
+                <button class="map-level-btn"         id="levelBtn-500h"   onclick="setWindyLevel('500h')">FL180</button>
+                <button class="map-level-btn"         id="levelBtn-300h"   onclick="setWindyLevel('300h')">FL300</button>
+                <button class="map-level-btn"         id="levelBtn-200h"   onclick="setWindyLevel('200h')">FL390</button>
+            </div>
+            <!-- Overlay layer -->
+            <div class="map-layer-bar">
+                <button class="map-layer-btn active" id="layerBtn-wind"     onclick="setWindyLayer('wind')">WIND</button>
+                <button class="map-layer-btn"         id="layerBtn-rain"     onclick="setWindyLayer('rain')">RAIN</button>
+                <button class="map-layer-btn"         id="layerBtn-gust"     onclick="setWindyLayer('gust')">GUSTS</button>
+                <button class="map-layer-btn"         id="layerBtn-temp"     onclick="setWindyLayer('temp')">TEMP</button>
+                <button class="map-layer-btn"         id="layerBtn-clouds"   onclick="setWindyLayer('clouds')">CLOUDS</button>
+                <button class="map-layer-btn"         id="layerBtn-pressure" onclick="setWindyLayer('pressure')">PRESSURE</button>
+                <button class="map-layer-btn"         id="layerBtn-cape"     onclick="setWindyLayer('cape')">TURB</button>
+                <button class="map-layer-btn"         id="layerBtn-fog"      onclick="setWindyLayer('fog')">FOG</button>
+                <button class="map-layer-btn"         id="layerBtn-thunder"  onclick="setWindyLayer('thunder')">LIGHTNING</button>
+                <button class="map-layer-btn map-layer-btn--center" onclick="recenterWindyMap()" title="Re-center on airport">⊕</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- ================================================================
@@ -3536,6 +3639,26 @@
             </div>
         </div>
 
+        <!-- ================================================================
+             PRINT PREVIEW MODAL
+        ================================================================ -->
+        <div id="printPreviewModal" class="modal-overlay" onclick="closePrintPreview()" style="z-index:9200;padding:0;align-items:center;justify-content:center;">
+            <div onclick="event.stopPropagation()" style="width:92%;max-width:700px;max-height:90vh;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.9);">
+                <!-- Modal header (hidden on print) -->
+                <div id="printPreviewHeader" style="background:#1c1c1e;border:1px solid #333;border-bottom:none;border-radius:12px 12px 0 0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+                    <div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.3px;">🖨 Print Preview</div>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="window.print()" style="background:rgba(10,132,255,0.15);border:1px solid #0a84ff;color:#0a84ff;padding:7px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.3px;">Print / Save PDF</button>
+                        <button onclick="closePrintPreview()" style="background:#333;border:1px solid #555;color:#fff;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Close</button>
+                    </div>
+                </div>
+                <!-- White print-content area -->
+                <div id="printPreviewContent" style="background:#fff;flex:1;overflow-y:auto;padding:28px 32px;color:#111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;">
+                    <!-- Populated by showPrintPreview() -->
+                </div>
+            </div>
+        </div>
+
 </body>
 
 <script>
@@ -3543,9 +3666,16 @@
 (function () {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('[SW] Registered:', reg.scope))
-                .catch(err => console.warn('[SW] Registration failed:', err));
+            if (window.__EFB_SKIP_SW) {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    regs.forEach(r => r.unregister());
+                    console.log('[SW] Staging — service worker unregistered');
+                });
+            } else {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[SW] Registered:', reg.scope))
+                    .catch(err => console.warn('[SW] Registration failed:', err));
+            }
         });
     }
 
@@ -3640,6 +3770,103 @@
 body.fullscreen-mode {
     /* Prevent scrolling behind full-screen panel */
     overflow: hidden;
+}
+
+/* ── Print preview modal content styles ── */
+#printPreviewContent h2 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #444;
+    border-bottom: 1.5px solid #e0e0e0;
+    padding-bottom: 4px;
+    margin: 18px 0 8px;
+}
+#printPreviewContent h2:first-of-type { margin-top: 4px; }
+#printPreviewContent .pp-raw {
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 11px;
+    background: #f4f4f6;
+    border-radius: 6px;
+    padding: 8px 12px;
+    word-break: break-all;
+    margin-bottom: 8px;
+    color: #111;
+    border-left: 3px solid #ccc;
+}
+#printPreviewContent .pp-grid {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 3px 10px;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+#printPreviewContent .pp-label {
+    font-weight: 700;
+    color: #555;
+    font-size: 11px;
+}
+#printPreviewContent .pp-cat {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 6px;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+}
+#printPreviewContent .pp-taf-period {
+    font-size: 11px;
+    margin: 3px 0;
+    padding: 5px 10px;
+    background: #f4f4f6;
+    border-radius: 5px;
+    font-family: 'SF Mono', 'Courier New', monospace;
+}
+#printPreviewContent .pp-notam-critical { color: #b00000; font-size: 11px; margin: 3px 0; line-height: 1.4; }
+#printPreviewContent .pp-notam-warn     { color: #8a4500; font-size: 11px; margin: 3px 0; line-height: 1.4; }
+#printPreviewContent .pp-notam-info     { color: #333;    font-size: 11px; margin: 3px 0; line-height: 1.4; }
+#printPreviewContent .pp-footer {
+    margin-top: 24px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+    font-size: 9px;
+    color: #999;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+/* ── @media print ── */
+@media print {
+    /* Hide everything on the page except the print preview content */
+    body > * { display: none !important; }
+    #printPreviewModal {
+        display: block !important;
+        position: static !important;
+        background: none !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+    #printPreviewModal > div {
+        max-height: none !important;
+        width: 100% !important;
+        max-width: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        display: block !important;
+    }
+    #printPreviewHeader { display: none !important; }
+    #printPreviewContent {
+        overflow: visible !important;
+        max-height: none !important;
+        padding: 16px !important;
+        border-radius: 0 !important;
+        font-size: 11px !important;
+    }
+    #printPreviewContent .pp-taf-period { background: #f4f4f6 !important; }
+    #printPreviewContent .pp-raw { background: #f4f4f6 !important; }
 }
 </style>
 </html>
