@@ -2598,6 +2598,46 @@
 
             document.getElementById('printPreviewContent').innerHTML = html;
             document.getElementById('printPreviewModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function _doPrint() {
+            const content = document.getElementById('printPreviewContent').innerHTML;
+            const printStyles = `
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; background: #fff; margin: 0; padding: 20px 28px; font-size: 13px; line-height: 1.5; max-width: 720px; }
+                h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #444; border-bottom: 1.5px solid #e0e0e0; padding-bottom: 4px; margin: 18px 0 8px; }
+                h2:first-of-type { margin-top: 4px; }
+                .pp-raw { font-family: 'SF Mono','Courier New',monospace; font-size: 11px; background: #f4f4f6; border-radius: 6px; padding: 8px 12px; word-break: break-all; margin-bottom: 8px; color: #111; border-left: 3px solid #ccc; }
+                .pp-grid { display: grid; grid-template-columns: 120px 1fr; gap: 3px 10px; font-size: 12px; margin-bottom: 6px; }
+                .pp-label { font-weight: 700; color: #555; font-size: 11px; }
+                .pp-cat { display: inline-block; padding: 4px 14px; border-radius: 6px; font-weight: 900; font-size: 14px; letter-spacing: 1.5px; }
+                .pp-taf-period { font-size: 11px; margin: 3px 0; padding: 5px 10px; background: #f4f4f6; border-radius: 5px; font-family: 'SF Mono','Courier New',monospace; }
+                .pp-notam-critical { color: #b00000; font-size: 11px; margin: 3px 0; line-height: 1.4; }
+                .pp-notam-warn     { color: #8a4500; font-size: 11px; margin: 3px 0; line-height: 1.4; }
+                .pp-notam-info     { color: #333;    font-size: 11px; margin: 3px 0; line-height: 1.4; }
+                .pp-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 9px; color: #999; text-align: center; }
+                @media print { body { padding: 8px; } }
+            `;
+            const fullHTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width,initial-scale=1">
+                <title>METAR GO — Flight Briefing</title>
+                <style>${printStyles}</style></head><body>${content}</body></html>`;
+
+            const win = window.open('', '_blank');
+            if (win) {
+                win.document.open();
+                win.document.write(fullHTML);
+                win.document.close();
+                win.addEventListener('load', () => { win.focus(); win.print(); });
+                setTimeout(() => { try { win.focus(); win.print(); } catch(e) {} }, 800);
+            } else {
+                window.print(); // popup blocked — fall back to in-page print
+            }
+        }
+
+        function closePrintPreview() {
+            document.getElementById('printPreviewModal').classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         function _buildWindsAloftPrint() {
@@ -2628,10 +2668,6 @@
                 <tbody>${rows}</tbody>
             </table>
             <div style="font-size:9px;color:#aaa;margin-top:2px;">NWP model data · advisory only</div>`;
-        }
-
-        function closePrintPreview() {
-            document.getElementById('printPreviewModal').classList.remove('active');
         }
 
         // ================================================================
