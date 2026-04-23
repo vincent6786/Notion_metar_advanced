@@ -3,7 +3,7 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/vincent6786/Notion_metar_advanced/main/app-icon.png" alt="METAR GO Logo" width="120"/>
   
-  ### Training Edition · v4.8.0
+  ### Training Edition · v4.8.6
   
   **Aviation Weather Viewer & Electronic Flight Bag**
   
