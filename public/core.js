@@ -744,10 +744,16 @@
             tabContent.innerHTML = `<div style="text-align:center;padding:30px;color:#8e8e93;">⏳ Loading users...</div>`;
             try {
                 const res  = await fetch('/api/access', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'list', password }) });
-                const data = await res.json();
+                let data = {};
+                try { data = await res.json(); } catch { /* non-JSON */ }
+                if (!res.ok) {
+                    const detail = data.error ? `: ${escHtml(data.error)}` : ` (HTTP ${res.status})`;
+                    tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load users${detail}</div>`;
+                    return;
+                }
                 renderUsersTab(data.users || [], password);
             } catch(e) {
-                tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load users: ${escHtml(e.message)}</div>`;
+                tabContent.innerHTML = `<div style="color:var(--danger);padding:20px;">Failed to load users: ${escHtml(e.message || 'network error')}</div>`;
             }
         }
 

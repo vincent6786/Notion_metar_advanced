@@ -112,16 +112,28 @@ export default async function handler(req, res) {
 
     // ── LIST — get all users with today's call counts ─────────────────────
     if (action === 'list') {
-        const codes = await kv.smembers('efb:users:_registry');
-        if (!codes || codes.length === 0) return res.json({ users: [] });
+        try {
+            const codes = await kv.smembers('efb:users:_registry');
+            if (!codes || codes.length === 0) return res.json({ users: [] });
 
-        const today = getTodayKey();
-        const users = await Promise.all(codes.map(async (c) => {
-            const user = await kv.get(`efb:users:${c}`);
-            const calls = await kv.get(`efb:users:${c}:calls:${today}`);
-            return { code: c, ...(user || {}), calls_today: parseInt(calls || 0, 10) };
-        }));
-        return res.json({ users: users.filter(u => u.name).sort((a,b) => a.code.localeCompare(b.code)) });
+            const today = getTodayKey();
+            // Use allSettled so one corrupt record doesn't break the whole list
+            const settled = await Promise.allSettled(codes.map(async (c) => {
+                const user = await kv.get(`efb:users:${c}`);
+                const calls = await kv.get(`efb:users:${c}:calls:${today}`);
+                const userObj = (user && typeof user === 'object') ? user : {};
+                const callsNum = parseInt(calls ?? 0, 10) || 0;
+                return { code: c, ...userObj, calls_today: callsNum };
+            }));
+            const users = settled
+                .filter(r => r.status === 'fulfilled' && r.value && r.value.name)
+                .map(r => r.value)
+                .sort((a,b) => a.code.localeCompare(b.code));
+            return res.json({ users });
+        } catch (error) {
+            console.error('[Access] List error:', error);
+            return res.status(500).json({ error: `Failed to list users: ${error.message}` });
+        }
     }
 
     // ── UPDATE — edit a user's name ───────────────────────────────────────

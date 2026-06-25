@@ -649,10 +649,16 @@ async function loadUsers() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'list', password: _password })
     });
-    const data = await res.json();
+    let data = {};
+    try { data = await res.json(); } catch { /* non-JSON response */ }
+    if (!res.ok) {
+      const detail = data.error ? `: ${data.error}` : ` (HTTP ${res.status})`;
+      document.getElementById('userList').innerHTML = `<div class="empty">⚠️ Failed to load users${detail}</div>`;
+      return;
+    }
     renderUsers(data.users || []);
   } catch(e) {
-    document.getElementById('userList').innerHTML = `<div class="empty">⚠️ Failed to load users</div>`;
+    document.getElementById('userList').innerHTML = `<div class="empty">⚠️ Failed to load users: ${e.message || 'network error'}</div>`;
   }
 }
 
