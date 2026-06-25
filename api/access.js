@@ -123,7 +123,9 @@ export default async function handler(req, res) {
                 const calls = await kv.get(`efb:users:${c}:calls:${today}`);
                 const userObj = (user && typeof user === 'object') ? user : {};
                 const callsNum = parseInt(calls ?? 0, 10) || 0;
-                return { code: c, ...userObj, calls_today: callsNum };
+                // Spread userObj first so stored fields can't overwrite the
+                // registry code (which must remain a string for sort).
+                return { ...userObj, calls_today: callsNum, code: String(c) };
             }));
             const users = settled
                 .filter(r => r.status === 'fulfilled' && r.value && r.value.name)
