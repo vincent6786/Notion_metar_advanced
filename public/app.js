@@ -3050,8 +3050,8 @@
                 return;
             }
 
-            if (multiAirports.length >= 8) {
-                showToast('⚠️ Maximum 8 airports');
+            if (multiAirports.length >= 999) {
+                showToast('⚠️ Maximum 999 airports');
                 return;
             }
 
