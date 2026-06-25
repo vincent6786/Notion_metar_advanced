@@ -454,8 +454,9 @@
         }
 
         function renderTaf(d) {
-            // Raw TAF text
-            document.getElementById('rawTaf').innerText = d.raw || "No TAF Data";
+            // Raw TAF text — formatted with line-breaks before TEMPO/BECMG/FM######/PROB##
+            // and each change-group keyword coloured by the corresponding period's flight rules.
+            document.getElementById('rawTaf').innerHTML = formatRawTaf(d.raw, d.forecast);
             
             // Issued + Expiry times
             const issuedEl = document.getElementById('tafIssued');
@@ -1377,6 +1378,41 @@
         // ================================================================
         // 23. FORMATTING HELPERS
         // ================================================================
+        /**
+         * Format a raw TAF string for display:
+         *   • Inserts a newline before each TEMPO / BECMG / FM###### / PROB##
+         *     change-group, so the forecast reads as one period per line.
+         *   • Wraps the keyword in a .taf-grp span coloured by the matching
+         *     period's flight rules (from AVWX d.forecast[i].flight_rules).
+         * The header line (initial conditions) is coloured by forecast[0].
+         */
+        function formatRawTaf(rawText, forecast) {
+            if (!rawText) return 'No TAF Data';
+            const escape = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+            const re = /\b(TEMPO|BECMG|FM\d{6}|PROB\d{2})\b/g;
+
+            // Walk forecasts in order. forecast[0] is the initial/header period;
+            // each subsequent keyword maps to forecast[1], forecast[2], ...
+            const periods = Array.isArray(forecast) ? forecast : [];
+            const rulesOf = i => (periods[i] && periods[i].flight_rules) || null;
+
+            let html = '';
+            let lastIdx = 0;
+            let nextPeriod = 1;   // next forecast index to consume on a keyword hit
+            let m;
+            while ((m = re.exec(rawText)) !== null) {
+                // Plain text from previous boundary up to (and including a space before) the keyword
+                html += escape(rawText.slice(lastIdx, m.index));
+                const rules = rulesOf(nextPeriod);
+                const cls   = rules ? `taf-grp taf-grp-${rules}` : 'taf-grp';
+                html += `\n<span class="${cls}">${m[1]}</span>`;
+                lastIdx = m.index + m[1].length;
+                nextPeriod++;
+            }
+            html += escape(rawText.slice(lastIdx));
+            return html;
+        }
+
         function formatRawMetar(rawText) {
             if (!rawText) return "";
             let html = rawText;
@@ -3209,17 +3245,17 @@
 
         function renderMultiDashboard() {
             const grid = document.getElementById('multiGrid');
-            
+
             if (multiAirports.length === 0) {
                 grid.innerHTML = '<div class="multi-loading">Add airports above to start tracking</div>';
                 return;
             }
-            
-            grid.innerHTML = multiAirports.map(icao => {
+
+            const cardHtml = (icao) => {
                 const cached = multiDataCache[icao];
                 if (!cached) {
                     return `
-                        <div class="multi-card">
+                        <div class="multi-card" data-icao="${icao}">
                             <div class="multi-header">
                                 <div class="multi-icao">${icao}</div>
                                 <div class="multi-remove" onclick="event.stopPropagation(); removeMultiAirport('${icao}')">×</div>
@@ -3227,9 +3263,56 @@
                             <div class="multi-loading">Loading...</div>
                         </div>`;
                 }
-                
                 return renderMultiCardHTML(icao, cached);
-            }).join('');
+            };
+
+            const groupMode  = (typeof getDashGroupMode === 'function') ? getDashGroupMode() : 'none';
+            const reorderBtn = document.getElementById('btnReorderDashboard');
+
+            if (groupMode === 'country') {
+                // Bucket airports by ISO country code, preserving insertion order
+                const buckets = new Map();
+                for (const icao of multiAirports) {
+                    const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
+                    const co   = (info && info.country) ? info.country : 'XX';
+                    if (!buckets.has(co)) buckets.set(co, []);
+                    buckets.get(co).push(icao);
+                }
+                // Sort: known countries by name, "XX" (Other) last
+                const entries = [...buckets.entries()].sort((a, b) => {
+                    if (a[0] === 'XX') return 1;
+                    if (b[0] === 'XX') return -1;
+                    const an = (typeof ISO_COUNTRY_NAMES !== 'undefined' && ISO_COUNTRY_NAMES[a[0]]) || a[0];
+                    const bn = (typeof ISO_COUNTRY_NAMES !== 'undefined' && ISO_COUNTRY_NAMES[b[0]]) || b[0];
+                    return an.localeCompare(bn);
+                });
+
+                grid.innerHTML = entries.map(([co, icaos]) => {
+                    const name = co === 'XX'
+                        ? 'Other'
+                        : ((typeof ISO_COUNTRY_NAMES !== 'undefined' && ISO_COUNTRY_NAMES[co]) || co);
+                    const code = co === 'XX' ? '' : co;
+                    return `
+                        <section class="multi-group">
+                            <div class="multi-group-header">
+                                <span class="multi-group-name">${name}</span>
+                                ${code ? `<span class="multi-group-code">${code}</span>` : ''}
+                                <span class="multi-group-count">${icaos.length}</span>
+                            </div>
+                            <div class="multi-grid multi-grid-inner">
+                                ${icaos.map(cardHtml).join('')}
+                            </div>
+                        </section>`;
+                }).join('');
+
+                // Hide reorder in grouped mode (mixed-section drag is out of scope)
+                if (reorderBtn) reorderBtn.style.display = 'none';
+                return;
+            }
+
+            // Default flat grid
+            if (reorderBtn) reorderBtn.style.display = '';
+            grid.innerHTML = multiAirports.map(cardHtml).join('');
             // Enable drag reorder
             initSortable(grid, 'multi-card', 'btnReorderDashboard', async (from, to, isSave) => {
                 if (isSave) {
@@ -3248,7 +3331,7 @@
                 const moved = multiAirports.splice(from, 1)[0];
                 multiAirports.splice(to, 0, moved);
             });
-            
+
         }
 
         function renderMultiCard(icao) {

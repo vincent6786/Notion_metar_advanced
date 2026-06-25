@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.8.8',  // ← set once in index.html
-            title: 'METAR GO — v4.8.8',
+            version: window.APP_VERSION || '4.9.0',  // ← set once in index.html
+            title: 'METAR GO — v4.9.0',
             changes: [
                 {
                     icon: '🗺️',
@@ -1125,6 +1125,7 @@
         function getVisUnit()      { return localStorage.getItem('efb_vis_unit')        || 'sm'; }
         function getTempUnit()     { return localStorage.getItem('efb_temp_unit')       || 'c';  }
         function getDashCardStyle(){ return localStorage.getItem('efb_dash_card_style') || 'raw'; }
+        function getDashGroupMode(){ return localStorage.getItem('efb_dash_group_mode') || 'none'; }
         
         /**
          * Normalise an AVWX wind speed/gust value to knots.
@@ -1241,6 +1242,14 @@
             document.getElementById('cardStyleDetailed')?.classList.toggle('active-unit', style === 'detailed');
             renderMultiDashboard();
         }
+
+        /** Set dashboard grouping mode and refresh */
+        function setDashGroupMode(mode) {
+            localStorage.setItem('efb_dash_group_mode', mode);
+            document.getElementById('dashGroupNone')?.classList.toggle('active-unit',    mode === 'none');
+            document.getElementById('dashGroupCountry')?.classList.toggle('active-unit', mode === 'country');
+            renderMultiDashboard();
+        }
         
         /** Apply saved unit preferences to the Settings UI toggles */
         function loadUnitPreferences() {
@@ -1256,6 +1265,9 @@
             document.getElementById('unitPressInhg')?.classList.toggle('active-unit',press === 'inhg');
             document.getElementById('cardStyleRaw')?.classList.toggle('active-unit',      card === 'raw');
             document.getElementById('cardStyleDetailed')?.classList.toggle('active-unit', card === 'detailed');
+            const group = getDashGroupMode();
+            document.getElementById('dashGroupNone')?.classList.toggle('active-unit',    group === 'none');
+            document.getElementById('dashGroupCountry')?.classList.toggle('active-unit', group === 'country');
         }
     
         // ================================================================

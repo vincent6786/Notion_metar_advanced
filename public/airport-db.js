@@ -13,6 +13,33 @@
  *   Returns: { lat, lon, name, icao, iata, country } or null
  */
 
+const ISO_COUNTRY_NAMES = {
+    AE:'United Arab Emirates', AF:'Afghanistan', AL:'Albania', AM:'Armenia',
+    AR:'Argentina', AT:'Austria', AU:'Australia', AZ:'Azerbaijan',
+    BD:'Bangladesh', BE:'Belgium', BG:'Bulgaria', BH:'Bahrain', BN:'Brunei',
+    BO:'Bolivia', BR:'Brazil', CA:'Canada', CH:'Switzerland', CL:'Chile',
+    CN:'China', CO:'Colombia', CR:'Costa Rica', CU:'Cuba', CY:'Cyprus',
+    CZ:'Czechia', DE:'Germany', DK:'Denmark', DO:'Dominican Republic',
+    DZ:'Algeria', EC:'Ecuador', EE:'Estonia', EG:'Egypt', ES:'Spain',
+    ET:'Ethiopia', FI:'Finland', FJ:'Fiji', FR:'France', GB:'United Kingdom',
+    GE:'Georgia', GR:'Greece', GU:'Guam', HK:'Hong Kong', HR:'Croatia',
+    HU:'Hungary', ID:'Indonesia', IE:'Ireland', IL:'Israel', IN:'India',
+    IR:'Iran', IS:'Iceland', IT:'Italy', JO:'Jordan', JP:'Japan',
+    KE:'Kenya', KH:'Cambodia', KR:'South Korea', KW:'Kuwait', KZ:'Kazakhstan',
+    LA:'Laos', LB:'Lebanon', LK:'Sri Lanka', LT:'Lithuania', LU:'Luxembourg',
+    LV:'Latvia', MA:'Morocco', MM:'Myanmar', MO:'Macau', MP:'N. Mariana Is.',
+    MU:'Mauritius', MX:'Mexico', MY:'Malaysia', NG:'Nigeria', NL:'Netherlands',
+    NO:'Norway', NP:'Nepal', NZ:'New Zealand', OM:'Oman', PA:'Panama',
+    PE:'Peru', PF:'French Polynesia', PH:'Philippines', PK:'Pakistan',
+    PL:'Poland', PR:'Puerto Rico', PT:'Portugal', QA:'Qatar', RO:'Romania',
+    RS:'Serbia', RU:'Russia', SA:'Saudi Arabia', SC:'Seychelles', SE:'Sweden',
+    SG:'Singapore', SI:'Slovenia', SK:'Slovakia', SN:'Senegal',
+    SX:'Sint Maarten', TH:'Thailand', TN:'Tunisia', TR:'Turkey', TW:'Taiwan',
+    UA:'Ukraine', US:'United States', UY:'Uruguay', UZ:'Uzbekistan',
+    VE:'Venezuela', VN:'Vietnam', ZA:'South Africa'
+};
+
+
 // ============================================================================
 // AIRPORT DATABASE
 // ============================================================================
