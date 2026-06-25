@@ -571,6 +571,18 @@
         .cat-ifr  { background-color: var(--danger)  !important; color: #fff !important; }
         .cat-lifr { background-color: var(--lifr)    !important; color: #fff !important; }
 
+        /* TAF change-group keywords in the raw TAF block */
+        .taf-grp {
+            font-weight: 800;
+            padding: 0 5px;
+            border-radius: 3px;
+            letter-spacing: 0.3px;
+        }
+        .taf-grp-VFR  { background-color: var(--success); color: #000; }
+        .taf-grp-MVFR { background-color: var(--mvfr);    color: #fff; }
+        .taf-grp-IFR  { background-color: var(--danger);  color: #fff; }
+        .taf-grp-LIFR { background-color: var(--lifr);    color: #fff; }
+
         /* ============================================================
            7. TABS
         ============================================================ */
@@ -2211,7 +2223,49 @@
             min-width: 0;
             overflow: hidden;
         }
-        
+
+        /* Grouped-by-country layout */
+        .multi-group {
+            margin-top: 18px;
+        }
+        .multi-group:first-child {
+            margin-top: 8px;
+        }
+        .multi-group-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            color: #e5e5e5;
+        }
+        .multi-group-code {
+            font-family: 'SF Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--sub-text);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            padding: 1px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+        .multi-group-count {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--sub-text);
+            background: rgba(255,255,255,0.04);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .multi-grid-inner {
+            margin-top: 10px;
+        }
+
         .multi-card {
             background: var(--card-bg);
             border: 2px solid var(--border);
