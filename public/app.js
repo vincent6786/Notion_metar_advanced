@@ -1920,11 +1920,20 @@
             // up the full clowd.io page in a new tab if they want the
             // unprocessed source view. Only shown when the data actually
             // came from clowd.io (atis.guru iframe case has its own button).
-            // Show the in-header "Open ↗" button when clowd.io supplied
-            // the data. The standalone toolbar row is gone — it added an
-            // unnecessary 70-80px of vertical whitespace on wide screens.
+            // Show the in-header "Open ↗" button when a known JSON source
+            // supplied the data. Wire it to the correct source's web view.
             const headBtn = document.getElementById('atisHeadOpenBtn');
-            if (headBtn) headBtn.style.display = (d.source === 'datis.clowd.io') ? '' : 'none';
+            if (headBtn) {
+                const srcKey = d.source === 'atis.info' ? 'info'
+                             : d.source === 'datis.clowd.io' ? 'clowd'
+                             : null;
+                if (srcKey) {
+                    headBtn.style.display = '';
+                    headBtn.onclick = () => openAtisPopup(icao, srcKey);
+                } else {
+                    headBtn.style.display = 'none';
+                }
+            }
             rawEl.innerHTML = blocks.join('');
         }
 
@@ -1933,9 +1942,12 @@
         // a normal tab on mobile (browsers ignore the size args on phones).
         function openAtisPopup(icao, source) {
             const code = (icao || '').toString().toUpperCase();
-            const url  = source === 'clowd'
-                ? `https://datis.clowd.io/api/${code}`
-                : `https://atis.guru/atis/${code}`;
+            let url;
+            switch (source) {
+                case 'info':  url = `https://atis.info/${code}`;            break;
+                case 'clowd': url = `https://datis.clowd.io/api/${code}`;   break;
+                default:      url = `https://atis.guru/atis/${code}`;       break;
+            }
             const w = 720, h = 720;
             const x = Math.max(0, (window.screen?.width  || 1024) / 2 - w / 2);
             const y = Math.max(0, (window.screen?.height || 768)  / 2 - h / 2);

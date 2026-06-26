@@ -143,57 +143,128 @@ export default async function handler(req, res) {
         });
     }
 
-    const url  = `https://datis.clowd.io/api/${station}`;
+    // Try sources in priority order. atis.info is the official successor to
+    // datis.clowd.io (FAA D-ATIS aggregator, same project relocated). We try
+    // it first, then fall back to clowd.io (still online, may keep working
+    // for a while), aggregating any diagnostics for the unavailable card.
+    const diag = { tried: [] };
+
+    const infoResult = await tryAtisInfo(station, diag);
+    if (infoResult) return res.status(200).json({ ...infoResult, _diag: diag });
+
+    const clowdResult = await tryClowdIo(station, diag);
+    if (clowdResult) return res.status(200).json({ ...clowdResult, _diag: diag });
+
+    return res.status(200).json({
+        error:   'D-ATIS unavailable',
+        station,
+        detail:  diag.tried.map(t => `${t.source}: ${t.detail || 'no data'}`).join(' · '),
+        status:  diag.tried.find(t => typeof t.status === 'number')?.status || null,
+        source:  null,
+        fetched: Date.now(),
+        _diag:   diag,
+    });
+}
+
+// ── Source: atis.info ────────────────────────────────────────────────────
+// Successor to datis.clowd.io for FAA D-ATIS aggregation. Same project,
+// new home. Tried first.
+//
+// Expected response shape (inherited from the clowd.io implementation):
+//   GET /api/<ICAO>
+//   → 200 [{ airport, type: "arr"|"dep"|"combined", code, datis }, ...]
+//   → 404 / {error:"..."} for unknown ICAO
+// If atis.info uses a different shape, the parser falls through and we try
+// clowd.io. The Vercel logs will show the body snippet so we can adapt.
+async function tryAtisInfo(station, diag) {
+    const url = `https://atis.info/api/${station}`;
+    const t0 = Date.now();
     const ctrl = new AbortController();
-    const tid  = setTimeout(() => ctrl.abort(), 7000);
+    const tid = setTimeout(() => ctrl.abort(), 7000);
     try {
         const r = await fetch(url, {
-            headers: { 'Accept': 'application/json', 'User-Agent': 'METAR-GO-EFB/1.0' },
-            signal:  ctrl.signal,
+            headers: {
+                'Accept':     'application/json',
+                'User-Agent': 'Mozilla/5.0 METAR-GO-EFB',
+            },
+            signal: ctrl.signal,
         });
         clearTimeout(tid);
+        const ms = Date.now() - t0;
         if (!r.ok) {
-            return res.status(200).json({
-                error:   'D-ATIS unavailable',
-                detail:  `clowd.io HTTP ${r.status}`,
-                station,
-                status:  r.status,
-                source:  'datis.clowd.io',
-                fetched: Date.now(),
-            });
+            diag.tried.push({ source: 'atis.info', status: r.status, detail: `HTTP ${r.status}`, ms });
+            return null;
+        }
+        const text = await r.text();
+        let data;
+        try { data = JSON.parse(text); } catch(e) {
+            console.warn(`[ATIS] ${station} atis.info non-JSON response. First 240:`, text.slice(0, 240).replace(/\s+/g, ' '));
+            diag.tried.push({ source: 'atis.info', status: 200, detail: 'non-JSON response', ms });
+            return null;
+        }
+        if (!data || (!Array.isArray(data) && data.error)) {
+            diag.tried.push({ source: 'atis.info', status: 200, detail: (data && data.error) || 'no data', ms });
+            return null;
+        }
+        const items  = Array.isArray(data) ? data : [data];
+        const shaped = shapeClowdResponse(station, items);   // identical shape to clowd.io
+        if (!shaped) {
+            console.warn(`[ATIS] ${station} atis.info items but no usable datis:`, JSON.stringify(items).slice(0, 240));
+            diag.tried.push({ source: 'atis.info', status: 200, detail: 'no usable datis text', ms });
+            return null;
+        }
+        // Tag the source so the frontend label updates correctly.
+        shaped.source = 'atis.info';
+        diag.tried.push({ source: 'atis.info', status: 200, detail: 'ok', ms });
+        return shaped;
+    } catch(err) {
+        clearTimeout(tid);
+        const detail = err.name === 'AbortError' ? 'timeout' : (err.message || 'fetch error');
+        console.warn(`[ATIS] ${station} atis.info failed:`, detail);
+        diag.tried.push({ source: 'atis.info', detail, ms: Date.now() - t0 });
+        return null;
+    }
+}
+
+// ── Source: datis.clowd.io ───────────────────────────────────────────────
+// Fallback for when atis.info is down or returns nothing. Same JSON shape.
+async function tryClowdIo(station, diag) {
+    const url = `https://datis.clowd.io/api/${station}`;
+    const t0 = Date.now();
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 7000);
+    try {
+        const r = await fetch(url, {
+            headers: {
+                'Accept':     'application/json',
+                'User-Agent': 'Mozilla/5.0 METAR-GO-EFB',
+            },
+            signal: ctrl.signal,
+        });
+        clearTimeout(tid);
+        const ms = Date.now() - t0;
+        if (!r.ok) {
+            diag.tried.push({ source: 'datis.clowd.io', status: r.status, detail: `HTTP ${r.status}`, ms });
+            return null;
         }
         const data = await r.json().catch(() => null);
         if (!data || (!Array.isArray(data) && data.error)) {
-            return res.status(200).json({
-                error:   'D-ATIS unavailable',
-                detail:  (data && data.error) || 'no data for station',
-                station,
-                source:  'datis.clowd.io',
-                fetched: Date.now(),
-            });
+            diag.tried.push({ source: 'datis.clowd.io', status: 200, detail: (data && data.error) || 'no data', ms });
+            return null;
         }
         const items  = Array.isArray(data) ? data : [data];
         const shaped = shapeClowdResponse(station, items);
         if (!shaped) {
-            return res.status(200).json({
-                error:   'D-ATIS unavailable',
-                detail:  'clowd.io returned items but no usable datis text',
-                station,
-                source:  'datis.clowd.io',
-                fetched: Date.now(),
-            });
+            diag.tried.push({ source: 'datis.clowd.io', status: 200, detail: 'no usable datis text', ms });
+            return null;
         }
-        return res.status(200).json(shaped);
+        diag.tried.push({ source: 'datis.clowd.io', status: 200, detail: 'ok', ms });
+        return shaped;
     } catch(err) {
         clearTimeout(tid);
-        const detail = err.name === 'AbortError' ? 'clowd.io timeout' : (err.message || 'fetch error');
+        const detail = err.name === 'AbortError' ? 'timeout' : (err.message || 'fetch error');
         console.warn(`[ATIS] ${station} clowd.io failed:`, detail);
-        return res.status(200).json({
-            error:   'D-ATIS unavailable',
-            detail,
-            station,
-            source:  'datis.clowd.io',
-            fetched: Date.now(),
-        });
+        diag.tried.push({ source: 'datis.clowd.io', detail, ms: Date.now() - t0 });
+        return null;
     }
 }
