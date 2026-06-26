@@ -1856,34 +1856,28 @@
                 }
 
                 const upstreamStatus = (d && typeof d.status === 'number') ? d.status : null;
-                const guruUrl = `https://atis.guru/atis/${_escapeHtml(icao)}`;
-                // The iframe is the primary fallback display. If atis.guru
-                // serves X-Frame-Options: DENY the frame will render blank,
-                // but the explicit "Open ↗" button below it always works.
+                const safeIcao = _escapeHtml(icao);
+                // Iframe-embedding atis.guru doesn't work — they ship
+                // X-Frame-Options. Show a compact, action-oriented card:
+                // the explanation, the voice frequency from the local DB,
+                // and a prominent button that pops atis.guru in a new tab.
                 rawEl.innerHTML = `
-                    <div class="atis-embed">
-                        <div class="atis-embed-bar">
-                            <div class="atis-embed-label">
-                                Embedded view · atis.guru / ${_escapeHtml(icao)}
-                            </div>
-                            <button class="atis-popup-btn"
-                                    onclick="openAtisPopup('${_escapeHtml(icao)}','guru')">
-                                Open ↗
-                            </button>
-                        </div>
-                        <iframe class="atis-iframe"
-                                src="${guruUrl}"
-                                title="atis.guru ${_escapeHtml(icao)}"
-                                referrerpolicy="no-referrer"
-                                loading="lazy"></iframe>
-                        <div class="atis-embed-note">
-                            If the embedded view above is blank, atis.guru blocked the embed.
-                            Tap <b>Open ↗</b> to view the live page in a new tab.
-                            Otherwise this airport may not broadcast D-ATIS — tune the
-                            voice frequency below.
-                        </div>
+                    <div class="atis-fallback">
+                        <button class="atis-open-source"
+                                onclick="openAtisPopup('${safeIcao}','guru')">
+                            <span class="atis-open-source-icon">🛰</span>
+                            <span class="atis-open-source-text">
+                                <span class="atis-open-source-title">Open D-ATIS on atis.guru</span>
+                                <span class="atis-open-source-sub">atis.guru / ${safeIcao} ↗</span>
+                            </span>
+                        </button>
                         ${voiceAtis}
-                        <button onclick="_atisLoadedFor=null;loadAtisFor('${_escapeHtml(icao)}')"
+                        <div class="atis-fallback-note">
+                            ${voiceAtis
+                              ? `If ${safeIcao} doesn't have D-ATIS, tune the voice ATIS frequency above.`
+                              : `This airport may not broadcast D-ATIS.`}
+                        </div>
+                        <button onclick="_atisLoadedFor=null;loadAtisFor('${safeIcao}')"
                                 class="atis-retry-btn">↺ Retry D-ATIS lookup</button>
                         ${upstreamStatus ? `<div class="atis-diag">clowd.io: HTTP ${upstreamStatus}${d?.detail ? ' · ' + _escapeHtml(d.detail) : ''}</div>` : ''}
                     </div>`;

@@ -644,8 +644,8 @@
             background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 16px;
-            margin-top: 12px;
+            padding: 10px 12px 12px;
+            margin-top: 8px;
         }
         .atis-card.is-empty .atis-letter-badge {
             background: rgba(255,255,255,0.04);
@@ -668,13 +668,13 @@
             border: 1px solid rgba(10,132,255,0.35);
             box-shadow: none;
         }
-        .atis-card.has-blocks > .atis-head { margin-bottom: 14px; }
+        .atis-card.has-blocks > .atis-head { margin-bottom: 8px; }
         .atis-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 10px;
+            margin-bottom: 8px;
         }
         .atis-label {
             font-size: 11px;
@@ -707,21 +707,21 @@
             box-shadow: 0 2px 12px rgba(10,132,255,0.25);
         }
         .atis-unofficial {
-            margin-top: 12px;
-            padding: 8px 10px;
+            margin-top: 8px;
+            padding: 6px 9px;
             background: rgba(255,159,10,0.08);
             border: 1px solid rgba(255,159,10,0.3);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--warn);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
-            line-height: 1.6;
+            line-height: 1.45;
         }
         /* Reshaped D-ATIS — embedded atis.guru iframe + popup buttons */
         .atis-toolbar {
             display: flex;
             justify-content: flex-end;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .atis-popup-btn {
             background: rgba(10,132,255,0.12);
@@ -737,39 +737,54 @@
         .atis-popup-btn:hover {
             background: rgba(10,132,255,0.22);
         }
-        .atis-embed {
+        /* Fallback card when there's no clowd.io data — atis.guru can't be
+           embedded (X-Frame-Options blocks it), so we ship a prominent
+           link button instead of an iframe. */
+        .atis-fallback {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
-        .atis-embed-bar {
+        .atis-open-source {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            padding: 12px 14px;
+            background: rgba(10,132,255,0.10);
+            border: 1px solid rgba(10,132,255,0.45);
+            border-radius: 10px;
+            color: #fff;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s;
         }
-        .atis-embed-label {
+        .atis-open-source:hover { background: rgba(10,132,255,0.18); }
+        .atis-open-source-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .atis-open-source-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .atis-open-source-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .atis-open-source-sub {
             font-size: 11px;
-            font-weight: 700;
-            color: var(--sub-text);
             font-family: 'SF Mono', monospace;
+            color: var(--accent);
+            margin-top: 2px;
         }
-        .atis-iframe {
-            width: 100%;
-            height: 420px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #fff;
-            color-scheme: light;
-        }
-        .atis-embed-note {
+        .atis-fallback-note {
             font-size: 11px;
-            line-height: 1.6;
+            line-height: 1.5;
             color: var(--sub-text);
-            padding: 8px 10px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            text-align: center;
         }
         .atis-voice-card {
             margin-top: 4px;
@@ -829,49 +844,49 @@
         /* Per-section blocks (Arrival, Departure) inside #rawAtis */
         #rawAtis { padding: 0; background: transparent; border: none; }
         .atis-block {
-            background: rgba(255,255,255,0.04);
+            background: rgba(255,255,255,0.03);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 12px;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
         }
         .atis-block:last-child { margin-bottom: 0; }
         .atis-block-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 8px;
+            margin-bottom: 6px;
         }
         .atis-block-label {
             font-size: 10px;
             font-weight: 800;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             color: var(--accent);
             text-transform: uppercase;
-            margin-bottom: 3px;
+            margin-bottom: 1px;
         }
         .atis-block-issued {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--sub-text);
             font-family: 'SF Mono', monospace;
         }
-        /* Make the per-block letter badge a bit smaller than the card header */
+        /* Compact letter badge inside per-block headers */
         .atis-block .atis-letter-badge {
-            width: 44px;
-            height: 44px;
-            font-size: 24px;
-            border-radius: 10px;
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+            border-radius: 8px;
         }
         .atis-body {
             font-family: 'SF Mono', monospace;
-            font-size: 13px;
+            font-size: 12px;
             color: #e5e5e5;
             background: rgba(0,0,0,0.25);
             border-radius: 6px;
-            padding: 10px 12px;
+            padding: 8px 10px;
             margin: 0;
-            line-height: 1.55;
+            line-height: 1.45;
             white-space: pre-wrap;
             word-break: break-word;
         }
