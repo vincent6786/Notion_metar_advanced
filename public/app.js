@@ -3280,7 +3280,10 @@
         function renderMultiDashboard() {
             const grid = document.getElementById('multiGrid');
             const groupMode = (typeof getDashGroupMode === 'function') ? getDashGroupMode() : 'none';
-            grid.classList.toggle('is-grouped', groupMode === 'country');
+            // is-grouped flips #multiGrid from CSS-grid to block stack. We apply it
+            // not just for country/continent/custom modes but ALSO whenever a
+            // Favourites pseudo-group is rendered, otherwise each <section> lands
+            // in a grid cell and crushes the cards inside.
             // Destroy any per-card radar maps from the previous render — DOM nodes are gone
             if (typeof _radarInstances !== 'undefined' && _radarInstances.size) {
                 for (const m of _radarInstances.values()) { try { m.remove(); } catch(e) {} }
@@ -3288,6 +3291,7 @@
             }
 
             if (multiAirports.length === 0) {
+                grid.classList.remove('is-grouped');
                 grid.innerHTML = '<div class="multi-loading">Add airports above to start tracking</div>';
                 _ensureDashboardDelegates(grid);
                 return;
@@ -3409,9 +3413,11 @@
 
             if (sections.length > 0) {
                 grid.innerHTML = sections.join('');
+                grid.classList.add('is-grouped');
             } else {
                 // Flat mode, no favourites — original simple grid
                 grid.innerHTML = restIcaos.map(cardHtml).join('');
+                grid.classList.remove('is-grouped');
             }
 
             _ensureDashboardDelegates(grid);
