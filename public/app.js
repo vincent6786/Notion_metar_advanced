@@ -2873,6 +2873,9 @@
                        t.closest('#windsAloftModal') ||        // modal content — don't swipe
                        t.closest('.map-layer-bar') ||          // horizontally scrollable map controls
                        t.closest('.map-level-bar') ||
+                       t.closest('#multiMap') ||               // dashboard map — Leaflet handles pan
+                       t.closest('.radar-block') ||            // per-card radar mini-map
+                       t.closest('.leaflet-container') ||      // any other Leaflet map
                        (t.tagName === 'INPUT' && t.type === 'range') || // sliders are horizontal too
                        document.getElementById('windsAloftModal')?.style.display === 'flex' || // backdrop tap
                        document.getElementById('formula-modal')?.style.display === 'flex' ||   // other modals
