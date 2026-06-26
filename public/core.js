@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.9.3',  // ← set once in index.html
-            title: 'METAR GO — v4.9.3',
+            version: window.APP_VERSION || '4.9.4',  // ← set once in index.html
+            title: 'METAR GO — v4.9.4',
             changes: [
                 {
                     icon: '🗺️',
@@ -1244,6 +1244,24 @@
         }
 
         /** Set dashboard grouping mode and refresh */
+        // Dashboard view: 'grid' (default) or 'map' (Leaflet overview)
+        function getDashView() { return localStorage.getItem('efb_dash_view') || 'grid'; }
+        function setDashView(view) {
+            localStorage.setItem('efb_dash_view', view);
+            document.getElementById('dashViewGrid')?.classList.toggle('active-unit', view === 'grid');
+            document.getElementById('dashViewMap')?.classList.toggle('active-unit',  view === 'map');
+            const gridEl = document.getElementById('multiGrid');
+            const mapEl  = document.getElementById('multiMap');
+            if (gridEl) gridEl.style.display = view === 'map' ? 'none' : '';
+            if (mapEl)  mapEl.style.display  = view === 'map' ? 'block' : 'none';
+            // Hide group/reorder controls in map view
+            const reorderBtn = document.getElementById('btnReorderDashboard');
+            if (reorderBtn) reorderBtn.style.visibility = view === 'map' ? 'hidden' : '';
+            if (view === 'map' && typeof renderMultiMap === 'function') {
+                renderMultiMap();
+            }
+        }
+
         function setDashGroupMode(mode) {
             localStorage.setItem('efb_dash_group_mode', mode);
             document.getElementById('dashGroupNone')?.classList.toggle('active-unit',      mode === 'none');
@@ -1328,6 +1346,9 @@
             document.getElementById('dashGroupNone')?.classList.toggle('active-unit',      group === 'none');
             document.getElementById('dashGroupCountry')?.classList.toggle('active-unit',   group === 'country');
             document.getElementById('dashGroupContinent')?.classList.toggle('active-unit', group === 'continent');
+            const view = getDashView();
+            document.getElementById('dashViewGrid')?.classList.toggle('active-unit', view === 'grid');
+            document.getElementById('dashViewMap')?.classList.toggle('active-unit',  view === 'map');
         }
     
         // ================================================================

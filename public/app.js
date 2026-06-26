@@ -3063,7 +3063,11 @@
                 multiAirports = [];
             }
             renderMultiDashboard();
-            
+            // Restore saved view (Grid / Map) — must run after multiGrid + multiMap exist
+            if (typeof getDashView === 'function' && typeof setDashView === 'function') {
+                setDashView(getDashView());
+            }
+
             // Auto-refresh every 5 minutes
             if (multiRefreshInterval) clearInterval(multiRefreshInterval);
             if (multiAirports.length > 0) {
@@ -3234,6 +3238,11 @@
             const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
             const el = document.getElementById('multiLastUpdated');
             if (el) el.innerText = `Auto-refreshed: ${timeStr}`;
+            // Refresh map pins if map view is active
+            if (typeof getDashView === 'function' && getDashView() === 'map'
+                && typeof renderMultiMap === 'function') {
+                renderMultiMap();
+            }
 
             // Sync: if the currently loaded METAR airport is in the dashboard, refresh it too
             const currentIcao = document.getElementById('icao')?.value?.trim()?.toUpperCase();
@@ -3457,6 +3466,106 @@
                 e.preventDefault();
                 if (e.shiftKey) toggleAll(); else toggleOne(header.dataset.groupCode);
             });
+        }
+
+        // ── Dashboard map view ────────────────────────────────────────────
+        let _multiMapInstance  = null;
+        let _multiMapMarkers   = [];
+
+        function _flightRulesColor(rules) {
+            switch (rules) {
+                case 'VFR':  return '#32d74b';
+                case 'MVFR': return '#0a84ff';
+                case 'IFR':  return '#ff453a';
+                case 'LIFR': return '#bf5af2';
+                default:     return '#8e8e93';
+            }
+        }
+
+        function renderMultiMap() {
+            const el = document.getElementById('multiMap');
+            if (!el || typeof L === 'undefined') return;
+
+            // Init once
+            if (!_multiMapInstance) {
+                _multiMapInstance = L.map(el, {
+                    center: [20, 100],
+                    zoom: 2,
+                    worldCopyJump: true,
+                    zoomControl: true,
+                    attributionControl: true,
+                });
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 18,
+                    subdomains: 'abcd',
+                    attribution: '© OpenStreetMap, © CARTO',
+                }).addTo(_multiMapInstance);
+            }
+
+            // Clear previous markers
+            _multiMapMarkers.forEach(m => _multiMapInstance.removeLayer(m));
+            _multiMapMarkers = [];
+
+            if (multiAirports.length === 0) {
+                _multiMapInstance.setView([20, 100], 2);
+                setTimeout(() => _multiMapInstance.invalidateSize(), 50);
+                return;
+            }
+
+            const bounds = [];
+            for (const icao of multiAirports) {
+                const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
+                if (!info || info.lat == null || info.lon == null) continue;
+
+                const cached = multiDataCache[icao];
+                const m      = cached && cached.metar;
+                const rules  = (m && m.flight_rules) || 'UNKN';
+                const color  = _flightRulesColor(rules);
+                const fav    = (typeof isFavorite === 'function') && isFavorite(icao);
+
+                const html = `
+                    <div class="map-pin ${fav ? 'is-fav' : ''}" style="background:${color};"
+                         data-icao="${icao}">
+                        <span class="map-pin-label">${icao}</span>
+                    </div>`;
+                const ic = L.divIcon({
+                    className: 'map-pin-wrap',
+                    html,
+                    iconSize:    [60, 22],
+                    iconAnchor:  [30, 11],
+                    popupAnchor: [0, -10],
+                });
+
+                const marker = L.marker([info.lat, info.lon], { icon: ic });
+
+                const rawLine = (m && m.raw) ? `<div class="map-popup-raw">${m.raw}</div>` : '';
+                const ageMin  = (m && m.time && m.time.dt)
+                    ? Math.floor((Date.now() - new Date(m.time.dt)) / 60000) : null;
+                const ageStr  = ageMin == null ? '' : `<div class="map-popup-age">${ageMin}m ago</div>`;
+
+                const popup = `
+                    <div class="map-popup">
+                        <div class="map-popup-head">
+                            <span class="map-popup-icao">${icao}</span>
+                            <span class="map-popup-rules" style="background:${color};
+                                color:${rules === 'VFR' ? '#000' : '#fff'};">${rules}</span>
+                        </div>
+                        <div class="map-popup-name">${info.name || ''}</div>
+                        ${rawLine}
+                        ${ageStr}
+                        <button class="map-popup-open" onclick="loadMultiAirport('${icao}')">Open ${icao} ▶</button>
+                    </div>`;
+                marker.bindPopup(popup, { closeButton: true, maxWidth: 280 });
+                marker.addTo(_multiMapInstance);
+                _multiMapMarkers.push(marker);
+                bounds.push([info.lat, info.lon]);
+            }
+
+            if (bounds.length > 0) {
+                _multiMapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 7 });
+            }
+            // Leaflet needs a size recalc after the parent becomes visible
+            setTimeout(() => _multiMapInstance.invalidateSize(), 50);
         }
 
         function renderMultiCard(icao) {

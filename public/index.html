@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.9.3';</script>
+    <script>window.APP_VERSION = '4.9.4';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -1326,9 +1326,16 @@
                 <button class="multi-add-btn" onclick="addMultiAirport()">+ Add</button>
             </div>
             
+            <!-- View toggle: Grid (default) ⇄ Map -->
+            <div id="multiViewToggle" style="display:flex; gap:2px; background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:8px; padding:3px; margin-bottom:10px; width:fit-content;">
+                <button id="dashViewGrid" class="unit-pill active-unit" onclick="setDashView('grid')">▦ Grid</button>
+                <button id="dashViewMap"  class="unit-pill"             onclick="setDashView('map')">🗺 Map</button>
+            </div>
+
             <div id="multiGrid" class="multi-grid">
                 <div class="multi-loading">Add airports above to start tracking</div>
             </div>
+            <div id="multiMap" class="multi-map" style="display:none;"></div>
         </div>
     
     <!-- ================================================================
