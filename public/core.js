@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.9.1',  // ← set once in index.html
-            title: 'METAR GO — v4.9.1',
+            version: window.APP_VERSION || '4.9.2',  // ← set once in index.html
+            title: 'METAR GO — v4.9.2',
             changes: [
                 {
                     icon: '🗺️',
@@ -1249,6 +1249,64 @@
             document.getElementById('dashGroupNone')?.classList.toggle('active-unit',    mode === 'none');
             document.getElementById('dashGroupCountry')?.classList.toggle('active-unit', mode === 'country');
             renderMultiDashboard();
+        }
+
+        // ── Collapsed dashboard groups (per-device) ──────────────────────
+        // Stored as JSON array of group codes, e.g. ["JP","XX","★"].
+        // Sentinel "★" = Favourites pseudo-group.
+        function getDashCollapsedGroups() {
+            try {
+                const raw = localStorage.getItem('efb_dash_group_collapsed');
+                const arr = raw ? JSON.parse(raw) : [];
+                return new Set(Array.isArray(arr) ? arr : []);
+            } catch(e) { return new Set(); }
+        }
+        function _saveDashCollapsedGroups(set) {
+            localStorage.setItem('efb_dash_group_collapsed', JSON.stringify([...set]));
+        }
+        function isDashGroupCollapsed(code) {
+            return getDashCollapsedGroups().has(code);
+        }
+        function toggleDashGroupCollapsed(code) {
+            const set = getDashCollapsedGroups();
+            if (set.has(code)) set.delete(code); else set.add(code);
+            _saveDashCollapsedGroups(set);
+            renderMultiDashboard();
+        }
+        /** Collapse-all if any expanded, else expand-all. `allCodes` is the
+         *  set of group codes currently rendered (so we don't collapse codes
+         *  that aren't on screen). */
+        function toggleAllDashGroupsCollapsed(allCodes) {
+            const set    = getDashCollapsedGroups();
+            const codes  = [...new Set(allCodes)];
+            const allCol = codes.every(c => set.has(c));
+            if (allCol) {
+                // Expand all currently rendered
+                codes.forEach(c => set.delete(c));
+            } else {
+                codes.forEach(c => set.add(c));
+            }
+            _saveDashCollapsedGroups(set);
+            renderMultiDashboard();
+        }
+
+        // ── Favourites toggle for dashboard cards ────────────────────────
+        function isFavorite(icao) {
+            return getFavorites().includes(icao);
+        }
+        async function toggleFavorite(icao) {
+            const code = (icao || '').toUpperCase();
+            if (!code) return;
+            let favs = getFavorites();
+            const i  = favs.indexOf(code);
+            if (i === -1) favs.push(code); else favs.splice(i, 1);
+            // Write through localStorage first for instant UI, then sync to cloud
+            localStorage.setItem('efb_favorites', JSON.stringify(favs));
+            if (typeof renderMultiDashboard === 'function') renderMultiDashboard();
+            try { await Storage.set('efb_favorites', favs); } catch(e) {}
+            if (typeof renderFavoritesSettings === 'function') renderFavoritesSettings();
+            if (typeof renderHistory === 'function') renderHistory();
+            showToast(i === -1 ? `★ ${code} pinned` : `☆ ${code} unpinned`);
         }
         
         /** Apply saved unit preferences to the Settings UI toggles */

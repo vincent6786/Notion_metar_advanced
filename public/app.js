@@ -3243,6 +3243,9 @@
             }
         }
 
+        // Sentinel group code for the Favourites pseudo-group
+        const DASH_FAV_CODE = '★';
+
         function renderMultiDashboard() {
             const grid = document.getElementById('multiGrid');
             const groupMode = (typeof getDashGroupMode === 'function') ? getDashGroupMode() : 'none';
@@ -3250,6 +3253,7 @@
 
             if (multiAirports.length === 0) {
                 grid.innerHTML = '<div class="multi-loading">Add airports above to start tracking</div>';
+                _ensureDashboardDelegates(grid);
                 return;
             }
 
@@ -3269,11 +3273,41 @@
             };
 
             const reorderBtn = document.getElementById('btnReorderDashboard');
+            const collapsed  = (typeof getDashCollapsedGroups === 'function') ? getDashCollapsedGroups() : new Set();
+            const favSet     = new Set(((typeof getFavorites === 'function') ? getFavorites() : []).map(s => s.toUpperCase()));
+
+            // Split out favourites pinned at top (preserve multiAirports order)
+            const favIcaos  = multiAirports.filter(i => favSet.has(i));
+            const restIcaos = multiAirports.filter(i => !favSet.has(i));
+
+            // Render a single <section> with collapsible header
+            const sectionHtml = (code, label, codeChip, icaos, extraClass = '') => {
+                const isCol = collapsed.has(code);
+                return `
+                    <section class="multi-group ${extraClass} ${isCol ? 'is-collapsed' : ''}" data-group-code="${code}">
+                        <div class="multi-group-header" data-group-code="${code}" role="button" tabindex="0">
+                            <span class="multi-group-chevron" aria-hidden="true">▾</span>
+                            <span class="multi-group-name">${label}</span>
+                            ${codeChip ? `<span class="multi-group-code">${codeChip}</span>` : ''}
+                            <span class="multi-group-count">${icaos.length}</span>
+                        </div>
+                        <div class="multi-grid multi-grid-inner">
+                            ${icaos.map(cardHtml).join('')}
+                        </div>
+                    </section>`;
+            };
+
+            // Build the list of sections (favourites first, then either flat or country groups)
+            const sections = [];
+
+            if (favIcaos.length > 0) {
+                sections.push(sectionHtml(DASH_FAV_CODE, 'Favourites', DASH_FAV_CODE, favIcaos, 'is-favgroup'));
+            }
 
             if (groupMode === 'country') {
                 // Bucket airports by ISO country code, preserving insertion order
                 const buckets = new Map();
-                for (const icao of multiAirports) {
+                for (const icao of restIcaos) {
                     const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
                     const co   = (info && info.country) ? info.country : 'XX';
                     if (!buckets.has(co)) buckets.set(co, []);
@@ -3287,52 +3321,121 @@
                     const bn = (typeof ISO_COUNTRY_NAMES !== 'undefined' && ISO_COUNTRY_NAMES[b[0]]) || b[0];
                     return an.localeCompare(bn);
                 });
-
-                grid.innerHTML = entries.map(([co, icaos]) => {
+                for (const [co, icaos] of entries) {
                     const name = co === 'XX'
                         ? 'Other'
                         : ((typeof ISO_COUNTRY_NAMES !== 'undefined' && ISO_COUNTRY_NAMES[co]) || co);
-                    const code = co === 'XX' ? '' : co;
-                    return `
-                        <section class="multi-group">
-                            <div class="multi-group-header">
-                                <span class="multi-group-name">${name}</span>
-                                ${code ? `<span class="multi-group-code">${code}</span>` : ''}
-                                <span class="multi-group-count">${icaos.length}</span>
-                            </div>
-                            <div class="multi-grid multi-grid-inner">
-                                ${icaos.map(cardHtml).join('')}
-                            </div>
-                        </section>`;
-                }).join('');
-
-                // Hide reorder in grouped mode (mixed-section drag is out of scope)
-                if (reorderBtn) reorderBtn.style.display = 'none';
-                return;
+                    sections.push(sectionHtml(co, name, co === 'XX' ? '' : co, icaos));
+                }
+            } else if (restIcaos.length > 0) {
+                // Flat mode: when favourites are pinned, wrap the rest in a plain "All airports" section.
+                // When no favourites, fall back to a plain grid (no header) so the layout matches pre-feature look.
+                if (favIcaos.length > 0) {
+                    sections.push(sectionHtml('_REST', 'All airports', '', restIcaos, 'is-restgroup'));
+                }
             }
 
-            // Default flat grid
-            if (reorderBtn) reorderBtn.style.display = '';
-            grid.innerHTML = multiAirports.map(cardHtml).join('');
-            // Enable drag reorder
-            initSortable(grid, 'multi-card', 'btnReorderDashboard', async (from, to, isSave) => {
-                if (isSave) {
-                    // Done pressed — read final order from DOM
-                    const items = [...grid.querySelectorAll('.multi-card')];
-                    const newOrder = items.map(el => el.dataset.icao).filter(Boolean);
-                    if (newOrder.length === multiAirports.length) {
-                        multiAirports = newOrder;
-                        await saveMultiAirports();
-                        showToast('✅ Order saved');
+            if (sections.length > 0) {
+                grid.innerHTML = sections.join('');
+            } else {
+                // Flat mode, no favourites — original simple grid
+                grid.innerHTML = restIcaos.map(cardHtml).join('');
+            }
+
+            _ensureDashboardDelegates(grid);
+
+            // Reorder is only meaningful in pure flat mode (no favourites pinned, no country grouping)
+            const canReorder = groupMode === 'none' && favIcaos.length === 0;
+            if (reorderBtn) reorderBtn.style.display = canReorder ? '' : 'none';
+            if (canReorder) {
+                initSortable(grid, 'multi-card', 'btnReorderDashboard', async (from, to, isSave) => {
+                    if (isSave) {
+                        const items = [...grid.querySelectorAll('.multi-card')];
+                        const newOrder = items.map(el => el.dataset.icao).filter(Boolean);
+                        if (newOrder.length === multiAirports.length) {
+                            multiAirports = newOrder;
+                            await saveMultiAirports();
+                            showToast('✅ Order saved');
+                        }
+                        renderMultiDashboard();
+                        return;
                     }
-                    renderMultiDashboard(); // re-render to restore Done→Reorder btn state
-                    return;
+                    const moved = multiAirports.splice(from, 1)[0];
+                    multiAirports.splice(to, 0, moved);
+                });
+            }
+        }
+
+        // Attach group-header delegates once. Click → toggle the group. Shift-click
+        // or long-press (≥600ms) → toggle ALL currently rendered groups.
+        let _dashDelegatesWired = false;
+        function _ensureDashboardDelegates(grid) {
+            if (_dashDelegatesWired) return;
+            _dashDelegatesWired = true;
+
+            let pressTimer = null;
+            let pressedHeader = null;
+            let didLongPress = false;
+            const LONG_PRESS_MS = 600;
+
+            const allRenderedCodes = () => {
+                return [...grid.querySelectorAll('.multi-group')]
+                    .map(s => s.dataset.groupCode)
+                    .filter(Boolean);
+            };
+            const toggleAll = () => {
+                if (typeof toggleAllDashGroupsCollapsed === 'function') {
+                    toggleAllDashGroupsCollapsed(allRenderedCodes());
                 }
-                // Live swap
-                const moved = multiAirports.splice(from, 1)[0];
-                multiAirports.splice(to, 0, moved);
+            };
+            const toggleOne = (code) => {
+                if (typeof toggleDashGroupCollapsed === 'function') {
+                    toggleDashGroupCollapsed(code);
+                }
+            };
+
+            grid.addEventListener('pointerdown', (e) => {
+                const header = e.target.closest('.multi-group-header');
+                if (!header) return;
+                if (e.target.closest('.multi-card')) return;  // safety
+                pressedHeader = header;
+                didLongPress  = false;
+                pressTimer    = setTimeout(() => {
+                    didLongPress = true;
+                    toggleAll();
+                }, LONG_PRESS_MS);
             });
 
+            const cancelPress = () => {
+                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                pressedHeader = null;
+            };
+            grid.addEventListener('pointerup',     cancelPress);
+            grid.addEventListener('pointercancel', cancelPress);
+            grid.addEventListener('pointerleave',  cancelPress);
+
+            grid.addEventListener('click', (e) => {
+                const header = e.target.closest('.multi-group-header');
+                if (!header) return;
+                // Suppress click after a long-press fired
+                if (didLongPress) { didLongPress = false; return; }
+                const code = header.dataset.groupCode;
+                if (!code) return;
+                if (e.shiftKey) {
+                    toggleAll();
+                } else {
+                    toggleOne(code);
+                }
+            });
+
+            // Keyboard accessibility — Enter/Space on focused header
+            grid.addEventListener('keydown', (e) => {
+                const header = e.target.closest('.multi-group-header');
+                if (!header) return;
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                if (e.shiftKey) toggleAll(); else toggleOne(header.dataset.groupCode);
+            });
         }
 
         function renderMultiCard(icao) {
@@ -3375,6 +3478,15 @@
                 </div>`;
         }
     
+        // Star button HTML used in both raw + detailed cards
+        function _dashStarBtnHtml(icao) {
+            const fav = (typeof isFavorite === 'function') ? isFavorite(icao) : false;
+            const cls = 'multi-fav-btn' + (fav ? ' is-fav' : '');
+            const ttl = fav ? 'Unpin from Favourites' : 'Pin to Favourites';
+            return `<button class="${cls}" type="button" title="${ttl}"
+                onclick="event.stopPropagation();toggleFavorite('${icao}')">${fav ? '★' : '☆'}</button>`;
+        }
+
         // ── RAW view (original compact METAR string card) ──
         function renderRawCardHTML(icao, cached) {
             const m        = cached.metar;
@@ -3398,7 +3510,10 @@
                             </div>
                             <div style="background:${rulesBg};color:${rulesColor};font-size:11px;font-weight:900;padding:3px 9px;border-radius:5px;letter-spacing:0.5px;">${rules}</div>
                         </div>
-                        <div class="multi-remove" onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            ${_dashStarBtnHtml(icao)}
+                            <div class="multi-remove" onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
+                        </div>
                     </div>
                     <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:10px;font-family:'SF Mono',monospace;font-size:12px;color:#e0e0e0;line-height:1.6;word-break:break-all;white-space:pre-wrap;margin-top:6px;">${formatRawMetar(rawMetar)}</div>
                     <div class="multi-age" style="color:${ageColor};margin-top:6px;">${ageMin > 60 ? '⚠️ ' : ''}${ageMin}m ago · Tap to load full data</div>
@@ -3546,10 +3661,11 @@
                             </div>
                         </div>
         
-                        <!-- ICAO + delete -->
+                        <!-- ICAO + star + delete -->
                         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                             <div style="font-size:14px;font-weight:900;font-family:'SF Mono',monospace;
                                         color:#fff;letter-spacing:1px;">${icao}</div>
+                            ${_dashStarBtnHtml(icao)}
                             <div class="multi-remove"
                                  onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
                         </div>

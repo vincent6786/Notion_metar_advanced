@@ -2248,6 +2248,42 @@
             font-weight: 800;
             letter-spacing: 0.3px;
             color: #e5e5e5;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        .multi-group-header:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        .multi-group-header:focus-visible {
+            box-shadow: 0 0 0 2px var(--accent);
+            border-radius: 4px;
+        }
+        .multi-group-chevron {
+            display: inline-block;
+            width: 14px;
+            font-size: 11px;
+            color: var(--sub-text);
+            transition: transform 0.18s ease;
+            transform: rotate(0deg);
+        }
+        .multi-group.is-collapsed .multi-group-chevron {
+            transform: rotate(-90deg);
+        }
+        .multi-group.is-collapsed .multi-grid-inner {
+            display: none;
+        }
+        /* Favourites pseudo-group accent */
+        .multi-group.is-favgroup .multi-group-header {
+            color: #ffd60a;
+            border-bottom-color: rgba(255,214,10,0.3);
+        }
+        .multi-group.is-favgroup .multi-group-code {
+            color: #ffd60a;
+            border-color: rgba(255,214,10,0.4);
+            background: rgba(255,214,10,0.08);
         }
         .multi-group-code {
             font-family: 'SF Mono', monospace;
@@ -2323,6 +2359,34 @@
         .multi-remove:hover {
             background: var(--danger);
             color: #fff;
+        }
+        .multi-fav-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--sub-text);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .multi-fav-btn:hover {
+            background: rgba(255,214,10,0.12);
+            color: #ffd60a;
+            border-color: rgba(255,214,10,0.4);
+        }
+        .multi-fav-btn.is-fav {
+            background: rgba(255,214,10,0.12);
+            color: #ffd60a;
+            border-color: rgba(255,214,10,0.5);
         }
         
         .multi-name {
