@@ -2819,6 +2819,10 @@
             padding: 28px 24px 20px;
             width: 100%;
             max-width: 380px;
+            max-height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
             box-shadow: 0 20px 60px rgba(0,0,0,0.6);
             animation: slideUpFade 0.4s cubic-bezier(0.2,0.8,0.2,1) both;
         }
@@ -2852,7 +2856,14 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 24px;
+            margin-bottom: 18px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            min-height: 0;
+            flex: 1 1 auto;
+            /* Fade hint at the bottom so users know there's more to scroll */
+            -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 16px), transparent);
+                    mask-image: linear-gradient(180deg, #000 calc(100% - 16px), transparent);
         }
         .whatsnew-item {
             display: flex;
@@ -2891,6 +2902,7 @@
             font-weight: 800;
             cursor: pointer;
             transition: opacity 0.2s;
+            flex-shrink: 0;
         }
         .whatsnew-btn:active { opacity: 0.8; }
 
