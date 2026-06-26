@@ -1826,19 +1826,48 @@
             const rawEl    = document.getElementById('rawAtis');
             if (!cardEl || !rawEl || !letterEl || !issuedEl) return;
 
-            // Unavailable / error state
+            // Unavailable / error state — explain why and offer the voice
+            // ATIS frequency from our local database when we have it. D-ATIS
+            // is only broadcast at ~100 major US airports; for everywhere
+            // else the pilot uses the voice ATIS frequency directly.
             if (!d || d.error) {
                 cardEl.classList.add('is-empty');
                 letterEl.innerText = '—';
                 issuedEl.innerText = '';
-                const why = d?.detail || d?.error || 'No D-ATIS available for this airport.';
+                const isNetworkErr = d?.detail && /timeout|fetch|network/i.test(d.detail);
+
+                // Voice ATIS frequency from our bundled DB (if known)
+                let voiceAtis = '';
+                if (typeof lookupFrequencies === 'function') {
+                    const freqs = lookupFrequencies(icao) || [];
+                    const a = freqs.find(f => f.t === 'ATIS') || freqs.find(f => f.t === 'AWOS');
+                    if (a) {
+                        const label = a.t === 'AWOS' ? 'AWOS' : 'Voice ATIS';
+                        voiceAtis = `
+                            <div style="margin:10px 0 4px;padding:10px 12px;background:rgba(10,132,255,0.07);
+                                        border:1px solid rgba(10,132,255,0.25);border-radius:8px;color:#d0d0d0;">
+                                <div style="font-size:10px;font-weight:800;letter-spacing:0.6px;
+                                            color:var(--accent);text-transform:uppercase;margin-bottom:4px;">
+                                    ${label}
+                                </div>
+                                <div style="font-family:'SF Mono',monospace;font-size:16px;font-weight:800;color:#fff;">
+                                    ${a.f.toFixed(3)} MHz
+                                </div>
+                                ${a.d ? `<div style="font-size:11px;color:var(--sub-text);margin-top:3px;">${_escapeHtml(a.d)}</div>` : ''}
+                            </div>`;
+                    }
+                }
+                const why = isNetworkErr
+                    ? `Couldn't reach the D-ATIS source — tap Retry.`
+                    : `${_escapeHtml(icao)} does not appear to broadcast D-ATIS. D-ATIS coverage is limited to ~100 major US airports via the FAA Datalink feed.${voiceAtis ? ' Tune the voice ATIS instead:' : ''}`;
                 rawEl.innerHTML = `
                     <div style="text-align:center;color:var(--sub-text);padding:12px 4px;">
                         <div style="font-size:24px;margin-bottom:6px;">🛰</div>
                         <div style="font-weight:700;color:#e5e5e5;margin-bottom:4px;">D-ATIS unavailable</div>
-                        <div style="font-size:11px;line-height:1.6;margin-bottom:10px;">${_escapeHtml(why)} · ${_escapeHtml(icao)}</div>
+                        <div style="font-size:11px;line-height:1.6;margin-bottom:10px;text-align:center;max-width:380px;margin-left:auto;margin-right:auto;">${why}</div>
+                        ${voiceAtis}
                         <button onclick="_atisLoadedFor=null;loadAtisFor('${_escapeHtml(icao)}')"
-                                style="background:var(--accent);border:none;color:#fff;padding:7px 14px;
+                                style="background:var(--accent);border:none;color:#fff;padding:7px 14px;margin-top:8px;
                                        border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
                             ↺ Retry
                         </button>
