@@ -1620,7 +1620,7 @@
                         await loadMultiAirports();
                         if (multiRefreshInterval) clearInterval(multiRefreshInterval);
                         if (multiAirports.length > 0) {
-                            multiRefreshInterval = setInterval(refreshMultiData, 300000);
+                            multiRefreshInterval = setInterval(refreshMultiData, MULTI_REFRESH_MS);
                         }
                     }
                 }
@@ -1641,7 +1641,7 @@
                 await loadMultiAirports();
                 showToast('📊 Dashboard enabled');
                 if (!multiRefreshInterval && multiAirports.length > 0) {
-                    multiRefreshInterval = setInterval(refreshMultiData, 300000);
+                    multiRefreshInterval = setInterval(refreshMultiData, MULTI_REFRESH_MS);
                 }
             } else {
                 setTab('metar');
@@ -3058,6 +3058,10 @@
         // ================================================================
         // 28. MULTI-AIRPORT DASHBOARD
         // ================================================================
+        // Auto-refresh cadence for the dashboard. METAR validity is ~60 min, so
+        // 20-minute refresh keeps cards reasonably fresh while staying well
+        // under the backend's per-IP hourly rate limit even on busy dashboards.
+        const MULTI_REFRESH_MS = 20 * 60 * 1000;
         let multiAirports = [];
         let multiDataCache = {};
         let multiRefreshInterval = null;
@@ -3089,7 +3093,7 @@
             if (multiRefreshInterval) clearInterval(multiRefreshInterval);
             if (multiAirports.length > 0) {
                 refreshMultiData();
-                multiRefreshInterval = setInterval(refreshMultiData, 300000);
+                multiRefreshInterval = setInterval(refreshMultiData, MULTI_REFRESH_MS);
             }
         }
 
@@ -3155,7 +3159,7 @@
                 fetchMultiAirportData(icao);
 
                 if (!multiRefreshInterval) {
-                    multiRefreshInterval = setInterval(refreshMultiData, 300000);
+                    multiRefreshInterval = setInterval(refreshMultiData, MULTI_REFRESH_MS);
                 }
 
             } catch(e) {
