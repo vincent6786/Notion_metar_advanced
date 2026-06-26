@@ -2577,7 +2577,52 @@
         }
         .cg-edit:hover { color: var(--accent); border-color: rgba(10,132,255,0.4); }
         .cg-del:hover  { color: var(--danger); border-color: rgba(255,69,58,0.4); }
-        
+
+        /* Per-card radar (RainViewer overlay) */
+        .radar-row { width: 100%; }
+        .radar-toggle {
+            width: 100%;
+            background: rgba(10,132,255,0.08);
+            border: 1px solid rgba(10,132,255,0.3);
+            color: var(--accent);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .radar-toggle:hover { background: rgba(10,132,255,0.16); }
+        .radar-block {
+            display: none;
+            margin-top: 6px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .radar-block.is-open { display: block; }
+        .radar-map {
+            width: 100%;
+            height: 150px;
+            background: #111;
+        }
+        .radar-attr {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 9px;
+            color: rgba(255,255,255,0.55);
+            background: rgba(0,0,0,0.45);
+            padding: 1px 5px;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+        .radar-empty {
+            display: flex; align-items: center; justify-content: center;
+            height: 150px; color: var(--sub-text); font-size: 12px;
+        }
+
         .multi-name {
             font-size: 11px;
             color: var(--sub-text);

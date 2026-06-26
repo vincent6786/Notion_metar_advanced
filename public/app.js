@@ -3273,6 +3273,11 @@
             const grid = document.getElementById('multiGrid');
             const groupMode = (typeof getDashGroupMode === 'function') ? getDashGroupMode() : 'none';
             grid.classList.toggle('is-grouped', groupMode === 'country');
+            // Destroy any per-card radar maps from the previous render — DOM nodes are gone
+            if (typeof _radarInstances !== 'undefined' && _radarInstances.size) {
+                for (const m of _radarInstances.values()) { try { m.remove(); } catch(e) {} }
+                _radarInstances.clear();
+            }
 
             if (multiAirports.length === 0) {
                 grid.innerHTML = '<div class="multi-loading">Add airports above to start tracking</div>';
@@ -3495,6 +3500,102 @@
                 e.preventDefault();
                 if (e.shiftKey) toggleAll(); else toggleOne(header.dataset.groupCode);
             });
+        }
+
+        // ── RainViewer radar (lazy, cached for 10 min) ────────────────────
+        let _rainviewerCache = null;       // { ts, host, path, fetchedAt }
+        let _rainviewerPromise = null;
+
+        async function _getRainviewerFrame() {
+            const now = Date.now();
+            if (_rainviewerCache && (now - _rainviewerCache.fetchedAt) < 10 * 60 * 1000) {
+                return _rainviewerCache;
+            }
+            if (_rainviewerPromise) return _rainviewerPromise;
+            _rainviewerPromise = (async () => {
+                try {
+                    const res  = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+                    const json = await res.json();
+                    const radar = json && json.radar && json.radar.past;
+                    if (!radar || radar.length === 0) return null;
+                    const latest = radar[radar.length - 1];
+                    _rainviewerCache = {
+                        host: json.host || 'https://tilecache.rainviewer.com',
+                        path: latest.path,
+                        ts:   latest.time,
+                        fetchedAt: now,
+                    };
+                    return _rainviewerCache;
+                } catch (e) {
+                    console.warn('[Radar] RainViewer fetch failed:', e);
+                    return null;
+                } finally {
+                    _rainviewerPromise = null;
+                }
+            })();
+            return _rainviewerPromise;
+        }
+
+        // Per-card radar: build a Leaflet mini-map with RainViewer overlay.
+        // Called lazily when the radar block is expanded for that card.
+        const _radarInstances = new Map();   // icao → L.Map
+        async function _initRadarMap(icao, hostEl) {
+            if (typeof L === 'undefined' || !hostEl) return;
+            if (_radarInstances.has(icao)) {
+                const m = _radarInstances.get(icao);
+                setTimeout(() => m.invalidateSize(), 50);
+                return;
+            }
+            const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
+            if (!info || info.lat == null || info.lon == null) {
+                hostEl.innerHTML = '<div class="radar-empty">Location unavailable</div>';
+                return;
+            }
+            const map = L.map(hostEl, {
+                center: [info.lat, info.lon],
+                zoom: 7,
+                zoomControl: false,
+                attributionControl: false,
+                dragging: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                keyboard: false,
+                touchZoom: false,
+                tap: false,
+            });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 12, subdomains: 'abcd',
+            }).addTo(map);
+
+            const frame = await _getRainviewerFrame();
+            if (frame) {
+                L.tileLayer(`${frame.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
+                    opacity: 0.75, maxZoom: 12,
+                }).addTo(map);
+            }
+            // Station marker
+            L.circleMarker([info.lat, info.lon], {
+                radius: 5, color: '#fff', weight: 2,
+                fillColor: '#0a84ff', fillOpacity: 1,
+            }).addTo(map);
+
+            _radarInstances.set(icao, map);
+            setTimeout(() => map.invalidateSize(), 50);
+        }
+
+        // Per-card radar toggle (collapsed by default)
+        function toggleCardRadar(icao, btn) {
+            const card = btn && btn.closest('.multi-card');
+            if (!card) return;
+            const block = card.querySelector('.radar-block');
+            if (!block) return;
+            const open = block.classList.toggle('is-open');
+            btn.innerText = open ? '⛅ Hide radar' : '⛅ Show radar';
+            if (open) {
+                const host = block.querySelector('.radar-map');
+                _initRadarMap(icao, host);
+            }
         }
 
         // ── Dashboard map view ────────────────────────────────────────────
@@ -3970,10 +4071,20 @@
                                 })() : ''}
                                 ${isAuto ? badge('AUTO', '#555', '#ccc')   : ''}
                             </div>
-        
+
                         </div>
                     </div>
-        
+
+                    <!-- Radar (collapsed by default; Leaflet inits on first expand) -->
+                    <div class="radar-row" style="margin-top:8px;">
+                        <button class="radar-toggle" type="button"
+                                onclick="event.stopPropagation();toggleCardRadar('${icao}', this)">⛅ Show radar</button>
+                        <div class="radar-block">
+                            <div class="radar-map"></div>
+                            <div class="radar-attr">© RainViewer · © CARTO</div>
+                        </div>
+                    </div>
+
                 </div>`;
         }
         function loadMultiAirport(icao) {
