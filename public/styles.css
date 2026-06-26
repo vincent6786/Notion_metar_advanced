@@ -652,6 +652,23 @@
             color: var(--sub-text);
             border-color: var(--border);
         }
+        /* When the card already shows Arrival + Departure blocks, the top
+           badge is redundant — shrink it to a small ICAO chip instead. */
+        .atis-card.has-blocks > .atis-head .atis-letter-badge {
+            width: auto;
+            min-width: 0;
+            height: 28px;
+            padding: 0 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            background: rgba(10,132,255,0.12);
+            color: var(--accent);
+            border: 1px solid rgba(10,132,255,0.35);
+            box-shadow: none;
+        }
+        .atis-card.has-blocks > .atis-head { margin-bottom: 14px; }
         .atis-head {
             display: flex;
             justify-content: space-between;
@@ -709,6 +726,55 @@
             margin-top: 3px;
             color: var(--sub-text);
             font-weight: 500;
+        }
+        /* Per-section blocks (Arrival, Departure) inside #rawAtis */
+        #rawAtis { padding: 0; background: transparent; border: none; }
+        .atis-block {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .atis-block:last-child { margin-bottom: 0; }
+        .atis-block-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .atis-block-label {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .atis-block-issued {
+            font-size: 11px;
+            color: var(--sub-text);
+            font-family: 'SF Mono', monospace;
+        }
+        /* Make the per-block letter badge a bit smaller than the card header */
+        .atis-block .atis-letter-badge {
+            width: 44px;
+            height: 44px;
+            font-size: 24px;
+            border-radius: 10px;
+        }
+        .atis-body {
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            color: #e5e5e5;
+            background: rgba(0,0,0,0.25);
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 0;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
         .section-title {
             font-weight: 700;

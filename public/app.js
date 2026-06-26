@@ -1776,15 +1776,57 @@
             }
         }
 
-        // Render a D-ATIS payload. Tolerates the soft-error shape returned
-        // by /api/atis when the upstream source has nothing for this airport.
+        // Render a D-ATIS payload. The backend returns structured fields:
+        //   { letter, issued, arrival: {letter,issued,text}, departure: {...},
+        //     single: {letter,text}, raw, source, fetched }
+        // We render Arrival and Departure as separate blocks each with its own
+        // letter badge, since they're usually different letters at busy fields
+        // (RCTP currently shows Q arrival / L departure).
+        function _escapeHtml(s) {
+            return String(s || '').replace(/[&<>"']/g, c =>
+                ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function _fmtIssued(issued, fetched) {
+            if (issued) {
+                const t = new Date(issued);
+                if (!Number.isNaN(t.getTime())) {
+                    return `${String(t.getUTCDate()).padStart(2,'0')}/${String(t.getUTCMonth()+1).padStart(2,'0')} ${String(t.getUTCHours()).padStart(2,'0')}:${String(t.getUTCMinutes()).padStart(2,'0')}Z`;
+                }
+                // Upstream string isn't a recognised date — show it verbatim.
+                if (/^\d{4}-\d{2}-\d{2}/.test(issued)) return issued;
+            }
+            if (fetched) {
+                const ageMin = Math.max(0, Math.floor((Date.now() - fetched) / 60000));
+                return `Fetched ${ageMin}m ago`;
+            }
+            return '—';
+        }
+        function _atisBlockHtml(label, block, fetched) {
+            if (!block) return '';
+            const letter = (block.letter || '').toString().slice(0,1).toUpperCase() || '—';
+            const issued = _fmtIssued(block.issued, fetched);
+            const text   = _escapeHtml((block.text || '').trim() || '(empty broadcast)');
+            return `
+                <div class="atis-block">
+                    <div class="atis-block-head">
+                        <div>
+                            <div class="atis-block-label">${label}</div>
+                            <div class="atis-block-issued">${issued}</div>
+                        </div>
+                        <div class="atis-letter-badge">${letter}</div>
+                    </div>
+                    <pre class="atis-body">${text}</pre>
+                </div>`;
+        }
+
         function renderAtis(icao, d) {
+            const cardEl   = document.getElementById('atisCard');
             const issuedEl = document.getElementById('atisIssued');
             const letterEl = document.getElementById('atisLetter');
             const rawEl    = document.getElementById('rawAtis');
-            const cardEl   = document.getElementById('atisCard');
-            if (!rawEl || !letterEl || !issuedEl || !cardEl) return;
+            if (!cardEl || !rawEl || !letterEl || !issuedEl) return;
 
+            // Unavailable / error state
             if (!d || d.error) {
                 cardEl.classList.add('is-empty');
                 letterEl.innerText = '—';
@@ -1794,8 +1836,8 @@
                     <div style="text-align:center;color:var(--sub-text);padding:12px 4px;">
                         <div style="font-size:24px;margin-bottom:6px;">🛰</div>
                         <div style="font-weight:700;color:#e5e5e5;margin-bottom:4px;">D-ATIS unavailable</div>
-                        <div style="font-size:11px;line-height:1.6;margin-bottom:10px;">${why} · ${icao}</div>
-                        <button onclick="_atisLoadedFor=null;loadAtisFor('${icao}')"
+                        <div style="font-size:11px;line-height:1.6;margin-bottom:10px;">${_escapeHtml(why)} · ${_escapeHtml(icao)}</div>
+                        <button onclick="_atisLoadedFor=null;loadAtisFor('${_escapeHtml(icao)}')"
                                 style="background:var(--accent);border:none;color:#fff;padding:7px 14px;
                                        border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
                             ↺ Retry
@@ -1805,28 +1847,31 @@
             }
 
             cardEl.classList.remove('is-empty');
-            const letter = (d.letter || '').toString().slice(0, 1).toUpperCase();
-            letterEl.innerText = letter || '—';
-            // Best-effort issued time
-            let issuedStr = '';
-            if (d.issued) {
-                const t = new Date(d.issued);
-                if (!Number.isNaN(t.getTime())) {
-                    issuedStr = `${String(t.getUTCDate()).padStart(2,'0')}/${String(t.getUTCMonth()+1).padStart(2,'0')} ${String(t.getUTCHours()).padStart(2,'0')}:${String(t.getUTCMinutes()).padStart(2,'0')}Z`;
-                }
-            }
-            if (!issuedStr && d.fetched) {
-                const ageMin = Math.max(0, Math.floor((Date.now() - d.fetched) / 60000));
-                issuedStr = `Fetched ${ageMin}m ago`;
-            }
-            issuedEl.innerText = issuedStr || '—';
 
-            const raw = (d.raw || '').trim();
-            if (!raw) {
-                rawEl.innerText = `(empty broadcast for ${icao})`;
-            } else {
-                rawEl.innerText = raw;
+            // Build structured blocks. Use the structured fields when present;
+            // fall back to a single block from `raw` otherwise.
+            const blocks = [];
+            if (d.arrival)   blocks.push(_atisBlockHtml('ARRIVAL ATIS',   d.arrival,   d.fetched));
+            if (d.departure) blocks.push(_atisBlockHtml('DEPARTURE ATIS', d.departure, d.fetched));
+            if (d.single)    blocks.push(_atisBlockHtml('ATIS',           d.single,    d.fetched));
+            if (blocks.length === 0 && d.raw) {
+                blocks.push(`<pre class="atis-body">${_escapeHtml(d.raw)}</pre>`);
             }
+
+            // The top-of-card letter/header is redundant when we have
+            // separate Arrival + Departure blocks (each with their own
+            // badge). Collapse it to a station summary in that case.
+            const hasBlocks = (d.arrival || d.departure || d.single) ? true : false;
+            cardEl.classList.toggle('has-blocks', hasBlocks);
+            if (hasBlocks) {
+                letterEl.innerText = (icao || '').toString().toUpperCase();
+                issuedEl.innerText = '';
+            } else {
+                letterEl.innerText = (d.letter || '—').toString().slice(0,1).toUpperCase();
+                issuedEl.innerText = _fmtIssued(d.issued, d.fetched);
+            }
+
+            rawEl.innerHTML = blocks.join('');
         }
         
         // Mirror all METAR/TAF render calls to the weather tab duplicates

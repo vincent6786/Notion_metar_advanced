@@ -89,6 +89,133 @@ function extractLetter(text) {
     return m ? m[1].toUpperCase() : null;
 }
 
+// Decode numeric / named HTML entities. atis.guru's <pre> block preserves
+// whitespace via &#xA; / &#x9; / &#xD;, which our previous tag-stripper
+// passed through as literal text — making the output look like garbage.
+function decodeHtmlEntities(s) {
+    if (!s) return '';
+    return s
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+            try { return String.fromCodePoint(parseInt(hex, 16)); } catch(e) { return ''; }
+        })
+        .replace(/&#(\d+);/g, (_, dec) => {
+            try { return String.fromCodePoint(parseInt(dec, 10)); } catch(e) { return ''; }
+        })
+        .replace(/&amp;/g,  '&')
+        .replace(/&lt;/g,   '<')
+        .replace(/&gt;/g,   '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g,  "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+}
+
+// Convert atis.guru's HTML page into clean plain text. Preserves the
+// per-section linebreaks (Arrival ATIS / Departure ATIS / METAR / TAF) by
+// turning block-level tags into newlines BEFORE stripping the remaining
+// markup.
+function htmlToText(html) {
+    let s = String(html || '');
+    s = s.replace(/<script[\s\S]*?<\/script>/gi, ' ');
+    s = s.replace(/<style[\s\S]*?<\/style>/gi,  ' ');
+    // Block elements → newline so we don't run sections together.
+    s = s.replace(/<br\s*\/?>/gi, '\n');
+    s = s.replace(/<\/(p|div|section|article|h[1-6]|li|tr|pre|table)\s*>/gi, '\n');
+    s = s.replace(/<(p|div|section|article|h[1-6]|li|tr|pre|table)\b[^>]*>/gi, '\n');
+    // Remove the rest of the tags.
+    s = s.replace(/<[^>]+>/g, ' ');
+    // Decode entities AFTER tag strip so &#xA; becomes a real newline.
+    s = decodeHtmlEntities(s);
+    // Normalise: collapse runs of spaces/tabs inside a line, keep newlines.
+    s = s.split('\n')
+         .map(line => line.replace(/[\t ]+/g, ' ').trim())
+         .filter(line => line.length > 0)
+         .join('\n');
+    return s;
+}
+
+// Parse an atis.guru station page into structured ATIS sections.
+// The page layout is roughly:
+//   <page chrome>           ← drop everything before the first "Arrival ATIS"
+//   Arrival ATIS            ← section header
+//   <yyyy-mm-dd hh:mm UTC>  ← issued time
+//   <STATION> ARR ATIS X    ← header line; X = ATIS letter
+//   <body lines>
+//   Departure ATIS          ← next section header (optional)
+//   …
+//   METAR / TAF             ← we already show these elsewhere; drop them
+//   "An unhandled error has occurred. Reload"  ← drop
+function parseAtisPage(html, station) {
+    const text = htmlToText(html);
+    if (!text) return null;
+
+    // Stop at the page's footer error message if present.
+    const errIdx = text.indexOf('An unhandled error');
+    const clipped = errIdx === -1 ? text : text.slice(0, errIdx);
+
+    // Locate every recognised section heading, keep the ones we care about,
+    // then slice the page between them.
+    const headings = [];
+    const headingRe = /^(Arrival ATIS|Departure ATIS|METAR|TAF)\b/gmi;
+    let m;
+    while ((m = headingRe.exec(clipped)) !== null) {
+        headings.push({ name: m[1].toUpperCase(), start: m.index, headerEnd: m.index + m[0].length });
+    }
+    if (headings.length === 0) return null;
+
+    function bodyOf(i) {
+        const next = headings[i + 1];
+        const end  = next ? next.start : clipped.length;
+        return clipped.slice(headings[i].headerEnd, end).trim();
+    }
+
+    function parseBlock(body) {
+        if (!body) return null;
+        const lines = body.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length === 0) return null;
+
+        // First line is often the issued timestamp like "2026-06-26 06:55 UTC".
+        let issued = null;
+        if (/^\d{4}-\d{2}-\d{2}\b/.test(lines[0])) {
+            issued = lines.shift();
+        }
+
+        // The next line typically reads "<STATION> ARR ATIS Q" or "<STATION> DEP ATIS L".
+        let letter = null;
+        if (lines.length > 0) {
+            const head = lines[0];
+            const lm = head.match(/\bATIS\s+([A-Z])\b/);
+            if (lm) {
+                letter = lm[1];
+                lines.shift();   // consume the header so it doesn't repeat in the body
+            }
+        }
+
+        const textOut = lines.join('\n').trim();
+        return textOut ? { issued, letter, text: textOut } : null;
+    }
+
+    let arrival = null, departure = null;
+    for (let i = 0; i < headings.length; i++) {
+        const h = headings[i];
+        if (h.name === 'ARRIVAL ATIS'   && !arrival)   arrival   = parseBlock(bodyOf(i));
+        if (h.name === 'DEPARTURE ATIS' && !departure) departure = parseBlock(bodyOf(i));
+    }
+
+    // Some stations only broadcast a single ATIS (not split arrival/departure).
+    // In that case the first section heading might just be "ATIS" or the page
+    // skips straight to METAR — fall back to scanning the whole clipped text
+    // for an ATIS letter so the frontend has something to show.
+    if (!arrival && !departure) {
+        const letter = extractLetter(clipped);
+        if (letter) {
+            return { arrival: null, departure: null, single: { letter, text: clipped.trim() } };
+        }
+        return null;
+    }
+    return { arrival, departure };
+}
+
 export default async function handler(req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -145,37 +272,10 @@ export default async function handler(req, res) {
             });
         }
 
-        const ct   = (r.headers.get('content-type') || '').toLowerCase();
-        const body = await r.text();
+        const body   = await r.text();
+        const parsed = parseAtisPage(body, station);
 
-        // Normalise: prefer JSON if the upstream sent it; otherwise return
-        // the raw body as a text blob and let the frontend display it.
-        let payload = null;
-        if (ct.includes('json')) {
-            try { payload = JSON.parse(body); } catch(e) { payload = null; }
-        }
-        if (payload && typeof payload === 'object') {
-            const rawText = payload.datis || payload.atis || payload.text || payload.raw || '';
-            return res.status(200).json({
-                station,
-                raw:     rawText || '',
-                letter:  payload.letter || extractLetter(rawText),
-                issued:  payload.timestamp || payload.issued || payload.time || null,
-                source:  'atis.guru',
-                fetched: Date.now(),
-                _raw:    payload,    // pass through for future fields without a code change
-            });
-        }
-        // Fallback: upstream sent HTML/text. Strip tags so the frontend has
-        // something readable; keep the raw HTML on _html for diagnostics.
-        const stripped = body
-            .replace(/<script[\s\S]*?<\/script>/gi, '')
-            .replace(/<style[\s\S]*?<\/style>/gi,  '')
-            .replace(/<[^>]+>/g, ' ')
-            .replace(/&nbsp;/g, ' ')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-        if (!stripped) {
+        if (!parsed || (!parsed.arrival && !parsed.departure && !parsed.single)) {
             return res.status(200).json({
                 error:   'D-ATIS unavailable',
                 station,
@@ -183,14 +283,34 @@ export default async function handler(req, res) {
                 fetched: Date.now(),
             });
         }
+
+        // Compose a flat "raw" string for legacy renderers / quick copy-paste,
+        // but always send the structured fields too so the frontend can lay it
+        // out properly (arrival letter badge + departure letter badge).
+        const flat = [];
+        if (parsed.arrival)   flat.push(`ARRIVAL ATIS ${parsed.arrival.letter || ''}\n${parsed.arrival.text}`.trim());
+        if (parsed.departure) flat.push(`DEPARTURE ATIS ${parsed.departure.letter || ''}\n${parsed.departure.text}`.trim());
+        if (parsed.single)    flat.push(parsed.single.text);
+
+        // The primary "letter" exposed at the top level is the arrival letter
+        // (what most pilots want to know first), falling back to departure or
+        // the single-broadcast letter.
+        const primaryLetter =
+            parsed.arrival?.letter ||
+            parsed.single?.letter  ||
+            parsed.departure?.letter ||
+            null;
+
         return res.status(200).json({
             station,
-            raw:     stripped,
-            letter:  extractLetter(stripped),
-            issued:  null,
-            source:  'atis.guru',
-            fetched: Date.now(),
-            _format: 'html',
+            letter:    primaryLetter,
+            issued:    parsed.arrival?.issued || parsed.departure?.issued || null,
+            arrival:   parsed.arrival   || null,
+            departure: parsed.departure || null,
+            single:    parsed.single    || null,
+            raw:       flat.join('\n\n'),
+            source:    'atis.guru',
+            fetched:   Date.now(),
         });
     } catch(err) {
         clearTimeout(tId);
