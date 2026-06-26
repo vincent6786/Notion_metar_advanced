@@ -3268,8 +3268,8 @@
         }
 
         async function refreshMultiData() {
-            console.log(`[Multi] Refreshing ${multiAirports.length} airports (concurrency 4)...`);
-            await _runPooled(multiAirports, 4, fetchMultiAirportData);
+            console.log(`[Multi] Refreshing ${multiAirports.length} airports (concurrency 2)...`);
+            await _runPooled(multiAirports, 2, fetchMultiAirportData);
             // Update last-refreshed stamp
             const now = new Date();
             const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;

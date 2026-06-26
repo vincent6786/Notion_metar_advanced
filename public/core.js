@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.0.4',  // ← set once in index.html
-            title: 'METAR GO — v5.0.4',
+            version: window.APP_VERSION || '5.0.5',  // ← set once in index.html
+            title: 'METAR GO — v5.0.5',
             changes: [
                 {
                     icon: '🗂️',
@@ -1611,6 +1611,27 @@
                     showAccessGate('🔒 Access revoked. Enter a new access code.');
                     throw new Error('Access revoked');
                 }
+
+                // 429 = rate limit. Honour Retry-After (or use exponential
+                // backoff) and retry the same fetch up to twice before giving
+                // up. Caller doesn't see the 429 unless all retries exhaust.
+                if (res.status === 429) {
+                    const attempt = (window.__sf429Attempts ||= new Map()).get(endpoint) || 0;
+                    if (attempt < 2) {
+                        window.__sf429Attempts.set(endpoint, attempt + 1);
+                        const retryAfter = parseFloat(res.headers.get('Retry-After'));
+                        const delay = Number.isFinite(retryAfter)
+                            ? Math.min(retryAfter * 1000, 8000)
+                            : (1500 * Math.pow(2, attempt));   // 1.5s, then 3s
+                        console.warn(`[Rate-limit] ${endpoint} → 429, retrying in ${delay}ms (attempt ${attempt + 1}/2)`);
+                        await new Promise(r => setTimeout(r, delay));
+                        return secureFetch(endpoint);
+                    }
+                    window.__sf429Attempts.delete(endpoint);
+                }
+                // Reset the retry counter on any non-429 response so the next
+                // request for this endpoint starts fresh.
+                window.__sf429Attempts?.delete(endpoint);
 
                 if (!res.ok) throw new Error(`API Error: ${res.status}`);
                 const data = await res.json();
