@@ -292,29 +292,48 @@ export default async function handler(req, res) {
         });
     }
 
-    // 3. Proxy to atis.guru with a realistic UA and a tight timeout.
+    // 3. Proxy to atis.guru. Use a full real-browser header set — the source
+    // appears to gate non-browser User-Agents (and clearly identifying bot
+    // strings) via Cloudflare. A "compatible; bot" UA returns 403 even though
+    // the same URL works fine in Chrome / Safari.
     const upstream = `https://atis.guru/atis/${station}`;
     const controller = new AbortController();
     const tId = setTimeout(() => controller.abort(), 9000);
     try {
         const r = await fetch(upstream, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; METAR-GO-EFB/1.0) AppleWebKit/537.36',
-                'Accept':     'application/json, text/html;q=0.9, */*;q=0.5',
+                'User-Agent':                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                'Accept':                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language':           'en-US,en;q=0.9',
+                'Accept-Encoding':           'gzip, deflate, br',
+                'Cache-Control':             'no-cache',
+                'Pragma':                    'no-cache',
+                'Sec-Fetch-Dest':            'document',
+                'Sec-Fetch-Mode':            'navigate',
+                'Sec-Fetch-Site':            'none',
+                'Sec-Fetch-User':            '?1',
+                'Upgrade-Insecure-Requests': '1',
+                'Referer':                   'https://atis.guru/',
             },
-            signal: controller.signal,
+            redirect: 'follow',
+            signal:   controller.signal,
         });
         clearTimeout(tId);
 
         // Soft-fail upstream errors so the frontend can show a friendly
-        // "D-ATIS unavailable" card instead of a red ERROR state.
+        // "D-ATIS unavailable" card instead of a red ERROR state. Forward
+        // the upstream status so the client can distinguish "source down"
+        // (5xx), "blocked by Cloudflare" (403), and "airport not in feed"
+        // (404 or empty body).
         if (!r.ok) {
+            console.warn(`[ATIS] ${station} upstream HTTP ${r.status}`);
             return res.status(200).json({
-                error:   'D-ATIS unavailable',
+                error:    'D-ATIS unavailable',
+                detail:   `upstream HTTP ${r.status}`,
                 station,
-                status:  r.status,
-                source:  'atis.guru',
-                fetched: Date.now(),
+                status:   r.status,
+                source:   'atis.guru',
+                fetched:  Date.now(),
             });
         }
 
@@ -322,11 +341,16 @@ export default async function handler(req, res) {
         const parsed = parseAtisPage(body, station);
 
         if (!parsed || (!parsed.arrival && !parsed.departure && !parsed.single)) {
+            // Log a snippet so we can diagnose new layouts from Vercel logs
+            // without flooding stdout.
+            console.warn(`[ATIS] ${station} parse miss (body ${body.length}B). First 240 chars:`, body.slice(0, 240).replace(/\s+/g, ' '));
             return res.status(200).json({
-                error:   'D-ATIS unavailable',
+                error:    'D-ATIS unavailable',
+                detail:   'upstream returned a page but no ATIS section was recognised',
                 station,
-                source:  'atis.guru',
-                fetched: Date.now(),
+                bytes:    body.length,
+                source:   'atis.guru',
+                fetched:  Date.now(),
             });
         }
 

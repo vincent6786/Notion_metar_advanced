@@ -1834,7 +1834,11 @@
                 cardEl.classList.add('is-empty');
                 letterEl.innerText = '—';
                 issuedEl.innerText = '';
-                const isNetworkErr = d?.detail && /timeout|fetch|network/i.test(d.detail);
+                const upstreamStatus = (d && typeof d.status === 'number') ? d.status : null;
+                const isBlocked      = upstreamStatus === 403 || upstreamStatus === 401;
+                const isUpstreamDown = upstreamStatus && upstreamStatus >= 500;
+                const isNotFound     = upstreamStatus === 404;
+                const isNetworkErr   = d?.detail && /timeout|fetch|network/i.test(d.detail);
 
                 // Voice ATIS frequency from our bundled DB (if known)
                 let voiceAtis = '';
@@ -1857,9 +1861,23 @@
                             </div>`;
                     }
                 }
-                const why = isNetworkErr
-                    ? `Couldn't reach the D-ATIS source — tap Retry.`
-                    : `${_escapeHtml(icao)} does not appear to broadcast D-ATIS. D-ATIS coverage is limited to ~100 major US airports via the FAA Datalink feed.${voiceAtis ? ' Tune the voice ATIS instead:' : ''}`;
+                let why;
+                if (isBlocked) {
+                    why = `The D-ATIS source temporarily blocked our request (HTTP ${upstreamStatus}). Tap Retry, or open <a href="https://atis.guru/atis/${_escapeHtml(icao)}" target="_blank" rel="noopener" style="color:var(--accent);">atis.guru/${_escapeHtml(icao)}</a> directly.`;
+                } else if (isUpstreamDown) {
+                    why = `The D-ATIS source is currently down (HTTP ${upstreamStatus}). Try again later.`;
+                } else if (isNetworkErr) {
+                    why = `Couldn't reach the D-ATIS source — tap Retry.`;
+                } else if (isNotFound) {
+                    why = `${_escapeHtml(icao)} is not on the atis.guru feed.${voiceAtis ? ' Tune the voice ATIS instead:' : ''}`;
+                } else {
+                    why = `${_escapeHtml(icao)} does not appear to broadcast D-ATIS. D-ATIS coverage is limited to ~100 major US airports via the FAA Datalink feed.${voiceAtis ? ' Tune the voice ATIS instead:' : ''}`;
+                }
+                // Tiny diagnostic line — helps the user (and us) tell the
+                // difference between "blocked", "down", and "not on the feed".
+                const diag = upstreamStatus
+                    ? `<div style="font-size:10px;color:var(--sub-text);margin-top:6px;font-family:'SF Mono',monospace;opacity:0.7;">Upstream: HTTP ${upstreamStatus}${d?.bytes ? ` · ${d.bytes}B` : ''}</div>`
+                    : '';
                 rawEl.innerHTML = `
                     <div style="text-align:center;color:var(--sub-text);padding:12px 4px;">
                         <div style="font-size:24px;margin-bottom:6px;">🛰</div>
@@ -1871,6 +1889,7 @@
                                        border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
                             ↺ Retry
                         </button>
+                        ${diag}
                     </div>`;
                 return;
             }
