@@ -1834,6 +1834,10 @@
                 cardEl.classList.add('is-empty');
                 letterEl.innerText = '—';
                 issuedEl.innerText = '';
+                // Reset the source label to the multi-source default in case
+                // a previous render had pinned it to one provider.
+                const srcEl = document.getElementById('atisSource');
+                if (srcEl) srcEl.innerText = 'datis.clowd.io / atis.guru';
                 const upstreamStatus = (d && typeof d.status === 'number') ? d.status : null;
                 const isBlocked      = upstreamStatus === 403 || upstreamStatus === 401;
                 const isUpstreamDown = upstreamStatus && upstreamStatus >= 500;
@@ -1895,6 +1899,12 @@
             }
 
             cardEl.classList.remove('is-empty');
+
+            // Reflect which source actually supplied this payload (the
+            // backend tries datis.clowd.io first, then atis.guru) so the
+            // pilot knows where the data came from.
+            const srcEl = document.getElementById('atisSource');
+            if (srcEl && d.source) srcEl.innerText = d.source;
 
             // Build structured blocks. Use the structured fields when present;
             // fall back to a single block from `raw` otherwise.
