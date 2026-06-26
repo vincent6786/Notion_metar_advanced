@@ -3214,9 +3214,17 @@
                         fetchTime:        Date.now()
                     };
                     renderMultiCard(icao);
+                } else {
+                    // Surface the failure in the card so it doesn't sit on "Loading…" forever
+                    const errMsg = (metarRes.status === 'rejected' && metarRes.reason?.message)
+                        || metarRes.value?.error
+                        || 'No data returned';
+                    console.warn(`[Multi] METAR fetch failed for ${icao}:`, errMsg);
+                    _renderMultiCardError(icao, errMsg);
                 }
             } catch(e) {
                 console.error(`[Multi] Error fetching ${icao}:`, e);
+                _renderMultiCardError(icao, e.message || 'Fetch error');
             } finally {
                 _fetchingIcaos.delete(icao);            // always release the lock
             }
@@ -3696,6 +3704,34 @@
             }
             // Leaflet needs a size recalc after the parent becomes visible
             setTimeout(() => _multiMapInstance.invalidateSize(), 50);
+        }
+
+        // Replace a stuck Loading placeholder with a visible error state.
+        // Keeps the user from staring at a spinner forever when AVWX is down/
+        // rate-limited or the network drops.
+        function _renderMultiCardError(icao, errMsg) {
+            const cardEl = document.querySelector(`.multi-card[data-icao="${icao}"]`);
+            if (!cardEl) return;
+            const safe = String(errMsg || 'Fetch failed').slice(0, 80).replace(/[<>&]/g, '');
+            cardEl.outerHTML = `
+                <div class="multi-card multi-card-error" data-icao="${icao}"
+                     onclick="forceRefreshDashboard()" title="Tap to retry">
+                    <div class="multi-header">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="multi-icao">${icao}</div>
+                            <div style="background:var(--danger);color:#fff;font-size:10px;font-weight:900;
+                                        padding:2px 7px;border-radius:4px;letter-spacing:0.5px;">ERROR</div>
+                        </div>
+                        <div class="multi-remove"
+                             onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
+                    </div>
+                    <div style="color:var(--danger);font-size:12px;margin-top:8px;line-height:1.4;">
+                        ⚠️ ${safe}
+                    </div>
+                    <div style="color:var(--sub-text);font-size:11px;margin-top:6px;">
+                        Tap card to retry · or remove with ×
+                    </div>
+                </div>`;
         }
 
         function renderMultiCard(icao) {
