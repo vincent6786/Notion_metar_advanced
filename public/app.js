@@ -1609,6 +1609,12 @@
                         if (document.getElementById('rwySelect').value) drawWindRose();
                         drawWindRoseOnCanvas('windRose2');
                     }, 50);
+                    // Poll the per-user API-usage chip only while the dashboard
+                    // is visible — no point refreshing it on a hidden pane.
+                    if (typeof startUsageChipPolling === 'function' && typeof stopUsageChipPolling === 'function') {
+                        if (name === 'dashboard') startUsageChipPolling();
+                        else                      stopUsageChipPolling();
+                    }
                 }
 
         async function checkMultiDashboardEnabled() {

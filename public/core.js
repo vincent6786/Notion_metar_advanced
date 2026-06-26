@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.3.0',  // ← set once in index.html
-            title: 'METAR GO — v5.3.0',
+            version: window.APP_VERSION || '5.4.0',  // ← set once in index.html
+            title: 'METAR GO — v5.4.0',
             changes: [
                 {
                     icon: '🔊',
@@ -1079,6 +1079,51 @@
             });
             html += `<div style="margin-top:24px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:11px;color:#555;line-height:1.6;">ℹ️ Stats reset daily at midnight UTC. Keys rotate automatically based on usage.</div>`;
             content.innerHTML = html;
+        }
+
+        // Fetch the user's personal API usage (per-access-code hourly + daily
+        // counters that get incremented by /api/weather and /api/atis) and
+        // render it as a chip on the dashboard. Lets the user see how close
+        // they are to the per-user hourly rate-limit ceiling so they can
+        // pace themselves.
+        let _usageRefreshInterval = null;
+        async function updateMyUsageChip() {
+            const chip = document.getElementById('usageChip');
+            const fill = document.getElementById('usageChipFill');
+            const text = document.getElementById('usageChipText');
+            if (!chip || !fill || !text) return;
+            try {
+                const accessCode = localStorage.getItem('efb_access_code');
+                const headers = {};
+                if (accessCode) headers['x-access-code'] = accessCode;
+                const res  = await fetch('/api/my-usage', { headers, cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!data.authenticated) { chip.style.display = 'none'; return; }
+                const used  = data.hourly?.used  ?? 0;
+                const limit = data.hourly?.limit ?? 1000;
+                const pct   = data.hourly?.pct   ?? 0;
+                fill.style.width = `${pct}%`;
+                // Tint the fill based on consumption: green < 60 %, amber < 85 %, red beyond.
+                fill.style.background = pct >= 85 ? 'var(--danger)'
+                                       : pct >= 60 ? 'var(--warn)'
+                                       : 'var(--success)';
+                text.innerText = `${used} / ${limit} this hr`;
+                chip.title = `Per-user hourly limit. Daily total today: ${data.daily?.used ?? 0}. Resets at the top of the next UTC hour.`;
+                chip.style.display = '';
+            } catch(e) {
+                console.warn('[my-usage] fetch failed:', e.message);
+                chip.style.display = 'none';
+            }
+        }
+        function startUsageChipPolling() {
+            // Refresh the chip every 30s while the dashboard tab is visible.
+            if (_usageRefreshInterval) return;
+            updateMyUsageChip();
+            _usageRefreshInterval = setInterval(updateMyUsageChip, 30000);
+        }
+        function stopUsageChipPolling() {
+            if (_usageRefreshInterval) { clearInterval(_usageRefreshInterval); _usageRefreshInterval = null; }
         }
 
         async function updateApiQuickStats() {
