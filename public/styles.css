@@ -2225,6 +2225,13 @@
         }
 
         /* Grouped-by-country layout */
+        /* When grouped, the outer #multiGrid is a vertical stack of sections;
+           each section has its own 280px-minmax grid inside. */
+        #multiGrid.is-grouped {
+            display: block;
+            grid-template-columns: none;
+            overflow: visible;
+        }
         .multi-group {
             margin-top: 18px;
         }

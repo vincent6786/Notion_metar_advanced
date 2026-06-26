@@ -3245,6 +3245,8 @@
 
         function renderMultiDashboard() {
             const grid = document.getElementById('multiGrid');
+            const groupMode = (typeof getDashGroupMode === 'function') ? getDashGroupMode() : 'none';
+            grid.classList.toggle('is-grouped', groupMode === 'country');
 
             if (multiAirports.length === 0) {
                 grid.innerHTML = '<div class="multi-loading">Add airports above to start tracking</div>';
@@ -3266,7 +3268,6 @@
                 return renderMultiCardHTML(icao, cached);
             };
 
-            const groupMode  = (typeof getDashGroupMode === 'function') ? getDashGroupMode() : 'none';
             const reorderBtn = document.getElementById('btnReorderDashboard');
 
             if (groupMode === 'country') {
