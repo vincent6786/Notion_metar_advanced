@@ -22,8 +22,13 @@ if (API_KEYS.length === 0) {
     throw new Error('No AVWX API keys configured. Set at least AVWX_KEY_1 in environment variables.');
 }
 
-const DAILY_LIMIT    = parseInt(process.env.AVWX_DAILY_LIMIT    || '4000', 10);
-const IP_HOURLY_LIMIT = parseInt(process.env.IP_HOURLY_LIMIT    || '200',  10);
+const DAILY_LIMIT         = parseInt(process.env.AVWX_DAILY_LIMIT     || '4000', 10);
+// Rate-limit knobs. ACCESS_HOURLY_LIMIT is the per-user budget (keyed by
+// access code) and is the limit that matters for normal users. IP_HOURLY_LIMIT
+// is a backstop for unauthenticated traffic so a flood from one IP can't
+// drown the backend even if the access gate is bypassed. Both are hourly.
+const ACCESS_HOURLY_LIMIT = parseInt(process.env.ACCESS_HOURLY_LIMIT  || '1000', 10);
+const IP_HOURLY_LIMIT     = parseInt(process.env.IP_HOURLY_LIMIT      || '600',  10);
 
 function setCors(res) {
     const allowed = process.env.ALLOWED_ORIGIN;
@@ -62,16 +67,36 @@ async function validateAccessCode(code) {
     }
 }
 
-// ── Per-IP Rate Limiting ──────────────────────────────────────────────────
-async function checkIpRateLimit(ip) {
-    const rateLimitKey = `efb:ratelimit:${ip}:${getHourKey()}`;
+// ── Hourly Rate Limiting ──────────────────────────────────────────────────
+// Two-tier: per access code (the real budget for an authenticated user) and
+// per IP (a backstop so unauthenticated bursts can't drown the backend).
+async function checkRateLimit(accessCode, ip) {
+    const hourKey = getHourKey();
     try {
-        const count = await kv.incr(rateLimitKey);
-        if (count === 1) await kv.expire(rateLimitKey, 7200); // 2h TTL
-        return count <= IP_HOURLY_LIMIT;
+        // Per-user limit — keyed by normalised access code. Shared across
+        // every device the same user is logged into so PC + iPad + phone all
+        // draw from one bucket.
+        const code = (accessCode || '').toString().toUpperCase().replace(/[^A-Z0-9\-]/g, '').slice(0, 20);
+        if (code.length >= 4) {
+            const userKey = `efb:ratelimit:user:${code}:${hourKey}`;
+            const userCount = await kv.incr(userKey);
+            if (userCount === 1) await kv.expire(userKey, 7200); // 2h TTL
+            if (userCount > ACCESS_HOURLY_LIMIT) {
+                return { allowed: false, by: 'user', count: userCount, limit: ACCESS_HOURLY_LIMIT };
+            }
+        }
+        // Per-IP backstop — always applied so an attacker without a code can't
+        // hammer us.
+        const ipKey = `efb:ratelimit:ip:${ip}:${hourKey}`;
+        const ipCount = await kv.incr(ipKey);
+        if (ipCount === 1) await kv.expire(ipKey, 7200);
+        if (ipCount > IP_HOURLY_LIMIT) {
+            return { allowed: false, by: 'ip', count: ipCount, limit: IP_HOURLY_LIMIT };
+        }
+        return { allowed: true };
     } catch(e) {
         console.error('[RateLimit] Redis error:', e.message);
-        return true; // Fail open on Redis errors
+        return { allowed: true }; // Fail open on Redis errors
     }
 }
 
@@ -222,21 +247,24 @@ export default async function handler(req, res) {
 
     // ── 1. Access Code Check ──────────────────────────────────────────────
     // Skip validation only if ACCESS_GATE_ENABLED is not explicitly 'true'
+    const accessCode = req.headers['x-access-code'];
     if (process.env.ACCESS_GATE_ENABLED === 'true') {
-        const accessCode = req.headers['x-access-code'];
-        const isValid    = await validateAccessCode(accessCode);
+        const isValid = await validateAccessCode(accessCode);
         if (!isValid) {
             console.warn(`[Access] Rejected request — code: ${accessCode || 'none'}, station: ${station}`);
             return res.status(403).json({ error: 'Invalid or missing access code' });
         }
     }
 
-    // ── 2. Per-IP Rate Limit ──────────────────────────────────────────────
+    // ── 2. Hourly Rate Limit (per access code, with per-IP backstop) ──────
     const clientIp = getClientIp(req);
-    const allowed  = await checkIpRateLimit(clientIp);
-    if (!allowed) {
-        console.warn(`[RateLimit] Blocked IP: ${clientIp}`);
-        return res.status(429).json({ error: 'Rate limit exceeded. Try again in an hour.' });
+    const rl       = await checkRateLimit(accessCode, clientIp);
+    if (!rl.allowed) {
+        console.warn(`[RateLimit] Blocked by ${rl.by}: count ${rl.count} > limit ${rl.limit}`);
+        return res.status(429).json({
+            error: `Rate limit exceeded (${rl.by}). Try again in an hour.`,
+            limit: rl.limit,
+        });
     }
 
     // ── 3. Fetch weather data ─────────────────────────────────────────────
