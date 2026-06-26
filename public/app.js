@@ -1841,7 +1841,8 @@
                 const headBtn = document.getElementById('atisHeadOpenBtn');
                 if (headBtn) headBtn.style.display = 'none';
 
-                // Voice ATIS / AWOS card from bundled airportfrequencies.js
+                // Voice ATIS / AWOS reminder — compact inline pill, not a
+                // hero element. Just label · freq · optional detail.
                 let voiceAtis = '';
                 if (typeof lookupFrequencies === 'function') {
                     const freqs = lookupFrequencies(icao) || [];
@@ -1849,11 +1850,11 @@
                     if (a) {
                         const label = a.t === 'AWOS' ? 'AWOS' : 'Voice ATIS';
                         voiceAtis = `
-                            <div class="atis-voice-card">
-                                <div class="atis-voice-label">${label}</div>
-                                <div class="atis-voice-freq">${a.f.toFixed(3)} MHz</div>
-                                ${a.d ? `<div class="atis-voice-detail">${_escapeHtml(a.d)}</div>` : ''}
-                            </div>`;
+                            <span class="atis-voice-card">
+                                <span class="atis-voice-label">${label}</span>
+                                <span class="atis-voice-freq">${a.f.toFixed(3)} MHz</span>
+                                ${a.d ? `<span class="atis-voice-detail">· ${_escapeHtml(a.d)}</span>` : ''}
+                            </span>`;
                     }
                 }
 

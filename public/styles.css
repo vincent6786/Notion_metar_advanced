@@ -790,32 +790,35 @@
             color: var(--sub-text);
             text-align: center;
         }
+        /* Compact inline voice ATIS reminder — just label + frequency on
+           a single line. This is a fallback hint, not a hero element. */
         .atis-voice-card {
-            margin-top: 4px;
-            padding: 10px 12px;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 5px 10px;
             background: rgba(10,132,255,0.07);
             border: 1px solid rgba(10,132,255,0.25);
-            border-radius: 8px;
+            border-radius: 6px;
             color: #d0d0d0;
+            font-size: 11px;
         }
         .atis-voice-label {
             font-size: 10px;
             font-weight: 800;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.4px;
             color: var(--accent);
             text-transform: uppercase;
-            margin-bottom: 4px;
         }
         .atis-voice-freq {
             font-family: 'SF Mono', monospace;
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 800;
             color: #fff;
         }
         .atis-voice-detail {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--sub-text);
-            margin-top: 3px;
         }
         .atis-retry-btn {
             align-self: flex-start;
@@ -845,21 +848,30 @@
             color: var(--sub-text);
             font-weight: 500;
         }
-        /* Per-section blocks (Arrival, Departure) inside #rawAtis.
-           Override the inherited .raw-text padding / background so the
-           outer .atis-card frame is the only chrome around the blocks. */
-        #rawAtis {
-            padding: 0 !important;
-            background: transparent !important;
-            border: none !important;
-            margin-top: 0 !important;
+        /* Container that holds the structured ATIS blocks or fallback card.
+           No padding / background of its own — the parent .atis-card and
+           individual .atis-block elements own the chrome. */
+        .atis-content {
+            display: block;
+            padding: 0;
+            background: transparent;
+            border: none;
+            margin: 0;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            line-height: inherit;
+            white-space: normal;
         }
         .atis-block {
+            display: block;
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 8px 10px;
             margin-bottom: 8px;
+            min-height: 0;
+            height: auto;
         }
         .atis-block:last-child { margin-bottom: 0; }
         .atis-block-head {

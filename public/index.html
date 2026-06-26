@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '5.2.2';</script>
+    <script>window.APP_VERSION = '5.2.3';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -107,7 +107,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.2.2</div>
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.2.3</div>
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -762,7 +762,7 @@
                         <div class="atis-letter-badge" id="atisLetter">—</div>
                     </div>
                 </div>
-                <div class="raw-text" id="rawAtis">Tap a station to load D-ATIS.</div>
+                <div id="rawAtis" class="atis-content">Tap a station to load D-ATIS.</div>
                 <div class="atis-unofficial">
                     ⚠ Unofficial · source: <span class="atis-src" id="atisSource">datis.clowd.io</span>
                     <span class="atis-hint">Major US airports get a clean datis.clowd.io render. Other airports embed atis.guru directly (loaded by your device). Airports without D-ATIS show the voice ATIS frequency.</span>
