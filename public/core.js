@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.1.2',  // ← set once in index.html
-            title: 'METAR GO — v5.1.2',
+            version: window.APP_VERSION || '5.1.3',  // ← set once in index.html
+            title: 'METAR GO — v5.1.3',
             changes: [
                 {
                     icon: '🔊',
@@ -2148,11 +2148,17 @@
                 });
                 console.log('[Force Refresh] All caches cleared');
             }
-            // D-ATIS is lazy-loaded by the Weather tab pill — reset the
-            // "already loaded for this airport" guard whenever the active
-            // airport changes (or a force refresh wipes the cache).
+            // Reset the D-ATIS "already loaded for this airport" guard so
+            // the new airport gets a fresh fetch, then kick off the fetch in
+            // the background. We don't await it — METAR/TAF rendering should
+            // never block on a flaky third-party source, and the D-ATIS pane
+            // shows its own "Loading…" placeholder until the response arrives.
             if (typeof _atisLoadedFor !== 'undefined') {
                 try { _atisLoadedFor = null; } catch(e) {}
+            }
+            if (typeof loadAtisFor === 'function') {
+                const icaoStr = (icaoVal || '').toString().trim().toUpperCase();
+                if (icaoStr) loadAtisFor(icaoStr);
             }
 
             // Reset meteogram interval so new airport gets a fresh timer

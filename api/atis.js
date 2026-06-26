@@ -135,33 +135,56 @@ function htmlToText(html) {
 }
 
 // Parse an atis.guru station page into structured ATIS sections.
-// The page layout is roughly:
-//   <page chrome>           ← drop everything before the first "Arrival ATIS"
-//   Arrival ATIS            ← section header
-//   <yyyy-mm-dd hh:mm UTC>  ← issued time
-//   <STATION> ARR ATIS X    ← header line; X = ATIS letter
-//   <body lines>
-//   Departure ATIS          ← next section header (optional)
-//   …
-//   METAR / TAF             ← we already show these elsewhere; drop them
-//   "An unhandled error has occurred. Reload"  ← drop
+// Layouts seen so far:
+//
+//   (a) RCTP-style — split arrival + departure:
+//         Arrival ATIS
+//         2026-06-26 06:55 UTC
+//         RCTP ARR ATIS Q
+//         <body>
+//         Departure ATIS …
+//
+//   (b) US FAA-style — single combined broadcast, no Arrival/Departure split:
+//         ATIS
+//         <yyyy-mm-dd hh:mm UTC>
+//         KDFW ATIS INFORMATION L 1853Z
+//         <body>
+//
+// The parser tries both, and falls back to scraping whatever clean text we
+// can find if neither matches.
 function parseAtisPage(html, station) {
     const text = htmlToText(html);
     if (!text) return null;
 
-    // Stop at the page's footer error message if present.
-    const errIdx = text.indexOf('An unhandled error');
-    const clipped = errIdx === -1 ? text : text.slice(0, errIdx);
+    // Drop the page chrome before the first ATIS-related heading and stop at
+    // the trailing "An unhandled error" footer atis.guru injects.
+    let clipped = text;
+    const errIdx = clipped.indexOf('An unhandled error');
+    if (errIdx !== -1) clipped = clipped.slice(0, errIdx);
 
     // Locate every recognised section heading, keep the ones we care about,
-    // then slice the page between them.
+    // then slice the page between them. We accept several wordings:
+    //   "Arrival ATIS"      → arrival
+    //   "Departure ATIS"    → departure
+    //   "ATIS" / "D-ATIS"   → single (only if no arrival/departure heading)
+    //   "METAR" / "TAF"     → end-of-ATIS markers (we render these elsewhere)
     const headings = [];
-    const headingRe = /^(Arrival ATIS|Departure ATIS|METAR|TAF)\b/gmi;
+    // Match a section heading only when it's the entire trimmed line, otherwise
+    // "ATIS.guru Home" or "D-ATIS for KDFW" would erroneously match.
+    const headingRe = /^(Arrival\s+D?-?ATIS|Departure\s+D?-?ATIS|Combined\s+D?-?ATIS|D-?ATIS|ATIS|METAR|TAF)\s*$/gim;
     let m;
     while ((m = headingRe.exec(clipped)) !== null) {
-        headings.push({ name: m[1].toUpperCase(), start: m.index, headerEnd: m.index + m[0].length });
+        // Normalise the heading name into a small set of canonical tags.
+        let raw = m[1].toUpperCase().replace(/\s+/g, ' ');
+        let name;
+        if      (/^ARRIVAL/.test(raw))   name = 'ARRIVAL';
+        else if (/^DEPARTURE/.test(raw)) name = 'DEPARTURE';
+        else if (/^COMBINED/.test(raw))  name = 'SINGLE';
+        else if (/^METAR/.test(raw))     name = 'METAR';
+        else if (/^TAF/.test(raw))       name = 'TAF';
+        else                             name = 'SINGLE';   // "ATIS" / "D-ATIS"
+        headings.push({ name, start: m.index, headerEnd: m.index + m[0].length });
     }
-    if (headings.length === 0) return null;
 
     function bodyOf(i) {
         const next = headings[i + 1];
@@ -180,14 +203,19 @@ function parseAtisPage(html, station) {
             issued = lines.shift();
         }
 
-        // The next line typically reads "<STATION> ARR ATIS Q" or "<STATION> DEP ATIS L".
+        // The next line typically reads "<STATION> ARR ATIS Q",
+        // "<STATION> DEP ATIS L", or "<STATION> ATIS INFORMATION L 1853Z"
+        // depending on the source layout. Pull out the ATIS letter and
+        // consume the header so it doesn't repeat in the body.
         let letter = null;
         if (lines.length > 0) {
             const head = lines[0];
-            const lm = head.match(/\bATIS\s+([A-Z])\b/);
+            const lm = head.match(/\bATIS\s+INFORMATION\s+([A-Z])\b/i)
+                    || head.match(/\bINFORMATION\s+([A-Z])\b/i)
+                    || head.match(/\bATIS\s+([A-Z])\b/);
             if (lm) {
-                letter = lm[1];
-                lines.shift();   // consume the header so it doesn't repeat in the body
+                letter = lm[1].toUpperCase();
+                lines.shift();
             }
         }
 
@@ -195,25 +223,43 @@ function parseAtisPage(html, station) {
         return textOut ? { issued, letter, text: textOut } : null;
     }
 
-    let arrival = null, departure = null;
+    let arrival = null, departure = null, single = null;
     for (let i = 0; i < headings.length; i++) {
         const h = headings[i];
-        if (h.name === 'ARRIVAL ATIS'   && !arrival)   arrival   = parseBlock(bodyOf(i));
-        if (h.name === 'DEPARTURE ATIS' && !departure) departure = parseBlock(bodyOf(i));
+        if      (h.name === 'ARRIVAL'   && !arrival)   arrival   = parseBlock(bodyOf(i));
+        else if (h.name === 'DEPARTURE' && !departure) departure = parseBlock(bodyOf(i));
+        else if (h.name === 'SINGLE'    && !single)    single    = parseBlock(bodyOf(i));
+        // METAR / TAF headings just delimit the end of the ATIS region.
     }
 
-    // Some stations only broadcast a single ATIS (not split arrival/departure).
-    // In that case the first section heading might just be "ATIS" or the page
-    // skips straight to METAR — fall back to scanning the whole clipped text
-    // for an ATIS letter so the frontend has something to show.
-    if (!arrival && !departure) {
-        const letter = extractLetter(clipped);
-        if (letter) {
-            return { arrival: null, departure: null, single: { letter, text: clipped.trim() } };
-        }
-        return null;
+    if (arrival || departure) {
+        // Split format wins. Suppress the "single" candidate if we also matched
+        // an explicit Arrival/Departure heading (otherwise we'd duplicate).
+        return { arrival, departure };
     }
-    return { arrival, departure };
+    if (single) {
+        return { arrival: null, departure: null, single };
+    }
+
+    // Nothing matched a known heading. Last-ditch fallback: try to recover an
+    // ATIS letter from anywhere in the cleaned text, drop obvious page chrome,
+    // and return whatever remains as a single block. This handles atis.guru
+    // pages where the layout doesn't match anything above but the broadcast
+    // text is still there.
+    const letter = extractLetter(clipped);
+    if (letter) {
+        // Trim leading nav/title chrome heuristically: keep from the first
+        // line that mentions the station ICAO or "ATIS"/"INFORMATION".
+        const lines = clipped.split('\n');
+        const startIdx = lines.findIndex(l =>
+            (station && l.toUpperCase().includes(station)) ||
+            /\bATIS\b/i.test(l) ||
+            /\bINFORMATION\b/i.test(l)
+        );
+        const body = (startIdx === -1 ? clipped : lines.slice(startIdx).join('\n')).trim();
+        return { arrival: null, departure: null, single: { letter, text: body, issued: null } };
+    }
+    return null;
 }
 
 export default async function handler(req, res) {
