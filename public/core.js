@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.0.3',  // ← set once in index.html
-            title: 'METAR GO — v5.0.3',
+            version: window.APP_VERSION || '5.0.4',  // ← set once in index.html
+            title: 'METAR GO — v5.0.4',
             changes: [
                 {
                     icon: '🗂️',

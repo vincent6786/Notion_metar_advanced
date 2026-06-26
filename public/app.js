@@ -3253,11 +3253,23 @@
             showToast('✅ Dashboard refreshed');
         }
     
+        // Pool runner: process `items` with at most `limit` in flight. Returns when
+        // every worker has settled. Used to throttle dashboard fetches so AVWX
+        // doesn't 429 us when the user is tracking many airports.
+        async function _runPooled(items, limit, fn) {
+            const queue = items.slice();
+            const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
+                while (queue.length > 0) {
+                    const item = queue.shift();
+                    try { await fn(item); } catch(e) { /* fn handles its own errors */ }
+                }
+            });
+            await Promise.all(workers);
+        }
+
         async function refreshMultiData() {
-            console.log('[Multi] Refreshing all airports...');
-            await Promise.allSettled(
-                multiAirports.map(icao => fetchMultiAirportData(icao))
-            );
+            console.log(`[Multi] Refreshing ${multiAirports.length} airports (concurrency 4)...`);
+            await _runPooled(multiAirports, 4, fetchMultiAirportData);
             // Update last-refreshed stamp
             const now = new Date();
             const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
