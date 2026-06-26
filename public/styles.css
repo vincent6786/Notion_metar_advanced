@@ -646,6 +646,7 @@
             border-radius: 12px;
             padding: 10px 12px 12px;
             margin-top: 8px;
+            max-width: 900px;
         }
         .atis-card.is-empty .atis-letter-badge {
             background: rgba(255,255,255,0.04);
@@ -669,6 +670,13 @@
             box-shadow: none;
         }
         .atis-card.has-blocks > .atis-head { margin-bottom: 8px; }
+        .atis-head-text { min-width: 0; }
+        .atis-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
         .atis-head {
             display: flex;
             justify-content: space-between;
@@ -718,11 +726,7 @@
             line-height: 1.45;
         }
         /* Reshaped D-ATIS — embedded atis.guru iframe + popup buttons */
-        .atis-toolbar {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 6px;
-        }
+        /* (atis-toolbar removed — popup button now lives inside .atis-head) */
         .atis-popup-btn {
             background: rgba(10,132,255,0.12);
             color: var(--accent);
@@ -841,8 +845,15 @@
             color: var(--sub-text);
             font-weight: 500;
         }
-        /* Per-section blocks (Arrival, Departure) inside #rawAtis */
-        #rawAtis { padding: 0; background: transparent; border: none; }
+        /* Per-section blocks (Arrival, Departure) inside #rawAtis.
+           Override the inherited .raw-text padding / background so the
+           outer .atis-card frame is the only chrome around the blocks. */
+        #rawAtis {
+            padding: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            margin-top: 0 !important;
+        }
         .atis-block {
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--border);

@@ -1837,7 +1837,9 @@
                 letterEl.innerText = '—';
                 issuedEl.innerText = '';
                 const srcEl = document.getElementById('atisSource');
-                if (srcEl) srcEl.innerText = 'atis.guru (embed)';
+                if (srcEl) srcEl.innerText = 'atis.guru (open ↗)';
+                const headBtn = document.getElementById('atisHeadOpenBtn');
+                if (headBtn) headBtn.style.display = 'none';
 
                 // Voice ATIS / AWOS card from bundled airportfrequencies.js
                 let voiceAtis = '';
@@ -1917,14 +1919,12 @@
             // up the full clowd.io page in a new tab if they want the
             // unprocessed source view. Only shown when the data actually
             // came from clowd.io (atis.guru iframe case has its own button).
-            const popupBar = (d.source === 'datis.clowd.io')
-                ? `<div class="atis-toolbar">
-                        <button class="atis-popup-btn" onclick="openAtisPopup('${_escapeHtml(icao)}','clowd')">
-                            Open clowd.io view ↗
-                        </button>
-                   </div>`
-                : '';
-            rawEl.innerHTML = popupBar + blocks.join('');
+            // Show the in-header "Open ↗" button when clowd.io supplied
+            // the data. The standalone toolbar row is gone — it added an
+            // unnecessary 70-80px of vertical whitespace on wide screens.
+            const headBtn = document.getElementById('atisHeadOpenBtn');
+            if (headBtn) headBtn.style.display = (d.source === 'datis.clowd.io') ? '' : 'none';
+            rawEl.innerHTML = blocks.join('');
         }
 
         // Open the source's web view in a popup window. We use window.open
