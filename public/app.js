@@ -1826,25 +1826,20 @@
             const rawEl    = document.getElementById('rawAtis');
             if (!cardEl || !rawEl || !letterEl || !issuedEl) return;
 
-            // Unavailable / error state — explain why and offer the voice
-            // ATIS frequency from our local database when we have it. D-ATIS
-            // is only broadcast at ~100 major US airports; for everywhere
-            // else the pilot uses the voice ATIS frequency directly.
+            // No clowd.io data — fall back to embedding atis.guru directly
+            // in an iframe loaded by the user's browser (their residential
+            // IP works fine; only our Vercel egress is blocked). Always show
+            // the voice ATIS frequency from the local DB as the surest
+            // tune-and-listen fallback, and an "Open ↗" button that pops the
+            // source up in a new tab in case the iframe is X-Frame-Options'd.
             if (!d || d.error) {
                 cardEl.classList.add('is-empty');
                 letterEl.innerText = '—';
                 issuedEl.innerText = '';
-                // Reset the source label to the multi-source default in case
-                // a previous render had pinned it to one provider.
                 const srcEl = document.getElementById('atisSource');
-                if (srcEl) srcEl.innerText = 'datis.clowd.io / atis.guru';
-                const upstreamStatus = (d && typeof d.status === 'number') ? d.status : null;
-                const isBlocked      = upstreamStatus === 403 || upstreamStatus === 401;
-                const isUpstreamDown = upstreamStatus && upstreamStatus >= 500;
-                const isNotFound     = upstreamStatus === 404;
-                const isNetworkErr   = d?.detail && /timeout|fetch|network/i.test(d.detail);
+                if (srcEl) srcEl.innerText = 'atis.guru (embed)';
 
-                // Voice ATIS frequency from our bundled DB (if known)
+                // Voice ATIS / AWOS card from bundled airportfrequencies.js
                 let voiceAtis = '';
                 if (typeof lookupFrequencies === 'function') {
                     const freqs = lookupFrequencies(icao) || [];
@@ -1852,57 +1847,52 @@
                     if (a) {
                         const label = a.t === 'AWOS' ? 'AWOS' : 'Voice ATIS';
                         voiceAtis = `
-                            <div style="margin:10px 0 4px;padding:10px 12px;background:rgba(10,132,255,0.07);
-                                        border:1px solid rgba(10,132,255,0.25);border-radius:8px;color:#d0d0d0;">
-                                <div style="font-size:10px;font-weight:800;letter-spacing:0.6px;
-                                            color:var(--accent);text-transform:uppercase;margin-bottom:4px;">
-                                    ${label}
-                                </div>
-                                <div style="font-family:'SF Mono',monospace;font-size:16px;font-weight:800;color:#fff;">
-                                    ${a.f.toFixed(3)} MHz
-                                </div>
-                                ${a.d ? `<div style="font-size:11px;color:var(--sub-text);margin-top:3px;">${_escapeHtml(a.d)}</div>` : ''}
+                            <div class="atis-voice-card">
+                                <div class="atis-voice-label">${label}</div>
+                                <div class="atis-voice-freq">${a.f.toFixed(3)} MHz</div>
+                                ${a.d ? `<div class="atis-voice-detail">${_escapeHtml(a.d)}</div>` : ''}
                             </div>`;
                     }
                 }
-                let why;
-                if (isBlocked) {
-                    why = `The D-ATIS source temporarily blocked our request (HTTP ${upstreamStatus}). Tap Retry, or open <a href="https://atis.guru/atis/${_escapeHtml(icao)}" target="_blank" rel="noopener" style="color:var(--accent);">atis.guru/${_escapeHtml(icao)}</a> directly.`;
-                } else if (isUpstreamDown) {
-                    why = `The D-ATIS source is currently down (HTTP ${upstreamStatus}). Try again later.`;
-                } else if (isNetworkErr) {
-                    why = `Couldn't reach the D-ATIS source — tap Retry.`;
-                } else if (isNotFound) {
-                    why = `${_escapeHtml(icao)} is not on the atis.guru feed.${voiceAtis ? ' Tune the voice ATIS instead:' : ''}`;
-                } else {
-                    why = `${_escapeHtml(icao)} does not appear to broadcast D-ATIS. D-ATIS coverage is limited to ~100 major US airports via the FAA Datalink feed.${voiceAtis ? ' Tune the voice ATIS instead:' : ''}`;
-                }
-                // Tiny diagnostic line — helps the user (and us) tell the
-                // difference between "blocked", "down", and "not on the feed".
-                const diag = upstreamStatus
-                    ? `<div style="font-size:10px;color:var(--sub-text);margin-top:6px;font-family:'SF Mono',monospace;opacity:0.7;">Upstream: HTTP ${upstreamStatus}${d?.bytes ? ` · ${d.bytes}B` : ''}</div>`
-                    : '';
+
+                const upstreamStatus = (d && typeof d.status === 'number') ? d.status : null;
+                const guruUrl = `https://atis.guru/atis/${_escapeHtml(icao)}`;
+                // The iframe is the primary fallback display. If atis.guru
+                // serves X-Frame-Options: DENY the frame will render blank,
+                // but the explicit "Open ↗" button below it always works.
                 rawEl.innerHTML = `
-                    <div style="text-align:center;color:var(--sub-text);padding:12px 4px;">
-                        <div style="font-size:24px;margin-bottom:6px;">🛰</div>
-                        <div style="font-weight:700;color:#e5e5e5;margin-bottom:4px;">D-ATIS unavailable</div>
-                        <div style="font-size:11px;line-height:1.6;margin-bottom:10px;text-align:center;max-width:380px;margin-left:auto;margin-right:auto;">${why}</div>
+                    <div class="atis-embed">
+                        <div class="atis-embed-bar">
+                            <div class="atis-embed-label">
+                                Embedded view · atis.guru / ${_escapeHtml(icao)}
+                            </div>
+                            <button class="atis-popup-btn"
+                                    onclick="openAtisPopup('${_escapeHtml(icao)}','guru')">
+                                Open ↗
+                            </button>
+                        </div>
+                        <iframe class="atis-iframe"
+                                src="${guruUrl}"
+                                title="atis.guru ${_escapeHtml(icao)}"
+                                referrerpolicy="no-referrer"
+                                loading="lazy"></iframe>
+                        <div class="atis-embed-note">
+                            If the embedded view above is blank, atis.guru blocked the embed.
+                            Tap <b>Open ↗</b> to view the live page in a new tab.
+                            Otherwise this airport may not broadcast D-ATIS — tune the
+                            voice frequency below.
+                        </div>
                         ${voiceAtis}
                         <button onclick="_atisLoadedFor=null;loadAtisFor('${_escapeHtml(icao)}')"
-                                style="background:var(--accent);border:none;color:#fff;padding:7px 14px;margin-top:8px;
-                                       border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
-                            ↺ Retry
-                        </button>
-                        ${diag}
+                                class="atis-retry-btn">↺ Retry D-ATIS lookup</button>
+                        ${upstreamStatus ? `<div class="atis-diag">clowd.io: HTTP ${upstreamStatus}${d?.detail ? ' · ' + _escapeHtml(d.detail) : ''}</div>` : ''}
                     </div>`;
                 return;
             }
 
             cardEl.classList.remove('is-empty');
 
-            // Reflect which source actually supplied this payload (the
-            // backend tries datis.clowd.io first, then atis.guru) so the
-            // pilot knows where the data came from.
+            // Reflect the data source.
             const srcEl = document.getElementById('atisSource');
             if (srcEl && d.source) srcEl.innerText = d.source;
 
@@ -1929,9 +1919,35 @@
                 issuedEl.innerText = _fmtIssued(d.issued, d.fetched);
             }
 
-            rawEl.innerHTML = blocks.join('');
+            // "Open ↗" popup toolbar above the blocks — lets the pilot pull
+            // up the full clowd.io page in a new tab if they want the
+            // unprocessed source view. Only shown when the data actually
+            // came from clowd.io (atis.guru iframe case has its own button).
+            const popupBar = (d.source === 'datis.clowd.io')
+                ? `<div class="atis-toolbar">
+                        <button class="atis-popup-btn" onclick="openAtisPopup('${_escapeHtml(icao)}','clowd')">
+                            Open clowd.io view ↗
+                        </button>
+                   </div>`
+                : '';
+            rawEl.innerHTML = popupBar + blocks.join('');
         }
-        
+
+        // Open the source's web view in a popup window. We use window.open
+        // with a size so it pops as a small floating window on desktop and
+        // a normal tab on mobile (browsers ignore the size args on phones).
+        function openAtisPopup(icao, source) {
+            const code = (icao || '').toString().toUpperCase();
+            const url  = source === 'clowd'
+                ? `https://datis.clowd.io/api/${code}`
+                : `https://atis.guru/atis/${code}`;
+            const w = 720, h = 720;
+            const x = Math.max(0, (window.screen?.width  || 1024) / 2 - w / 2);
+            const y = Math.max(0, (window.screen?.height || 768)  / 2 - h / 2);
+            window.open(url, `atis_${code}_${source}`,
+                `width=${w},height=${h},left=${x},top=${y},noopener,noreferrer`);
+        }
+
         // Mirror all METAR/TAF render calls to the weather tab duplicates
         function mirrorToWeatherTab() {
             const enabled = document.getElementById('toggleMultiDashboard')?.checked;

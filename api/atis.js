@@ -1,13 +1,14 @@
-// ── D-ATIS proxy (atis.guru) ──────────────────────────────────────────────
-// Server-side proxy for atis.guru so the browser doesn't have to deal with
-// CORS or the source's UA gating, and so we can share the existing
-// access-code + rate-limit machinery used by /api/weather.
+// ── D-ATIS proxy (datis.clowd.io) ─────────────────────────────────────────
+// As of v5.1.7 we no longer scrape atis.guru server-side — Cloudflare keeps
+// 403-ing Vercel's egress IPs regardless of UA / Sec-Fetch headers. atis.guru
+// is now loaded by the client browser in an iframe, which uses the user's
+// residential IP and just works.
 //
-// This is intentionally an UNOFFICIAL preview source. The frontend renders
-// every response with a "Unofficial — source: atis.guru" footer. We return
-// HTTP 200 with { error: 'D-ATIS unavailable', ... } when the upstream
-// gives us nothing usable — the dashboard's red ERROR card is reserved for
-// truly broken responses, not "this airport isn't in the feed".
+// What's left here: a thin proxy to datis.clowd.io — a documented community
+// FAA D-ATIS mirror. JSON-only, permissive CORS, no UA gating. US airports
+// only. We proxy through the backend (rather than have the client hit it
+// directly) so we keep the existing access-code gate and per-user / per-IP
+// hourly rate limit consistent across all weather data routes.
 
 import { Redis } from '@upstash/redis';
 
@@ -54,8 +55,6 @@ async function validateAccessCode(code) {
     }
 }
 
-// Mirror of api/weather.js checkRateLimit, scoped here so the file is
-// self-contained on Vercel deploy.
 async function checkRateLimit(accessCode, ip) {
     const hourKey = getHourKey();
     try {
@@ -77,189 +76,46 @@ async function checkRateLimit(accessCode, ip) {
         return { allowed: true };
     } catch(e) {
         console.error('[ATIS][RateLimit] Redis error:', e.message);
-        return { allowed: true };  // fail open
+        return { allowed: true };
     }
 }
 
-// Pull an ATIS letter (Information ALPHA / Z) out of a free-text body.
-// Most D-ATIS broadcasts include exactly one letter in this format.
 function extractLetter(text) {
     if (!text) return null;
     const m = text.match(/INFORMATION\s+([A-Z])\b/i) || text.match(/ATIS\s+([A-Z])\b/);
     return m ? m[1].toUpperCase() : null;
 }
 
-// Decode numeric / named HTML entities. atis.guru's <pre> block preserves
-// whitespace via &#xA; / &#x9; / &#xD;, which our previous tag-stripper
-// passed through as literal text — making the output look like garbage.
-function decodeHtmlEntities(s) {
-    if (!s) return '';
-    return s
-        .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
-            try { return String.fromCodePoint(parseInt(hex, 16)); } catch(e) { return ''; }
-        })
-        .replace(/&#(\d+);/g, (_, dec) => {
-            try { return String.fromCodePoint(parseInt(dec, 10)); } catch(e) { return ''; }
-        })
-        .replace(/&amp;/g,  '&')
-        .replace(/&lt;/g,   '<')
-        .replace(/&gt;/g,   '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g,  "'")
-        .replace(/&apos;/g, "'")
-        .replace(/&nbsp;/g, ' ');
-}
-
-// Convert atis.guru's HTML page into clean plain text. Preserves the
-// per-section linebreaks (Arrival ATIS / Departure ATIS / METAR / TAF) by
-// turning block-level tags into newlines BEFORE stripping the remaining
-// markup.
-function htmlToText(html) {
-    let s = String(html || '');
-    s = s.replace(/<script[\s\S]*?<\/script>/gi, ' ');
-    s = s.replace(/<style[\s\S]*?<\/style>/gi,  ' ');
-    // Block elements → newline so we don't run sections together.
-    s = s.replace(/<br\s*\/?>/gi, '\n');
-    s = s.replace(/<\/(p|div|section|article|h[1-6]|li|tr|pre|table)\s*>/gi, '\n');
-    s = s.replace(/<(p|div|section|article|h[1-6]|li|tr|pre|table)\b[^>]*>/gi, '\n');
-    // Remove the rest of the tags.
-    s = s.replace(/<[^>]+>/g, ' ');
-    // Decode entities AFTER tag strip so &#xA; becomes a real newline.
-    s = decodeHtmlEntities(s);
-    // Normalise: collapse runs of spaces/tabs inside a line, keep newlines.
-    s = s.split('\n')
-         .map(line => line.replace(/[\t ]+/g, ' ').trim())
-         .filter(line => line.length > 0)
-         .join('\n');
-    return s;
-}
-
-// Parse an atis.guru station page into structured ATIS sections.
-// Layouts seen so far:
-//
-//   (a) RCTP-style — split arrival + departure:
-//         Arrival ATIS
-//         2026-06-26 06:55 UTC
-//         RCTP ARR ATIS Q
-//         <body>
-//         Departure ATIS …
-//
-//   (b) US FAA-style — single combined broadcast, no Arrival/Departure split:
-//         ATIS
-//         <yyyy-mm-dd hh:mm UTC>
-//         KDFW ATIS INFORMATION L 1853Z
-//         <body>
-//
-// The parser tries both, and falls back to scraping whatever clean text we
-// can find if neither matches.
-function parseAtisPage(html, station) {
-    const text = htmlToText(html);
-    if (!text) return null;
-
-    // Drop the page chrome before the first ATIS-related heading and stop at
-    // the trailing "An unhandled error" footer atis.guru injects.
-    let clipped = text;
-    const errIdx = clipped.indexOf('An unhandled error');
-    if (errIdx !== -1) clipped = clipped.slice(0, errIdx);
-
-    // Locate every recognised section heading, keep the ones we care about,
-    // then slice the page between them. We accept several wordings:
-    //   "Arrival ATIS"      → arrival
-    //   "Departure ATIS"    → departure
-    //   "ATIS" / "D-ATIS"   → single (only if no arrival/departure heading)
-    //   "METAR" / "TAF"     → end-of-ATIS markers (we render these elsewhere)
-    const headings = [];
-    // Match a section heading only when it's the entire trimmed line, otherwise
-    // "ATIS.guru Home" or "D-ATIS for KDFW" would erroneously match.
-    const headingRe = /^(Arrival\s+D?-?ATIS|Departure\s+D?-?ATIS|Combined\s+D?-?ATIS|D-?ATIS|ATIS|METAR|TAF)\s*$/gim;
-    let m;
-    while ((m = headingRe.exec(clipped)) !== null) {
-        // Normalise the heading name into a small set of canonical tags.
-        let raw = m[1].toUpperCase().replace(/\s+/g, ' ');
-        let name;
-        if      (/^ARRIVAL/.test(raw))   name = 'ARRIVAL';
-        else if (/^DEPARTURE/.test(raw)) name = 'DEPARTURE';
-        else if (/^COMBINED/.test(raw))  name = 'SINGLE';
-        else if (/^METAR/.test(raw))     name = 'METAR';
-        else if (/^TAF/.test(raw))       name = 'TAF';
-        else                             name = 'SINGLE';   // "ATIS" / "D-ATIS"
-        headings.push({ name, start: m.index, headerEnd: m.index + m[0].length });
-    }
-
-    function bodyOf(i) {
-        const next = headings[i + 1];
-        const end  = next ? next.start : clipped.length;
-        return clipped.slice(headings[i].headerEnd, end).trim();
-    }
-
-    function parseBlock(body) {
-        if (!body) return null;
-        const lines = body.split('\n').map(l => l.trim()).filter(Boolean);
-        if (lines.length === 0) return null;
-
-        // First line is often the issued timestamp like "2026-06-26 06:55 UTC".
-        let issued = null;
-        if (/^\d{4}-\d{2}-\d{2}\b/.test(lines[0])) {
-            issued = lines.shift();
-        }
-
-        // The next line typically reads "<STATION> ARR ATIS Q",
-        // "<STATION> DEP ATIS L", or "<STATION> ATIS INFORMATION L 1853Z"
-        // depending on the source layout. Pull out the ATIS letter and
-        // consume the header so it doesn't repeat in the body.
-        let letter = null;
-        if (lines.length > 0) {
-            const head = lines[0];
-            const lm = head.match(/\bATIS\s+INFORMATION\s+([A-Z])\b/i)
-                    || head.match(/\bINFORMATION\s+([A-Z])\b/i)
-                    || head.match(/\bATIS\s+([A-Z])\b/);
-            if (lm) {
-                letter = lm[1].toUpperCase();
-                lines.shift();
-            }
-        }
-
-        const textOut = lines.join('\n').trim();
-        return textOut ? { issued, letter, text: textOut } : null;
-    }
-
+// Wrap datis.clowd.io into the same { arrival, departure, single, raw }
+// shape the frontend already knows how to render.
+function shapeClowdResponse(station, items) {
     let arrival = null, departure = null, single = null;
-    for (let i = 0; i < headings.length; i++) {
-        const h = headings[i];
-        if      (h.name === 'ARRIVAL'   && !arrival)   arrival   = parseBlock(bodyOf(i));
-        else if (h.name === 'DEPARTURE' && !departure) departure = parseBlock(bodyOf(i));
-        else if (h.name === 'SINGLE'    && !single)    single    = parseBlock(bodyOf(i));
-        // METAR / TAF headings just delimit the end of the ATIS region.
+    for (const it of items) {
+        if (!it || !it.datis) continue;
+        const block = {
+            letter: (it.code || extractLetter(it.datis) || null),
+            issued: null,
+            text:   it.datis.trim(),
+        };
+        const type = (it.type || '').toLowerCase();
+        if      (type === 'arr' && !arrival)    arrival   = block;
+        else if (type === 'dep' && !departure)  departure = block;
+        else if (!single)                       single    = block;
     }
-
-    if (arrival || departure) {
-        // Split format wins. Suppress the "single" candidate if we also matched
-        // an explicit Arrival/Departure heading (otherwise we'd duplicate).
-        return { arrival, departure };
-    }
-    if (single) {
-        return { arrival: null, departure: null, single };
-    }
-
-    // Nothing matched a known heading. Last-ditch fallback: try to recover an
-    // ATIS letter from anywhere in the cleaned text, drop obvious page chrome,
-    // and return whatever remains as a single block. This handles atis.guru
-    // pages where the layout doesn't match anything above but the broadcast
-    // text is still there.
-    const letter = extractLetter(clipped);
-    if (letter) {
-        // Trim leading nav/title chrome heuristically: keep from the first
-        // line that mentions the station ICAO or "ATIS"/"INFORMATION".
-        const lines = clipped.split('\n');
-        const startIdx = lines.findIndex(l =>
-            (station && l.toUpperCase().includes(station)) ||
-            /\bATIS\b/i.test(l) ||
-            /\bINFORMATION\b/i.test(l)
-        );
-        const body = (startIdx === -1 ? clipped : lines.slice(startIdx).join('\n')).trim();
-        return { arrival: null, departure: null, single: { letter, text: body, issued: null } };
-    }
-    return null;
+    if (!arrival && !departure && !single) return null;
+    const flat = [];
+    if (arrival)   flat.push(`ARRIVAL ATIS ${arrival.letter || ''}\n${arrival.text}`.trim());
+    if (departure) flat.push(`DEPARTURE ATIS ${departure.letter || ''}\n${departure.text}`.trim());
+    if (single)    flat.push(single.text);
+    return {
+        station,
+        letter:   arrival?.letter || single?.letter || departure?.letter || null,
+        issued:   null,
+        arrival, departure, single,
+        raw:      flat.join('\n\n'),
+        source:   'datis.clowd.io',
+        fetched:  Date.now(),
+    };
 }
 
 export default async function handler(req, res) {
@@ -271,199 +127,73 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Station is required (3–4 letter ICAO/IATA)' });
     }
 
-    // 1. Access code check (same gate the weather route uses).
     const accessCode = req.headers['x-access-code'];
     if (process.env.ACCESS_GATE_ENABLED === 'true') {
         const valid = await validateAccessCode(accessCode);
         if (!valid) {
-            console.warn(`[ATIS][Access] Rejected — code: ${accessCode || 'none'}, station: ${station}`);
             return res.status(403).json({ error: 'Invalid or missing access code' });
         }
     }
 
-    // 2. Rate limit (per-user, with per-IP backstop).
-    const ip = getClientIp(req);
-    const rl = await checkRateLimit(accessCode, ip);
+    const rl = await checkRateLimit(accessCode, getClientIp(req));
     if (!rl.allowed) {
-        console.warn(`[ATIS][RateLimit] Blocked by ${rl.by}: ${rl.count} > ${rl.limit}`);
         return res.status(429).json({
             error: `Rate limit exceeded (${rl.by}). Try again in an hour.`,
             limit: rl.limit,
         });
     }
 
-    // 3. Try sources in order. We aggregate the diagnostics so the client can
-    //    see which sources we tried and why they failed.
-    const diag = { tried: [] };
-
-    // ── Source 1: datis.clowd.io ────────────────────────────────────────
-    // Documented community US FAA D-ATIS mirror. Returns JSON, has CORS,
-    // no UA gating, no Cloudflare. US airports only — returns an empty
-    // array (or a 404-ish JSON) for non-US ICAOs.
-    const clowdResult = await tryClowdIo(station, diag);
-    if (clowdResult) return res.status(200).json({ ...clowdResult, _diag: diag });
-
-    // ── Source 2: atis.guru (HTML scrape) ───────────────────────────────
-    // Global coverage, but the page is behind aggressive bot detection
-    // that often returns 403 to server-side requests even with a full
-    // real-browser header set. Tried last because it's flaky.
-    const guruResult = await tryAtisGuru(station, diag);
-    if (guruResult) return res.status(200).json({ ...guruResult, _diag: diag });
-
-    // No source had data — return a structured unavailable response with
-    // every diagnostic we gathered so the frontend can explain *why* and
-    // suggest a sensible fallback (voice ATIS frequency from local DB).
-    return res.status(200).json({
-        error:   'D-ATIS unavailable',
-        station,
-        detail:  diag.tried.length > 0
-            ? diag.tried.map(t => `${t.source}: ${t.detail || 'no data'}`).join(' · ')
-            : 'no sources reachable',
-        status:  diag.tried.find(t => typeof t.status === 'number')?.status || null,
-        source:  null,
-        fetched: Date.now(),
-        _diag:   diag,
-    });
-}
-
-// ── Source: datis.clowd.io ───────────────────────────────────────────────
-// API shape (confirmed via community docs):
-//   GET /api/<ICAO>
-//   → 200 [{ airport: "KATL", type: "dep"|"arr"|"combined",
-//             code: "Y", datis: "ATLANTA ... INFORMATION YANKEE ..." }, ...]
-//   → 404 { error: "not found" } for non-US ICAOs
-async function tryClowdIo(station, diag) {
-    const url = `https://datis.clowd.io/api/${station}`;
-    const t0 = Date.now();
+    const url  = `https://datis.clowd.io/api/${station}`;
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 7000);
+    const tid  = setTimeout(() => ctrl.abort(), 7000);
     try {
         const r = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 METAR-GO-EFB',
-                'Accept':     'application/json',
-            },
-            signal: ctrl.signal,
+            headers: { 'Accept': 'application/json', 'User-Agent': 'METAR-GO-EFB/1.0' },
+            signal:  ctrl.signal,
         });
         clearTimeout(tid);
-        const ms = Date.now() - t0;
         if (!r.ok) {
-            diag.tried.push({ source: 'datis.clowd.io', status: r.status, detail: `HTTP ${r.status}`, ms });
-            return null;
+            return res.status(200).json({
+                error:   'D-ATIS unavailable',
+                detail:  `clowd.io HTTP ${r.status}`,
+                station,
+                status:  r.status,
+                source:  'datis.clowd.io',
+                fetched: Date.now(),
+            });
         }
         const data = await r.json().catch(() => null);
-        if (!data || (Array.isArray(data) && data.length === 0)) {
-            diag.tried.push({ source: 'datis.clowd.io', status: 200, detail: 'no data for station', ms });
-            return null;
+        if (!data || (!Array.isArray(data) && data.error)) {
+            return res.status(200).json({
+                error:   'D-ATIS unavailable',
+                detail:  (data && data.error) || 'no data for station',
+                station,
+                source:  'datis.clowd.io',
+                fetched: Date.now(),
+            });
         }
-        // datis.clowd.io can return either { error: "..." } (no data) or an
-        // array of broadcasts.
-        if (!Array.isArray(data) && data.error) {
-            diag.tried.push({ source: 'datis.clowd.io', status: 200, detail: data.error, ms });
-            return null;
+        const items  = Array.isArray(data) ? data : [data];
+        const shaped = shapeClowdResponse(station, items);
+        if (!shaped) {
+            return res.status(200).json({
+                error:   'D-ATIS unavailable',
+                detail:  'clowd.io returned items but no usable datis text',
+                station,
+                source:  'datis.clowd.io',
+                fetched: Date.now(),
+            });
         }
-        const items = Array.isArray(data) ? data : [data];
-        let arrival = null, departure = null, single = null;
-        for (const it of items) {
-            if (!it || !it.datis) continue;
-            const block = {
-                letter: (it.code || extractLetter(it.datis) || null),
-                issued: null,                  // clowd doesn't return a timestamp
-                text:   it.datis.trim(),
-            };
-            const type = (it.type || '').toLowerCase();
-            if      (type === 'arr' && !arrival)    arrival   = block;
-            else if (type === 'dep' && !departure)  departure = block;
-            else if (!single)                       single    = block;
-        }
-        if (!arrival && !departure && !single) {
-            diag.tried.push({ source: 'datis.clowd.io', status: 200, detail: 'no datis text in items', ms });
-            return null;
-        }
-        const flat = [];
-        if (arrival)   flat.push(`ARRIVAL ATIS ${arrival.letter || ''}\n${arrival.text}`.trim());
-        if (departure) flat.push(`DEPARTURE ATIS ${departure.letter || ''}\n${departure.text}`.trim());
-        if (single)    flat.push(single.text);
-        const primaryLetter = arrival?.letter || single?.letter || departure?.letter || null;
-        diag.tried.push({ source: 'datis.clowd.io', status: 200, detail: 'ok', ms });
-        return {
-            station,
-            letter:    primaryLetter,
-            issued:    null,
-            arrival, departure, single,
-            raw:       flat.join('\n\n'),
-            source:    'datis.clowd.io',
-            fetched:   Date.now(),
-        };
+        return res.status(200).json(shaped);
     } catch(err) {
         clearTimeout(tid);
-        const detail = err.name === 'AbortError' ? 'timeout' : (err.message || 'fetch error');
-        diag.tried.push({ source: 'datis.clowd.io', detail, ms: Date.now() - t0 });
-        return null;
-    }
-}
-
-// ── Source: atis.guru (HTML scrape) ──────────────────────────────────────
-async function tryAtisGuru(station, diag) {
-    const url = `https://atis.guru/atis/${station}`;
-    const t0 = Date.now();
-    const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 9000);
-    try {
-        const r = await fetch(url, {
-            headers: {
-                'User-Agent':                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-                'Accept':                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language':           'en-US,en;q=0.9',
-                'Accept-Encoding':           'gzip, deflate, br',
-                'Cache-Control':             'no-cache',
-                'Pragma':                    'no-cache',
-                'Sec-Fetch-Dest':            'document',
-                'Sec-Fetch-Mode':            'navigate',
-                'Sec-Fetch-Site':            'none',
-                'Sec-Fetch-User':            '?1',
-                'Upgrade-Insecure-Requests': '1',
-                'Referer':                   'https://atis.guru/',
-            },
-            redirect: 'follow',
-            signal:   ctrl.signal,
+        const detail = err.name === 'AbortError' ? 'clowd.io timeout' : (err.message || 'fetch error');
+        console.warn(`[ATIS] ${station} clowd.io failed:`, detail);
+        return res.status(200).json({
+            error:   'D-ATIS unavailable',
+            detail,
+            station,
+            source:  'datis.clowd.io',
+            fetched: Date.now(),
         });
-        clearTimeout(tid);
-        const ms = Date.now() - t0;
-        if (!r.ok) {
-            console.warn(`[ATIS] ${station} atis.guru HTTP ${r.status}`);
-            diag.tried.push({ source: 'atis.guru', status: r.status, detail: `HTTP ${r.status}`, ms });
-            return null;
-        }
-        const body   = await r.text();
-        const parsed = parseAtisPage(body, station);
-        if (!parsed || (!parsed.arrival && !parsed.departure && !parsed.single)) {
-            console.warn(`[ATIS] ${station} atis.guru parse miss (${body.length}B). First 240:`, body.slice(0, 240).replace(/\s+/g, ' '));
-            diag.tried.push({ source: 'atis.guru', status: 200, detail: `parse miss (${body.length}B)`, ms });
-            return null;
-        }
-        const flat = [];
-        if (parsed.arrival)   flat.push(`ARRIVAL ATIS ${parsed.arrival.letter || ''}\n${parsed.arrival.text}`.trim());
-        if (parsed.departure) flat.push(`DEPARTURE ATIS ${parsed.departure.letter || ''}\n${parsed.departure.text}`.trim());
-        if (parsed.single)    flat.push(parsed.single.text);
-        const primaryLetter = parsed.arrival?.letter || parsed.single?.letter || parsed.departure?.letter || null;
-        diag.tried.push({ source: 'atis.guru', status: 200, detail: 'ok', ms });
-        return {
-            station,
-            letter:    primaryLetter,
-            issued:    parsed.arrival?.issued || parsed.departure?.issued || null,
-            arrival:   parsed.arrival   || null,
-            departure: parsed.departure || null,
-            single:    parsed.single    || null,
-            raw:       flat.join('\n\n'),
-            source:    'atis.guru',
-            fetched:   Date.now(),
-        };
-    } catch(err) {
-        clearTimeout(tid);
-        const detail = err.name === 'AbortError' ? 'timeout' : (err.message || 'fetch error');
-        console.warn(`[ATIS] ${station} atis.guru failed:`, detail);
-        diag.tried.push({ source: 'atis.guru', detail, ms: Date.now() - t0 });
-        return null;
     }
 }
