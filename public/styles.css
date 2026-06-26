@@ -2495,6 +2495,88 @@
             color: #ffd60a;
             border-color: rgba(255,214,10,0.5);
         }
+        .multi-folder-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--sub-text);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .multi-folder-btn:hover {
+            background: rgba(10,132,255,0.12);
+            color: var(--accent);
+            border-color: rgba(10,132,255,0.4);
+        }
+        .multi-folder-btn.is-set {
+            background: rgba(10,132,255,0.12);
+            color: var(--accent);
+            border-color: rgba(10,132,255,0.5);
+        }
+        /* Per-card group picker rows */
+        .cg-list .cg-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .cg-list .cg-row:hover { background: rgba(255,255,255,0.04); }
+        .cg-list .cg-row input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: var(--accent);
+        }
+        .cg-row-name { flex: 1; color: var(--text); }
+        .cg-row-count {
+            font-size: 11px;
+            color: var(--sub-text);
+            background: rgba(255,255,255,0.04);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        /* Settings — custom group list rows */
+        .cg-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .cg-item:last-child { border-bottom: none; }
+        .cg-item-main { flex: 1; min-width: 0; }
+        .cg-item-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .cg-item-count {
+            font-size: 11px;
+            color: var(--sub-text);
+            margin-top: 2px;
+        }
+        .cg-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .cg-edit, .cg-del {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: #ccc;
+            width: 30px; height: 30px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cg-edit:hover { color: var(--accent); border-color: rgba(10,132,255,0.4); }
+        .cg-del:hover  { color: var(--danger); border-color: rgba(255,69,58,0.4); }
         
         .multi-name {
             font-size: 11px;

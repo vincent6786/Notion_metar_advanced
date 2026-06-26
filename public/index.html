@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '4.9.4';</script>
+    <script>window.APP_VERSION = '4.9.5';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -1910,15 +1910,39 @@
                             Continent — broader regional sections (Asia, Europe, …)
                         </div>
                     </div>
-                    <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);flex-shrink:0;margin-left:12px;">
+                    <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:8px;padding:3px;gap:2px;border:1px solid var(--border);flex-shrink:0;margin-left:12px;flex-wrap:wrap;">
                         <button id="dashGroupNone"      class="unit-pill active-unit" onclick="setDashGroupMode('none')">None</button>
+                        <button id="dashGroupCustom"    class="unit-pill"             onclick="setDashGroupMode('custom')">Custom</button>
                         <button id="dashGroupCountry"   class="unit-pill"             onclick="setDashGroupMode('country')">Country</button>
                         <button id="dashGroupContinent" class="unit-pill"             onclick="setDashGroupMode('continent')">Continent</button>
                     </div>
                 </div>
             </div>
         </div>
-        
+
+        <!-- ── DASHBOARD CUSTOM GROUPS ── -->
+        <div id="dashCustomGroupsSection" class="hidden">
+            <div class="section-title">Dashboard Groups</div>
+            <div class="info-card">
+                <div style="font-size:12px;color:var(--sub-text);line-height:1.5;margin-bottom:10px;">
+                    Create custom groups like <i>My Bases</i>, <i>Diversions</i>, or <i>Network hubs</i>.
+                    Assign airports from any dashboard card with the 📁 icon. Groups sync via Cloud Backup.
+                </div>
+                <div style="display:flex; gap:6px; margin-bottom:10px;">
+                    <input id="cgNewNameInput" type="text" maxlength="40"
+                           placeholder="New group name…"
+                           style="flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);
+                                  color:var(--text);border-radius:8px;padding:8px 10px;font-size:13px;outline:none;">
+                    <button onclick="onCreateCustomGroup()"
+                            style="background:var(--accent);color:#fff;border:none;border-radius:8px;
+                                   padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                        + Add
+                    </button>
+                </div>
+                <div id="cgList"></div>
+            </div>
+        </div>
+
         <!-- API Usage Monitor -->
         <div class="section-title">API Usage Monitor</div>
         <div class="info-card" onclick="openApiStatsModal()" style="cursor:pointer;">
@@ -2218,6 +2242,32 @@
                     <div style="font-weight:800; color:var(--lifr);">LIFR (Low IFR)</div>
                     <div style="font-size:11px; color:var(--sub-text);">Ceiling &lt; 500' or Vis &lt; 1sm</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         DASHBOARD: PER-CARD GROUP PICKER
+    ================================================================ -->
+    <div id="cardGroupPickerModal" class="modal-overlay" onclick="closeCardGroupPicker()">
+        <div class="info-card" style="margin:auto; width:90%; max-width:360px; border:1px solid var(--border);"
+             onclick="event.stopPropagation()">
+            <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px;">
+                <span id="cardGroupPickerTitle" style="font-weight:700;">Assign to groups</span>
+                <button class="modal-close" onclick="closeCardGroupPicker()">✕</button>
+            </div>
+            <div id="cardGroupPickerList" class="cg-list" style="max-height:50vh;overflow-y:auto;"></div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <button onclick="closeCardGroupPicker()"
+                        style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);
+                               color:#ccc;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">
+                    Cancel
+                </button>
+                <button onclick="saveCardGroupPicker()"
+                        style="flex:1;background:var(--accent);border:none;color:#fff;
+                               border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">
+                    Save
+                </button>
             </div>
         </div>
     </div>

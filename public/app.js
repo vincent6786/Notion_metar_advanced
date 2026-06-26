@@ -1711,6 +1711,16 @@
                     ? cardSection.classList.remove('hidden')
                     : cardSection.classList.add('hidden');
             }
+            // Show/hide Custom Groups section in Settings (and refresh its list)
+            const cgSection = document.getElementById('dashCustomGroupsSection');
+            if (cgSection) {
+                enabled
+                    ? cgSection.classList.remove('hidden')
+                    : cgSection.classList.add('hidden');
+                if (enabled && typeof renderCustomGroupsSettings === 'function') {
+                    renderCustomGroupsSettings();
+                }
+            }
             
         }
         
@@ -3051,6 +3061,10 @@
         const _fetchingIcaos = new Set(); // guard against concurrent fetches for same airport
 
         async function loadMultiAirports() {
+            // Hydrate cloud-synced custom groups first
+            if (typeof loadCustomGroupsFromCloud === 'function') {
+                await loadCustomGroupsFromCloud();
+            }
             // Try cloud first, then local
             const cloudData = await Storage.get('efb_multi_airports');
             const localData = localStorage.getItem('efb_multi_airports');
@@ -3336,6 +3350,21 @@
                         : ((typeof ISO_COUNTRY_NAMES !== 'undefined' && ISO_COUNTRY_NAMES[co]) || co);
                     sections.push(sectionHtml(co, name, co === 'XX' ? '' : co, icaos));
                 }
+            } else if (groupMode === 'custom') {
+                // Bucket airports by user-defined custom groups (an airport can belong to multiple)
+                const cgs = (typeof getCustomGroups === 'function') ? getCustomGroups() : [];
+                const assigned = new Set();
+                for (const g of cgs) {
+                    const icaos = (g.icaos || []).filter(c => restIcaos.includes(c));
+                    if (icaos.length === 0) continue;
+                    icaos.forEach(c => assigned.add(c));
+                    const code = 'CUSTOM_' + g.id;
+                    sections.push(sectionHtml(code, g.name, '', icaos));
+                }
+                const unassigned = restIcaos.filter(c => !assigned.has(c));
+                if (unassigned.length > 0) {
+                    sections.push(sectionHtml('CUSTOM_UNASSIGNED', 'Ungrouped', '', unassigned, 'is-restgroup'));
+                }
             } else if (groupMode === 'continent') {
                 // Bucket airports by continent, preserving insertion order
                 const buckets = new Map();
@@ -3616,6 +3645,58 @@
             return `<button class="${cls}" type="button" title="${ttl}"
                 onclick="event.stopPropagation();toggleFavorite('${icao}')">${fav ? '★' : '☆'}</button>`;
         }
+        // Folder button — opens the per-card group picker
+        function _dashFolderBtnHtml(icao) {
+            const has = (typeof getGroupsForAirport === 'function') && getGroupsForAirport(icao).length > 0;
+            const cls = 'multi-folder-btn' + (has ? ' is-set' : '');
+            return `<button class="${cls}" type="button" title="Assign to groups"
+                onclick="event.stopPropagation();openCardGroupPicker('${icao}')">📁</button>`;
+        }
+
+        // ── Per-card group picker modal ──────────────────────────────────
+        function openCardGroupPicker(icao) {
+            const code = (icao || '').toUpperCase();
+            if (!code) return;
+            const modal = document.getElementById('cardGroupPickerModal');
+            if (!modal) return;
+            modal.dataset.icao = code;
+            _renderCardGroupPicker(code);
+            modal.classList.add('active');
+        }
+        function closeCardGroupPicker() {
+            document.getElementById('cardGroupPickerModal')?.classList.remove('active');
+        }
+        function _renderCardGroupPicker(icao) {
+            const titleEl = document.getElementById('cardGroupPickerTitle');
+            const listEl  = document.getElementById('cardGroupPickerList');
+            if (!titleEl || !listEl) return;
+            titleEl.innerText = `Assign ${icao} to groups`;
+            const groups = (typeof getCustomGroups === 'function') ? getCustomGroups() : [];
+            if (groups.length === 0) {
+                listEl.innerHTML = `<div style="color:var(--sub-text);font-size:13px;line-height:1.6;text-align:center;padding:18px 8px;">
+                    No custom groups yet.<br>Create one in Settings → Dashboard Groups.</div>`;
+                return;
+            }
+            const myGroupIds = new Set(((typeof getGroupsForAirport === 'function') ? getGroupsForAirport(icao) : []).map(g => g.id));
+            listEl.innerHTML = groups.map(g => {
+                const on = myGroupIds.has(g.id);
+                return `<label class="cg-row">
+                    <input type="checkbox" data-group-id="${g.id}" ${on ? 'checked' : ''}>
+                    <span class="cg-row-name">${g.name}</span>
+                    <span class="cg-row-count">${(g.icaos || []).length}</span>
+                </label>`;
+            }).join('');
+        }
+        async function saveCardGroupPicker() {
+            const modal = document.getElementById('cardGroupPickerModal');
+            if (!modal) return;
+            const icao = modal.dataset.icao;
+            const checked = [...modal.querySelectorAll('input[type=checkbox][data-group-id]:checked')]
+                .map(el => el.dataset.groupId);
+            await setAirportGroups(icao, checked);
+            closeCardGroupPicker();
+            showToast(`📁 Updated groups for ${icao}`);
+        }
 
         // ── RAW view (original compact METAR string card) ──
         function renderRawCardHTML(icao, cached) {
@@ -3642,6 +3723,7 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;">
                             ${_dashStarBtnHtml(icao)}
+                            ${_dashFolderBtnHtml(icao)}
                             <div class="multi-remove" onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
                         </div>
                     </div>
@@ -3791,11 +3873,12 @@
                             </div>
                         </div>
         
-                        <!-- ICAO + star + delete -->
+                        <!-- ICAO + star + folder + delete -->
                         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                             <div style="font-size:14px;font-weight:900;font-family:'SF Mono',monospace;
                                         color:#fff;letter-spacing:1px;">${icao}</div>
                             ${_dashStarBtnHtml(icao)}
+                            ${_dashFolderBtnHtml(icao)}
                             <div class="multi-remove"
                                  onclick="event.stopPropagation();removeMultiAirport('${icao}')">×</div>
                         </div>

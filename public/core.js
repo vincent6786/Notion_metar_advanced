@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.9.4',  // ← set once in index.html
-            title: 'METAR GO — v4.9.4',
+            version: window.APP_VERSION || '4.9.5',  // ← set once in index.html
+            title: 'METAR GO — v4.9.5',
             changes: [
                 {
                     icon: '🗺️',
@@ -1265,9 +1265,129 @@
         function setDashGroupMode(mode) {
             localStorage.setItem('efb_dash_group_mode', mode);
             document.getElementById('dashGroupNone')?.classList.toggle('active-unit',      mode === 'none');
+            document.getElementById('dashGroupCustom')?.classList.toggle('active-unit',    mode === 'custom');
             document.getElementById('dashGroupCountry')?.classList.toggle('active-unit',   mode === 'country');
             document.getElementById('dashGroupContinent')?.classList.toggle('active-unit', mode === 'continent');
             renderMultiDashboard();
+        }
+
+        // ── Custom dashboard groups (cloud-synced) ───────────────────────
+        // Stored as { groups: [{id,name,icaos[]}] } under efb_dash_custom_groups.
+        // Cloud-synced (Storage.set) so the same groups appear across devices.
+        function getCustomGroups() {
+            try {
+                const raw = localStorage.getItem('efb_dash_custom_groups');
+                const obj = raw ? JSON.parse(raw) : null;
+                if (obj && Array.isArray(obj.groups)) return obj.groups;
+                if (Array.isArray(obj)) return obj;
+            } catch(e) {}
+            return [];
+        }
+        async function _saveCustomGroups(groups) {
+            const payload = { groups };
+            localStorage.setItem('efb_dash_custom_groups', JSON.stringify(payload));
+            try { await Storage.set('efb_dash_custom_groups', payload); } catch(e) {}
+        }
+        async function loadCustomGroupsFromCloud() {
+            try {
+                const cloud = await Storage.get('efb_dash_custom_groups');
+                if (cloud && Array.isArray(cloud.groups)) {
+                    localStorage.setItem('efb_dash_custom_groups', JSON.stringify(cloud));
+                }
+            } catch(e) {}
+        }
+        async function createCustomGroup(name) {
+            const trimmed = (name || '').trim();
+            if (!trimmed) return null;
+            const groups = getCustomGroups();
+            const id = 'g_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            groups.push({ id, name: trimmed, icaos: [] });
+            await _saveCustomGroups(groups);
+            return id;
+        }
+        async function renameCustomGroup(id, name) {
+            const trimmed = (name || '').trim();
+            if (!trimmed) return;
+            const groups = getCustomGroups();
+            const g = groups.find(g => g.id === id);
+            if (!g) return;
+            g.name = trimmed;
+            await _saveCustomGroups(groups);
+        }
+        async function deleteCustomGroup(id) {
+            const groups = getCustomGroups().filter(g => g.id !== id);
+            await _saveCustomGroups(groups);
+        }
+        async function setAirportGroups(icao, groupIds) {
+            const code = (icao || '').toUpperCase();
+            if (!code) return;
+            const wanted = new Set(groupIds || []);
+            const groups = getCustomGroups();
+            for (const g of groups) {
+                const has = g.icaos.includes(code);
+                if (wanted.has(g.id) && !has) g.icaos.push(code);
+                else if (!wanted.has(g.id) && has) g.icaos = g.icaos.filter(c => c !== code);
+            }
+            await _saveCustomGroups(groups);
+            if (typeof renderMultiDashboard === 'function') renderMultiDashboard();
+        }
+        function getGroupsForAirport(icao) {
+            const code = (icao || '').toUpperCase();
+            return getCustomGroups().filter(g => g.icaos.includes(code));
+        }
+
+        // ── Settings panel handlers for custom groups ────────────────────
+        async function onCreateCustomGroup() {
+            const input = document.getElementById('cgNewNameInput');
+            if (!input) return;
+            const name = input.value;
+            if (!name || !name.trim()) return;
+            await createCustomGroup(name);
+            input.value = '';
+            renderCustomGroupsSettings();
+            if (typeof renderMultiDashboard === 'function') renderMultiDashboard();
+        }
+        async function onRenameCustomGroup(id) {
+            const groups = getCustomGroups();
+            const g = groups.find(g => g.id === id);
+            if (!g) return;
+            const name = prompt('Rename group:', g.name);
+            if (name == null) return;
+            const t = name.trim();
+            if (!t) return;
+            await renameCustomGroup(id, t);
+            renderCustomGroupsSettings();
+            if (typeof renderMultiDashboard === 'function') renderMultiDashboard();
+        }
+        async function onDeleteCustomGroup(id) {
+            const groups = getCustomGroups();
+            const g = groups.find(g => g.id === id);
+            if (!g) return;
+            if (!confirm(`Delete group "${g.name}"?\n\nAirports in this group will be unassigned. They stay on your dashboard.`)) return;
+            await deleteCustomGroup(id);
+            renderCustomGroupsSettings();
+            if (typeof renderMultiDashboard === 'function') renderMultiDashboard();
+        }
+        function renderCustomGroupsSettings() {
+            const list = document.getElementById('cgList');
+            if (!list) return;
+            const groups = getCustomGroups();
+            if (groups.length === 0) {
+                list.innerHTML = `<div style="color:var(--sub-text);font-size:12px;font-style:italic;text-align:center;padding:8px;">
+                    No custom groups yet. Create one above.</div>`;
+                return;
+            }
+            list.innerHTML = groups.map(g => `
+                <div class="cg-item">
+                    <div class="cg-item-main">
+                        <div class="cg-item-name">${g.name}</div>
+                        <div class="cg-item-count">${(g.icaos || []).length} airport${(g.icaos || []).length === 1 ? '' : 's'}</div>
+                    </div>
+                    <div class="cg-item-actions">
+                        <button class="cg-edit" type="button" onclick="onRenameCustomGroup('${g.id}')" title="Rename">✎</button>
+                        <button class="cg-del"  type="button" onclick="onDeleteCustomGroup('${g.id}')" title="Delete">🗑</button>
+                    </div>
+                </div>`).join('');
         }
 
         // ── Collapsed dashboard groups (per-device) ──────────────────────
@@ -1344,6 +1464,7 @@
             document.getElementById('cardStyleDetailed')?.classList.toggle('active-unit', card === 'detailed');
             const group = getDashGroupMode();
             document.getElementById('dashGroupNone')?.classList.toggle('active-unit',      group === 'none');
+            document.getElementById('dashGroupCustom')?.classList.toggle('active-unit',    group === 'custom');
             document.getElementById('dashGroupCountry')?.classList.toggle('active-unit',   group === 'country');
             document.getElementById('dashGroupContinent')?.classList.toggle('active-unit', group === 'continent');
             const view = getDashView();
