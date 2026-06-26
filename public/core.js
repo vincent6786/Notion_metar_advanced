@@ -3,23 +3,43 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.9.8',  // ← set once in index.html
-            title: 'METAR GO — v4.9.8',
+            version: window.APP_VERSION || '5.0.1',  // ← set once in index.html
+            title: 'METAR GO — v5.0.1',
             changes: [
                 {
+                    icon: '🗂️',
+                    title: 'Dashboard Grouping',
+                    desc: 'Organise your tracked airports by None, Country, Continent, or Custom groups. Sections collapse with a tap; shift-click or long-press a header to collapse / expand all at once.'
+                },
+                {
+                    icon: '⭐',
+                    title: 'Pinned Favourites',
+                    desc: 'Tap the ☆ on any card to pin an airport. Pinned airports float to a gold Favourites section at the top of the dashboard, regardless of grouping mode. Syncs across devices via Cloud Backup.'
+                },
+                {
+                    icon: '📁',
+                    title: 'Custom Groups',
+                    desc: 'Define groups like My Bases, Diversions, or Network hubs in Settings → Dashboard Groups. Tap 📁 on any card to assign it. Airports can belong to multiple groups; groups sync via Cloud Backup.'
+                },
+                {
                     icon: '🗺️',
-                    title: 'Weather Map Tab',
-                    desc: 'New MAP tab powered by Windy — interactive weather map centered on your airport with 9 overlay layers (Wind, Rain, Gusts, Temp, Clouds, Pressure, Turbulence, Fog, Lightning).'
+                    title: 'Dashboard Map View',
+                    desc: 'Switch between ▦ Grid and 🗺 Map at the top of the dashboard. The map renders one pin per tracked airport, coloured by flight rules — tap a pin for raw METAR and an Open button.'
                 },
                 {
-                    icon: '🛫',
-                    title: 'Flight Level Selector',
-                    desc: 'Switch between SFC, FL050, FL100, FL180, FL300, and FL390 on the weather map to visualise winds and conditions at cruise altitude.'
+                    icon: '⛅',
+                    title: 'Per-Card Radar',
+                    desc: 'Detailed cards now have a Show radar toggle that overlays the latest RainViewer precipitation tiles on a mini-map. Loads lazily so battery and data are protected.'
                 },
                 {
-                    icon: '✈︎',
-                    title: 'Live Traffic View',
-                    desc: 'Toggle to LIVE TRAFFIC mode in the MAP tab to see real-time ADS-B aircraft positions via ADS-B Exchange, centered on your current airport.'
+                    icon: '📋',
+                    title: 'Colour-Coded TAF',
+                    desc: 'The raw TAF block is now line-broken at every TEMPO / BECMG / FM / PROB keyword, with each keyword tinted by that period’s flight rules. Easier to scan at a glance.'
+                },
+                {
+                    icon: '⚠️',
+                    title: 'Visible Error State',
+                    desc: 'When a card’s METAR fetch fails (rate limit, network drop, AVWX outage) the card now shows a red ERROR state with the reason instead of sitting on Loading… forever. Tap to retry.'
                 }
             ]
         };
