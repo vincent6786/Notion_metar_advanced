@@ -39,6 +39,37 @@ const ISO_COUNTRY_NAMES = {
     VE:'Venezuela', VN:'Vietnam', ZA:'South Africa'
 };
 
+// ISO-2 country code → continent name (used by dashboard "Group By: Continent")
+const ISO_TO_CONTINENT = {
+    // Asia (incl. Middle East)
+    AE:'Asia', AF:'Asia', AM:'Asia', AZ:'Asia', BD:'Asia', BH:'Asia', BN:'Asia',
+    CN:'Asia', GE:'Asia', HK:'Asia', ID:'Asia', IL:'Asia', IN:'Asia', IR:'Asia',
+    JO:'Asia', JP:'Asia', KH:'Asia', KR:'Asia', KW:'Asia', KZ:'Asia', LA:'Asia',
+    LB:'Asia', LK:'Asia', MM:'Asia', MO:'Asia', MY:'Asia', NP:'Asia', OM:'Asia',
+    PH:'Asia', PK:'Asia', QA:'Asia', SA:'Asia', SG:'Asia', TH:'Asia', TR:'Asia',
+    TW:'Asia', UZ:'Asia', VN:'Asia', CY:'Asia',
+    // Europe
+    AL:'Europe', AT:'Europe', BE:'Europe', BG:'Europe', CH:'Europe', CZ:'Europe',
+    DE:'Europe', DK:'Europe', EE:'Europe', ES:'Europe', FI:'Europe', FR:'Europe',
+    GB:'Europe', GR:'Europe', HR:'Europe', HU:'Europe', IE:'Europe', IS:'Europe',
+    IT:'Europe', LT:'Europe', LU:'Europe', LV:'Europe', NL:'Europe', NO:'Europe',
+    PL:'Europe', PT:'Europe', RO:'Europe', RS:'Europe', RU:'Europe', SE:'Europe',
+    SI:'Europe', SK:'Europe', UA:'Europe',
+    // North America (incl. Central America + Caribbean)
+    CA:'North America', CR:'North America', CU:'North America', DO:'North America',
+    GU:'North America', MP:'North America', MX:'North America', PA:'North America',
+    PR:'North America', SX:'North America', US:'North America',
+    // South America
+    AR:'South America', BO:'South America', BR:'South America', CL:'South America',
+    CO:'South America', EC:'South America', PE:'South America', UY:'South America',
+    VE:'South America',
+    // Oceania
+    AU:'Oceania', FJ:'Oceania', NZ:'Oceania', PF:'Oceania',
+    // Africa
+    DZ:'Africa', EG:'Africa', ET:'Africa', KE:'Africa', MA:'Africa', MU:'Africa',
+    NG:'Africa', SC:'Africa', SN:'Africa', TN:'Africa', ZA:'Africa'
+};
+
 
 // ============================================================================
 // AIRPORT DATABASE

@@ -3327,6 +3327,27 @@
                         : ((typeof ISO_COUNTRY_NAMES !== 'undefined' && ISO_COUNTRY_NAMES[co]) || co);
                     sections.push(sectionHtml(co, name, co === 'XX' ? '' : co, icaos));
                 }
+            } else if (groupMode === 'continent') {
+                // Bucket airports by continent, preserving insertion order
+                const buckets = new Map();
+                for (const icao of restIcaos) {
+                    const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
+                    const co   = (info && info.country) ? info.country : null;
+                    const cont = (co && typeof ISO_TO_CONTINENT !== 'undefined' && ISO_TO_CONTINENT[co]) || 'Other';
+                    if (!buckets.has(cont)) buckets.set(cont, []);
+                    buckets.get(cont).push(icao);
+                }
+                // Sort alphabetically by continent name, "Other" last
+                const entries = [...buckets.entries()].sort((a, b) => {
+                    if (a[0] === 'Other') return 1;
+                    if (b[0] === 'Other') return -1;
+                    return a[0].localeCompare(b[0]);
+                });
+                for (const [cont, icaos] of entries) {
+                    // Group code = continent name with spaces removed, so it's unique vs country codes
+                    const code = 'CONT_' + cont.replace(/\s+/g, '');
+                    sections.push(sectionHtml(code, cont, '', icaos));
+                }
             } else if (restIcaos.length > 0) {
                 // Flat mode: when favourites are pinned, wrap the rest in a plain "All airports" section.
                 // When no favourites, fall back to a plain grid (no header) so the layout matches pre-feature look.

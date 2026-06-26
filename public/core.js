@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '4.9.2',  // ← set once in index.html
-            title: 'METAR GO — v4.9.2',
+            version: window.APP_VERSION || '4.9.3',  // ← set once in index.html
+            title: 'METAR GO — v4.9.3',
             changes: [
                 {
                     icon: '🗺️',
@@ -1246,8 +1246,9 @@
         /** Set dashboard grouping mode and refresh */
         function setDashGroupMode(mode) {
             localStorage.setItem('efb_dash_group_mode', mode);
-            document.getElementById('dashGroupNone')?.classList.toggle('active-unit',    mode === 'none');
-            document.getElementById('dashGroupCountry')?.classList.toggle('active-unit', mode === 'country');
+            document.getElementById('dashGroupNone')?.classList.toggle('active-unit',      mode === 'none');
+            document.getElementById('dashGroupCountry')?.classList.toggle('active-unit',   mode === 'country');
+            document.getElementById('dashGroupContinent')?.classList.toggle('active-unit', mode === 'continent');
             renderMultiDashboard();
         }
 
@@ -1324,8 +1325,9 @@
             document.getElementById('cardStyleRaw')?.classList.toggle('active-unit',      card === 'raw');
             document.getElementById('cardStyleDetailed')?.classList.toggle('active-unit', card === 'detailed');
             const group = getDashGroupMode();
-            document.getElementById('dashGroupNone')?.classList.toggle('active-unit',    group === 'none');
-            document.getElementById('dashGroupCountry')?.classList.toggle('active-unit', group === 'country');
+            document.getElementById('dashGroupNone')?.classList.toggle('active-unit',      group === 'none');
+            document.getElementById('dashGroupCountry')?.classList.toggle('active-unit',   group === 'country');
+            document.getElementById('dashGroupContinent')?.classList.toggle('active-unit', group === 'continent');
         }
     
         // ================================================================
