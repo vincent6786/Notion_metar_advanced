@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.1.0',  // ← set once in index.html
-            title: 'METAR GO — v5.1.0',
+            version: window.APP_VERSION || '5.1.1',  // ← set once in index.html
+            title: 'METAR GO — v5.1.1',
             changes: [
+                {
+                    icon: '🔊',
+                    title: 'D-ATIS preview',
+                    desc: 'Weather tab now has a D-ATIS pill. Pulls the latest digital ATIS broadcast for the active airport from atis.guru. Marked unofficial — the source is FAA-feed based, so non-US airports may show "D-ATIS unavailable".'
+                },
                 {
                     icon: '🗂️',
                     title: 'Dashboard Grouping',
@@ -2136,12 +2141,18 @@
         async function loadData(force = false) {
             const icaoVal = document.getElementById('icao').value;
             if (!icaoVal) return;
-            
+
             if (force) {
                 Object.keys(localStorage).forEach(key => {
                     if (key.startsWith('cache_')) localStorage.removeItem(key);
                 });
                 console.log('[Force Refresh] All caches cleared');
+            }
+            // D-ATIS is lazy-loaded by the Weather tab pill — reset the
+            // "already loaded for this airport" guard whenever the active
+            // airport changes (or a force refresh wipes the cache).
+            if (typeof _atisLoadedFor !== 'undefined') {
+                try { _atisLoadedFor = null; } catch(e) {}
             }
 
             // Reset meteogram interval so new airport gets a fresh timer

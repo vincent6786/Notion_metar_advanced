@@ -1727,21 +1727,105 @@
         function switchWeatherPane(pane) {
             const metarPane = document.getElementById('weather-metar-pane');
             const tafPane   = document.getElementById('weather-taf-pane');
+            const atisPane  = document.getElementById('weather-atis-pane');
             const pillMetar = document.getElementById('pillMetar');
             const pillTaf   = document.getElementById('pillTaf');
+            const pillAtis  = document.getElementById('pillAtis');
             if (!metarPane || !tafPane) return;
-        
+
+            const show = (el, on) => { if (el) el.style.display = on ? '' : 'none'; };
+            const setActive = (el, on) => { if (el) el.classList.toggle('active', on); };
+
             if (pane === 'taf') {
-                metarPane.style.display = 'none';
-                tafPane.style.display   = '';
-                pillMetar?.classList.remove('active');
-                pillTaf?.classList.add('active');
+                show(metarPane, false); show(tafPane, true); show(atisPane, false);
+                setActive(pillMetar, false); setActive(pillTaf, true); setActive(pillAtis, false);
                 if (meteoDataCache) setTimeout(() => drawMeteogram(meteoDataCache, 'meteoCanvas2'), 120);
+            } else if (pane === 'atis') {
+                show(metarPane, false); show(tafPane, false); show(atisPane, true);
+                setActive(pillMetar, false); setActive(pillTaf, false); setActive(pillAtis, true);
+                // Lazy-load D-ATIS the first time the user opens this pane for the current airport
+                const icao = document.getElementById('icao')?.value?.trim()?.toUpperCase();
+                if (icao && typeof loadAtisFor === 'function') loadAtisFor(icao);
             } else {
-                tafPane.style.display   = 'none';
-                metarPane.style.display = '';
-                pillTaf?.classList.remove('active');
-                pillMetar?.classList.add('active');
+                show(metarPane, true); show(tafPane, false); show(atisPane, false);
+                setActive(pillMetar, true); setActive(pillTaf, false); setActive(pillAtis, false);
+            }
+        }
+
+        // ── D-ATIS (preview, unofficial source: atis.guru) ──────────────────
+        // Lazy fetch. We don't fire this in loadData() because the dashboard
+        // already burns enough rate-limit budget; only fetch when the user
+        // actually opens the D-ATIS pane.
+        let _atisLoadedFor = null;
+        async function loadAtisFor(icao) {
+            const code = (icao || '').toUpperCase();
+            if (!code) return;
+            if (_atisLoadedFor === code) return;
+            _atisLoadedFor = code;
+            const issuedEl = document.getElementById('atisIssued');
+            const letterEl = document.getElementById('atisLetter');
+            const rawEl    = document.getElementById('rawAtis');
+            if (rawEl)    rawEl.innerText    = 'Loading D-ATIS…';
+            if (letterEl) letterEl.innerText = '…';
+            if (issuedEl) issuedEl.innerText = '';
+            try {
+                const data = await secureFetch(`/api/atis?station=${code}`);
+                renderAtis(code, data);
+            } catch(e) {
+                renderAtis(code, { error: e.message || 'Fetch failed' });
+            }
+        }
+
+        // Render a D-ATIS payload. Tolerates the soft-error shape returned
+        // by /api/atis when the upstream source has nothing for this airport.
+        function renderAtis(icao, d) {
+            const issuedEl = document.getElementById('atisIssued');
+            const letterEl = document.getElementById('atisLetter');
+            const rawEl    = document.getElementById('rawAtis');
+            const cardEl   = document.getElementById('atisCard');
+            if (!rawEl || !letterEl || !issuedEl || !cardEl) return;
+
+            if (!d || d.error) {
+                cardEl.classList.add('is-empty');
+                letterEl.innerText = '—';
+                issuedEl.innerText = '';
+                const why = d?.detail || d?.error || 'No D-ATIS available for this airport.';
+                rawEl.innerHTML = `
+                    <div style="text-align:center;color:var(--sub-text);padding:12px 4px;">
+                        <div style="font-size:24px;margin-bottom:6px;">🛰</div>
+                        <div style="font-weight:700;color:#e5e5e5;margin-bottom:4px;">D-ATIS unavailable</div>
+                        <div style="font-size:11px;line-height:1.6;margin-bottom:10px;">${why} · ${icao}</div>
+                        <button onclick="_atisLoadedFor=null;loadAtisFor('${icao}')"
+                                style="background:var(--accent);border:none;color:#fff;padding:7px 14px;
+                                       border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
+                            ↺ Retry
+                        </button>
+                    </div>`;
+                return;
+            }
+
+            cardEl.classList.remove('is-empty');
+            const letter = (d.letter || '').toString().slice(0, 1).toUpperCase();
+            letterEl.innerText = letter || '—';
+            // Best-effort issued time
+            let issuedStr = '';
+            if (d.issued) {
+                const t = new Date(d.issued);
+                if (!Number.isNaN(t.getTime())) {
+                    issuedStr = `${String(t.getUTCDate()).padStart(2,'0')}/${String(t.getUTCMonth()+1).padStart(2,'0')} ${String(t.getUTCHours()).padStart(2,'0')}:${String(t.getUTCMinutes()).padStart(2,'0')}Z`;
+                }
+            }
+            if (!issuedStr && d.fetched) {
+                const ageMin = Math.max(0, Math.floor((Date.now() - d.fetched) / 60000));
+                issuedStr = `Fetched ${ageMin}m ago`;
+            }
+            issuedEl.innerText = issuedStr || '—';
+
+            const raw = (d.raw || '').trim();
+            if (!raw) {
+                rawEl.innerText = `(empty broadcast for ${icao})`;
+            } else {
+                rawEl.innerText = raw;
             }
         }
         

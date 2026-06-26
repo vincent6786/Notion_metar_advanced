@@ -636,6 +636,80 @@
             100% { opacity: 1; }
         }
         .hidden { display: none !important; }
+
+        /* ============================================================
+           D-ATIS CARD (unofficial preview source)
+        ============================================================ */
+        .atis-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        .atis-card.is-empty .atis-letter-badge {
+            background: rgba(255,255,255,0.04);
+            color: var(--sub-text);
+            border-color: var(--border);
+        }
+        .atis-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .atis-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--sub-text);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .atis-issued {
+            font-size: 12px;
+            color: #d0d0d0;
+            font-family: 'SF Mono', monospace;
+        }
+        .atis-letter-badge {
+            width: 54px;
+            height: 54px;
+            border-radius: 12px;
+            background: var(--accent);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.18);
+            font-size: 30px;
+            font-weight: 900;
+            font-family: 'SF Mono', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 12px rgba(10,132,255,0.25);
+        }
+        .atis-unofficial {
+            margin-top: 12px;
+            padding: 8px 10px;
+            background: rgba(255,159,10,0.08);
+            border: 1px solid rgba(255,159,10,0.3);
+            border-radius: 8px;
+            color: var(--warn);
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.6;
+        }
+        .atis-unofficial .atis-src {
+            font-family: 'SF Mono', monospace;
+            text-decoration: underline;
+        }
+        .atis-unofficial .atis-hint {
+            display: block;
+            margin-top: 3px;
+            color: var(--sub-text);
+            font-weight: 500;
+        }
         .section-title {
             font-weight: 700;
             color: var(--sub-text);

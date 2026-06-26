@@ -1,0 +1,207 @@
+// ── D-ATIS proxy (atis.guru) ──────────────────────────────────────────────
+// Server-side proxy for atis.guru so the browser doesn't have to deal with
+// CORS or the source's UA gating, and so we can share the existing
+// access-code + rate-limit machinery used by /api/weather.
+//
+// This is intentionally an UNOFFICIAL preview source. The frontend renders
+// every response with a "Unofficial — source: atis.guru" footer. We return
+// HTTP 200 with { error: 'D-ATIS unavailable', ... } when the upstream
+// gives us nothing usable — the dashboard's red ERROR card is reserved for
+// truly broken responses, not "this airport isn't in the feed".
+
+import { Redis } from '@upstash/redis';
+
+const kv = new Redis({
+    url:   process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+});
+
+const ACCESS_HOURLY_LIMIT = parseInt(process.env.ACCESS_HOURLY_LIMIT || '1000', 10);
+const IP_HOURLY_LIMIT     = parseInt(process.env.IP_HOURLY_LIMIT     || '600',  10);
+
+function setCors(res) {
+    const allowed = process.env.ALLOWED_ORIGIN;
+    res.setHeader('Access-Control-Allow-Origin', allowed || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-access-code');
+    if (allowed) res.setHeader('Vary', 'Origin');
+}
+
+function getTodayKey() {
+    const d = new Date();
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+function getHourKey() {
+    const d = new Date();
+    return `${getTodayKey()}:${String(d.getUTCHours()).padStart(2,'0')}`;
+}
+function getClientIp(req) {
+    const fwd = req.headers['x-forwarded-for'];
+    if (fwd) return fwd.split(',')[0].trim();
+    return req.socket?.remoteAddress || 'unknown';
+}
+
+async function validateAccessCode(code) {
+    if (!code) return false;
+    const key = code.toString().toUpperCase().replace(/[^A-Z0-9\-]/g, '').slice(0, 20);
+    if (key.length < 4) return false;
+    try {
+        const user = await kv.get(`efb:users:${key}`);
+        return !!(user && user.active);
+    } catch(e) {
+        console.error('[ATIS][Access] Redis lookup failed:', e.message);
+        return true;  // fail open
+    }
+}
+
+// Mirror of api/weather.js checkRateLimit, scoped here so the file is
+// self-contained on Vercel deploy.
+async function checkRateLimit(accessCode, ip) {
+    const hourKey = getHourKey();
+    try {
+        const code = (accessCode || '').toString().toUpperCase().replace(/[^A-Z0-9\-]/g, '').slice(0, 20);
+        if (code.length >= 4) {
+            const k = `efb:ratelimit:user:${code}:${hourKey}`;
+            const c = await kv.incr(k);
+            if (c === 1) await kv.expire(k, 7200);
+            if (c > ACCESS_HOURLY_LIMIT) {
+                return { allowed: false, by: 'user', count: c, limit: ACCESS_HOURLY_LIMIT };
+            }
+        }
+        const ipK = `efb:ratelimit:ip:${ip}:${hourKey}`;
+        const ipC = await kv.incr(ipK);
+        if (ipC === 1) await kv.expire(ipK, 7200);
+        if (ipC > IP_HOURLY_LIMIT) {
+            return { allowed: false, by: 'ip', count: ipC, limit: IP_HOURLY_LIMIT };
+        }
+        return { allowed: true };
+    } catch(e) {
+        console.error('[ATIS][RateLimit] Redis error:', e.message);
+        return { allowed: true };  // fail open
+    }
+}
+
+// Pull an ATIS letter (Information ALPHA / Z) out of a free-text body.
+// Most D-ATIS broadcasts include exactly one letter in this format.
+function extractLetter(text) {
+    if (!text) return null;
+    const m = text.match(/INFORMATION\s+([A-Z])\b/i) || text.match(/ATIS\s+([A-Z])\b/);
+    return m ? m[1].toUpperCase() : null;
+}
+
+export default async function handler(req, res) {
+    setCors(res);
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
+    const station = (req.query.station || '').toString().toUpperCase().slice(0, 4);
+    if (!station || !/^[A-Z0-9]{3,4}$/.test(station)) {
+        return res.status(400).json({ error: 'Station is required (3–4 letter ICAO/IATA)' });
+    }
+
+    // 1. Access code check (same gate the weather route uses).
+    const accessCode = req.headers['x-access-code'];
+    if (process.env.ACCESS_GATE_ENABLED === 'true') {
+        const valid = await validateAccessCode(accessCode);
+        if (!valid) {
+            console.warn(`[ATIS][Access] Rejected — code: ${accessCode || 'none'}, station: ${station}`);
+            return res.status(403).json({ error: 'Invalid or missing access code' });
+        }
+    }
+
+    // 2. Rate limit (per-user, with per-IP backstop).
+    const ip = getClientIp(req);
+    const rl = await checkRateLimit(accessCode, ip);
+    if (!rl.allowed) {
+        console.warn(`[ATIS][RateLimit] Blocked by ${rl.by}: ${rl.count} > ${rl.limit}`);
+        return res.status(429).json({
+            error: `Rate limit exceeded (${rl.by}). Try again in an hour.`,
+            limit: rl.limit,
+        });
+    }
+
+    // 3. Proxy to atis.guru with a realistic UA and a tight timeout.
+    const upstream = `https://atis.guru/atis/${station}`;
+    const controller = new AbortController();
+    const tId = setTimeout(() => controller.abort(), 9000);
+    try {
+        const r = await fetch(upstream, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; METAR-GO-EFB/1.0) AppleWebKit/537.36',
+                'Accept':     'application/json, text/html;q=0.9, */*;q=0.5',
+            },
+            signal: controller.signal,
+        });
+        clearTimeout(tId);
+
+        // Soft-fail upstream errors so the frontend can show a friendly
+        // "D-ATIS unavailable" card instead of a red ERROR state.
+        if (!r.ok) {
+            return res.status(200).json({
+                error:   'D-ATIS unavailable',
+                station,
+                status:  r.status,
+                source:  'atis.guru',
+                fetched: Date.now(),
+            });
+        }
+
+        const ct   = (r.headers.get('content-type') || '').toLowerCase();
+        const body = await r.text();
+
+        // Normalise: prefer JSON if the upstream sent it; otherwise return
+        // the raw body as a text blob and let the frontend display it.
+        let payload = null;
+        if (ct.includes('json')) {
+            try { payload = JSON.parse(body); } catch(e) { payload = null; }
+        }
+        if (payload && typeof payload === 'object') {
+            const rawText = payload.datis || payload.atis || payload.text || payload.raw || '';
+            return res.status(200).json({
+                station,
+                raw:     rawText || '',
+                letter:  payload.letter || extractLetter(rawText),
+                issued:  payload.timestamp || payload.issued || payload.time || null,
+                source:  'atis.guru',
+                fetched: Date.now(),
+                _raw:    payload,    // pass through for future fields without a code change
+            });
+        }
+        // Fallback: upstream sent HTML/text. Strip tags so the frontend has
+        // something readable; keep the raw HTML on _html for diagnostics.
+        const stripped = body
+            .replace(/<script[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[\s\S]*?<\/style>/gi,  '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        if (!stripped) {
+            return res.status(200).json({
+                error:   'D-ATIS unavailable',
+                station,
+                source:  'atis.guru',
+                fetched: Date.now(),
+            });
+        }
+        return res.status(200).json({
+            station,
+            raw:     stripped,
+            letter:  extractLetter(stripped),
+            issued:  null,
+            source:  'atis.guru',
+            fetched: Date.now(),
+            _format: 'html',
+        });
+    } catch(err) {
+        clearTimeout(tId);
+        const msg = err.name === 'AbortError' ? 'upstream timeout' : (err.message || 'upstream error');
+        console.warn(`[ATIS] ${station} failed:`, msg);
+        return res.status(200).json({
+            error:   'D-ATIS unavailable',
+            station,
+            detail:  msg,
+            source:  'atis.guru',
+            fetched: Date.now(),
+        });
+    }
+}

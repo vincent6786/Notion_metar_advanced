@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '5.1.0';</script>
+    <script>window.APP_VERSION = '5.1.1';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -107,7 +107,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.1.0</div>
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.1.1</div>
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -473,6 +473,7 @@
         <div class="weather-pill-row">
             <button id="pillMetar" class="pill-btn active" onclick="switchWeatherPane('metar')">METAR</button>
             <button id="pillTaf"   class="pill-btn"        onclick="switchWeatherPane('taf')">TAF</button>
+            <button id="pillAtis"  class="pill-btn"        onclick="switchWeatherPane('atis')">D-ATIS</button>
         </div>
     
         <!-- METAR pane -->
@@ -744,6 +745,25 @@
             </div>
         </div>
         <!-- /weather-taf-pane -->
+
+        <!-- D-ATIS pane (preview, unofficial source) -->
+        <div id="weather-atis-pane" style="display:none;">
+            <div class="atis-card" id="atisCard">
+                <div class="atis-head">
+                    <div>
+                        <div class="atis-label">D-ATIS · INFORMATION</div>
+                        <div class="atis-issued" id="atisIssued">—</div>
+                    </div>
+                    <div class="atis-letter-badge" id="atisLetter">—</div>
+                </div>
+                <div class="raw-text" id="rawAtis">Tap a station to load D-ATIS.</div>
+                <div class="atis-unofficial">
+                    ⚠ Unofficial · source: <span class="atis-src">atis.guru</span>
+                    <span class="atis-hint">Coverage is FAA-feed based; non-US airports may be unavailable.</span>
+                </div>
+            </div>
+        </div>
+        <!-- /weather-atis-pane -->
 
     </div>
     <!-- /tab-weather -->
