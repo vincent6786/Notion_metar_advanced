@@ -1763,10 +1763,10 @@
         // already burns enough rate-limit budget; only fetch when the user
         // actually opens the D-ATIS pane.
         let _atisLoadedFor = null;
-        async function loadAtisFor(icao) {
+        async function loadAtisFor(icao, force) {
             const code = (icao || '').toUpperCase();
             if (!code) return;
-            if (_atisLoadedFor === code) return;
+            if (!force && _atisLoadedFor === code) return;
             _atisLoadedFor = code;
             const issuedEl = document.getElementById('atisIssued');
             const letterEl = document.getElementById('atisLetter');
@@ -1843,7 +1843,10 @@
                 letterEl.innerText = '—';
                 issuedEl.innerText = '';
                 const srcEl = document.getElementById('atisSource');
-                if (srcEl) srcEl.innerText = 'atis.guru (open ↗)';
+                if (srcEl) {
+                    srcEl.textContent = 'atis.guru';
+                    srcEl.href = `https://atis.guru/atis/${(icao || '').toUpperCase()}`;
+                }
                 const headBtn = document.getElementById('atisHeadOpenBtn');
                 if (headBtn) headBtn.style.display = 'none';
 
@@ -1886,7 +1889,7 @@
                               ? `If ${safeIcao} doesn't have D-ATIS, tune the voice ATIS frequency above.`
                               : `This airport may not broadcast D-ATIS.`}
                         </div>
-                        <button onclick="_atisLoadedFor=null;loadAtisFor('${safeIcao}')"
+                        <button onclick="loadAtisFor('${safeIcao}',true)"
                                 class="atis-retry-btn">↺ Retry D-ATIS lookup</button>
                         ${upstreamStatus ? `<div class="atis-diag">clowd.io: HTTP ${upstreamStatus}${d?.detail ? ' · ' + _escapeHtml(d.detail) : ''}</div>` : ''}
                     </div>`;
@@ -1895,9 +1898,14 @@
 
             cardEl.classList.remove('is-empty');
 
-            // Reflect the data source.
+            // Reflect the data source and wire the link to the correct API URL.
             const srcEl = document.getElementById('atisSource');
-            if (srcEl && d.source) srcEl.innerText = d.source;
+            if (srcEl && d.source) {
+                srcEl.textContent = d.source;
+                srcEl.href = d.source === 'atis.info'      ? `https://atis.info/api/${icao}`
+                           : d.source === 'datis.clowd.io' ? `https://datis.clowd.io/api/${icao}`
+                           : 'https://atis.info';
+            }
 
             // Build structured blocks. Use the structured fields when present;
             // fall back to a single block from `raw` otherwise.
@@ -1950,7 +1958,7 @@
             const code = (icao || '').toString().toUpperCase();
             let url;
             switch (source) {
-                case 'info':  url = `https://atis.info/${code}`;            break;
+                case 'info':  url = `https://atis.info/api/${code}`;         break;
                 case 'clowd': url = `https://datis.clowd.io/api/${code}`;   break;
                 default:      url = `https://atis.guru/atis/${code}`;       break;
             }
