@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.4.1',  // ← set once in index.html
-            title: 'METAR GO — v5.4.1',
+            version: window.APP_VERSION || '5.4.3',  // ← set once in index.html
+            title: 'METAR GO — v5.4.3',
             changes: [
+                {
+                    icon: '🔧',
+                    title: 'ATIS & Audio Fixes',
+                    desc: 'The D-ATIS source label is now a real tappable link — tap "atis.info" or "datis.clowd.io" to open the raw data feed. Live audio streams that silently hang (stream server offline) now time out after 15 seconds and show a "Try LiveATC" fallback instead of spinning forever. The retry button on the D-ATIS card also works again.'
+                },
                 {
                     icon: '🔊',
                     title: 'D-ATIS preview',
