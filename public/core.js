@@ -2794,10 +2794,8 @@
                 container.innerHTML = cfg.streams.map(s => `
                     <div style="margin-bottom:12px;">
                         <div class="m-label" style="color:${s.color};">${s.type}</div>
-                        <audio controls 
-                               style="width:100%;height:32px;border-radius:16px;"
-                               onerror="this.style.display='none';
-                                        this.nextElementSibling.style.display='flex';">
+                        <audio controls
+                               style="width:100%;height:32px;border-radius:16px;">
                             <source src="${s.src}" type="audio/mpeg">
                         </audio>
                         <div style="display:none;font-size:11px;color:var(--warn);
@@ -2813,6 +2811,39 @@
                         </div>
                     </div>`).join('') +
                     `<div style="font-size:10px;color:#555;margin-top:8px;text-align:right;">Source: TWATC.net & LiveATC</div>`;
+
+                // The native onerror only fires on hard HTTP failures. Icecast
+                // streams that accept the TCP connection but never send audio
+                // frames (offline feed) stall silently forever. Detect that by
+                // timing out on 'waiting'/'stalled' before the first 'playing'.
+                container.querySelectorAll('audio').forEach(audio => {
+                    const fallback = audio.nextElementSibling;
+                    let stallTimer = null;
+                    let hasPlayed  = false;
+
+                    const showOffline = () => {
+                        clearTimeout(stallTimer); stallTimer = null;
+                        audio.pause();
+                        audio.style.display = 'none';
+                        if (fallback) fallback.style.display = 'flex';
+                    };
+
+                    const onWaiting = () => {
+                        if (hasPlayed) return;
+                        if (!stallTimer) stallTimer = setTimeout(showOffline, 15000);
+                    };
+
+                    const onPlaying = () => {
+                        hasPlayed = true;
+                        clearTimeout(stallTimer); stallTimer = null;
+                    };
+
+                    audio.addEventListener('error',   showOffline);
+                    audio.addEventListener('waiting', onWaiting);
+                    audio.addEventListener('stalled', onWaiting);
+                    audio.addEventListener('playing', onPlaying);
+                    audio.addEventListener('canplay', onPlaying);
+                });
             } else {
                 label.innerText = "AUDIO STREAMS";
                 container.innerHTML = `<div style="color:var(--sub-text);font-size:13px;text-align:center;padding:10px 0;">No direct in-app stream available for ${icao}.<br><span style="font-size:11px;color:#555;">Use the LiveATC button below.</span></div>`;
