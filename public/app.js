@@ -3098,7 +3098,7 @@
                        t.closest('.map-layer-bar') ||          // horizontally scrollable map controls
                        t.closest('.map-level-bar') ||
                        t.closest('#multiMap') ||               // dashboard map — Leaflet handles pan
-                       t.closest('.radar-block') ||            // per-card radar mini-map
+                       t.closest('.dash-taf-block') ||        // per-card forecast text — don't swipe
                        t.closest('.leaflet-container') ||      // any other Leaflet map
                        (t.tagName === 'INPUT' && t.type === 'range') || // sliders are horizontal too
                        document.getElementById('windsAloftModal')?.style.display === 'flex' || // backdrop tap
@@ -3291,6 +3291,44 @@
         let multiRefreshInterval = null;
         const _fetchingIcaos = new Set(); // guard against concurrent fetches for same airport
 
+        // Warm the in-memory card cache from whatever secureFetch already stashed
+        // in localStorage on a previous visit. multiDataCache lives only in memory,
+        // so without this every dashboard open starts blank and each card sits on
+        // "Loading…" until the concurrency-2 fetch pool reaches it — even when the
+        // data is already cached locally. Hydrating first lets cards paint instantly
+        // (stale-while-revalidate); refreshMultiData still fetches fresh data behind
+        // the scenes and re-renders. Reads mirror the shape fetchMultiAirportData writes.
+        function hydrateMultiCacheFromLocal() {
+            for (const icao of multiAirports) {
+                if (multiDataCache[icao]) continue;
+                try {
+                    const mRaw = localStorage.getItem(`cache_/api/weather?type=metar&station=${icao}`);
+                    if (!mRaw) continue;
+                    const mObj  = JSON.parse(mRaw);
+                    const metar = mObj && mObj.data;
+                    if (!metar || metar.error || !metar.raw) continue;
+
+                    const sRaw    = localStorage.getItem(`cache_/api/weather?type=station&station=${icao}`);
+                    const station = sRaw ? (JSON.parse(sRaw).data || null) : null;
+
+                    let hasTaf = false;
+                    try {
+                        const tRaw = localStorage.getItem(`cache_/api/weather?type=taf&station=${icao}`);
+                        hasTaf = !!(tRaw && JSON.parse(tRaw).data && JSON.parse(tRaw).data.raw);
+                    } catch(e) {}
+
+                    multiDataCache[icao] = {
+                        metar,
+                        hasTaf,
+                        stationName:      (station && station.name) || icao,
+                        stationIata:      (station && station.iata) || '',
+                        stationElevation: (station && station.elevation_ft != null) ? station.elevation_ft : null,
+                        fetchTime:        (mObj && mObj.ts) || Date.now(),
+                    };
+                } catch(e) { /* skip this airport, it'll fill in on refresh */ }
+            }
+        }
+
         async function loadMultiAirports() {
             // Hydrate cloud-synced custom groups first
             if (typeof loadCustomGroupsFromCloud === 'function') {
@@ -3307,6 +3345,8 @@
             } else {
                 multiAirports = [];
             }
+            // Paint cards immediately from last-known local cache, then refresh below.
+            hydrateMultiCacheFromLocal();
             renderMultiDashboard();
             // Restore saved view (Grid / Map) — must run after multiGrid + multiMap exist
             if (typeof getDashView === 'function' && typeof setDashView === 'function') {
@@ -3503,7 +3543,8 @@
             const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
             const el = document.getElementById('multiLastUpdated');
             if (el) el.innerText = `Auto-refreshed: ${timeStr}`;
-            // Refresh map pins if map view is active
+            // Refresh map pins if map view is active — no recenter, so a background
+            // refresh doesn't snap the map away from wherever the user panned to.
             if (typeof getDashView === 'function' && getDashView() === 'map'
                 && typeof renderMultiMap === 'function') {
                 renderMultiMap();
@@ -3527,11 +3568,6 @@
             // not just for country/continent/custom modes but ALSO whenever a
             // Favourites pseudo-group is rendered, otherwise each <section> lands
             // in a grid cell and crushes the cards inside.
-            // Destroy any per-card radar maps from the previous render — DOM nodes are gone
-            if (typeof _radarInstances !== 'undefined' && _radarInstances.size) {
-                for (const m of _radarInstances.values()) { try { m.remove(); } catch(e) {} }
-                _radarInstances.clear();
-            }
 
             if (multiAirports.length === 0) {
                 grid.classList.remove('is-grouped');
@@ -3759,105 +3795,56 @@
             });
         }
 
-        // ── RainViewer radar (lazy, cached for 10 min) ────────────────────
-        let _rainviewerCache = null;       // { ts, host, path, fetchedAt }
-        let _rainviewerPromise = null;
-
-        async function _getRainviewerFrame() {
-            const now = Date.now();
-            if (_rainviewerCache && (now - _rainviewerCache.fetchedAt) < 10 * 60 * 1000) {
-                return _rainviewerCache;
-            }
-            if (_rainviewerPromise) return _rainviewerPromise;
-            _rainviewerPromise = (async () => {
-                try {
-                    const res  = await fetch('https://api.rainviewer.com/public/weather-maps.json');
-                    const json = await res.json();
-                    const radar = json && json.radar && json.radar.past;
-                    if (!radar || radar.length === 0) return null;
-                    const latest = radar[radar.length - 1];
-                    _rainviewerCache = {
-                        host: json.host || 'https://tilecache.rainviewer.com',
-                        path: latest.path,
-                        ts:   latest.time,
-                        fetchedAt: now,
-                    };
-                    return _rainviewerCache;
-                } catch (e) {
-                    console.warn('[Radar] RainViewer fetch failed:', e);
-                    return null;
-                } finally {
-                    _rainviewerPromise = null;
-                }
-            })();
-            return _rainviewerPromise;
-        }
-
-        // Per-card radar: build a Leaflet mini-map with RainViewer overlay.
-        // Called lazily when the radar block is expanded for that card.
-        const _radarInstances = new Map();   // icao → L.Map
-        async function _initRadarMap(icao, hostEl) {
-            if (typeof L === 'undefined' || !hostEl) return;
-            if (_radarInstances.has(icao)) {
-                const m = _radarInstances.get(icao);
-                setTimeout(() => m.invalidateSize(), 50);
-                return;
-            }
-            const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
-            if (!info || info.lat == null || info.lon == null) {
-                hostEl.innerHTML = '<div class="radar-empty">Location unavailable</div>';
-                return;
-            }
-            const map = L.map(hostEl, {
-                center: [info.lat, info.lon],
-                zoom: 7,
-                zoomControl: false,
-                attributionControl: false,
-                dragging: false,
-                scrollWheelZoom: false,
-                doubleClickZoom: false,
-                boxZoom: false,
-                keyboard: false,
-                touchZoom: false,
-                tap: false,
-            });
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                maxZoom: 12, subdomains: 'abcd',
-            }).addTo(map);
-
-            const frame = await _getRainviewerFrame();
-            if (frame) {
-                L.tileLayer(`${frame.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
-                    opacity: 0.75, maxZoom: 12,
-                }).addTo(map);
-            }
-            // Station marker
-            L.circleMarker([info.lat, info.lon], {
-                radius: 5, color: '#fff', weight: 2,
-                fillColor: '#0a84ff', fillOpacity: 1,
-            }).addTo(map);
-
-            _radarInstances.set(icao, map);
-            setTimeout(() => map.invalidateSize(), 50);
-        }
-
-        // Per-card radar toggle (collapsed by default)
-        function toggleCardRadar(icao, btn) {
+        // ── Per-card TAF forecast toggle (collapsed by default) ───────────
+        // Replaces the old radar mini-map: expands the terminal forecast inline,
+        // which is the most useful glance after the current METAR. Loads lazily
+        // from the local TAF cache, falling back to a fetch on first open.
+        async function toggleCardTaf(icao, btn) {
             const card = btn && btn.closest('.multi-card');
             if (!card) return;
-            const block = card.querySelector('.radar-block');
+            const block = card.querySelector('.dash-taf-block');
             if (!block) return;
             const open = block.classList.toggle('is-open');
-            btn.innerText = open ? '⛅ Hide radar' : '⛅ Show radar';
-            if (open) {
-                const host = block.querySelector('.radar-map');
-                _initRadarMap(icao, host);
+            btn.innerText = open ? '📋 Hide forecast' : '📋 Show forecast';
+            if (!open) return;
+
+            const content = block.querySelector('.dash-taf-content');
+            if (!content || content.dataset.loaded === '1') return;
+            content.innerHTML = '<div class="dash-taf-loading">Loading forecast…</div>';
+
+            try {
+                let taf = null;
+                const cached = localStorage.getItem(`cache_/api/weather?type=taf&station=${icao}`);
+                if (cached) { try { taf = JSON.parse(cached).data; } catch(e) {} }
+                if (!taf || !taf.raw) {
+                    taf = await secureFetch(`/api/weather?type=taf&station=${icao}`).catch(() => null);
+                }
+                if (taf && taf.raw) {
+                    const forecast = taf.forecast || (taf.data && taf.data.forecast) || [];
+                    content.innerHTML = `<div class="dash-taf-raw">${formatRawTaf(taf.raw, forecast)}</div>`;
+                    content.dataset.loaded = '1';
+                } else {
+                    content.innerHTML = '<div class="dash-taf-empty">No forecast (TAF) issued for this station.</div>';
+                }
+            } catch(e) {
+                content.innerHTML = '<div class="dash-taf-empty">Forecast unavailable — tap again to retry.</div>';
             }
         }
 
         // ── Dashboard map view ────────────────────────────────────────────
         let _multiMapInstance  = null;
         let _multiMapMarkers   = [];
+        let _multiMapCentered  = false;   // only auto-center on first open / explicit recenter
+        let _multiMapMeMarker  = null;    // "you are here" dot from the locate button
+
+        // The user's saved home airport, read synchronously from the settings input
+        // (it's hydrated there at startup). Used to open the dashboard map centered
+        // on somewhere meaningful instead of a zoomed-out whole-world view.
+        function _dashDefaultAirport() {
+            const el = document.getElementById('defaultIcaoInput');
+            const v  = (el && el.value ? el.value : '').trim().toUpperCase();
+            return v || null;
+        }
 
         function _flightRulesColor(rules) {
             switch (rules) {
@@ -3869,32 +3856,47 @@
             }
         }
 
-        function renderMultiMap() {
+        // opts.recenter — snap the view back to the home airport / all pins.
+        // We only recenter on the first open or when explicitly asked (entering the
+        // map view), so a background data refresh never yanks the map out from under
+        // the user while they're panning around.
+        function renderMultiMap(opts) {
+            opts = opts || {};
             const el = document.getElementById('multiMap');
             if (!el || typeof L === 'undefined') return;
 
-            // Init once
+            // Init once. maxBounds + minZoom keep the view locked to a single world
+            // copy so zooming/pinching out can't reveal empty gray void beyond the
+            // map (the container background is dark, so any polar strip blends in).
             if (!_multiMapInstance) {
                 _multiMapInstance = L.map(el, {
-                    center: [20, 100],
+                    center: [20, 0],
                     zoom: 2,
-                    worldCopyJump: true,
+                    minZoom: 2,
                     zoomControl: true,
                     attributionControl: true,
+                    maxBounds: [[-85, -180], [85, 180]],
+                    maxBoundsViscosity: 1.0,
                 });
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                     maxZoom: 18,
                     subdomains: 'abcd',
                     attribution: '© OpenStreetMap, © CARTO',
                 }).addTo(_multiMapInstance);
+                _addMultiMapLocateControl();
             }
+
+            const shouldCenter = opts.recenter || !_multiMapCentered;
 
             // Clear previous markers
             _multiMapMarkers.forEach(m => _multiMapInstance.removeLayer(m));
             _multiMapMarkers = [];
 
             if (multiAirports.length === 0) {
-                _multiMapInstance.setView([20, 100], 2);
+                if (shouldCenter) {
+                    _multiMapInstance.setView([20, 0], 2);
+                    _multiMapCentered = true;
+                }
                 setTimeout(() => _multiMapInstance.invalidateSize(), 50);
                 return;
             }
@@ -3948,11 +3950,77 @@
                 bounds.push([info.lat, info.lon]);
             }
 
-            if (bounds.length > 0) {
-                _multiMapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 7 });
+            if (shouldCenter) {
+                _centerMultiMap(bounds);
+                _multiMapCentered = true;
             }
             // Leaflet needs a size recalc after the parent becomes visible
             setTimeout(() => _multiMapInstance.invalidateSize(), 50);
+        }
+
+        // Decide where the map opens: prefer the user's home airport (a familiar,
+        // useful starting point at a readable zoom), otherwise a single tracked
+        // airport, otherwise fit all pins — never the zoomed-all-the-way-out globe.
+        function _centerMultiMap(bounds) {
+            if (!_multiMapInstance) return;
+            const def = _dashDefaultAirport();
+            if (def) {
+                const info = (typeof lookupAirport === 'function') ? lookupAirport(def) : null;
+                if (info && info.lat != null && info.lon != null) {
+                    _multiMapInstance.setView([info.lat, info.lon], 7);
+                    return;
+                }
+            }
+            if (bounds.length === 1) {
+                _multiMapInstance.setView(bounds[0], 7);
+            } else if (bounds.length > 1) {
+                _multiMapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 7 });
+            } else {
+                _multiMapInstance.setView([20, 0], 2);
+            }
+        }
+
+        // Small "📍" control that centers the map on the phone's GPS position on
+        // demand — the on-tap alternative to opening at the home airport, without
+        // forcing a location prompt every time the map is opened.
+        function _addMultiMapLocateControl() {
+            if (!_multiMapInstance || typeof L === 'undefined') return;
+            const Locate = L.Control.extend({
+                options: { position: 'topright' },
+                onAdd() {
+                    const btn = L.DomUtil.create('button', 'multi-map-locate');
+                    btn.type = 'button';
+                    btn.title = 'Center on my location';
+                    btn.innerHTML = '📍';
+                    L.DomEvent.on(btn, 'click', L.DomEvent.stop)
+                              .on(btn, 'click', _locateOnMultiMap);
+                    return btn;
+                },
+            });
+            _multiMapInstance.addControl(new Locate());
+        }
+
+        function _locateOnMultiMap() {
+            if (!_multiMapInstance) return;
+            if (!navigator.geolocation) {
+                if (typeof showToast === 'function') showToast('⚠️ Geolocation not supported on this device');
+                return;
+            }
+            if (typeof showToast === 'function') showToast('📍 Locating…');
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const { latitude, longitude } = pos.coords;
+                _multiMapInstance.setView([latitude, longitude], 8);
+                if (_multiMapMeMarker) _multiMapInstance.removeLayer(_multiMapMeMarker);
+                _multiMapMeMarker = L.circleMarker([latitude, longitude], {
+                    radius: 7, color: '#fff', weight: 2,
+                    fillColor: '#0a84ff', fillOpacity: 0.9,
+                }).addTo(_multiMapInstance);
+            }, (err) => {
+                const msg = err.code === 1
+                    ? '🔒 Location permission denied — enable in browser settings'
+                    : '❌ GPS unavailable or timed out';
+                if (typeof showToast === 'function') showToast(msg);
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
         }
 
         // Replace a stuck Loading placeholder with a visible error state.
@@ -4360,13 +4428,12 @@
                         </div>
                     </div>
 
-                    <!-- Radar (collapsed by default; Leaflet inits on first expand) -->
-                    <div class="radar-row" style="margin-top:8px;">
-                        <button class="radar-toggle" type="button"
-                                onclick="event.stopPropagation();toggleCardRadar('${icao}', this)">⛅ Show radar</button>
-                        <div class="radar-block">
-                            <div class="radar-map"></div>
-                            <div class="radar-attr">© RainViewer · © CARTO</div>
+                    <!-- Forecast (TAF) — collapsed by default; loads on first expand -->
+                    <div class="dash-taf-row" style="margin-top:8px;">
+                        <button class="dash-taf-toggle" type="button"
+                                onclick="event.stopPropagation();toggleCardTaf('${icao}', this)">📋 Show forecast</button>
+                        <div class="dash-taf-block" onclick="event.stopPropagation();">
+                            <div class="dash-taf-content"></div>
                         </div>
                     </div>
 

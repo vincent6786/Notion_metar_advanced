@@ -3,53 +3,28 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.4.3',  // ← set once in index.html
-            title: 'METAR GO — v5.4.3',
+            version: window.APP_VERSION || '5.5.0',  // ← set once in index.html
+            title: 'METAR GO — v5.5.0',
             changes: [
                 {
-                    icon: '🔧',
-                    title: 'ATIS & Audio Fixes',
-                    desc: 'The D-ATIS source label is now a real tappable link — tap "atis.info" or "datis.clowd.io" to open the raw data feed. Live audio streams that silently hang (stream server offline) now time out after 15 seconds and show a "Try LiveATC" fallback instead of spinning forever. The retry button on the D-ATIS card also works again.'
-                },
-                {
-                    icon: '🔊',
-                    title: 'D-ATIS preview',
-                    desc: 'Weather tab now has a D-ATIS pill. Pulls the latest digital ATIS broadcast for the active airport from atis.guru. Marked unofficial — the source is FAA-feed based, so non-US airports may show "D-ATIS unavailable".'
-                },
-                {
-                    icon: '🗂️',
-                    title: 'Dashboard Grouping',
-                    desc: 'Organise your tracked airports by None, Country, Continent, or Custom groups. Sections collapse with a tap; shift-click or long-press a header to collapse / expand all at once.'
-                },
-                {
-                    icon: '⭐',
-                    title: 'Pinned Favourites',
-                    desc: 'Tap the ☆ on any card to pin an airport. Pinned airports float to a gold Favourites section at the top of the dashboard, regardless of grouping mode. Syncs across devices via Cloud Backup.'
-                },
-                {
-                    icon: '📁',
-                    title: 'Custom Groups',
-                    desc: 'Define groups like My Bases, Diversions, or Network hubs in Settings → Dashboard Groups. Tap 📁 on any card to assign it. Airports can belong to multiple groups; groups sync via Cloud Backup.'
-                },
-                {
-                    icon: '🗺️',
-                    title: 'Dashboard Map View',
-                    desc: 'Switch between ▦ Grid and 🗺 Map at the top of the dashboard. The map renders one pin per tracked airport, coloured by flight rules — tap a pin for raw METAR and an Open button.'
-                },
-                {
-                    icon: '⛅',
-                    title: 'Per-Card Radar',
-                    desc: 'Detailed cards now have a Show radar toggle that overlays the latest RainViewer precipitation tiles on a mini-map. Loads lazily so battery and data are protected.'
+                    icon: '⚡',
+                    title: 'Instant Dashboard Load',
+                    desc: 'Tracked airports now paint instantly from your last-known local cache when the dashboard opens, instead of every card sitting on Loading… while it fetches. Fresh data still refreshes quietly in the background.'
                 },
                 {
                     icon: '📋',
-                    title: 'Colour-Coded TAF',
-                    desc: 'The raw TAF block is now line-broken at every TEMPO / BECMG / FM / PROB keyword, with each keyword tinted by that period’s flight rules. Easier to scan at a glance.'
+                    title: 'Forecast on Cards',
+                    desc: 'The per-card ⛅ radar toggle is replaced with a 📋 Show forecast toggle. Tap it on any detailed card to expand that airport’s TAF inline — colour-coded by flight rules — without leaving the dashboard.'
                 },
                 {
-                    icon: '⚠️',
-                    title: 'Visible Error State',
-                    desc: 'When a card’s METAR fetch fails (rate limit, network drop, AVWX outage) the card now shows a red ERROR state with the reason instead of sitting on Loading… forever. Tap to retry.'
+                    icon: '🗺️',
+                    title: 'Smarter Map Open',
+                    desc: 'The dashboard Map view now opens centered on your Default Airport at a readable zoom instead of the whole zoomed-out globe. A new 📍 button recenters on your current GPS location on demand.'
+                },
+                {
+                    icon: '🌊',
+                    title: 'Cleaner Map Edges',
+                    desc: 'Pinching or zooming the dashboard map out no longer reveals a gray void around the world — the map now stays locked to a single world copy on a dark backdrop.'
                 }
             ]
         };
@@ -1333,7 +1308,7 @@
             const reorderBtn = document.getElementById('btnReorderDashboard');
             if (reorderBtn) reorderBtn.style.visibility = view === 'map' ? 'hidden' : '';
             if (view === 'map' && typeof renderMultiMap === 'function') {
-                renderMultiMap();
+                renderMultiMap({ recenter: true });
             }
         }
 
