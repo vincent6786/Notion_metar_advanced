@@ -3322,6 +3322,7 @@
                         hasTaf,
                         stationName:      (station && station.name) || icao,
                         stationIata:      (station && station.iata) || '',
+                        stationCountry:   (station && station.country) || '',
                         stationElevation: (station && station.elevation_ft != null) ? station.elevation_ft : null,
                         fetchTime:        (mObj && mObj.ts) || Date.now(),
                     };
@@ -3481,6 +3482,7 @@
                         hasTaf,
                         stationName:      station?.name || icao,
                         stationIata:      station?.iata || '',
+                        stationCountry:   station?.country || '',
                         stationElevation: station?.elevation_ft ?? null,
                         fetchTime:        Date.now()
                     };
@@ -3543,6 +3545,17 @@
             const timeStr = `${now.getUTCHours().toString().padStart(2,'0')}:${now.getUTCMinutes().toString().padStart(2,'0')}Z`;
             const el = document.getElementById('multiLastUpdated');
             if (el) el.innerText = `Auto-refreshed: ${timeStr}`;
+
+            // If we're grouping by country/continent and a just-fetched airport's
+            // country is now known (it wasn't at render time — e.g. an airport outside
+            // the bundled DB, freshly added), re-render once so it lands in the right
+            // group instead of "Other". The signature guard keeps steady-state refreshes
+            // from needlessly re-rendering (and collapsing open forecast panes).
+            const gm = (typeof getDashGroupMode === 'function') ? getDashGroupMode() : 'none';
+            if ((gm === 'country' || gm === 'continent') && _dashGroupSig() !== _lastDashGroupSig) {
+                renderMultiDashboard();
+            }
+
             // Refresh map pins if map view is active — no recenter, so a background
             // refresh doesn't snap the map away from wherever the user panned to.
             if (typeof getDashView === 'function' && getDashView() === 'map'
@@ -3560,6 +3573,26 @@
 
         // Sentinel group code for the Favourites pseudo-group
         const DASH_FAV_CODE = '★';
+
+        // Resolve an airport's ISO-2 country for Group By Country / Continent.
+        // The bundled airport DB only covers ~340 airports, so anything outside it
+        // used to fall into "Other". The dashboard already fetches full station data
+        // (which carries an ISO country code) for every tracked airport, so prefer
+        // that and only fall back to the local DB. Returns null if still unknown.
+        function _dashAirportCountry(icao) {
+            const cached = multiDataCache[icao];
+            if (cached && cached.stationCountry) return cached.stationCountry;
+            const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
+            return (info && info.country) ? info.country : null;
+        }
+
+        // Signature of the current country/continent bucketing, so a background
+        // refresh can re-group the dashboard once when a newly-fetched airport's
+        // country first becomes known — and stay quiet (no re-render) otherwise.
+        let _lastDashGroupSig = '';
+        function _dashGroupSig() {
+            return multiAirports.map(i => i + ':' + (_dashAirportCountry(i) || '')).join('|');
+        }
 
         function renderMultiDashboard() {
             const grid = document.getElementById('multiGrid');
@@ -3627,8 +3660,7 @@
                 // Bucket airports by ISO country code, preserving insertion order
                 const buckets = new Map();
                 for (const icao of restIcaos) {
-                    const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
-                    const co   = (info && info.country) ? info.country : 'XX';
+                    const co = _dashAirportCountry(icao) || 'XX';
                     if (!buckets.has(co)) buckets.set(co, []);
                     buckets.get(co).push(icao);
                 }
@@ -3665,8 +3697,7 @@
                 // Bucket airports by continent, preserving insertion order
                 const buckets = new Map();
                 for (const icao of restIcaos) {
-                    const info = (typeof lookupAirport === 'function') ? lookupAirport(icao) : null;
-                    const co   = (info && info.country) ? info.country : null;
+                    const co   = _dashAirportCountry(icao);
                     const cont = (co && typeof ISO_TO_CONTINENT !== 'undefined' && ISO_TO_CONTINENT[co]) || 'Other';
                     if (!buckets.has(cont)) buckets.set(cont, []);
                     buckets.get(cont).push(icao);
@@ -3721,6 +3752,10 @@
                     multiAirports.splice(to, 0, moved);
                 });
             }
+
+            // Remember how airports were bucketed, so refreshMultiData knows whether
+            // freshly-fetched country data actually changes the grouping.
+            _lastDashGroupSig = _dashGroupSig();
         }
 
         // Attach group-header delegates once. Click → toggle the group. Shift-click

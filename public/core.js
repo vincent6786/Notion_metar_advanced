@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.5.1',  // ← set once in index.html
-            title: 'METAR GO — v5.5.1',
+            version: window.APP_VERSION || '5.5.2',  // ← set once in index.html
+            title: 'METAR GO — v5.5.2',
             changes: [
+                {
+                    icon: '🌍',
+                    title: 'Accurate Country Grouping',
+                    desc: 'Group By: Country / Continent now uses each airport’s real country from its live station data, so airports outside the bundled database no longer fall into “Other”. Newly added airports drop into the right group as soon as their data loads.'
+                },
                 {
                     icon: '⚡',
                     title: 'Instant Dashboard Load',
