@@ -2589,9 +2589,30 @@
             background: #111;
             border: 1px solid var(--border);
         }
+        /* Leaflet stamps its own .leaflet-container class (default bg #ddd) on this
+           same element, and its stylesheet loads AFTER ours — so the light-gray void
+           beyond the world showed through when zoomed/pinched out. The two-class
+           selector out-specifies Leaflet's single-class rule and keeps it dark. */
+        .multi-map.leaflet-container {
+            background: #0f1115;
+        }
         @media (min-width: 1100px) {
             .multi-map { height: 75vh; }
         }
+        /* "Center on my location" button on the dashboard map */
+        .multi-map-locate {
+            width: 34px;
+            height: 34px;
+            background: #1c1c1e;
+            color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.5);
+        }
+        .multi-map-locate:hover { background: #2c2c2e; }
         .map-pin-wrap { background: transparent !important; border: none !important; }
         .map-pin {
             display: flex;
@@ -2937,9 +2958,9 @@
         .cg-edit:hover { color: var(--accent); border-color: rgba(10,132,255,0.4); }
         .cg-del:hover  { color: var(--danger); border-color: rgba(255,69,58,0.4); }
 
-        /* Per-card radar (RainViewer overlay) */
-        .radar-row { width: 100%; }
-        .radar-toggle {
+        /* Per-card TAF forecast toggle (dashboard cards) */
+        .dash-taf-row { width: 100%; }
+        .dash-taf-toggle {
             width: 100%;
             background: rgba(10,132,255,0.08);
             border: 1px solid rgba(10,132,255,0.3);
@@ -2951,35 +2972,31 @@
             cursor: pointer;
             transition: background 0.15s;
         }
-        .radar-toggle:hover { background: rgba(10,132,255,0.16); }
-        .radar-block {
+        .dash-taf-toggle:hover { background: rgba(10,132,255,0.16); }
+        .dash-taf-block {
             display: none;
             margin-top: 6px;
             border-radius: 6px;
             overflow: hidden;
             border: 1px solid var(--border);
-            position: relative;
+            background: rgba(255,255,255,0.04);
         }
-        .radar-block.is-open { display: block; }
-        .radar-map {
-            width: 100%;
-            height: 150px;
-            background: #111;
+        .dash-taf-block.is-open { display: block; }
+        .dash-taf-content {
+            padding: 9px 10px;
         }
-        .radar-attr {
-            position: absolute;
-            bottom: 2px;
-            right: 4px;
-            font-size: 9px;
-            color: rgba(255,255,255,0.55);
-            background: rgba(0,0,0,0.45);
-            padding: 1px 5px;
-            border-radius: 3px;
-            pointer-events: none;
+        .dash-taf-raw {
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 11px;
+            line-height: 1.7;
+            color: #e0e0e0;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
-        .radar-empty {
-            display: flex; align-items: center; justify-content: center;
-            height: 150px; color: var(--sub-text); font-size: 12px;
+        .dash-taf-loading, .dash-taf-empty {
+            font-size: 11px;
+            color: var(--sub-text);
+            padding: 2px 0;
         }
 
         .multi-name {
