@@ -4183,6 +4183,15 @@
                     </div>
                     <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:10px;font-family:'SF Mono',monospace;font-size:12px;color:#e0e0e0;line-height:1.6;word-break:break-all;white-space:pre-wrap;margin-top:6px;">${formatRawMetar(rawMetar)}</div>
                     <div class="multi-age" style="color:${ageColor};margin-top:6px;">${ageMin > 60 ? '⚠️ ' : ''}${ageMin}m ago · Tap to load full data</div>
+
+                    <!-- Forecast (TAF) — collapsed by default; loads on first expand -->
+                    <div class="dash-taf-row" style="margin-top:8px;">
+                        <button class="dash-taf-toggle" type="button"
+                                onclick="event.stopPropagation();toggleCardTaf('${icao}', this)">📋 Show forecast</button>
+                        <div class="dash-taf-block" onclick="event.stopPropagation();">
+                            <div class="dash-taf-content"></div>
+                        </div>
+                    </div>
                 </div>`;
         }
 

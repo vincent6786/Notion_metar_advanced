@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '5.5.0';</script>
+    <script>window.APP_VERSION = '5.5.1';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -107,7 +107,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.5.0</div>
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.5.1</div>
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -167,7 +167,7 @@
         <!-- Always visible -->
         <div class="tab" onclick="setTab('info')">INFO</div>
         <div class="tab" onclick="setTab('atc')">ATC</div>
-        <div class="tab" onclick="setTab('world')">WORLD</div>
+        <div class="tab" onclick="setTab('world')">CLOCK</div>
         <div class="tab" onclick="setTab('map')">MAP</div>
         <div class="tab" onclick="setTab('tools')">TOOLS</div>
         <div class="tab" onclick="setTab('settings')">SETTINGS</div>
@@ -1120,7 +1120,7 @@
                 </div>
                 
                 <div class="help-section">
-                    <div class="help-section-title">🌍 WORLD Tab</div>
+                    <div class="help-section-title">🕐 CLOCK Tab</div>
                     <div class="help-item">
                         <div class="help-q">World Clock</div>
                         <div class="help-a">Live local times with UTC offset. Type any ICAO code (e.g. EGLL, KJFK) and tap <b>Add</b>. Timezone is resolved automatically via coordinates. Tap <b>✕</b> to remove a city.</div>

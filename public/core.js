@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.5.0',  // ← set once in index.html
-            title: 'METAR GO — v5.5.0',
+            version: window.APP_VERSION || '5.5.1',  // ← set once in index.html
+            title: 'METAR GO — v5.5.1',
             changes: [
                 {
                     icon: '⚡',
@@ -13,8 +13,13 @@
                 },
                 {
                     icon: '📋',
-                    title: 'Forecast on Cards',
-                    desc: 'The per-card ⛅ radar toggle is replaced with a 📋 Show forecast toggle. Tap it on any detailed card to expand that airport’s TAF inline — colour-coded by flight rules — without leaving the dashboard.'
+                    title: 'Forecast on Every Card',
+                    desc: 'The 📋 Show forecast toggle (which replaced the old radar toggle) now appears on every card in both Raw and Detailed views. Tap it to expand that airport’s TAF inline — colour-coded by flight rules — without leaving the dashboard.'
+                },
+                {
+                    icon: '🕐',
+                    title: 'CLOCK Tab',
+                    desc: 'The WORLD tab is now labelled CLOCK — the same world-clock feature, with a clearer name.'
                 },
                 {
                     icon: '🗺️',
