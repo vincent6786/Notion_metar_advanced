@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '5.6.1';</script>
+    <script>window.APP_VERSION = '5.6.2';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -53,6 +53,27 @@
         from { transform: translateY(-100%); }
         to   { transform: translateY(0); }
     }
+    /* ── App-update banner ── */
+    #update-banner {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 10001;
+        background: linear-gradient(90deg, #063a7a, #0a3d91);
+        border-bottom: 1px solid #0a84ff;
+        padding: 10px 16px;
+        padding-top: max(10px, env(safe-area-inset-top));
+        text-align: center;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 0.4px;
+        cursor: pointer;
+        animation: offlineBannerIn 0.3s ease;
+    }
+    #update-banner.visible { display: block; }
+    #update-banner b { color: #7ab8ff; }
+    #update-banner:active { filter: brightness(1.12); }
     /* ── Staging / Preview indicator ── */
     #staging-banner {
         display: none;
@@ -107,7 +128,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.6.1</div>
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.6.2</div>
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -2660,6 +2681,11 @@
         <span class="offline-stale" id="offline-stale-time"></span>
     </div>
 
+    <!-- App-update banner — shown when a newer version is ready; tap to reload -->
+    <div id="update-banner" onclick="applyAppUpdate()" role="button" tabindex="0">
+        <span>🔄</span> Update available — <b>tap to refresh</b>
+    </div>
+
 
     <!-- ================================================================
          TOOLS EXTENSION PANEL
@@ -3789,6 +3815,59 @@
 // ── Service Worker Registration + Offline Detection ──
 (function () {
     if ('serviceWorker' in navigator) {
+        let _swReg = null;
+        let _reloadingForUpdate = false;
+
+        // Reload into the new version once the fresh worker takes control — but
+        // only after the user taps the banner. Gated so we never auto-reload on
+        // first install or a background activation the user didn't ask for.
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (_reloadingForUpdate) window.location.reload();
+        });
+
+        function _showUpdateBanner() {
+            const b = document.getElementById('update-banner');
+            if (!b || b.classList.contains('visible')) return;
+            b.classList.add('visible');
+            document.body.style.paddingTop = b.offsetHeight + 'px';
+        }
+
+        function _watchWorker(worker) {
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+                // 'installed' while a controller already exists = an update (not first install)
+                if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                    _showUpdateBanner();
+                }
+            });
+        }
+
+        function _wireUpdates(reg) {
+            _swReg = reg;
+            if (reg.waiting && navigator.serviceWorker.controller) _showUpdateBanner();
+            _watchWorker(reg.installing);
+            reg.addEventListener('updatefound', () => _watchWorker(reg.installing));
+            // Check for a fresh deploy now, whenever the app regains focus, and hourly.
+            const check = () => { reg.update().catch(() => {}); };
+            check();
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+            setInterval(check, 60 * 60 * 1000);
+        }
+
+        // Tapping the banner applies the update and reloads into it.
+        window.applyAppUpdate = function () {
+            const b = document.getElementById('update-banner');
+            if (b) b.innerHTML = '<span>⏳</span> Updating…';
+            _reloadingForUpdate = true;
+            const waiting = _swReg && _swReg.waiting;
+            if (waiting) {
+                waiting.postMessage({ type: 'SKIP_WAITING' });
+                setTimeout(() => window.location.reload(), 2500);  // fallback if controllerchange is slow
+            } else {
+                window.location.reload();   // new worker already active (skipWaiting)
+            }
+        };
+
         window.addEventListener('load', () => {
             if (window.__EFB_SKIP_SW) {
                 navigator.serviceWorker.getRegistrations().then(regs => {
@@ -3797,7 +3876,7 @@
                 });
             } else {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('[SW] Registered:', reg.scope))
+                    .then(reg => { console.log('[SW] Registered:', reg.scope); _wireUpdates(reg); })
                     .catch(err => console.warn('[SW] Registration failed:', err));
             }
         });
