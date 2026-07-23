@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.6.3',  // ← set once in index.html
-            title: 'METAR GO — v5.6.3',
+            version: window.APP_VERSION || '5.7.0',  // ← set once in index.html
+            title: 'METAR GO — v5.7.0',
             changes: [
+                {
+                    icon: '📋',
+                    title: 'Pre-Flight Briefing',
+                    desc: 'A new Pre-Flight Briefing box on the Tools page collects your instructor’s recommended weather sites — official briefing (1800wxbrief, GFA, METAR/TAF), winds & temps aloft, satellite (GOES, Zoom Earth), Windy, and FAA cameras. They open in the in-app viewer, and where the site supports it, follow the airport you’re viewing.'
+                },
                 {
                     icon: '🔄',
                     title: 'Tap-to-Update',
