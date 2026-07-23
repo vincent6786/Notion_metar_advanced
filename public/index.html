@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '5.6.2';</script>
+    <script>window.APP_VERSION = '5.6.3';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -128,7 +128,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.6.2</div>
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.6.3</div>
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -1788,6 +1788,23 @@
                 <div style="font-size:20px; color:var(--accent); margin-left:12px;">→</div>
             </div>
         </div>
+
+        <!-- My Resources — its own box on the tools page, a sibling to the
+             Aviation Tools Collection (not buried inside the tools overlay) -->
+        <div class="info-card" style="background:linear-gradient(135deg, rgba(232,160,32,0.12) 0%, rgba(232,160,32,0.05) 100%); border:1px solid rgba(232,160,32,0.35); cursor:pointer; transition:all 0.3s; margin-top:12px;" onclick="openToolsExtension('resources')">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="font-size:28px;">📌</div>
+                        <div>
+                            <div style="font-size:15px; font-weight:800; color:#fff;">My Resources</div>
+                            <div style="font-size:11px; color:var(--sub-text);">Saved links, PDFs &amp; notes · synced — tap to open</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size:20px; color:#e8a020; margin-left:12px;">→</div>
+            </div>
+        </div>
     </div>
 
 
@@ -2808,12 +2825,6 @@
              MY RESOURCES PANEL
         ================================================================ -->
         <div id="my-resources-panel" style="display:none;">
-            <!-- Section heading — My Resources now lives directly below the tool
-                 collection in one scrolling view (no separate sub-tab). -->
-            <div style="margin-top:26px;padding-top:20px;border-top:1px solid #2a2a2a;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span style="font-size:15px;font-weight:800;color:#fff;">📌 My Resources</span>
-                <span style="font-size:11px;color:var(--sub-text);">· links, PDFs &amp; notes · synced</span>
-            </div>
             <!-- Add button -->
             <div style="display:flex;gap:8px;margin-bottom:16px;">
                 <button onclick="showAddResourceForm()" id="addResourceBtn" style="flex:1;background:#111;border:2px dashed #444;color:var(--accent);padding:14px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">

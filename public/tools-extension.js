@@ -11,7 +11,8 @@ let toolsExtensionState = {
     isOpen: false,
     currentTool: null,
     previousTab: 'tools',
-    isFullScreen: false
+    isFullScreen: false,
+    view: 'tools'   // 'tools' (tool grid) or 'resources' (My Resources) — set by openToolsExtension
 };
 
 // Great Circle map state
@@ -197,9 +198,10 @@ function enableHorizontalScroll() {
 /**
  * Open the tools extension panel
  */
-function openToolsExtension() {
-    console.log('Opening tools extension...');
-    
+function openToolsExtension(view) {
+    console.log('Opening tools extension...', view || 'tools');
+    toolsExtensionState.view = (view === 'resources') ? 'resources' : 'tools';
+
     // Keep main tools tab visible (don't hide it)
     const toolsTab = document.getElementById('tab-tools');
     const toolsExtension = document.getElementById('tools-extension-panel');
@@ -317,18 +319,17 @@ function showToolsMenu() {
     const resources = document.getElementById('my-resources-panel');
     const toolViews = document.querySelectorAll('.tool-view');
 
-    if (menu) {
-        toolViews.forEach(view => view.style.display = 'none');
-        toolsExtensionState.currentTool = null;
+    toolViews.forEach(view => view.style.display = 'none');
+    toolsExtensionState.currentTool = null;
 
-        // The tool collection and My Resources now share one scrolling view —
-        // My Resources sits directly below the tools (no separate sub-tab).
-        menu.style.display = 'block';
-        if (resources) resources.style.display = 'block';
-        if (typeof loadMyResources === 'function') loadMyResources();
+    // The tool grid and My Resources are separate top-level views, each reached
+    // from its own box on the Tools page. Show whichever one we were opened for.
+    const isResources = toolsExtensionState.view === 'resources';
+    if (menu)      menu.style.display      = isResources ? 'none' : 'block';
+    if (resources) resources.style.display = isResources ? 'block' : 'none';
+    if (isResources && typeof loadMyResources === 'function') loadMyResources();
 
-        updateExtensionHeader('Aviation Tools', false);
-    }
+    updateExtensionHeader(isResources ? 'My Resources' : 'Aviation Tools', false);
 }
 
 /**

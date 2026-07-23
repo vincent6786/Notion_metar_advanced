@@ -3,8 +3,8 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.6.2',  // ← set once in index.html
-            title: 'METAR GO — v5.6.2',
+            version: window.APP_VERSION || '5.6.3',  // ← set once in index.html
+            title: 'METAR GO — v5.6.3',
             changes: [
                 {
                     icon: '🔄',
@@ -13,8 +13,8 @@
                 },
                 {
                     icon: '📌',
-                    title: 'My Resources Moved Up',
-                    desc: 'Your saved links, PDFs, and notes now sit in their own section directly below the Aviation Tools grid — no more digging into a separate tab.'
+                    title: 'My Resources Box',
+                    desc: 'Your saved links, PDFs, and notes now have their own box on the Tools page, right beside the Aviation Tools Collection — tap it to open your resources directly.'
                 },
                 {
                     icon: '📷',
