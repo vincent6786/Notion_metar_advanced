@@ -3416,7 +3416,9 @@
             font-size: 14px;
             font-weight: 700;
             padding: 11px 24px;
+            border: none;
             border-radius: 10px;
+            cursor: pointer;
             box-shadow: 0 2px 12px rgba(10,132,255,0.35);
         }
         .cams-open-btn:hover { filter: brightness(1.08); }
