@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '5.7.0';</script>
+    <script>window.APP_VERSION = '5.7.1';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -128,7 +128,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.7.0</div>
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.7.1</div>
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -3890,16 +3890,17 @@
 
         // Tapping the banner applies the update and reloads into it.
         window.applyAppUpdate = function () {
+            if (_reloadingForUpdate) return;   // ignore double taps
+            _reloadingForUpdate = true;
             const b = document.getElementById('update-banner');
             if (b) b.innerHTML = '<span>⏳</span> Updating…';
-            _reloadingForUpdate = true;
-            const waiting = _swReg && _swReg.waiting;
-            if (waiting) {
-                waiting.postMessage({ type: 'SKIP_WAITING' });
-                setTimeout(() => window.location.reload(), 2500);  // fallback if controllerchange is slow
-            } else {
-                window.location.reload();   // new worker already active (skipWaiting)
-            }
+            // Ask the waiting worker to take over; controllerchange then reloads
+            // (fast path). Regardless, force a reload shortly so a slow or missed
+            // controllerchange can never leave the banner stuck on "Updating…".
+            try {
+                if (_swReg && _swReg.waiting) _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            } catch (e) {}
+            setTimeout(() => window.location.reload(), 1500);
         };
 
         window.addEventListener('load', () => {

@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.7.0',  // ← set once in index.html
-            title: 'METAR GO — v5.7.0',
+            version: window.APP_VERSION || '5.7.1',  // ← set once in index.html
+            title: 'METAR GO — v5.7.1',
             changes: [
+                {
+                    icon: '🩹',
+                    title: 'Stability Fixes',
+                    desc: 'Fixed the in-app viewer (and update button) freezing after the app had been open a while. A new version deploying in the background no longer wipes the running app’s cache; the in-app viewer now times out its embed check instead of hanging; and reloads can no longer stall on a slow network.'
+                },
                 {
                     icon: '📋',
                     title: 'Pre-Flight Briefing',
