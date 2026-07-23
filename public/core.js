@@ -3,9 +3,24 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.5.3',  // ← set once in index.html
-            title: 'METAR GO — v5.5.3',
+            version: window.APP_VERSION || '5.6.0',  // ← set once in index.html
+            title: 'METAR GO — v5.6.0',
             changes: [
+                {
+                    icon: '📷',
+                    title: 'FAA Weather Cams',
+                    desc: 'The Map tab has a new 📷 WEBCAMS mode — one tap opens the FAA Weather Camera network (live imagery across the US & Alaska) in a new tab.'
+                },
+                {
+                    icon: '📡',
+                    title: 'KMHR Live AWOS Fixed',
+                    desc: 'The old KMHR sensor site went offline. The Live Sensor button now opens kmhr.awos.live instead.'
+                },
+                {
+                    icon: '🇺🇸',
+                    title: 'Region Labels',
+                    desc: 'Features whose data source only covers a specific region — like SIGMET/AIRMET and the FAA Weather Cams — now carry a clear “US only” badge so it’s obvious at a glance.'
+                },
                 {
                     icon: '🌩️',
                     title: 'Sturdier SIGMET / AIRMET',

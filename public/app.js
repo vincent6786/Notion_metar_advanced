@@ -1523,6 +1523,7 @@
         function initWindyMap() {
             const iframe = document.getElementById('windyMap');
             if (!iframe) return;
+            if (_windyMode === 'cams') return;   // cams shows a static panel, no iframe to load
             _setWindyHeight();
             const lat = stationData?.latitude  ?? 20;
             const lon = stationData?.longitude ?? 0;
@@ -1537,8 +1538,13 @@
             _windyMode = mode;
             document.querySelectorAll('.map-mode-btn').forEach(b =>
                 b.classList.toggle('active', b.id === 'modeBtn-' + mode));
-            const ctrls = document.getElementById('mapWeatherCtrls');
-            if (ctrls) ctrls.style.display = (mode === 'weather') ? '' : 'none';
+            const ctrls  = document.getElementById('mapWeatherCtrls');
+            const iframe = document.getElementById('windyMap');
+            const cams   = document.getElementById('mapCamsPanel');
+            const isCams = mode === 'cams';
+            if (ctrls)  ctrls.style.display  = (mode === 'weather') ? '' : 'none';
+            if (iframe) iframe.style.display = isCams ? 'none' : 'block';
+            if (cams)   cams.style.display   = isCams ? 'flex' : 'none';
             initWindyMap();
         }
 
@@ -2065,24 +2071,24 @@
         // ================================================================
         // 25. AWOS MODAL
         // ================================================================
+        // Live KMHR AWOS. The old awosnet.com sensor page is down; we now point at
+        // kmhr.awos.live. It's https (no mixed-content), so load it straight into the
+        // iframe — no scrape proxy needed. If the site refuses to be framed, the
+        // "OPEN SITE ↗" button in the modal header opens it in a new tab.
+        const KMHR_AWOS_URL = 'https://kmhr.awos.live/home';
         function openAwosModal() {
             const modal  = document.getElementById('awosModal');
             const iframe = document.getElementById('awosFrame');
             if (!modal || !iframe) { console.error('AWOS modal elements not found'); return; }
             modal.classList.add('active');
-            iframe.srcdoc = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:-apple-system,sans-serif;flex-direction:column;gap:16px;"><div style="width:40px;height:40px;border:3px solid #333;border-top-color:#0a84ff;border-radius:50%;animation:spin 1s linear infinite;"></div><div style="color:#8e8e93;font-size:13px;">Loading KMHR Live Sensor...</div><style>@keyframes spin{to{transform:rotate(360deg);}}</style></div>`;
-            fetch('/api/awos')
-                .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
-                .then(html => { iframe.srcdoc = html; })
-                .catch(error => {
-                    iframe.srcdoc = `<div style="padding:40px 20px;text-align:center;font-family:-apple-system,sans-serif;background:#000;color:#fff;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;"><div style="font-size:48px;">⚠️</div><div style="font-size:18px;font-weight:700;">Unable to Load Live Sensor</div><div style="color:#8e8e93;font-size:13px;max-width:280px;">${error.message}<br><br>The KMHR sensor website may be offline or unreachable.</div><a href="http://kmhr.awosnet.com/text.php" target="_blank" style="background:#0a84ff;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:8px;">Open KMHR.net Directly ↗</a></div>`;
-                });
+            iframe.removeAttribute('srcdoc');
+            iframe.src = KMHR_AWOS_URL;
         }
 
         function closeAwosModal() {
             const modal = document.getElementById('awosModal');
             modal.classList.remove('active');
-            setTimeout(() => { document.getElementById('awosFrame').srcdoc = ''; }, 300);
+            setTimeout(() => { const f = document.getElementById('awosFrame'); if (f) f.src = 'about:blank'; }, 300);
         }
 
         /* ── Detect US airport & derive local code ── */
