@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.6.1',  // ← set once in index.html
-            title: 'METAR GO — v5.6.1',
+            version: window.APP_VERSION || '5.6.2',  // ← set once in index.html
+            title: 'METAR GO — v5.6.2',
             changes: [
+                {
+                    icon: '🔄',
+                    title: 'Tap-to-Update',
+                    desc: 'When a newer version is available, a blue “Update available — tap to refresh” bar now appears at the top. Tap it to reload straight into the latest version — no more closing and reopening to force an update.'
+                },
                 {
                     icon: '📌',
                     title: 'My Resources Moved Up',

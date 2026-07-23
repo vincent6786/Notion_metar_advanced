@@ -3,7 +3,7 @@
 // Offline-first for static assets, network-first for API calls
 // ================================================================
 
-const CACHE_VERSION = 'metar-go-v5.6.1';
+const CACHE_VERSION = 'metar-go-v5.6.2';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
@@ -72,6 +72,16 @@ self.addEventListener('activate', event => {
             )
         ).then(() => self.clients.claim())
     );
+});
+
+// ── Message: let the page trigger an immediate activation ─────
+// The app shows a "tap to refresh" banner when a new worker is ready; tapping
+// posts SKIP_WAITING so a waiting worker takes over right away, then the page
+// reloads on controllerchange.
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
 
 // ── Fetch: route requests ─────────────────────────────────────
