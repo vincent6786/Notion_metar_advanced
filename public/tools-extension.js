@@ -315,35 +315,20 @@ function closeToolsExtension() {
 function showToolsMenu() {
     const menu = document.getElementById('tools-menu');
     const resources = document.getElementById('my-resources-panel');
-    const tabBar = document.getElementById('tools-tab-bar');
     const toolViews = document.querySelectorAll('.tool-view');
-    
+
     if (menu) {
         toolViews.forEach(view => view.style.display = 'none');
         toolsExtensionState.currentTool = null;
-        
-        // Show tab bar
-        if (tabBar) tabBar.style.display = 'flex';
-        
-        // Restore whichever sub-tab was active
-        const activeTab = menu.style.display !== 'none' ? 'tools' : 
-                         (resources && resources.style.display !== 'none') ? 'resources' : 'tools';
-        switchToolsTab(activeTab);
-        
+
+        // The tool collection and My Resources now share one scrolling view —
+        // My Resources sits directly below the tools (no separate sub-tab).
+        menu.style.display = 'block';
+        if (resources) resources.style.display = 'block';
+        if (typeof loadMyResources === 'function') loadMyResources();
+
         updateExtensionHeader('Aviation Tools', false);
     }
-}
-
-function switchToolsTab(tab) {
-    const menu = document.getElementById('tools-menu');
-    const resources = document.getElementById('my-resources-panel');
-    ['tools', 'resources'].forEach(t => {
-        const btn = document.getElementById('toolsTabBtn-' + t);
-        if (btn) { btn.style.background = t === tab ? 'var(--accent)' : 'transparent'; btn.style.color = t === tab ? '#fff' : '#888'; }
-    });
-    if (menu) menu.style.display = tab === 'tools' ? 'block' : 'none';
-    if (resources) resources.style.display = tab === 'resources' ? 'block' : 'none';
-    if (tab === 'resources') loadMyResources();
 }
 
 /**
@@ -357,9 +342,7 @@ function openTool(toolName) {
         menu.style.display = 'none';
         const resources = document.getElementById('my-resources-panel');
         if (resources) resources.style.display = 'none';
-        const tabBar = document.getElementById('tools-tab-bar');
-        if (tabBar) tabBar.style.display = 'none';
-        
+
         // Hide all tool views
         document.querySelectorAll('.tool-view').forEach(view => {
             view.style.display = 'none';

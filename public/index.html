@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <!-- Single version source of truth — bump this on every release -->
-    <script>window.APP_VERSION = '5.6.0';</script>
+    <script>window.APP_VERSION = '5.6.1';</script>
     <script>
     (function () {
         var PROD_HOST = 'metar-advanced.vercel.app';
@@ -107,7 +107,7 @@
         </div>
         <div class="launch-title">METAR GO</div>
         <div class="launch-sub">Weather &amp; EFB</div>
-        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.6.0</div>
+        <div class="launch-version" id="launchVersion">TRAINING EDITION · v5.6.1</div>
             <!-- What's New popup triggered by checkWhatsNew() -->
     </div>
 
@@ -2082,17 +2082,16 @@
         <iframe id="windyMap" src="" frameborder="0" allowfullscreen
                 style="width:100%;border:none;display:block;"></iframe>
 
-        <!-- FAA Weather Cams panel (opens externally — the FAA site can't be embedded) -->
+        <!-- FAA Weather Cams panel — opens in the in-app browser (same viewer My
+             Resources uses; it frame-checks and embeds, falling back if blocked) -->
         <div id="mapCamsPanel" style="display:none;">
             <div class="cams-card">
                 <div class="cams-icon">📷</div>
                 <div class="cams-title">FAA Weather Cameras</div>
                 <span class="region-badge">🇺🇸 US &amp; Alaska</span>
-                <div class="cams-desc">Live aviation weather-camera imagery across the US and Alaska.
-                    The FAA site can't be embedded here, so it opens in a new tab.</div>
-                <a href="https://weathercams.faa.gov/map/" target="_blank" rel="noopener" class="cams-open-btn">
-                    Open FAA Weather Cams ↗
-                </a>
+                <div class="cams-desc">Live aviation weather-camera imagery across the US and Alaska.</div>
+                <button onclick="openInAppBrowser('https://weathercams.faa.gov/map/', 'FAA Weather Cams')"
+                        class="cams-open-btn">Open FAA Weather Cams</button>
             </div>
         </div>
 
@@ -2687,12 +2686,6 @@
             </div>
         </div>
         
-        <!-- Tools / My Resources Tab Bar -->
-        <div id="tools-tab-bar" style="display:flex;gap:4px;margin-bottom:16px;background:#1c1c1e;border-radius:10px;padding:3px;border:1px solid #333;">
-            <button id="toolsTabBtn-tools" onclick="switchToolsTab('tools')" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.2s;">🔧 Tools</button>
-            <button id="toolsTabBtn-resources" onclick="switchToolsTab('resources')" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.2s;">📌 My Resources</button>
-        </div>
-
         <!-- ================================================================
              TOOLS MENU (Main Extension View)
         ================================================================ -->
@@ -2789,6 +2782,12 @@
              MY RESOURCES PANEL
         ================================================================ -->
         <div id="my-resources-panel" style="display:none;">
+            <!-- Section heading — My Resources now lives directly below the tool
+                 collection in one scrolling view (no separate sub-tab). -->
+            <div style="margin-top:26px;padding-top:20px;border-top:1px solid #2a2a2a;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:15px;font-weight:800;color:#fff;">📌 My Resources</span>
+                <span style="font-size:11px;color:var(--sub-text);">· links, PDFs &amp; notes · synced</span>
+            </div>
             <!-- Add button -->
             <div style="display:flex;gap:8px;margin-bottom:16px;">
                 <button onclick="showAddResourceForm()" id="addResourceBtn" style="flex:1;background:#111;border:2px dashed #444;color:var(--accent);padding:14px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
