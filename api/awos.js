@@ -1,6 +1,8 @@
 export default async function handler(req, res) {
-    // 1. Fetch the raw "Text" page from KMHR
-    const targetUrl = 'http://kmhr.awosnet.com/text.php'; 
+    // Legacy scrape proxy. The client now embeds https://kmhr.awos.live/home
+    // directly (no proxy needed), so this endpoint is a fallback only. Kept off
+    // the dead awosnet.com domain to avoid pointing at an offline host.
+    const targetUrl = 'https://kmhr.awos.live/home';
 
     try {
         const response = await fetch(targetUrl);
