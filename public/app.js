@@ -2145,42 +2145,52 @@
             openBtn.onclick = () => window.open(url, '_blank');
             modal.classList.add('active');
 
-            // Check if the URL allows iframe embedding before loading
+            // Probe embeddability with a hard client-side timeout so a slow or hung
+            // /api/check-frame can never freeze the viewer. On timeout/error we
+            // optimistically load anyway (the iframe shows its own error if blocked).
+            let embeddable = true;
             try {
-                const resp = await fetch(`/api/check-frame?url=${encodeURIComponent(url)}`);
+                const ctrl = new AbortController();
+                const to   = setTimeout(() => ctrl.abort(), 4000);
+                const resp = await fetch(`/api/check-frame?url=${encodeURIComponent(url)}`, { signal: ctrl.signal });
+                clearTimeout(to);
                 const data = await resp.json();
-                if (!data.embeddable) {
-                    loader.style.display = 'none';
-                    const safeUrl  = url.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-                    const safeText = url.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                    frame.srcdoc = `<html><body style="margin:0;background:#000;display:flex;flex-direction:column;
-                        align-items:center;justify-content:center;height:100vh;
-                        font-family:-apple-system,sans-serif;text-align:center;padding:30px;
-                        box-sizing:border-box;">
-                        <div style="font-size:48px;margin-bottom:16px;">🔒</div>
-                        <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:10px;">
-                            Cannot display in-app
-                        </div>
-                        <div style="font-size:13px;color:#8e8e93;line-height:1.7;max-width:280px;margin-bottom:28px;">
-                            This site blocks embedded viewing for security reasons.
-                            Tap the button below to open it in your browser.
-                        </div>
-                        <a href="${safeUrl}" target="_blank"
-                           style="background:#0a84ff;color:#fff;padding:13px 28px;
-                                  border-radius:12px;text-decoration:none;
-                                  font-size:15px;font-weight:800;display:inline-block;">
-                            Open in Browser ↗
-                        </a>
-                        <div style="margin-top:16px;font-size:11px;color:#444;">${safeText}</div>
-                    </body></html>`;
-                    return;
-                }
+                embeddable = data.embeddable !== false;
             } catch (e) {
-                // Check failed — proceed with loading anyway; the iframe will show its own error
+                embeddable = true;   // timeout / network error — try to load it anyway
             }
 
-            // Small delay so 'about:blank' clears the previous page visually
-            setTimeout(() => { frame.src = url; }, 80);
+            if (!embeddable) {
+                loader.style.display = 'none';
+                const safeUrl  = url.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                const safeText = url.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                frame.srcdoc = `<html><body style="margin:0;background:#000;display:flex;flex-direction:column;
+                    align-items:center;justify-content:center;height:100vh;
+                    font-family:-apple-system,sans-serif;text-align:center;padding:30px;
+                    box-sizing:border-box;">
+                    <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+                    <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:10px;">
+                        Cannot display in-app
+                    </div>
+                    <div style="font-size:13px;color:#8e8e93;line-height:1.7;max-width:280px;margin-bottom:28px;">
+                        This site blocks embedded viewing for security reasons.
+                        Tap the button below to open it in your browser.
+                    </div>
+                    <a href="${safeUrl}" target="_blank"
+                       style="background:#0a84ff;color:#fff;padding:13px 28px;
+                              border-radius:12px;text-decoration:none;
+                              font-size:15px;font-weight:800;display:inline-block;">
+                        Open in Browser ↗
+                    </a>
+                    <div style="margin-top:16px;font-size:11px;color:#444;">${safeText}</div>
+                </body></html>`;
+                return;
+            }
+
+            // The iframe's onload/onerror hides the spinner; some sites fire
+            // neither, so hide it after a few seconds regardless.
+            setTimeout(() => { if (loader) loader.style.display = 'none'; }, 6000);
+            frame.src = url;
         }
     
         function openUsLink(type) {

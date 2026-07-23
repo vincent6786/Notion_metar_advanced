@@ -3,7 +3,7 @@
 // Offline-first for static assets, network-first for API calls
 // ================================================================
 
-const CACHE_VERSION = 'metar-go-v5.7.0';
+const CACHE_VERSION = 'metar-go-v5.7.1';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const API_CACHE     = `${CACHE_VERSION}-api`;
 
@@ -40,9 +40,11 @@ const API_ROUTES = [
     '/api/awos',
     '/api/settings',
     '/api/status',
-    '/api/access',     // access-code validation must never be served from static cache
-    '/api/api-stats',  // admin stats must never be served from static cache
-    '/api/notam',      // NOTAM proxy — always fetch fresh
+    '/api/access',      // access-code validation must never be served from static cache
+    '/api/api-stats',   // admin stats must never be served from static cache
+    '/api/notam',       // NOTAM proxy — always fetch fresh
+    '/api/sigmet',      // SIGMET/AIRMET proxy — always fetch fresh (not cache-first)
+    '/api/check-frame', // frame-embeddability probe — network-first + timed, never a hang
 ];
 
 // ── Install: pre-cache all static assets ──────────────────────
@@ -57,7 +59,12 @@ self.addEventListener('install', event => {
                     )
                 )
             );
-        }).then(() => self.skipWaiting())
+        })
+        // NOTE: no skipWaiting() here on purpose. If a new version deploys while
+        // the app is open, we must NOT auto-activate and wipe the running page's
+        // caches out from under it (that caused "stuck after a while"). The new
+        // worker waits until the user taps the "Update available" banner, which
+        // posts SKIP_WAITING (handled below).
     );
 });
 
@@ -150,7 +157,9 @@ async function cacheFirstStatic(request) {
     if (cached) return cached;
 
     try {
-        const response = await fetch(request);
+        // Timed fetch so a slow/hung network never freezes a navigation (reload)
+        // or a missed asset — falls through to the cached index.html below.
+        const response = await fetchWithTimeout(request, 12000);
         if (response.ok) {
             const cache = await caches.open(STATIC_CACHE);
             cache.put(request, response.clone());
