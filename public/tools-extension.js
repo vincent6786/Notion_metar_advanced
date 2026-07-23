@@ -200,7 +200,7 @@ function enableHorizontalScroll() {
  */
 function openToolsExtension(view) {
     console.log('Opening tools extension...', view || 'tools');
-    toolsExtensionState.view = (view === 'resources') ? 'resources' : 'tools';
+    toolsExtensionState.view = (view === 'resources' || view === 'briefing') ? view : 'tools';
 
     // Keep main tools tab visible (don't hide it)
     const toolsTab = document.getElementById('tab-tools');
@@ -317,19 +317,26 @@ function closeToolsExtension() {
 function showToolsMenu() {
     const menu = document.getElementById('tools-menu');
     const resources = document.getElementById('my-resources-panel');
+    const briefing = document.getElementById('briefing-panel');
     const toolViews = document.querySelectorAll('.tool-view');
 
-    toolViews.forEach(view => view.style.display = 'none');
+    toolViews.forEach(v => v.style.display = 'none');
     toolsExtensionState.currentTool = null;
 
-    // The tool grid and My Resources are separate top-level views, each reached
-    // from its own box on the Tools page. Show whichever one we were opened for.
-    const isResources = toolsExtensionState.view === 'resources';
-    if (menu)      menu.style.display      = isResources ? 'none' : 'block';
-    if (resources) resources.style.display = isResources ? 'block' : 'none';
-    if (isResources && typeof loadMyResources === 'function') loadMyResources();
+    // The tool grid, My Resources, and Pre-Flight Briefing are separate top-level
+    // views, each reached from its own box on the Tools page. Show the one we were
+    // opened for.
+    const view = toolsExtensionState.view || 'tools';
+    if (menu)      menu.style.display      = view === 'tools'     ? 'block' : 'none';
+    if (resources) resources.style.display = view === 'resources' ? 'block' : 'none';
+    if (briefing)  briefing.style.display  = view === 'briefing'  ? 'block' : 'none';
 
-    updateExtensionHeader(isResources ? 'My Resources' : 'Aviation Tools', false);
+    if (view === 'resources' && typeof loadMyResources === 'function') loadMyResources();
+    if (view === 'briefing'  && typeof renderBriefing   === 'function') renderBriefing();
+
+    updateExtensionHeader(
+        view === 'resources' ? 'My Resources' :
+        view === 'briefing'  ? 'Pre-Flight Briefing' : 'Aviation Tools', false);
 }
 
 /**
@@ -343,6 +350,8 @@ function openTool(toolName) {
         menu.style.display = 'none';
         const resources = document.getElementById('my-resources-panel');
         if (resources) resources.style.display = 'none';
+        const briefing = document.getElementById('briefing-panel');
+        if (briefing) briefing.style.display = 'none';
 
         // Hide all tool views
         document.querySelectorAll('.tool-view').forEach(view => {
@@ -4921,4 +4930,108 @@ function openResourceInApp(idx) {
     } else {
         window.open(item.url, '_blank');
     }
+}
+
+// ============================================================================
+// PRE-FLIGHT BRIEFING — curated instructor links, opened in the in-app viewer
+// ============================================================================
+// Where a source URL supports it, links follow the airport you're viewing.
+// Resolution: loaded station → #icao input → default station → KMHR.
+function _briefingCtx() {
+    let icao = null, lat = null, lon = null;
+    if (typeof stationData !== 'undefined' && stationData && stationData.icao) {
+        icao = String(stationData.icao).toUpperCase();
+        if (typeof stationData.latitude  === 'number') lat = stationData.latitude;
+        if (typeof stationData.longitude === 'number') lon = stationData.longitude;
+    }
+    if (!icao) {
+        const el = document.getElementById('icao');
+        icao = (el && el.value ? el.value : '').trim().toUpperCase()
+            || (localStorage.getItem('efb_default_station') || '').toUpperCase()
+            || 'KMHR';
+    }
+    if ((lat == null || lon == null) && typeof lookupAirport === 'function') {
+        const info = lookupAirport(icao);
+        if (info && info.lat != null) { lat = info.lat; lon = info.lon; }
+    }
+    if (lat == null || lon == null) { lat = 38.554; lon = -121.297; }  // KMHR fallback
+    return { icao, lat, lon };
+}
+
+const BRIEFING_LINKS = [
+    { cat: 'Official Briefing', items: [
+        { icon:'📋', title:'1800 WX Brief — Graphics', desc:'Leidos official FAA weather graphics', region:'US',
+          build:() => 'https://www.1800wxbrief.com/Website/weatherGraphics' },
+        { icon:'🗺️', title:'Graphical Forecast (GFA)', desc:'AWC graphical forecast for aviation', region:'US',
+          build:() => 'https://aviationweather.gov/gfa/' },
+        { icon:'📄', title:'METAR + TAF (6 h)', desc:'AWC raw METAR & TAF for this airport', region:null,
+          build:(c) => `https://aviationweather.gov/data/metar/?id=${encodeURIComponent(c.icao)}&hours=6&include_taf=yes` },
+    ]},
+    { cat: 'Winds & Temps Aloft', items: [
+        { icon:'🌬️', title:'Winds / Temps Aloft (FB)', desc:'AWC — low level, SFO region', region:'US',
+          build:() => 'https://aviationweather.gov/data/windtemp/?region=sfo&fcst=06&level=low' },
+    ]},
+    { cat: 'Satellite & Radar', items: [
+        { icon:'🛰️', title:'GOES Satellite (Pacific SW)', desc:'NOAA GOES-18 imagery', region:'US',
+          build:() => 'https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=G18&sector=psw' },
+        { icon:'🌍', title:'Zoom Earth', desc:'Live satellite & radar, centered here', region:null,
+          build:(c) => `https://zoom.earth/maps/satellite/#view=${c.lat.toFixed(4)},${c.lon.toFixed(4)},8z` },
+        { icon:'💨', title:'Windy', desc:'Wind, radar & model layers, centered here', region:null,
+          build:(c) => `https://www.windy.com/?${c.lat.toFixed(3)},${c.lon.toFixed(3)},9` },
+    ]},
+    { cat: 'Cameras & Local', items: [
+        { icon:'📷', title:'FAA Weather Cams', desc:'Live airport-area cameras', region:'US',
+          build:(c) => `https://weathercams.faa.gov/map/${(c.lon-0.6).toFixed(5)},${(c.lat-0.3).toFixed(5)},${(c.lon+0.6).toFixed(5)},${(c.lat+0.3).toFixed(5)}` },
+        { icon:'📡', title:'KMHR Live AWOS', desc:'Real-time KMHR sensor', region:'US',
+          build:() => 'https://kmhr.awos.live/home' },
+        { icon:'🕐', title:'Weather.com Hourly', desc:'Consumer hour-by-hour (KMHR area)', region:null,
+          build:() => 'https://weather.com/weather/hourbyhour/l/07b7dfc57819801b09cb33d017276fac100218b0131609ad5d1a2cf894990e8b' },
+    ]},
+];
+
+// Buttons reference links by index to avoid quoting URLs inside inline onclick.
+let _briefingItems = [];
+function openBriefingLink(idx) {
+    const it = _briefingItems[idx];
+    if (!it) return;
+    if (typeof openInAppBrowser === 'function') openInAppBrowser(it.url, it.title);
+    else window.open(it.url, '_blank');
+}
+
+function renderBriefing() {
+    const list = document.getElementById('briefingList');
+    if (!list) return;
+    const ctx = _briefingCtx();
+    _briefingItems = [];
+
+    let html = `<div style="font-size:11px;color:var(--sub-text);line-height:1.6;margin-bottom:6px;">
+        Targeting <span style="color:var(--accent);font-weight:800;">${escHtml(ctx.icao)}</span> —
+        links follow the airport you're viewing where the source supports it.
+    </div>`;
+
+    for (const group of BRIEFING_LINKS) {
+        html += `<div style="margin:18px 0 8px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.8px;">${escHtml(group.cat)}</div>`;
+        for (const it of group.items) {
+            const url = it.build(ctx);
+            const idx = _briefingItems.push({ url, title: it.title }) - 1;
+            const badge = it.region === 'US' ? '<span class="region-badge">🇺🇸 US only</span>' : '';
+            let host = '';
+            try { host = new URL(url).hostname.replace(/^www\./, ''); } catch(e) {}
+            html += `<div style="background:#111;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:8px;">
+                <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <span style="font-size:20px;flex-shrink:0;margin-top:1px;">${it.icon}</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                            <span style="font-weight:700;font-size:13px;color:#fff;">${escHtml(it.title)}</span>
+                            ${badge}
+                        </div>
+                        <div style="font-size:11px;color:var(--sub-text);margin-top:3px;">${escHtml(it.desc)}</div>
+                        <div style="font-size:10px;color:#555;margin-top:4px;font-family:'SF Mono',monospace;">${escHtml(host)}</div>
+                    </div>
+                </div>
+                <button onclick="openBriefingLink(${idx})" style="width:100%;margin-top:10px;background:#1c1c1e;border:1px solid #333;color:var(--accent);padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Open in App ↗</button>
+            </div>`;
+        }
+    }
+    list.innerHTML = html;
 }
