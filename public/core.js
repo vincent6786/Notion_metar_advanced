@@ -3,9 +3,14 @@
         // WHAT'S NEW SYSTEM
         // ================================================================
         const WHATS_NEW = {
-            version: window.APP_VERSION || '5.5.2',  // ← set once in index.html
-            title: 'METAR GO — v5.5.2',
+            version: window.APP_VERSION || '5.5.3',  // ← set once in index.html
+            title: 'METAR GO — v5.5.3',
             changes: [
+                {
+                    icon: '🌩️',
+                    title: 'Sturdier SIGMET / AIRMET',
+                    desc: 'US SIGMET/AIRMET now loads through our own server instead of calling aviationweather.gov straight from the browser — more reliable, no cross-origin surprises. And a failed load now shows a clear “couldn’t load” message instead of silently implying clear skies.'
+                },
                 {
                     icon: '🌍',
                     title: 'Accurate Country Grouping',
@@ -2362,7 +2367,10 @@
 
                     // SIGMET / AIRMET
                     const usAirspace = isUSAirspace(icao);
-                    const sigData = sigairmetRes?.status === 'fulfilled' ? sigairmetRes.value : null;
+                    // A rejected fetch must NOT be treated as "no active SIGMETs" —
+                    // that silently implies clear skies. Surface a real error state.
+                    const sigFailed = !!(sigairmetRes && sigairmetRes.status === 'rejected');
+                    const sigData   = sigairmetRes?.status === 'fulfilled' ? sigairmetRes.value : null;
                     ['sigairmetList', 'sigairmetList2'].forEach(id => {
                         const el = document.getElementById(id);
                         if (!el) return;
@@ -2374,6 +2382,8 @@
                                 For this airport, check <a href="${authority.url}" target="_blank"
                                     style="color:var(--accent);text-decoration:none;font-weight:700;">${authority.name} ↗</a>.
                             </div>`;
+                        } else if (sigFailed) {
+                            renderSigairmetError(id);
                         } else {
                             renderSigairmet(sigData, id);
                         }
@@ -2614,7 +2624,9 @@
                 (lon + 4).toFixed(2),
                 (lat + 4).toFixed(2)
             ].join(',');
-            const url      = `https://aviationweather.gov/api/data/airsigmet?format=json&bbox=${bbox}`;
+            // Go through our serverless proxy (no CORS surface, real HTTP status
+            // on failure) instead of hitting aviationweather.gov from the browser.
+            const url      = `/api/sigmet?bbox=${bbox}`;
             const cacheKey = `cache_sigairmet_${lat.toFixed(1)}_${lon.toFixed(1)}`;
 
             const cached = localStorage.getItem(cacheKey);
@@ -2624,7 +2636,7 @@
             }
 
             const res = await fetch(url);
-            if (!res.ok) throw new Error(`AWC SIGMET/AIRMET: ${res.status}`);
+            if (!res.ok) throw new Error(`SIGMET proxy ${res.status}`);
             const data = await res.json();
             localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
             return data;
@@ -2696,6 +2708,20 @@
                 renderGroup(other,   'ℹ️ OTHER',          '#8e8e93', 'rgba(255,255,255,0.03)');
         }
 
+        /** Distinct error state — so a failed fetch is never mistaken for "no SIGMETs". */
+        function renderSigairmetError(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            ['sigairmetCheckedAt', 'sigairmetCheckedAt2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = 'unavailable';
+            });
+            container.innerHTML = `<div style="color:var(--warn);font-size:11px;padding:6px 0;line-height:1.6;">
+                ⚠️ Couldn't load SIGMET/AIRMET right now.<br>
+                <span style="color:#666;">Source may be temporarily unreachable — tap ↻ to retry.</span>
+            </div>`;
+        }
+
 
         /** Force re-fetch SIGMET/AIRMET — busts 10-min cache */
         async function refreshSigairmet() {
@@ -2724,10 +2750,8 @@
                 renderSigairmet(data, 'sigairmetList');
                 renderSigairmet(data, 'sigairmetList2');
             } catch(e) {
-                ['sigairmetList', 'sigairmetList2'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.innerHTML = '<div style="color:var(--danger);font-size:11px;padding:8px 0;">⚠ Failed to refresh. Check connection.</div>';
-                });
+                renderSigairmetError('sigairmetList');
+                renderSigairmetError('sigairmetList2');
             }
         }
 
